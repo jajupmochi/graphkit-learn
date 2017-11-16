@@ -24,10 +24,10 @@ def computeBipartiteCostMatrix(G1, G2, cf=BasicCostFunction(1, 3, 1, 3)):
     return C
 
 
-def getOptimalMapping(C):
+def getOptimalMapping(C, lsap_solver=linear_sum_assignment):
     """Compute an optimal linear mapping according to cost Matrix C
     inclure les progs C de Seb
 
     """
-    row_ind, col_ind = linear_sum_assignment(C)
+    row_ind, col_ind = lsap_solver(C)
     return col_ind, row_ind[np.argsort(col_ind)]
