@@ -1,10 +1,11 @@
 from ged.costfunctions import BasicCostFunction, RiesenCostFunction
 from ged.costfunctions import NeighboorhoodCostFunction
 from ged.bipartiteGED import computeBipartiteCostMatrix, getOptimalMapping
-
+from scipy.optimize import linear_sum_assignment
 
 def ged(G1, G2, method='Riesen', rho=None, varrho=None,
-        cf=BasicCostFunction(1, 3, 1, 3)):
+        cf=BasicCostFunction(1, 3, 1, 3),
+        solver=linear_sum_assignment):
     """Compute Graph Edit Distance between G1 and G2 according to mapping
     encoded within rho and varrho. Graph's node must be indexed by a
     index which is used is rho and varrho 
@@ -14,15 +15,16 @@ def ged(G1, G2, method='Riesen', rho=None, varrho=None,
     """
     if ((rho is None) or (varrho is None)):
         if(method == 'Riesen'):
-            cf_bp = RiesenCostFunction(cf)
+            cf_bp = RiesenCostFunction(cf,lsap_solver=solver)
         elif(method == 'Neighboorhood'):
-            cf_bp = NeighboorhoodCostFunction(cf)
+            cf_bp = NeighboorhoodCostFunction(cf,lsap_solver=solver)
         elif(method == 'Basic'):
             cf_bp = cf
         else:
             raise NameError('Non existent method ')
 
-        rho, varrho = getOptimalMapping(computeBipartiteCostMatrix(G1, G2, cf_bp))
+        rho, varrho = getOptimalMapping(
+            computeBipartiteCostMatrix(G1, G2, cf_bp), lsap_solver=solver)
 
     n = G1.number_of_nodes()
     m = G2.number_of_nodes()
@@ -49,7 +51,7 @@ def ged(G1, G2, method='Riesen', rho=None, varrho=None,
             if(mappedEdge):
                 e2 = [phi_i, phi_j, G2[phi_i][phi_j]]
                 min_cost = min(cf.ces(e, e2, G1, G2),
-                               cf.ced(e, G1), cf.cei(e2, G2))
+                               cf.ced(e, G1) + cf.cei(e2, G2))
                 ged += min_cost
             else:
                 ged += cf.ced(e, G1)
