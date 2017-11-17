@@ -1,6 +1,6 @@
-from ged.costfunctions import ConstantCostFunction, RiesenCostFunction
-from ged.costfunctions import NeighboorhoodCostFunction
-from ged.bipartiteGED import computeBipartiteCostMatrix, getOptimalMapping
+from pygraph.ged.costfunctions import ConstantCostFunction, RiesenCostFunction
+from pygraph.ged.costfunctions import NeighboorhoodCostFunction
+from pygraph.ged.bipartiteGED import computeBipartiteCostMatrix, getOptimalMapping
 from scipy.optimize import linear_sum_assignment
 
 def ged(G1, G2, method='Riesen', rho=None, varrho=None,
@@ -29,18 +29,18 @@ def ged(G1, G2, method='Riesen', rho=None, varrho=None,
     n = G1.number_of_nodes()
     m = G2.number_of_nodes()
     ged = 0
-    for i in G1.nodes_iter():
+    for i in G1.nodes():
         phi_i = rho[i]
         if(phi_i >= m):
             ged += cf.cnd(i, G1)
         else:
             ged += cf.cns(i, phi_i, G1, G2)
-    for j in G2.nodes_iter():
+    for j in G2.nodes():
         phi_j = varrho[j]
         if(phi_j >= n):
             ged += cf.cni(j, G2)
 
-    for e in G1.edges_iter(data=True):
+    for e in G1.edges(data=True):
         i = e[0]
         j = e[1]
         phi_i = rho[i]
@@ -57,7 +57,7 @@ def ged(G1, G2, method='Riesen', rho=None, varrho=None,
                 ged += cf.ced(e, G1)
         else:
             ged += cf.ced(e, G1)
-    for e in G2.edges_iter(data=True):
+    for e in G2.edges(data=True):
         i = e[0]
         j = e[1]
         phi_i = varrho[i]
@@ -70,7 +70,3 @@ def ged(G1, G2, method='Riesen', rho=None, varrho=None,
         else:
             ged += cf.ced(e, G2)
     return ged, rho, varrho
-
-
-def computeDistanceMatrix(dataset):
-        pass

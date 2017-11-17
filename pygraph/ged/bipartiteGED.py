@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from ged.costfunctions import ConstantCostFunction
+from pygraph.ged.costfunctions import ConstantCostFunction
 
 
 def computeBipartiteCostMatrix(G1, G2, cf=ConstantCostFunction(1, 3, 1, 3)):
@@ -11,15 +11,15 @@ def computeBipartiteCostMatrix(G1, G2, cf=ConstantCostFunction(1, 3, 1, 3)):
     C = np.ones([nm, nm])*np.inf
     C[n:, m:] = 0
 
-    for u in G1.nodes_iter():
-        for v in G2.nodes_iter():
+    for u in G1.nodes():
+        for v in G2.nodes():
             cost = cf.cns(u, v, G1, G2)
             C[u, v] = cost
 
-    for v in G1.nodes_iter():
+    for v in G1.nodes():
         C[v, m + v] = cf.cnd(v, G1)
 
-    for v in G2.nodes_iter():
+    for v in G2.nodes():
         C[n + v, v] = cf.cni(v, G2)
     return C
 
