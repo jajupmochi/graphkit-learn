@@ -1,5 +1,4 @@
 # -*-coding:utf-8 -*-
-
 """
 Pygraph
 
@@ -9,20 +8,14 @@ This  package contains 4 sub  packages :
         * kernels : computation of graph kernels, ie graph similarity measure compatible with SVM
         * notebooks : examples of code using this library
         * utils : Diverse computation on graphs
- 
-je vous passe le blabla
- 
 """
- 
+
 # info
 __version__ = "0.1"
 __author__  = "Benoit Gaüzère"
 __date__    = "November 2017"
  
 # import sub modules
-from c_ext import lsape_binders
-from ged import bipartiteGED
-from ged import costfunctions
-from ged import GED
-from utils import graphfiles
-from utils import utils
+from pygraph import c_ext
+from pygraph import ged
+from pygraph import utils
