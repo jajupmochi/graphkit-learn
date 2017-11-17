@@ -1,10 +1,10 @@
-from ged.costfunctions import BasicCostFunction, RiesenCostFunction
+from ged.costfunctions import ConstantCostFunction, RiesenCostFunction
 from ged.costfunctions import NeighboorhoodCostFunction
 from ged.bipartiteGED import computeBipartiteCostMatrix, getOptimalMapping
 from scipy.optimize import linear_sum_assignment
 
 def ged(G1, G2, method='Riesen', rho=None, varrho=None,
-        cf=BasicCostFunction(1, 3, 1, 3),
+        cf=ConstantCostFunction(1, 3, 1, 3),
         solver=linear_sum_assignment):
     """Compute Graph Edit Distance between G1 and G2 according to mapping
     encoded within rho and varrho. Graph's node must be indexed by a

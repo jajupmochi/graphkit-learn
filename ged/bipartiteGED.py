@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from ged.costfunctions import BasicCostFunction
+from ged.costfunctions import ConstantCostFunction
 
 
-def computeBipartiteCostMatrix(G1, G2, cf=BasicCostFunction(1, 3, 1, 3)):
+def computeBipartiteCostMatrix(G1, G2, cf=ConstantCostFunction(1, 3, 1, 3)):
     """Compute a Cost Matrix according to cost function cf"""
     n = G1.number_of_nodes()
     m = G2.number_of_nodes()
