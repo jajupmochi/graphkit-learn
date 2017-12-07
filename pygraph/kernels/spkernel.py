@@ -7,7 +7,7 @@ import networkx as nx
 import numpy as np
 import time
 
-from utils.utils import getSPGraph
+from pygraph.utils.utils import getSPGraph
 
 
 def spkernel(*args):
