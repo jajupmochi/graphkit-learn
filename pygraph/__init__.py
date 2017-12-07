@@ -16,6 +16,6 @@ __author__  = "Benoit Gaüzère"
 __date__    = "November 2017"
  
 # import sub modules
-from pygraph import c_ext
-from pygraph import ged
+# from pygraph import c_ext
+# from pygraph import ged
 from pygraph import utils
