@@ -53,11 +53,12 @@ def spkernel(*args):
         return Kmatrix
         
     else: # for only 2 graphs
-        G1 = args[0]
-        G2 = args[1]
+        G1 = getSPGraph(args[0])
+        G2 = getSPGraph(args[1])
         
         kernel = 0
         
+        start_time = time.time()
         for e1 in G1.edges(data = True):
             for e2 in G2.edges(data = True):          
                 if e1[2]['cost'] != 0 and e1[2]['cost'] == e2[2]['cost'] and ((e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])):
