@@ -70,7 +70,7 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
             
             for i in range(0, len(Gn)):
                 for j in range(i, len(Gn)):
-                    Kmatrix[i][j] = _weisfeilerlehmankernel_do(Gn[i], Gn[j])
+                    Kmatrix[i][j] = _weisfeilerlehmankernel_do(Gn[i], Gn[j], height = height)
                     Kmatrix[j][i] = Kmatrix[i][j]
 
         print("\n --- Weisfeiler-Lehman %s kernel matrix of size %d built in %s seconds ---" % (base_kernel, len(args[0]), (time.time() - start_time)))
@@ -119,6 +119,27 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
     Gn = args[0]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     all_num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+
+    # initial
+    # for each graph
+    for idx, G in enumerate(Gn):
+        # get the set of original labels
+        labels_ori = list(nx.get_node_attributes(G, 'label').values())
+        num_of_each_label = dict(Counter(labels_ori)) # number of occurence of each label in graph
+        num_of_labels = len(num_of_each_label) # number of all unique labels
+
+        all_labels_ori.update(labels_ori)
+    
+    
+#     # calculate subtree kernel while h = 0 and add it to the final kernel
+#     for i in range(0, len(Gn)):
+#         for j in range(i, len(Gn)):
+#             labels = set(list(nx.get_node_attributes(Gn[i], 'label').values()) + list(nx.get_node_attributes(Gn[j], 'label').values()))
+#             vector1 = np.matrix([ (nx.get_node_attributes(Gn[i], 'label').values()[label] if (label in all_num_of_each_label[i].keys()) else 0) for label in labels ])
+#             vector2 = np.matrix([ (all_num_of_each_label[j][label] if (label in all_num_of_each_label[j].keys()) else 0) for label in labels ])
+#             Kmatrix[i][j] += np.dot(vector1, vector2.transpose())
+#             Kmatrix[j][i] = Kmatrix[i][j]
+
     
     # iterate each height
     for h in range(height + 1):
@@ -135,7 +156,6 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
             num_of_labels = len(num_of_each_label) # number of all unique labels
             
             all_labels_ori.update(labels_ori)
-            # num_of_labels_occured += num_of_labels #@todo not precise
             num_of_labels_occured = all_num_of_labels_occured + len(all_labels_ori) + len(all_set_compressed)
             
             set_multisets = []
@@ -188,7 +208,7 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
     return Kmatrix
     
     
-def _weisfeilerlehmankernel_do(G1, G2):
+def _weisfeilerlehmankernel_do(G1, G2, height = 0):
     """Calculate Weisfeiler-Lehman kernels between 2 graphs. This kernel use shortest path kernel to calculate kernel between two graphs in each iteration.
     
     Parameters
@@ -206,14 +226,13 @@ def _weisfeilerlehmankernel_do(G1, G2):
     kernel = 0 # init kernel
     num_nodes1 = G1.number_of_nodes()
     num_nodes2 = G2.number_of_nodes()
-    height = 12 #min(num_nodes1, num_nodes2)) #Q how to determine the upper bound of the height?
     
     # the first iteration.
 #     labelset1 = { G1.nodes(data = True)[i]['label'] for i in range(num_nodes1) }
 #     labelset2 = { G2.nodes(data = True)[i]['label'] for i in range(num_nodes2) }
-    kernel += pathkernel(G1, G2) # change your base kernel here (and one more below)
+    kernel += spkernel(G1, G2) # change your base kernel here (and one more below)
     
-    for h in range(0, height):
+    for h in range(0, height + 1):
 #         if labelset1 != labelset2:
 #             break
 
@@ -222,7 +241,7 @@ def _weisfeilerlehmankernel_do(G1, G2):
         relabel(G2)
 
         # calculate kernel
-        kernel += pathkernel(G1, G2) # change your base kernel here (and one more before)
+        kernel += spkernel(G1, G2) # change your base kernel here (and one more before)
 
         # get label sets of both graphs
 #         labelset1 = { G1.nodes(data = True)[i]['label'] for i in range(num_nodes1) }
