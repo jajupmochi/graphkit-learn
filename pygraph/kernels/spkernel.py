@@ -64,6 +64,6 @@ def spkernel(*args):
                 if e1[2]['cost'] != 0 and e1[2]['cost'] == e2[2]['cost'] and ((e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])):
                     kernel += 1
 
-        print("--- shortest path kernel built in %s seconds ---" % (time.time() - start_time))
+#         print("--- shortest path kernel built in %s seconds ---" % (time.time() - start_time))
         
         return kernel
