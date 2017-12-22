@@ -5,18 +5,20 @@ import numpy as np
 def getSPLengths(G1):
     sp = nx.shortest_path(G1)
     distances = np.zeros((G1.number_of_nodes(), G1.number_of_nodes()))
-    for i in np.keys():
-        for j in np[i].keys():
+    for i in sp.keys():
+        for j in sp[i].keys():
             distances[i, j] = len(sp[i][j])-1
     return distances
 
-def getSPGraph(G):
+def getSPGraph(G, edge_weight = 'bond_type'):
     """Transform graph G to its corresponding shortest-paths graph.
     
     Parameters
     ----------
     G : NetworkX graph
         The graph to be tramsformed.
+    edge_weight : string
+        edge attribute corresponding to the edge weight. The default edge weight is bond_type.
         
     Return
     ------
@@ -31,15 +33,17 @@ def getSPGraph(G):
     ----------
     [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
     """
-    return floydTransformation(G)
+    return floydTransformation(G, edge_weight = edge_weight)
             
-def floydTransformation(G):
+def floydTransformation(G, edge_weight = 'bond_type'):
     """Transform graph G to its corresponding shortest-paths graph using Floyd-transformation.
     
     Parameters
     ----------
     G : NetworkX graph
         The graph to be tramsformed.
+    edge_weight : string
+        edge attribute corresponding to the edge weight. The default edge weight is bond_type.
         
     Return
     ------
@@ -50,7 +54,7 @@ def floydTransformation(G):
     ----------
     [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
     """
-    spMatrix = nx.floyd_warshall_numpy(G) # @todo weigth label not considered
+    spMatrix = nx.floyd_warshall_numpy(G, weight = edge_weight)
     S = nx.Graph()
     S.add_nodes_from(G.nodes(data=True))
     for i in range(0, G.number_of_nodes()):

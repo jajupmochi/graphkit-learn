@@ -23,7 +23,7 @@ import time
 from pygraph.kernels.spkernel import spkernel
 from pygraph.kernels.pathKernel import pathkernel
 
-def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
+def weisfeilerlehmankernel(*args, node_label = 'atom', edge_label = 'bond_type', height = 0, base_kernel = 'subtree'):
     """Calculate Weisfeiler-Lehman kernels between graphs.
     
     Parameters
@@ -32,12 +32,15 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
-        
-    height : subtree height
-    
-    base_kernel : base kernel used in each iteration of WL kernel
-        the default base kernel is subtree kernel
+        2 graphs between which the kernel is calculated.        
+    node_label : string
+        node attribute used as label. The default node label is atom.        
+    edge_label : string
+        edge attribute used as label. The default edge label is bond_type.        
+    height : int
+        subtree height    
+    base_kernel : string
+        base kernel used in each iteration of WL kernel. The default base kernel is subtree kernel.
         
     Return
     ------
@@ -57,7 +60,7 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
         
         # for WL subtree kernel
         if base_kernel == 'subtree':           
-            Kmatrix = _wl_subtreekernel_do(args[0], height = height, base_kernel = 'subtree')
+            Kmatrix = _wl_subtreekernel_do(args[0], node_label, edge_label, height = height, base_kernel = 'subtree')
             
         # for WL edge kernel
         elif base_kernel == 'edge':
@@ -73,9 +76,10 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
                     Kmatrix[i][j] = _weisfeilerlehmankernel_do(Gn[i], Gn[j], height = height)
                     Kmatrix[j][i] = Kmatrix[i][j]
 
-        print("\n --- Weisfeiler-Lehman %s kernel matrix of size %d built in %s seconds ---" % (base_kernel, len(args[0]), (time.time() - start_time)))
+        run_time = time.time() - start_time
+        print("\n --- Weisfeiler-Lehman %s kernel matrix of size %d built in %s seconds ---" % (base_kernel, len(args[0]), run_time))
         
-        return Kmatrix
+        return Kmatrix, run_time
         
     else: # for only 2 graphs
         
@@ -85,7 +89,7 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
         if base_kernel == 'subtree':
             
             args = [args[0], args[1]]
-            kernel = _wl_subtreekernel_do(args, height = height, base_kernel = 'subtree')
+            kernel = _wl_subtreekernel_do(args, node_label, edge_label, height = height, base_kernel = 'subtree')
             
         # for WL edge kernel
         elif base_kernel == 'edge':
@@ -97,18 +101,27 @@ def weisfeilerlehmankernel(*args, height = 0, base_kernel = 'subtree'):
 
             kernel = _pathkernel_do(args[0], args[1])
 
-        print("\n --- Weisfeiler-Lehman %s kernel built in %s seconds ---" % (base_kernel, time.time() - start_time))
+        run_time = time.time() - start_time
+        print("\n --- Weisfeiler-Lehman %s kernel built in %s seconds ---" % (base_kernel, run_time))
         
-        return kernel
+        return kernel, run_time
     
     
-def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
+def _wl_subtreekernel_do(*args, node_label = 'atom', edge_label = 'bond_type', height = 0, base_kernel = 'subtree'):
     """Calculate Weisfeiler-Lehman subtree kernels between graphs.
     
     Parameters
     ----------
     Gn : List of NetworkX graph
-        List of graphs between which the kernels are calculated.
+        List of graphs between which the kernels are calculated.       
+    node_label : string
+        node attribute used as label. The default node label is atom.       
+    edge_label : string
+        edge attribute used as label. The default edge label is bond_type.       
+    height : int
+        subtree height  
+    base_kernel : string
+        base kernel used in each iteration of WL kernel. The default base kernel is subtree kernel.
         
     Return
     ------
@@ -120,55 +133,54 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     all_num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
 
-    # initial
+    # initial for height = 0
+    all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
+    all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
+    all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+    num_of_labels_occured = all_num_of_labels_occured # number of the set of letters that occur before as node labels at least once in all graphs
+
     # for each graph
-    for idx, G in enumerate(Gn):
+    for G in Gn:
         # get the set of original labels
-        labels_ori = list(nx.get_node_attributes(G, 'label').values())
+        labels_ori = list(nx.get_node_attributes(G, node_label).values())
+        all_labels_ori.update(labels_ori)
         num_of_each_label = dict(Counter(labels_ori)) # number of occurence of each label in graph
+        all_num_of_each_label.append(num_of_each_label)
         num_of_labels = len(num_of_each_label) # number of all unique labels
 
         all_labels_ori.update(labels_ori)
-    
-    
-#     # calculate subtree kernel while h = 0 and add it to the final kernel
-#     for i in range(0, len(Gn)):
-#         for j in range(i, len(Gn)):
-#             labels = set(list(nx.get_node_attributes(Gn[i], 'label').values()) + list(nx.get_node_attributes(Gn[j], 'label').values()))
-#             vector1 = np.matrix([ (nx.get_node_attributes(Gn[i], 'label').values()[label] if (label in all_num_of_each_label[i].keys()) else 0) for label in labels ])
-#             vector2 = np.matrix([ (all_num_of_each_label[j][label] if (label in all_num_of_each_label[j].keys()) else 0) for label in labels ])
-#             Kmatrix[i][j] += np.dot(vector1, vector2.transpose())
-#             Kmatrix[j][i] = Kmatrix[i][j]
-
+        
+    all_num_of_labels_occured += len(all_labels_ori)
+        
+    # calculate subtree kernel with the 0th iteration and add it to the final kernel
+    for i in range(0, len(Gn)):
+        for j in range(i, len(Gn)):
+            labels = set(list(all_num_of_each_label[i].keys()) + list(all_num_of_each_label[j].keys()))
+            vector1 = np.matrix([ (all_num_of_each_label[i][label] if (label in all_num_of_each_label[i].keys()) else 0) for label in labels ])
+            vector2 = np.matrix([ (all_num_of_each_label[j][label] if (label in all_num_of_each_label[j].keys()) else 0) for label in labels ])
+            Kmatrix[i][j] += np.dot(vector1, vector2.transpose())
+            Kmatrix[j][i] = Kmatrix[i][j]
     
     # iterate each height
-    for h in range(height + 1):
-        all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
-        all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
+    for h in range(1, height + 1):
         all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
         num_of_labels_occured = all_num_of_labels_occured # number of the set of letters that occur before as node labels at least once in all graphs
+        all_labels_ori = set()
+        all_num_of_each_label = []
         
         # for each graph
         for idx, G in enumerate(Gn):
-            # get the set of original labels
-            labels_ori = list(nx.get_node_attributes(G, 'label').values())
-            num_of_each_label = dict(Counter(labels_ori)) # number of occurence of each label in graph
-            num_of_labels = len(num_of_each_label) # number of all unique labels
-            
-            all_labels_ori.update(labels_ori)
-            num_of_labels_occured = all_num_of_labels_occured + len(all_labels_ori) + len(all_set_compressed)
             
             set_multisets = []
             for node in G.nodes(data = True):
                 # Multiset-label determination.
-                multiset = [ G.node[neighbors]['label'] for neighbors in G[node[0]] ]
+                multiset = [ G.node[neighbors][node_label] for neighbors in G[node[0]] ]
                 # sorting each multiset
                 multiset.sort()
-                multiset = node[1]['label'] + ''.join(multiset) # concatenate to a string and add the prefix 
+                multiset = node[1][node_label] + ''.join(multiset) # concatenate to a string and add the prefix 
                 set_multisets.append(multiset)
 
             # label compression
-        #     set_multisets.sort() # this is unnecessary
             set_unique = list(set(set_multisets)) # set of unique multiset labels
             # a dictionary mapping original labels to new ones. 
             set_compressed = {}
@@ -179,20 +191,20 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
                 else:
                     set_compressed.update({ value : str(num_of_labels_occured + 1) })
                     num_of_labels_occured += 1
-#             set_compressed = { value : (all_set_compressed[value] if value in all_set_compressed.keys() else str(set_unique.index(value) + num_of_labels_occured + 1)) for value in set_unique }
             
             all_set_compressed.update(set_compressed)
-#             num_of_labels_occured += len(set_compressed) #@todo not precise
-
+            
             # relabel nodes
-        #     nx.relabel_nodes(G, set_compressed, copy = False)
             for node in G.nodes(data = True):
-                node[1]['label'] = set_compressed[set_multisets[node[0]]]
+                node[1][node_label] = set_compressed[set_multisets[node[0]]]
 
             # get the set of compressed labels
-            labels_comp = list(nx.get_node_attributes(G, 'label').values())
-            num_of_each_label.update(dict(Counter(labels_comp)))
+            labels_comp = list(nx.get_node_attributes(G, node_label).values())
+            all_labels_ori.update(labels_comp)
+            num_of_each_label = dict(Counter(labels_comp))
             all_num_of_each_label.append(num_of_each_label)
+                    
+        all_num_of_labels_occured += len(all_labels_ori)
         
         # calculate subtree kernel with h iterations and add it to the final kernel
         for i in range(0, len(Gn)):
@@ -203,8 +215,6 @@ def _wl_subtreekernel_do(*args, height = 0, base_kernel = 'subtree'):
                 Kmatrix[i][j] += np.dot(vector1, vector2.transpose())
                 Kmatrix[j][i] = Kmatrix[i][j]
                     
-        all_num_of_labels_occured += len(all_labels_ori)
-
     return Kmatrix
     
     
