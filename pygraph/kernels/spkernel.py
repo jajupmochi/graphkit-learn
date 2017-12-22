@@ -10,7 +10,7 @@ import time
 from pygraph.utils.utils import getSPGraph
 
 
-def spkernel(*args):
+def spkernel(*args, edge_weight = 'bond_type'):
     """Calculate shortest-path kernels between graphs.
     
     Parameters
@@ -20,6 +20,8 @@ def spkernel(*args):
     /
     G1, G2 : NetworkX graphs
         2 graphs between which the kernel is calculated.
+    edge_weight : string
+        edge attribute corresponding to the edge weight. The default edge weight is bond_type.
         
     Return
     ------
@@ -37,7 +39,7 @@ def spkernel(*args):
     
         Sn = [] # get shortest path graphs of Gn
         for i in range(0, len(Gn)):
-            Sn.append(getSPGraph(Gn[i]))
+            Sn.append(getSPGraph(Gn[i], edge_weight = edge_weight))
 
         start_time = time.time()
         for i in range(0, len(Gn)):
@@ -48,13 +50,14 @@ def spkernel(*args):
                             Kmatrix[i][j] += 1
                             Kmatrix[j][i] += (0 if i == j else 1)
 
-        print("--- shortest path kernel matrix of size %d built in %s seconds ---" % (len(Gn), (time.time() - start_time)))
+        run_time = time.time() - start_time
+        print("--- shortest path kernel matrix of size %d built in %s seconds ---" % (len(Gn), run_time))
         
-        return Kmatrix
+        return Kmatrix, run_time
         
     else: # for only 2 graphs
-        G1 = getSPGraph(args[0])
-        G2 = getSPGraph(args[1])
+        G1 = getSPGraph(args[0], edge_weight = edge_weight)
+        G2 = getSPGraph(args[1], edge_weight = edge_weight)
         
         kernel = 0
         

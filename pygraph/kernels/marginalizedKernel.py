@@ -8,7 +8,7 @@ import time
 
 from pygraph.kernels.deltaKernel import deltakernel
 
-def marginalizedkernel(*args):
+def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     """Calculate marginalized graph kernels between graphs.
     
     Parameters
@@ -22,6 +22,10 @@ def marginalizedkernel(*args):
         the termination probability in the random walks generating step
     itr : integer
         time of iterations to calculate R_inf
+    node_label : string
+        node attribute used as label. The default node label is atom.        
+    edge_label : string
+        edge attribute used as label. The default edge label is bond_type.       
         
     Return
     ------
@@ -34,38 +38,43 @@ def marginalizedkernel(*args):
     """
     if len(args) == 3: # for a list of graphs
         Gn = args[0]
-
         Kmatrix = np.zeros((len(Gn), len(Gn)))
 
         start_time = time.time()
         
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], args[1], args[2])
+                Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label, edge_label, args[1], args[2])
                 Kmatrix[j][i] = Kmatrix[i][j]
                 
-        print("\n --- marginalized kernel matrix of size %d built in %s seconds ---" % (len(Gn), (time.time() - start_time)))
+        run_time = time.time() - start_time
+        print("\n --- marginalized kernel matrix of size %d built in %s seconds ---" % (len(Gn), run_time))
         
-        return Kmatrix
+        return Kmatrix, run_time
         
     else: # for only 2 graphs
         
         start_time = time.time()
         
-        kernel = _marginalizedkernel_do(args[0], args[1], args[2], args[3])
+        kernel = _marginalizedkernel_do(args[0], args[1], node_label, edge_label, args[2], args[3])
 
-        print("\n --- marginalized kernel built in %s seconds ---" % (time.time() - start_time))
+        run_time = time.time() - start_time
+        print("\n --- marginalized kernel built in %s seconds ---" % (run_time))
         
-        return kernel
+        return kernel, run_time
 
     
-def _marginalizedkernel_do(G1, G2, p_quit, itr):
+def _marginalizedkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', p_quit, itr):
     """Calculate marginalized graph kernels between 2 graphs.
     
     Parameters
     ----------
     G1, G2 : NetworkX graphs
         2 graphs between which the kernel is calculated.
+    node_label : string
+        node attribute used as label. The default node label is atom.        
+    edge_label : string
+        edge attribute used as label. The default edge label is bond_type.
     p_quit : integer
         the termination probability in the random walks generating step
     itr : integer
@@ -106,8 +115,8 @@ def _marginalizedkernel_do(G1, G2, p_quit, itr):
                     for neighbor2 in neighbor_n2:
 
                         t = p_trans_n1 * p_trans_n2 * \
-                            deltakernel(G1.node[neighbor1]['label'] == G2.node[neighbor2]['label']) * \
-                            deltakernel(neighbor_n1[neighbor1]['label'] == neighbor_n2[neighbor2]['label'])
+                            deltakernel(G1.node[neighbor1][node_label] == G2.node[neighbor2][node_label]) * \
+                            deltakernel(neighbor_n1[neighbor1][edge_label] == neighbor_n2[neighbor2][edge_label])
                         R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][neighbor2] # ref [1] equation (8)
 
         R_inf[:] = R_inf_new
@@ -115,7 +124,7 @@ def _marginalizedkernel_do(G1, G2, p_quit, itr):
     # add elements of R_inf up and calculate kernel
     for node1 in G1.nodes(data = True):
         for node2 in G2.nodes(data = True):                
-            s = p_init_G1 * p_init_G2 * deltakernel(node1[1]['label'] == node2[1]['label'])
+            s = p_init_G1 * p_init_G2 * deltakernel(node1[1][node_label] == node2[1][node_label])
             kernel += s * R_inf[node1[0]][node2[0]] # ref [1] equation (6)
 
     return kernel
