@@ -129,6 +129,7 @@ def _wl_subtreekernel_do(*args, node_label = 'atom', edge_label = 'bond_type', h
         Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
     """
     
+    height = int(height)
     Gn = args[0]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     all_num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
@@ -233,6 +234,7 @@ def _weisfeilerlehmankernel_do(G1, G2, height = 0):
     """
     
     # init.
+    height = int(height)
     kernel = 0 # init kernel
     num_nodes1 = G1.number_of_nodes()
     num_nodes2 = G2.number_of_nodes()
