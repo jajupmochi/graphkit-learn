@@ -32,6 +32,10 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     ----------
     [1] Suard F, Rakotomamonjy A, Bensrhair A. Kernel on Bag of Paths For Measuring Similarity of Shapes. InESANN 2007 Apr 25 (pp. 355-360).
     """
+    some_graph = args[0][0] if len(args) == 1 else args[0] # only edge attributes of type int or float can be used as edge weight to calculate the shortest paths.
+    some_weight = list(nx.get_edge_attributes(some_graph, edge_label).values())[0]
+    weight = edge_label if isinstance(some_weight, float) or isinstance(some_weight, int) else None
+        
     if len(args) == 1: # for a list of graphs
         Gn = args[0]        
         Kmatrix = np.zeros((len(Gn), len(Gn)))
@@ -40,7 +44,7 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _pathkernel_do(Gn[i], Gn[j], node_label, edge_label)
+                Kmatrix[i][j] = _pathkernel_do(Gn[i], Gn[j], node_label, edge_label, weight = weight)
                 Kmatrix[j][i] = Kmatrix[i][j]
 
         run_time = time.time() - start_time
@@ -51,7 +55,7 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     else: # for only 2 graphs
         start_time = time.time()
         
-        kernel = _pathkernel_do(args[0], args[1], node_label, edge_label)
+        kernel = _pathkernel_do(args[0], args[1], node_label, edge_label, weight = weight)
 
         run_time = time.time() - start_time
         print("\n --- mean average path kernel built in %s seconds ---" % (run_time))
@@ -59,7 +63,7 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         return kernel, run_time
     
     
-def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type'):
+def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', weight = None):
     """Calculate mean average path kernels between 2 graphs.
     
     Parameters
@@ -70,6 +74,8 @@ def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type'):
         node attribute used as label. The default node label is atom.        
     edge_label : string
         edge attribute used as label. The default edge label is bond_type.
+    weight : string/None
+        edge attribute used as weight to calculate the shortest path. The default edge label is None.
         
     Return
     ------
@@ -81,13 +87,13 @@ def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type'):
     num_nodes = G1.number_of_nodes()
     for node1 in range(num_nodes):
         for node2 in range(node1 + 1, num_nodes):
-                sp1.append(nx.shortest_path(G1, node1, node2, weight = edge_label))
+                sp1.append(nx.shortest_path(G1, node1, node2, weight = weight))
                 
     sp2 = []
     num_nodes = G2.number_of_nodes()
     for node1 in range(num_nodes):
         for node2 in range(node1 + 1, num_nodes):
-                sp2.append(nx.shortest_path(G2, node1, node2, weight = edge_label))
+                sp2.append(nx.shortest_path(G2, node1, node2, weight = weight))
 
     # calculate kernel
     kernel = 0

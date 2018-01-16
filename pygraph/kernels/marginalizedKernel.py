@@ -8,7 +8,7 @@ import time
 
 from pygraph.kernels.deltaKernel import deltakernel
 
-def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
+def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type', p_quit = 0.5, itr = 20):
     """Calculate marginalized graph kernels between graphs.
     
     Parameters
@@ -18,14 +18,14 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     /
     G1, G2 : NetworkX graphs
         2 graphs between which the kernel is calculated.
+    node_label : string
+        node attribute used as label. The default node label is atom.        
+    edge_label : string
+        edge attribute used as label. The default edge label is bond_type.
     p_quit : integer
         the termination probability in the random walks generating step
     itr : integer
         time of iterations to calculate R_inf
-    node_label : string
-        node attribute used as label. The default node label is atom.        
-    edge_label : string
-        edge attribute used as label. The default edge label is bond_type.       
         
     Return
     ------
@@ -36,7 +36,7 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     ----------
     [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between labeled graphs. In Proceedings of the 20th International Conference on Machine Learning, Washington, DC, United States, 2003.
     """
-    if len(args) == 3: # for a list of graphs
+    if len(args) == 1: # for a list of graphs
         Gn = args[0]
         Kmatrix = np.zeros((len(Gn), len(Gn)))
 
@@ -44,7 +44,7 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label, edge_label, args[1], args[2])
+                Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label, edge_label, p_quit, itr)
                 Kmatrix[j][i] = Kmatrix[i][j]
                 
         run_time = time.time() - start_time
@@ -56,7 +56,7 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         
         start_time = time.time()
         
-        kernel = _marginalizedkernel_do(args[0], args[1], node_label, edge_label, args[2], args[3])
+        kernel = _marginalizedkernel_do(args[0], args[1], node_label, edge_label, p_quit, itr)
 
         run_time = time.time() - start_time
         print("\n --- marginalized kernel built in %s seconds ---" % (run_time))
@@ -64,7 +64,7 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         return kernel, run_time
 
     
-def _marginalizedkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', p_quit, itr):
+def _marginalizedkernel_do(G1, G2, node_label, edge_label, p_quit, itr):
     """Calculate marginalized graph kernels between 2 graphs.
     
     Parameters
