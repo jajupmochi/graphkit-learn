@@ -25,8 +25,8 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
         
     Return
     ------
-    Kmatrix/Kernel : Numpy matrix/int
-        Kernel matrix, each element of which is the path kernel between 2 praphs. / Path Kernel between 2 graphs.
+    Kmatrix/kernel : Numpy matrix/float
+        Kernel matrix, each element of which is the path kernel between 2 praphs. / Path kernel between 2 graphs.
         
     References
     ----------
@@ -64,7 +64,7 @@ def pathkernel(*args, node_label = 'atom', edge_label = 'bond_type'):
     
     
 def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', weight = None):
-    """Calculate mean average path kernels between 2 graphs.
+    """Calculate mean average path kernel between 2 graphs.
     
     Parameters
     ----------
@@ -79,7 +79,7 @@ def _pathkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', weight
         
     Return
     ------
-    Kernel : int
+    kernel : float
         Path Kernel between 2 graphs.
     """
     # calculate shortest paths for both graphs

@@ -32,7 +32,20 @@ For predition we randomly divide the data in train and test subset, where 90% of
 * The targets of training data are normalized before calculating *path kernel* and *treelet kernel*.
 * See detail results in [results.md](pygraph/kernels/results.md).
 
+## References
+[1] K. M. Borgwardt and H.-P. Kriegel. Shortest-path kernels on graphs. In Proceedings of the International Conference on Data Mining, pages 74-81, 2005.
+
+[2] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between labeled graphs. In Proceedings of the 20th International Conference on Machine Learning, Washington, DC, United States, 2003.
+
+[3] Suard F, Rakotomamonjy A, Bensrhair A. Kernel on Bag of Paths For Measuring Similarity of Shapes. InESANN 2007 Apr 25 (pp. 355-360).
+
+[4] N. Shervashidze, P. Schweitzer, E. J. van Leeuwen, K. Mehlhorn, and K. M. Borgwardt. Weisfeiler-lehman graph kernels. Journal of Machine Learning Research, 12:2539-2561, 2011.
+
+[5] Gaüzère B, Brun L, Villemin D. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
+
 ## Updates
+### 2018.01.17
+* ADD comments to code of treelet kernel. - linlin
 ### 2018.01.16
 * ADD *treelet kernel* and its result on dataset Asyclic. - linlin
 * MOD the way to calculate WL subtree kernel, correct its results. - linlin

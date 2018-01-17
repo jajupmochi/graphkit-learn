@@ -9,8 +9,6 @@ import time
 from pygraph.kernels.spkernel import spkernel
 from pygraph.kernels.pathKernel import pathkernel
 
-# test of WL subtree kernel on many graphs
-
 import sys
 import pathlib
 from collections import Counter
@@ -44,8 +42,8 @@ def weisfeilerlehmankernel(*args, node_label = 'atom', edge_label = 'bond_type',
         
     Return
     ------
-    Kmatrix/Kernel : Numpy matrix/int
-        Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs. / Weisfeiler-Lehman Kernel between 2 graphs.
+    Kmatrix/kernel : Numpy matrix/float
+        Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs. / Weisfeiler-Lehman kernel between 2 graphs.
         
     Notes
     -----
@@ -125,7 +123,7 @@ def _wl_subtreekernel_do(*args, node_label = 'atom', edge_label = 'bond_type', h
         
     Return
     ------
-    Kmatrix/Kernel : Numpy matrix/int
+    Kmatrix/kernel : Numpy matrix/float
         Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
     """
     
@@ -229,8 +227,8 @@ def _weisfeilerlehmankernel_do(G1, G2, height = 0):
         
     Return
     ------
-    Kernel : int
-        Weisfeiler-Lehman Kernel between 2 graphs.
+    kernel : float
+        Weisfeiler-Lehman kernel between 2 graphs.
     """
     
     # init.
