@@ -29,8 +29,8 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type', p_q
         
     Return
     ------
-    Kmatrix/Kernel : Numpy matrix/int
-        Kernel matrix, each element of which is the marginalized kernel between 2 praphs. / Marginalized Kernel between 2 graphs.
+    Kmatrix/kernel : Numpy matrix/float
+        Kernel matrix, each element of which is the marginalized kernel between 2 praphs. / Marginalized kernel between 2 graphs.
         
     References
     ----------
@@ -65,24 +65,24 @@ def marginalizedkernel(*args, node_label = 'atom', edge_label = 'bond_type', p_q
 
     
 def _marginalizedkernel_do(G1, G2, node_label, edge_label, p_quit, itr):
-    """Calculate marginalized graph kernels between 2 graphs.
+    """Calculate marginalized graph kernel between 2 graphs.
     
     Parameters
     ----------
     G1, G2 : NetworkX graphs
         2 graphs between which the kernel is calculated.
     node_label : string
-        node attribute used as label. The default node label is atom.        
+        node attribute used as label.
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
+        edge attribute used as label.
     p_quit : integer
-        the termination probability in the random walks generating step
+        the termination probability in the random walks generating step.
     itr : integer
-        time of iterations to calculate R_inf
+        time of iterations to calculate R_inf.
         
     Return
     ------
-    Kernel : int
+    kernel : float
         Marginalized Kernel between 2 graphs.
     """
     # init parameters

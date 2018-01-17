@@ -25,8 +25,8 @@ def spkernel(*args, edge_weight = 'bond_type'):
         
     Return
     ------
-    Kmatrix/Kernel : Numpy matrix/int
-        Kernel matrix, each element of which is the sp kernel between 2 praphs. / SP Kernel between 2 graphs.
+    Kmatrix/kernel : Numpy matrix/float
+        Kernel matrix, each element of which is the sp kernel between 2 praphs. / SP kernel between 2 graphs.
         
     References
     ----------

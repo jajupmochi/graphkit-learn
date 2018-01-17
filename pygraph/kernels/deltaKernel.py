@@ -8,8 +8,8 @@ def deltakernel(condition):
         
     Return
     ------
-    Kernel : integer
-        Delta Kernel.
+    kernel : integer
+        Delta kernel.
         
     References
     ----------
