@@ -17,13 +17,14 @@ The criteria used for prediction are SVM for classification and kernel Ridge reg
 
 For predition we randomly divide the data in train and test subset, where 90% of entire dataset is for training and rest for testing. 10 splits are performed. For each split, we first train on the train data, then evaluate the performance on the test set. We choose the optimal parameters for the test set and finally provide the corresponding performance. The final results correspond to the average of the performances on the test sets. 
 
-| Kernels       | RMSE(℃)  | STD(℃)  | Parameter    | k_time |
-|---------------|:---------:|:--------:|-------------:|-------:|
-| Shortest path | 35.19     | 4.50     | -            | 14.58" |
-| Marginalized  | 18.02     | 6.29     | p_quit = 0.1 | 4'19"  |
-| Path          | 14.00     | 6.93     | -            | 36.21" |
-| WL subtree    | 7.55      | 2.33     | height = 1   | 0.84"  |
-| Treelet       | 8.31      | 3.38     | -            | 49.58" |
+| Kernels       | RMSE(℃) | STD(℃) |    Parameter | k_time |
+|---------------|:-------:|:------:|-------------:|-------:|
+| Shortest path | 35.19   | 4.50   |            - | 14.58" |
+| Marginalized  | 18.02   | 6.29   | p_quit = 0.1 |  4'19" |
+| Path          | 14.00   | 6.93   |            - | 36.21" |
+| WL subtree    | 7.55    | 2.33   |   height = 1 |  0.84" |
+| Treelet       | 8.31    | 3.38   |            - |  0.50" |
+| Path up to d  | 7.43    | 2.69   |    depth = 2 |  0.59" |
 
 * RMSE stands for arithmetic mean of the root mean squared errors on all splits.
 * STD stands for standard deviation of the root mean squared errors on all splits.
@@ -44,6 +45,9 @@ For predition we randomly divide the data in train and test subset, where 90% of
 [5] Gaüzère B, Brun L, Villemin D. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
 
 ## Updates
+### 2018.01.24
+* ADD *path kernel up to depth d* and its result on dataset Asyclic.
+* MOD treelet kernel, retrieve canonkeys of all graphs before calculate kernels, wildly speed it up.
 ### 2018.01.17
 * ADD comments to code of treelet kernel. - linlin
 ### 2018.01.16

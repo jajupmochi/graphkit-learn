@@ -38,9 +38,13 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
 
         start_time = time.time()
         
+        # get all canonical keys of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
+        canonkeys = [ get_canonkeys(Gn[i], node_label = node_label, edge_label = edge_label, labeled = labeled) \
+           for i in range(0, len(Gn)) ]
+        
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _treeletkernel_do(Gn[i], Gn[j], node_label = node_label, edge_label = edge_label, labeled = labeled)
+                Kmatrix[i][j] = _treeletkernel_do(canonkeys[i], canonkeys[j], node_label = node_label, edge_label = edge_label, labeled = labeled)
                 Kmatrix[j][i] = Kmatrix[i][j]
 
         run_time = time.time() - start_time
@@ -51,8 +55,11 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
     else: # for only 2 graphs
         
         start_time = time.time()
+                          
+        canonkey1 = get_canonkeys(args[0], node_label = node_label, edge_label = edge_label, labeled = labeled)
+        canonkey2 = get_canonkeys(args[1], node_label = node_label, edge_label = edge_label, labeled = labeled)
         
-        kernel = _treeletkernel_do(args[0], args[1], node_label = node_label, edge_label = edge_label, labeled = labeled)
+        kernel = _treeletkernel_do(canonkey1, canonkey2, node_label = node_label, edge_label = edge_label, labeled = labeled)
         
         run_time = time.time() - start_time
         print("\n --- treelet kernel built in %s seconds ---" % (run_time))
@@ -60,17 +67,17 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
         return kernel, run_time
 
 
-def _treeletkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', labeled = True):
+def _treeletkernel_do(canonkey1, canonkey2, node_label = 'atom', edge_label = 'bond_type', labeled = True):
     """Calculate treelet graph kernel between 2 graphs.
     
     Parameters
     ----------
-    G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+    canonkey1, canonkey2 : list
+        List of canonical keys in 2 graphs, where each key is represented by a string.
     node_label : string
-        node attribute used as label. The default node label is atom.        
+        Node attribute used as label. The default node label is atom.        
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
+        Edge attribute used as label. The default edge label is bond_type.
     labeled : boolean
         Whether the graphs are labeled. The default is True.
         
@@ -79,12 +86,9 @@ def _treeletkernel_do(G1, G2, node_label = 'atom', edge_label = 'bond_type', lab
     kernel : float
         Treelet Kernel between 2 graphs.
     """
-    canonkey1 = get_canonkeys(G1, node_label = node_label, edge_label = edge_label, labeled = labeled)
-    canonkey2 = get_canonkeys(G2, node_label = node_label, edge_label = edge_label, labeled = labeled)
-
     keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
-    vector1 = np.matrix([ (canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys ])
-    vector2 = np.matrix([ (canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys ])        
+    vector1 = np.array([ (canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys ])
+    vector2 = np.array([ (canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys ])        
     kernel = np.sum(np.exp(- np.square(vector1 - vector2) / 2))
 
     return kernel

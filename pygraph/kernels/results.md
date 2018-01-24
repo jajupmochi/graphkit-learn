@@ -7,13 +7,14 @@ For predition we randomly divide the data in train and test subset, where 90% of
 
 ## Summary
 
-| Kernels       | RMSE(℃)  | STD(℃)  | Parameter    | k_time |
-|---------------|:---------:|:--------:|-------------:|-------:|
-| Shortest path | 35.19     | 4.50     | -            | 14.58" |
-| Marginalized  | 18.02     | 6.29     | p_quit = 0.1 | 4'19"  |
-| Path          | 14.00     | 6.94     | -            | 37.58" |
-| WL subtree    | 7.55      | 2.33     | height = 1   | 0.84"  |
-| Treelet       | 8.31      | 3.38     | -            | 49.58" |
+| Kernels       | RMSE(℃) | STD(℃) |    Parameter | k_time |
+|---------------|:-------:|:------:|-------------:|-------:|
+| Shortest path | 35.19   | 4.50   |            - | 14.58" |
+| Marginalized  | 18.02   | 6.29   | p_quit = 0.1 |  4'19" |
+| Path          | 14.00   | 6.94   |            - | 37.58" |
+| WL subtree    | 7.55    | 2.33   |   height = 1 |  0.84" |
+| Treelet       | 8.31    | 3.38   |            - |  0.50" |
+| Path up to d  | 7.43    | 2.69   |    depth = 2 |  0.52" |
 
 * RMSE stands for arithmetic mean of the root mean squared errors on all splits.
 * STD stands for standard deviation of the root mean squared errors on all splits.
@@ -76,9 +77,46 @@ The table below shows the results of the WL subtree under different subtree heig
 ```
 
 ### Treelet kernel
-**The targets of training data are normalized before calculating the kernel.**
+ **The targets of training data are normalized before calculating the kernel.**
 ```
   RMSE_test    std_test    RMSE_train    std_train    k_time
 -----------  ----------  ------------  -----------  --------
-     8.3079     3.37838       2.90887       1.2679   49.5814
+     8.3079     3.37838       2.90887       1.2679   0.500302
+```
+
+### Path kernel up to depth *d*
+The table below shows the results of the path kernel up to different depth *d*.
+
+The first table is the results using Tanimoto kernel, where **The targets of training data are normalized before calculating the kernel.**.
+```
+  depth    rmse_test    std_test    rmse_train    std_train     k_time
+-------  -----------  ----------  ------------  -----------  ---------
+      0      41.6202     6.453         43.6169      2.13212  0.0904737
+      1      38.8446     6.44648       40.8329      3.44147  0.175414
+      2      35.2915     4.7813        35.7461      1.61134  0.344896
+      3      29.4845     3.90351       28.4646      3.00137  0.553939
+      4      22.6693     6.28053       19.2517      3.42893  0.770649
+      5      21.7956     5.5225        16.886       2.60519  1.01558
+      6      20.6049     5.49983       13.1097      2.58431  1.33302
+      7      20.3479     5.17631       12.0152      2.5928   1.60266
+      8      19.8228     5.13769       10.7981      2.13082  1.81218
+      9      19.8734     5.10369       10.7997      2.09549  2.21726
+     10      19.8708     5.09217       10.7787      2.10002  2.41006
+```
+
+The second table is the results using MinMax kernel.
+```
+depth    rmse_test    std_test    rmse_train    std_train    k_time
+-------  -----------  ----------  ------------  -----------  --------
+      0     12.58        2.73235      12.1209      0.500467  0.377576
+      1     12.6215      2.18866      10.2243      0.734261  0.456332
+      2      7.42903     2.69395       2.71885     0.732922  0.585278
+      3      9.02468     2.50808       1.54        1.13813   0.706556
+      4     10.0811      3.6477        1.36029     1.42399   0.847957
+      5     11.3005      4.44163       1.08518     1.06206   1.00086
+      6     12.186       4.88816       1.06443     1.00191   1.19792
+      7     12.7534      5.14529       1.19912     1.34031   1.4372
+      8     13.0471      5.27184       1.35822     1.84315   1.68449
+      9     13.1789      5.27707       1.36002     1.84834   1.96545
+     10     13.2538      5.26425       1.36208     1.85426   2.24943
 ```
