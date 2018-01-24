@@ -170,10 +170,10 @@ def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, tria
         test_stds_list.append(test_std)
 
     print('\n')
-    table_dict = {'RMSE_test': test_means_list, 'std_test': test_stds_list, \
-        'RMSE_train': train_means_list, 'std_train': train_stds_list, 'k_time': kernel_time_list}
+    table_dict = {'rmse_test': test_means_list, 'std_test': test_stds_list, \
+        'rmse_train': train_means_list, 'std_train': train_stds_list, 'k_time': kernel_time_list}
     if hyper_name == '':
-        keyorder = ['RMSE_test', 'std_test', 'RMSE_train', 'std_train', 'k_time']
+        keyorder = ['rmse_test', 'std_test', 'rmse_train', 'std_train', 'k_time']
 
     else:
         table_dict[hyper_name] = hyper_range
