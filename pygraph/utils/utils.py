@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+from tqdm import tqdm
 
 
 def getSPLengths(G1):
@@ -58,21 +59,15 @@ def floydTransformation(G, edge_weight = 'bond_type'):
     S = nx.Graph()
     S.add_nodes_from(G.nodes(data=True))
     for i in range(0, G.number_of_nodes()):
-        for j in range(0, G.number_of_nodes()):
+        for j in range(i, G.number_of_nodes()):
             S.add_edge(i, j, cost = spMatrix[i, j])
     return S
 
 
 
-import os
-import pathlib
-from collections import OrderedDict
-from tabulate import tabulate
-from .graphfiles import loadDataset
-
-def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, trials = 100, splits = 10, alpha_grid = None, C_grid = None, hyper_name = '', hyper_range = [1], normalize = False):
+def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, trials = 100, splits = 10, alpha_grid = None, C_grid = None, hyper_name = '', hyper_range = [1], normalize = False, datafile_y = '', model_type = 'regression'):
     """Perform training and testing for a kernel method. Print out neccessary data during the process then finally the results.
-    
+
     Parameters
     ----------
     datafile : string
@@ -96,12 +91,14 @@ def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, tria
     hyper_range : list
         Range of the hyperparameter.
     normalize : string
-        Determine whether or not that normalization is performed. The default is False.
+        Determine whether or not that normalization is performed. Only works when model_type == 'regression'. The default is False.
+    model_type : string
+        Typr of the problem, regression or classification problem
 
     References
     ----------
     [1] Elisabetta Ghisu, https://github.com/eghisu/GraphKernels/blob/master/GraphKernelsCollection/python_scripts/compute_perf_gk.py, 2018.1
-    
+
     Examples
     --------
     >>> import sys
@@ -113,29 +110,41 @@ def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, tria
     >>> kernel_para = dict(node_label = 'atom', edge_label = 'bond_type', labeled = True)
     >>> kernel_train_test(datafile, kernel_file_path, treeletkernel, kernel_para, normalize = True)
     """
+    import os
+    import pathlib
+    from collections import OrderedDict
+    from tabulate import tabulate
+    from .graphfiles import loadDataset
+
     # setup the parameters
-    model_type = 'regression' # Regression or classification problem
+    model_type = model_type.lower()
+    if model_type != 'regression' and model_type != 'classification':
+        raise Exception('The model type is incorrect! Please choose from regression or clqssification.')
     print('\n --- This is a %s problem ---' % model_type)
-    
+
     alpha_grid = np.logspace(-10, 10, num = trials, base = 10) if alpha_grid == None else alpha_grid # corresponds to (2*C)^-1 in other linear models such as LogisticRegression
     C_grid = np.logspace(-10, 10, num = trials, base = 10) if C_grid == None else C_grid
-    
+
     if not os.path.exists(kernel_file_path):
         os.makedirs(kernel_file_path)
-        
+
     train_means_list = []
     train_stds_list = []
     test_means_list = []
     test_stds_list = []
     kernel_time_list = []
-        
+
     for hyper_para in hyper_range:
-        print('' if hyper_name == '' else '\n\n #--- calculating kernel matrix when %s = %.1f ---#' % (hyper_name, hyper_para))
+        print('' if hyper_name == '' else '\n\n #--- calculating kernel matrix when', hyper_name, '=', hyper_para, '---#')
 
         print('\n Loading dataset from file...')
-        dataset, y = loadDataset(datafile)
+        dataset, y = loadDataset(datafile, filename_y = datafile_y)
         y = np.array(y)
-#             print(y)
+        # normalize labels and transform non-numerical labels to numerical labels.
+        if model_type == 'classification':
+            from sklearn.preprocessing import LabelEncoder
+            y = LabelEncoder().fit_transform(y)
+        #   print(y)
 
         # save kernel matrices to files / read kernel matrices from files
         kernel_file = kernel_file_path + 'km.ds'
@@ -152,7 +161,7 @@ def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, tria
             Kmatrix, run_time = kernel_func(dataset, **kernel_para)
             kernel_time_list.append(run_time)
             print(Kmatrix)
-            print('\n Saving kernel matrix to file...')
+      #     print('\n Saving kernel matrix to file...')
         #     np.savetxt(kernel_file, Kmatrix)
 
         """
@@ -170,25 +179,29 @@ def kernel_train_test(datafile, kernel_file_path, kernel_func, kernel_para, tria
         test_stds_list.append(test_std)
 
     print('\n')
-    table_dict = {'rmse_test': test_means_list, 'std_test': test_stds_list, \
-        'rmse_train': train_means_list, 'std_train': train_stds_list, 'k_time': kernel_time_list}
-    if hyper_name == '':
-        keyorder = ['rmse_test', 'std_test', 'rmse_train', 'std_train', 'k_time']
-
-    else:
-        table_dict[hyper_name] = hyper_range
-        keyorder = [hyper_name, 'rmse_test', 'std_test', 'rmse_train', 'std_train', 'k_time']
+    if model_type == 'regression':
+        table_dict = {'rmse_test': test_means_list, 'std_test': test_stds_list, \
+                      'rmse_train': train_means_list, 'std_train': train_stds_list, 'k_time': kernel_time_list}
+        if hyper_name == '':
+            keyorder = ['rmse_test', 'std_test', 'rmse_train', 'std_train', 'k_time']
+        else:
+            table_dict[hyper_name] = hyper_range
+            keyorder = [hyper_name, 'rmse_test', 'std_test', 'rmse_train', 'std_train', 'k_time']
+    elif model_type == 'classification':
+        table_dict = {'accur_test': test_means_list, 'std_test': test_stds_list, \
+                      'accur_train': train_means_list, 'std_train': train_stds_list, 'k_time': kernel_time_list}
+        if hyper_name == '':
+            keyorder = ['accur_test', 'std_test', 'accur_train', 'std_train', 'k_time']
+        else:
+            table_dict[hyper_name] = hyper_range
+            keyorder = [hyper_name, 'accur_test', 'std_test', 'accur_train', 'std_train', 'k_time']
     print(tabulate(OrderedDict(sorted(table_dict.items(), key = lambda i:keyorder.index(i[0]))), headers='keys'))
 
 
-import random
-from sklearn.kernel_ridge import KernelRidge # 0.17
-from sklearn.metrics import accuracy_score, mean_squared_error
-from sklearn import svm
 
 def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, trials = 100, model_type = 'regression', normalize = False):
     """Split dataset to training and testing splits, train and test. Print out and return the results.
-    
+
     Parameters
     ----------
     Kmatrix : Numpy matrix
@@ -206,8 +219,8 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
     model_type : string
         Determine whether it is a regression or classification problem. The default is 'regression'.
     normalize : string
-        Determine whether or not that normalization is performed. The default is False.
-        
+        Determine whether or not that normalization is performed. Only works when model_type == 'regression'. The default is False.
+
     Return
     ------
     train_mean : float
@@ -218,19 +231,27 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
         mean of the best tests.
     test_std : float
         mean of test stds in the same trial with the best test mean.
-    
+
     References
     ----------
     [1] Elisabetta Ghisu, https://github.com/eghisu/GraphKernels/blob/master/GraphKernelsCollection/python_scripts/compute_perf_gk.py, 2018.1
     """
+    import random
+    from sklearn.kernel_ridge import KernelRidge # 0.17
+    from sklearn.metrics import accuracy_score, mean_squared_error
+    from sklearn import svm
+
     datasize = len(train_target)
     random.seed(20) # Set the seed for uniform parameter distribution
-    
+
     # Initialize the performance of the best parameter trial on train with the corresponding performance on test
     train_split = []
     test_split = []
 
     # For each split of the data
+    print('\n Starting calculate accuracy/rmse...')
+    import sys
+    pbar = tqdm(total = splits * trials, desc = 'calculate performance', file=sys.stdout)
     for j in range(10, 10 + splits):
     #         print('\n Starting split %d...' % j)
 
@@ -255,7 +276,7 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
 
         # Split the targets
         y_train = y_perm[0:num_train]
-       
+
 
         # Normalization step (for real valued targets only)
         if normalize == True and model_type == 'regression':
@@ -275,7 +296,6 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
             if model_type == 'regression':
                 # Fit the kernel ridge model
                 KR = KernelRidge(kernel = 'precomputed', alpha = alpha_grid[i])
-    #                 KR = svm.SVR(kernel = 'precomputed', C = C_grid[i])
                 KR.fit(Kmatrix_train, y_train if normalize == False else y_train_norm)
 
                 # predict on the train and test set
@@ -284,15 +304,33 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
 
                 # adjust prediction: needed because the training targets have been normalized
                 if normalize == True:
-                    y_pred_train = y_pred_train * float(y_train_std) + y_train_mean                
+                    y_pred_train = y_pred_train * float(y_train_std) + y_train_mean
                     y_pred_test = y_pred_test * float(y_train_std) + y_train_mean
 
-                # root mean squared error in train set
-                rmse_train = np.sqrt(mean_squared_error(y_train, y_pred_train))
-                perf_all_train.append(rmse_train)
-                # root mean squared error in test set
-                rmse_test = np.sqrt(mean_squared_error(y_test, y_pred_test))
-                perf_all_test.append(rmse_test)
+                # root mean squared error on train set
+                accuracy_train = np.sqrt(mean_squared_error(y_train, y_pred_train))
+                perf_all_train.append(accuracy_train)
+                # root mean squared error on test set
+                accuracy_test = np.sqrt(mean_squared_error(y_test, y_pred_test))
+                perf_all_test.append(accuracy_test)
+
+            # For clcassification use SVM
+            elif model_type == 'classification':
+                KR = svm.SVC(kernel = 'precomputed', C = C_grid[i])
+                KR.fit(Kmatrix_train, y_train)
+
+                # predict on the train and test set
+                y_pred_train = KR.predict(Kmatrix_train)
+                y_pred_test = KR.predict(Kmatrix_test)
+
+                # accuracy on train set
+                accuracy_train = accuracy_score(y_train, y_pred_train)
+                perf_all_train.append(accuracy_train)
+                # accuracy on test set
+                accuracy_test = accuracy_score(y_test, y_pred_test)
+                perf_all_test.append(accuracy_test)
+
+            pbar.update(1)
 
         # --- FIND THE OPTIMAL PARAMETERS --- #
         # For regression: minimise the mean squared error
@@ -305,6 +343,17 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
             # corresponding performance on train and test set for the same parameter
             perf_train_opt = perf_all_train[min_idx]
             perf_test_opt = perf_all_test[min_idx]
+
+        # For classification: maximise the accuracy
+        if model_type == 'classification':
+            # get optimal parameter on test (argmax accuracy)
+            max_idx = np.argmax(perf_all_test)
+            C_opt = C_grid[max_idx]
+
+            # corresponding performance on train and test set for the same parameter
+            perf_train_opt = perf_all_train[max_idx]
+            perf_test_opt = perf_all_test[max_idx]
+
 
         # append the correponding performance on the train and test set
         train_split.append(perf_train_opt)
@@ -322,5 +371,5 @@ def split_train_test(Kmatrix, train_target, alpha_grid, C_grid, splits = 10, tri
     print('With standard deviation: %3f' % train_std)
     print('\n Mean performance on test set: %3f' % test_mean)
     print('With standard deviation: %3f' % test_std)
-    
+
     return train_mean, train_std, test_mean, test_std

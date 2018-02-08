@@ -3,7 +3,7 @@
 
 def loadCT(filename):
     """load data from .ct file.
-
+nn
     Notes
     ------
     a typical example of data in .ct is like this:
@@ -33,12 +33,17 @@ def loadCT(filename):
             tmp = content[i + 2].split(" ")
             tmp = [x for x in tmp if x != '']
             g.add_node(i, atom=tmp[3], label=tmp[3])
-
         for i in range(0, nb_edges):
-            tmp = content[i + g.number_of_nodes() + 2]
-            tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
+            tmp = content[i + g.number_of_nodes() + 2].split(" ")
+            tmp = [x for x in tmp if x != '']
             g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
-                       bond_type=tmp[3].strip(), label=tmp[3].strip())
+                         bond_type=tmp[3].strip(), label=tmp[3].strip())
+
+#         for i in range(0, nb_edges):
+#             tmp = content[i + g.number_of_nodes() + 2]
+#             tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
+#             g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
+#                        bond_type=tmp[3].strip(), label=tmp[3].strip())
     return g
 
 
@@ -101,7 +106,57 @@ def saveGXL(graph, filename):
     tree.write(filename)
 
 
-def loadDataset(filename):
+def loadSDF(filename):
+    """load data from structured data file (.sdf file).
+
+    Notes
+    ------
+    A SDF file contains a group of molecules, represented in the similar way as in MOL format.
+    see http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, 2018 for detailed structure.
+    """
+    import networkx as nx
+    from os.path import basename
+    from tqdm import tqdm
+    import sys
+    data = []
+    with open(filename) as f:
+        content = f.read().splitlines()
+        index = 0
+        pbar = tqdm(total = len(content) + 1, desc = 'load SDF', file=sys.stdout)
+        while index < len(content):
+            index_old = index
+
+            g = nx.Graph(name=content[index].strip()) # set name of the graph
+
+            tmp = content[index + 3]
+            nb_nodes = int(tmp[:3]) # number of the nodes
+            nb_edges = int(tmp[3:6]) # number of the edges
+
+            for i in range(0, nb_nodes):
+                tmp = content[i + index + 4]
+                g.add_node(i, atom=tmp[31:34].strip())
+
+            for i in range(0, nb_edges):
+                tmp = content[i + index + g.number_of_nodes() + 4]
+                tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
+                g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1, bond_type=tmp[2].strip())
+
+            data.append(g)
+
+            index += 4 + g.number_of_nodes() + g.number_of_edges()
+            while content[index].strip() != '$$$$': # seperator
+                index += 1
+            index += 1
+
+            pbar.update(index - index_old)
+        pbar.update(1)
+        pbar.close()
+
+    return data
+
+
+
+def loadDataset(filename, filename_y = ''):
     """load file list of the dataset.
     """
     from os.path import dirname, splitext
@@ -128,5 +183,28 @@ def loadDataset(filename):
             mol_class = graph.attrib['class']
             data.append(loadGXL(dirname_dataset + '/' + mol_filename))
             y.append(mol_class)
+    elif extension == "sdf":
+        import numpy as np
+        from tqdm import tqdm
+        import sys
+
+        data = loadSDF(filename)
+
+        y_raw = open(filename_y).read().splitlines()
+        y_raw.pop(0)
+        tmp0 = []
+        tmp1 = []
+        for i in range(0, len(y_raw)):
+            tmp = y_raw[i].split(',')
+            tmp0.append(tmp[0])
+            tmp1.append(tmp[1].strip())
+
+        y = []
+        for i in tqdm(range(0, len(data)), desc = 'ajust data', file=sys.stdout):
+            try:
+                y.append(tmp1[tmp0.index(data[i].name)].strip())
+            except ValueError: # if data[i].name not in tmp0
+                data[i] = []
+        data = list(filter(lambda a: a != [], data))
 
     return data, y

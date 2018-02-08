@@ -1,3 +1,8 @@
+"""
+@author: linlin
+@references: Gaüzère B, Brun L, Villemin D. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
+"""
+
 import sys
 import pathlib
 sys.path.insert(0, "../")
@@ -12,7 +17,7 @@ import numpy as np
 
 def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled = True):
     """Calculate treelet graph kernels between graphs.
-    
+
     Parameters
     ----------
     Gn : List of NetworkX graph
@@ -26,7 +31,7 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
         edge attribute used as label. The default edge label is bond_type.
     labeled : boolean
         Whether the graphs are labeled. The default is True.
-        
+
     Return
     ------
     Kmatrix/kernel : Numpy matrix/float
@@ -37,11 +42,11 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
         Kmatrix = np.zeros((len(Gn), len(Gn)))
 
         start_time = time.time()
-        
+
         # get all canonical keys of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
         canonkeys = [ get_canonkeys(Gn[i], node_label = node_label, edge_label = edge_label, labeled = labeled) \
            for i in range(0, len(Gn)) ]
-        
+
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
                 Kmatrix[i][j] = _treeletkernel_do(canonkeys[i], canonkeys[j], node_label = node_label, edge_label = edge_label, labeled = labeled)
@@ -49,7 +54,7 @@ def treeletkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled 
 
         run_time = time.time() - start_time
         print("\n --- treelet kernel matrix of size %d built in %s seconds ---" % (len(Gn), run_time))
-        
+
         return Kmatrix, run_time
     
     else: # for only 2 graphs
@@ -112,10 +117,6 @@ def get_canonkeys(G, node_label = 'atom', edge_label = 'bond_type', labeled = Tr
     ------
     canonkey/canonkey_l : dict
         For unlabeled graphs, canonkey is a dictionary which records amount of every tree pattern. For labeled graphs, canonkey_l is one which keeps track of amount of every treelet.
-        
-    References
-    ----------
-    [1] Gaüzère B, Brun L, Villemin D. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
     """
     patterns = {} # a dictionary which consists of lists of patterns for all graphlet.
     canonkey = {} # canonical key, a dictionary which records amount of every tree pattern.
@@ -126,7 +127,7 @@ def get_canonkeys(G, node_label = 'atom', edge_label = 'bond_type', labeled = Tr
     # linear patterns
     patterns['0'] = G.nodes()
     canonkey['0'] = nx.number_of_nodes(G)
-    for i in range(1, 6):
+    for i in range(1, 6): # for i in range(1, 6):
         patterns[str(i)] = find_all_paths(G, i)
         canonkey[str(i)] = len(patterns[str(i)])
 
@@ -227,7 +228,7 @@ def get_canonkeys(G, node_label = 'atom', edge_label = 'bond_type', labeled = Tr
         for key in canonkey_t:
             canonkey_l['0' + key] = canonkey_t[key]
 
-        for i in range(1, 6):
+        for i in range(1, 6): # for i in range(1, 6):
             treelet = []
             for pattern in patterns[str(i)]:
                 canonlist = list(chain.from_iterable((G.node[node][node_label], \
