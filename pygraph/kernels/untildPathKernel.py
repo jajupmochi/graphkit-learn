@@ -1,3 +1,8 @@
+"""
+@author: linlin
+@references: Liva Ralaivola, Sanjay J Swamidass, Hiroto Saigo, and Pierre Baldi. Graph kernels for chemical informatics. Neural networks, 18(8):1093–1110, 2005.
+"""
+
 import sys
 import pathlib
 sys.path.insert(0, "../")
@@ -40,7 +45,7 @@ def untildpathkernel(*args, node_label = 'atom', edge_label = 'bond_type', label
         Kmatrix = np.zeros((len(Gn), len(Gn)))
 
         start_time = time.time()
-        
+
         # get all paths of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
         all_paths = [ find_all_paths_until_length(Gn[i], depth, node_label = node_label, edge_label = edge_label, labeled = labeled) for i in range(0, len(Gn)) ]
 
@@ -187,7 +192,7 @@ def find_all_paths(G, length):
     all_paths = []
     for node in G:
         all_paths.extend(find_paths(G, node, length))
-    
+
     ### The following process is not carried out according to the original article
     # all_paths_r = [ path[::-1] for path in all_paths ]
 
