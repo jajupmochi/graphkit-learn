@@ -16,25 +16,24 @@ All kernels expect for Cyclic pattern kernel are tested on dataset Asyclic, whic
 
 The criteria used for prediction are SVM for classification and kernel Ridge regression for regression.
 
-For predition we randomly divide the data in train and test subset, where 90% of entire dataset is for training and rest for testing. 10 splits are performed. For each split, we first train on the train data, then evaluate the performance on the test set. We choose the optimal parameters for the test set and finally provide the corresponding performance. The final results correspond to the average of the performances on the test sets. 
+~~For predition we randomly divide the data in train and test subset, where 90% of entire dataset is for training and rest for testing. 10 splits are performed. For each split, we first train on the train data, then evaluate the performance on the test set. We choose the optimal parameters for the test set and finally provide the corresponding performance. The final results correspond to the average of the performances on the test sets.~~
 
-| Kernels          | RMSE(℃) | STD(℃) |         Parameter | k_time |
-|------------------|:-------:|:------:|------------------:|-------:|
-| Shortest path    | 35.19   | 4.50   |                 - | 14.58" |
-| Marginalized     | 18.02   | 6.29   |      p_quit = 0.1 |  4'19" |
-| Path             | 18.41   | 10.78  |                 - | 29.43" |
-| WL subtree       | 7.55    | 2.33   |        height = 1 |  0.84" |
-| WL shortest path | 35.16   | 4.50   |        height = 2 | 40.24" |
-| WL edge          | 33.41   | 4.73   |        height = 5 |  5.66" |
-| Treelet          | 8.31    | 3.38   |                 - |  0.50" |
-| Path up to d     | 7.43    | 2.69   |         depth = 2 |  0.59" |
-| Tree pattern     | 7.27    | 2.21   |  lamda = 1, h = 2 | 37.24" |
-| Cyclic pattern   | 0.9     | 0.11   | cycle bound = 100 |  0.31" |
+| Kernels          | train_perf | valid_perf |  test_perf |                                            Parameters | gram_matrix_time |
+|------------------|-----------:|-----------:|-----------:|------------------------------------------------------:|-----------------:|
+| Shortest path    | 28.65±0.59 | 36.09±0.97 | 36.45±6.63 |                                   'alpha': '3.55e+01' |           12.67" |
+| Marginalized     | 12.42±0.28 | 18.60±2.02 | 16.51±5.12 |                    'p_quit': 0.3, 'alpha': '3.16e-06' |          430.42" |
+| Path             | 11.19±0.73 | 23.66±1.74 | 25.04±9.60 |                                   'alpha': '2.57e-03' |           21.84" |
+| WL subtree       |  6.00±0.27 |  7.59±0.71 |  7.92±2.92 |                    'height': 1.0, 'alpha': '1.26e-01' |            0.84" |
+| WL shortest path | 28.32±0.63 | 35.99±0.98 | 37.92±5.60 |                    'height': 2.0, 'alpha': '1.00e+02' |           39.79" |
+| WL edge          | 30.10±0.57 | 35.13±0.78 | 37.70±6.92 |                    'height': 4.0, 'alpha': '3.98e+01' |            4.35" |
+| Treelet          |  7.38±0.37 | 14.21±0.80 | 15.26±3.65 |                                   'alpha': '1.58e+00' |            0.49" |
+| Path up to d     |  5.48±0.23 | 10.00±0.83 | 10.73±5.67 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha': '7.94e-02' |            0.57" |
+| Tree pattern     |            |            |            |                                                       |                  |
+| Cyclic pattern   |  0.62±0.02 |  0.62±0.02 |  0.57±0.17 |                 'cycle_bound': 125.0, 'C': '1.78e-01' |            0.33" |
 * RMSE stands for arithmetic mean of the root mean squared errors on all splits.
 * STD stands for standard deviation of the root mean squared errors on all splits.
-* Paremeter is the one with which the kenrel achieves the best results.
-* k_time is the time spent on building the kernel matrix.
-* The targets of training data are normalized before calculating *treelet kernel*.
+* Paremeters are the ones with which the kenrel achieves the best results.
+* gram_matrix_time is the time spent on building the gram matrix.
 * See detail results in [results.md](pygraph/kernels/results.md).
 
 ## References

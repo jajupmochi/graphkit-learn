@@ -8,8 +8,6 @@ import pathlib
 sys.path.insert(0, "../")
 import time
 
-from collections import Counter
-
 import networkx as nx
 import numpy as np
 
@@ -36,8 +34,8 @@ def untildpathkernel(*args, node_label = 'atom', edge_label = 'bond_type', label
 
     Return
     ------
-    Kmatrix/kernel : Numpy matrix/float
-        Kernel matrix, each element of which is the path kernel up to d between 2 praphs. / Path kernel up to d between 2 graphs.
+    Kmatrix : Numpy matrix
+        Kernel matrix, each element of which is the path kernel up to d between 2 praphs.
     """
     depth = int(depth)
     if len(args) == 1: # for a list of graphs
