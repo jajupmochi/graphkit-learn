@@ -29,10 +29,12 @@ def treepatternkernel(*args, node_label = 'atom', edge_label = 'bond_type', labe
         edge attribute used as label. The default edge label is bond_type.
     labeled : boolean
         Whether the graphs are labeled. The default is True.
-    depth : integer
-        Depth of search. Longest length of paths.
-    k_func : function
-        A kernel function used using different notions of fingerprint similarity.
+    kernel_type : string
+        Type of tree pattern kernel, could be 'untiln', 'size' or 'branching'.
+    lmda : float
+        Weight to decide whether linear patterns or trees pattern of increasing complexity are favored.
+    h : integer
+        The upper bound of the height of tree patterns.
 
     Return
     ------
@@ -74,6 +76,12 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
         edge attribute used as label. The default edge label is bond_type.
     labeled : boolean
         Whether the graphs are labeled. The default is True.
+    kernel_type : string
+        Type of tree pattern kernel, could be 'untiln', 'size' or 'branching'.
+    lmda : float
+        Weight to decide whether linear patterns or trees pattern of increasing complexity are favored.
+    h : integer
+        The upper bound of the height of tree patterns.
 
     Return
     ------
