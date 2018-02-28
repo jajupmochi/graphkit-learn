@@ -30,6 +30,7 @@ The criteria used for prediction are SVM for classification and kernel Ridge reg
 | Path up to d     |  5.48±0.23 | 10.00±0.83 | 10.73±5.67 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha': '7.94e-02' |            0.57" |
 | Tree pattern     |            |            |            |                                                       |                  |
 | Cyclic pattern   |  0.62±0.02 |  0.62±0.02 |  0.57±0.17 |                 'cycle_bound': 125.0, 'C': '1.78e-01' |            0.33" |
+| Walk up to n     |  6.19±0.15 |  6.95±0.20 |  7.14±1.35 |                         'n': 3.0, 'alpha': '1.00e-10' |            1.19" |
 * RMSE stands for arithmetic mean of the root mean squared errors on all splits.
 * STD stands for standard deviation of the root mean squared errors on all splits.
 * Paremeters are the ones with which the kenrel achieves the best results.
@@ -53,7 +54,15 @@ The criteria used for prediction are SVM for classification and kernel Ridge reg
 
 [8] Tamás Horváth, Thomas Gärtner, and Stefan Wrobel. Cyclic pattern kernels for predictive graph mining. In Proceedings of the tenth ACM SIGKDD international conference on Knowledge discovery and data mining, pages 158–167. ACM, 2004.
 
+[9] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
+
 ## Updates
+### 2018.02.28
+* ADD *walk kernel up to n* and its result on dataset Asyclic.
+* MOD training process, use nested cross validation for model selection. Recalculate performance of all kernels.
+### 2018.02.08
+* ADD *tree pattern kernel* and its result on dataset Asyclic.
+* ADD *cyclic pattern kernel* and its result on classification datasets.
 ### 2018.01.24
 * ADD *path kernel up to depth d* and its result on dataset Asyclic.
 * MOD treelet kernel, retrieve canonkeys of all graphs before calculate kernels, wildly speed it up.
