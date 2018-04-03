@@ -1,9 +1,10 @@
 """ Utilities function to manage graph files
 """
 
+
 def loadCT(filename):
     """load data from .ct file.
-nn
+
     Notes
     ------
     a typical example of data in .ct is like this:
@@ -20,11 +21,12 @@ nn
     g = nx.Graph()
     with open(filename) as f:
         content = f.read().splitlines()
-        g = nx.Graph(name=str(content[0]), filename=basename(filename)) # set name of the graph
+        g = nx.Graph(name=str(content[0]), filename=basename(
+            filename))  # set name of the graph
         tmp = content[1].split(" ")
         if tmp[0] == '':
-            nb_nodes = int(tmp[1]) # number of the nodes
-            nb_edges = int(tmp[2]) # number of the edges
+            nb_nodes = int(tmp[1])  # number of the nodes
+            nb_edges = int(tmp[2])  # number of the edges
         else:
             nb_nodes = int(tmp[0])
             nb_edges = int(tmp[1])
@@ -37,7 +39,7 @@ nn
             tmp = content[i + g.number_of_nodes() + 2].split(" ")
             tmp = [x for x in tmp if x != '']
             g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
-                         bond_type=tmp[3].strip(), label=tmp[3].strip())
+                       bond_type=tmp[3].strip(), label=tmp[3].strip())
 
 #         for i in range(0, nb_edges):
 #             tmp = content[i + g.number_of_nodes() + 2]
@@ -56,7 +58,7 @@ def loadGXL(filename):
     root = tree.getroot()
     index = 0
     g = nx.Graph(filename=basename(filename), name=root[0].attrib['id'])
-    dic = {} #used to retrieve incident nodes of edges
+    dic = {}  # used to retrieve incident nodes of edges
     for node in root.iter('node'):
         dic[node.attrib['id']] = index
         labels = {}
@@ -72,9 +74,10 @@ def loadGXL(filename):
         for attr in edge.iter('attr'):
             labels[attr.attrib['name']] = attr[0].text
         if 'valence' in labels:
-           labels['label'] = labels['valence']
+            labels['label'] = labels['valence']
         g.add_edge(dic[edge.attrib['from']], dic[edge.attrib['to']], **labels)
     return g
+
 
 def saveGXL(graph, filename):
     import xml.etree.ElementTree as ET
@@ -86,20 +89,24 @@ def saveGXL(graph, filename):
     graph_node = ET.SubElement(root_node, 'graph', attrib=attr)
 
     for v in graph:
-        current_node = ET.SubElement(graph_node, 'node', attrib={'id' : str(v)})
+        current_node = ET.SubElement(graph_node, 'node', attrib={'id': str(v)})
         for attr in graph.nodes[v].keys():
-            cur_attr = ET.SubElement(current_node, 'attr', attrib={'name' : attr})
-            cur_value = ET.SubElement(cur_attr,graph.nodes[v][attr].__class__.__name__)
+            cur_attr = ET.SubElement(
+                current_node, 'attr', attrib={'name': attr})
+            cur_value = ET.SubElement(
+                cur_attr, graph.nodes[v][attr].__class__.__name__)
             cur_value.text = graph.nodes[v][attr]
 
     for v1 in graph:
         for v2 in graph[v1]:
-            if(v1 < v2): #Non oriented graphs
-                cur_edge = ET.SubElement(graph_node, 'edge', attrib={'from' : str(v1),
-                                                                     'to' : str(v2)})
+            if(v1 < v2):  # Non oriented graphs
+                cur_edge = ET.SubElement(graph_node, 'edge', attrib={'from': str(v1),
+                                                                     'to': str(v2)})
                 for attr in graph[v1][v2].keys():
-                    cur_attr = ET.SubElement(cur_edge, 'attr', attrib={'name' : attr})
-                    cur_value = ET.SubElement(cur_attr, graph[v1][v2][attr].__class__.__name__)
+                    cur_attr = ET.SubElement(
+                        cur_edge, 'attr', attrib={'name': attr})
+                    cur_value = ET.SubElement(
+                        cur_attr, graph[v1][v2][attr].__class__.__name__)
                     cur_value.text = str(graph[v1][v2][attr])
 
     tree = ET.ElementTree(root_node)
@@ -122,15 +129,15 @@ def loadSDF(filename):
     with open(filename) as f:
         content = f.read().splitlines()
         index = 0
-        pbar = tqdm(total = len(content) + 1, desc = 'load SDF', file=sys.stdout)
+        pbar = tqdm(total=len(content) + 1, desc='load SDF', file=sys.stdout)
         while index < len(content):
             index_old = index
 
-            g = nx.Graph(name=content[index].strip()) # set name of the graph
+            g = nx.Graph(name=content[index].strip())  # set name of the graph
 
             tmp = content[index + 3]
-            nb_nodes = int(tmp[:3]) # number of the nodes
-            nb_edges = int(tmp[3:6]) # number of the edges
+            nb_nodes = int(tmp[:3])  # number of the nodes
+            nb_edges = int(tmp[3:6])  # number of the edges
 
             for i in range(0, nb_nodes):
                 tmp = content[i + index + 4]
@@ -139,12 +146,13 @@ def loadSDF(filename):
             for i in range(0, nb_edges):
                 tmp = content[i + index + g.number_of_nodes() + 4]
                 tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
-                g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1, bond_type=tmp[2].strip())
+                g.add_edge(int(tmp[0]) - 1, int(tmp[1]) -
+                           1, bond_type=tmp[2].strip())
 
             data.append(g)
 
             index += 4 + g.number_of_nodes() + g.number_of_edges()
-            while content[index].strip() != '$$$$': # seperator
+            while content[index].strip() != '$$$$':  # seperator
                 index += 1
             index += 1
 
@@ -155,8 +163,7 @@ def loadSDF(filename):
     return data
 
 
-
-def loadDataset(filename, filename_y = ''):
+def loadDataset(filename, filename_y=''):
     """load file list of the dataset.
     """
     from os.path import dirname, splitext
@@ -169,7 +176,9 @@ def loadDataset(filename, filename_y = ''):
         content = open(filename).read().splitlines()
         for i in range(0, len(content)):
             tmp = content[i].split(' ')
-            data.append(loadCT(dirname_dataset + '/' + tmp[0].replace('#', '', 1))) # remove the '#'s in file names
+            # remove the '#'s in file names
+            data.append(loadCT(dirname_dataset + '/' +
+                               tmp[0].replace('#', '', 1)))
             y.append(float(tmp[1]))
     elif(extension == "cxl"):
         import xml.etree.ElementTree as ET
@@ -200,10 +209,10 @@ def loadDataset(filename, filename_y = ''):
             tmp1.append(tmp[1].strip())
 
         y = []
-        for i in tqdm(range(0, len(data)), desc = 'ajust data', file=sys.stdout):
+        for i in tqdm(range(0, len(data)), desc='ajust data', file=sys.stdout):
             try:
                 y.append(tmp1[tmp0.index(data[i].name)].strip())
-            except ValueError: # if data[i].name not in tmp0
+            except ValueError:  # if data[i].name not in tmp0
                 data[i] = []
         data = list(filter(lambda a: a != [], data))
 

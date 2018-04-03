@@ -8,13 +8,24 @@ import pathlib
 sys.path.insert(0, "../")
 import time
 
-from collections import Counter
-
 import networkx as nx
 import numpy as np
 
+from collections import Counter
+from tqdm import tqdm
+tqdm.monitor_interval = 0
 
-def treepatternkernel(*args, node_label = 'atom', edge_label = 'bond_type', labeled = True, kernel_type = 'untiln', lmda = 1, h = 1):
+from pygraph.utils.utils import untotterTransformation
+
+
+def treepatternkernel(*args,
+                      node_label='atom',
+                      edge_label='bond_type',
+                      labeled=True,
+                      kernel_type='untiln',
+                      lmda=1,
+                      h=1,
+                      remove_totters=True):
     """Calculate tree pattern graph kernels between graphs.
     Parameters
     ----------
@@ -35,6 +46,8 @@ def treepatternkernel(*args, node_label = 'atom', edge_label = 'bond_type', labe
         Weight to decide whether linear patterns or trees pattern of increasing complexity are favored.
     h : integer
         The upper bound of the height of tree patterns.
+    remove_totters : boolean
+        whether to remove totters. The default value is True.
 
     Return
     ------
@@ -44,24 +57,38 @@ def treepatternkernel(*args, node_label = 'atom', edge_label = 'bond_type', labe
     if h < 1:
         raise Exception('h > 0 is requested.')
     kernel_type = kernel_type.lower()
-    Gn = args[0] if len(args) == 1 else [args[0], args[1]] # arrange all graphs in a list
+    # arrange all graphs in a list
+    Gn = args[0] if len(args) == 1 else [args[0], args[1]]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     h = int(h)
 
     start_time = time.time()
 
+    if remove_totters:
+        Gn = [untotterTransformation(G, node_label, edge_label) for G in Gn]
+
+    pbar = tqdm(
+        total=(1 + len(Gn)) * len(Gn) / 2,
+        desc='calculate kernels',
+        file=sys.stdout)
     for i in range(0, len(Gn)):
         for j in range(i, len(Gn)):
-            Kmatrix[i][j] = _treepatternkernel_do(Gn[i], Gn[j], node_label, edge_label, labeled, kernel_type, lmda, h)
+            Kmatrix[i][j] = _treepatternkernel_do(Gn[i], Gn[j], node_label,
+                                                  edge_label, labeled,
+                                                  kernel_type, lmda, h)
             Kmatrix[j][i] = Kmatrix[i][j]
+            pbar.update(1)
 
     run_time = time.time() - start_time
-    print("\n --- kernel matrix of tree pattern kernel of size %d built in %s seconds ---" % (len(Gn), run_time))
+    print(
+        "\n --- kernel matrix of tree pattern kernel of size %d built in %s seconds ---"
+        % (len(Gn), run_time))
 
     return Kmatrix, run_time
 
 
-def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, lmda, h):
+def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type,
+                          lmda, h):
     """Calculate tree pattern graph kernels between 2 graphs.
 
     Parameters
@@ -97,17 +124,22 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
             """Find all sets R of pairs by combination.
             """
             if length == 1:
-                mset =  [ [pair] for pair in allpairs ]
+                mset = [[pair] for pair in allpairs]
                 return mset, mset
             else:
                 mset, mset_l = mset_com(allpairs, length - 1)
                 mset_tmp = []
-                for pairset in mset_l: # for each pair set of length l-1
-                    nodeset1 = [ pair[0] for pair in pairset ] # nodes already in the set
-                    nodeset2 = [ pair[1] for pair in pairset ]
+                for pairset in mset_l:  # for each pair set of length l-1
+                    nodeset1 = [pair[0] for pair in pairset
+                                ]  # nodes already in the set
+                    nodeset2 = [pair[1] for pair in pairset]
                     for pair in allpairs:
-                        if (pair[0] not in nodeset1) and (pair[1] not in nodeset2): # nodes in R should be unique
-                            mset_tmp.append(pairset + [pair]) # add this pair to the pair set of length l-1, constructing a new set of length l
+                        if (pair[0] not in nodeset1) and (
+                                pair[1] not in nodeset2
+                        ):  # nodes in R should be unique
+                            mset_tmp.append(
+                                pairset + [pair]
+                            )  # add this pair to the pair set of length l-1, constructing a new set of length l
                             nodeset1.append(pair[0])
                             nodeset2.append(pair[1])
 
@@ -115,8 +147,8 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
 
                 return mset, mset_tmp
 
-
-        allpairs = [] # all pairs those have the same node labels and edge labels
+        allpairs = [
+        ]  # all pairs those have the same node labels and edge labels
         for neighbor1 in G1[n1]:
             for neighbor2 in G2[n2]:
                 if G1.node[neighbor1][node_label] == G2.node[neighbor2][node_label] \
@@ -129,7 +161,6 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
             mset = []
 
         return mset
-
 
     def kernel_h(h):
         """Calculate kernel of h-th iteration.
@@ -147,9 +178,11 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
                         for R in mset:
                             kh_tmp = 1
                             for pair in R:
-                                kh_tmp *= lmda * all_kh[str(pair[0]) + '.' + str(pair[1])]
+                                kh_tmp *= lmda * all_kh[str(pair[0])
+                                                        + '.' + str(pair[1])]
                             kh += 1 / lmda * kh_tmp
-                        kh = (G1.node[n1][node_label] == G2.node[n2][node_label]) * (1 + kh)
+                        kh = (G1.node[n1][node_label] == G2.node[n2][
+                            node_label]) * (1 + kh)
                         all_kh_tmp[str(n1) + '.' + str(n2)] = kh
                 all_kh = all_kh_tmp.copy()
 
@@ -165,9 +198,11 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
                         for R in mset:
                             kh_tmp = 1
                             for pair in R:
-                                kh_tmp *= lmda * all_kh[str(pair[0]) + '.' + str(pair[1])]
+                                kh_tmp *= lmda * all_kh[str(pair[0])
+                                                        + '.' + str(pair[1])]
                             kh += kh_tmp
-                        kh *= lmda * (G1.node[n1][node_label] == G2.node[n2][node_label])
+                        kh *= lmda * (
+                            G1.node[n1][node_label] == G2.node[n2][node_label])
                         all_kh_tmp[str(n1) + '.' + str(n2)] = kh
                 all_kh = all_kh_tmp.copy()
 
@@ -183,15 +218,15 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
                         for R in mset:
                             kh_tmp = 1
                             for pair in R:
-                                kh_tmp *= lmda * all_kh[str(pair[0]) + '.' + str(pair[1])]
+                                kh_tmp *= lmda * all_kh[str(pair[0])
+                                                        + '.' + str(pair[1])]
                             kh += 1 / lmda * kh_tmp
-                        kh *= (G1.node[n1][node_label] == G2.node[n2][node_label])
+                        kh *= (
+                            G1.node[n1][node_label] == G2.node[n2][node_label])
                         all_kh_tmp[str(n1) + '.' + str(n2)] = kh
                 all_kh = all_kh_tmp.copy()
 
         return all_kh
-
-
 
     # calculate matching sets for every pair of nodes at first to avoid calculating in every iteration.
     all_msets = ({ str(node1) + '.' + str(node2) : matchingset(node1, node2) for node1 in G1.nodes() \
@@ -201,6 +236,6 @@ def _treepatternkernel_do(G1, G2, node_label, edge_label, labeled, kernel_type, 
     kernel = sum(all_kh.values())
 
     if kernel_type == 'size':
-        kernel = kernel / (lmda ** h)
+        kernel = kernel / (lmda**h)
 
     return kernel

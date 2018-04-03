@@ -16,25 +16,29 @@ All kernels expect for Cyclic pattern kernel are tested on dataset Asyclic, whic
 
 The criteria used for prediction are SVM for classification and kernel Ridge regression for regression.
 
-~~For predition we randomly divide the data in train and test subset, where 90% of entire dataset is for training and rest for testing. 10 splits are performed. For each split, we first train on the train data, then evaluate the performance on the test set. We choose the optimal parameters for the test set and finally provide the corresponding performance. The final results correspond to the average of the performances on the test sets.~~
+For prediction we randomly divide the data in train and test subset, where 90\% of entire dataset is for training and rest for testing. 30 splits are performed. For each split, we first train on the train data, then evaluate the performance on the test set. We choose the optimal parameters for the test set and finally provide the corresponding performance. The final results correspond to the average of the performances on the test sets.
 
-| Kernels          | train_perf | valid_perf |  test_perf |                                            Parameters | gram_matrix_time |
-|------------------|-----------:|-----------:|-----------:|------------------------------------------------------:|-----------------:|
-| Shortest path    | 28.65±0.59 | 36.09±0.97 | 36.45±6.63 |                                   'alpha': '3.55e+01' |           12.67" |
-| Marginalized     | 12.42±0.28 | 18.60±2.02 | 16.51±5.12 |                    'p_quit': 0.3, 'alpha': '3.16e-06' |          430.42" |
-| Path             | 11.19±0.73 | 23.66±1.74 | 25.04±9.60 |                                   'alpha': '2.57e-03' |           21.84" |
-| WL subtree       |  6.00±0.27 |  7.59±0.71 |  7.92±2.92 |                    'height': 1.0, 'alpha': '1.26e-01' |            0.84" |
-| WL shortest path | 28.32±0.63 | 35.99±0.98 | 37.92±5.60 |                    'height': 2.0, 'alpha': '1.00e+02' |           39.79" |
-| WL edge          | 30.10±0.57 | 35.13±0.78 | 37.70±6.92 |                    'height': 4.0, 'alpha': '3.98e+01' |            4.35" |
-| Treelet          |  7.38±0.37 | 14.21±0.80 | 15.26±3.65 |                                   'alpha': '1.58e+00' |            0.49" |
-| Path up to d     |  5.48±0.23 | 10.00±0.83 | 10.73±5.67 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha': '7.94e-02' |            0.57" |
-| Tree pattern     |            |            |            |                                                       |                  |
-| Cyclic pattern   |  0.62±0.02 |  0.62±0.02 |  0.57±0.17 |                 'cycle_bound': 125.0, 'C': '1.78e-01' |            0.33" |
-| Walk up to n     |  6.19±0.15 |  6.95±0.20 |  7.14±1.35 |                         'n': 3.0, 'alpha': '1.00e-10' |            1.19" |
-* RMSE stands for arithmetic mean of the root mean squared errors on all splits.
-* STD stands for standard deviation of the root mean squared errors on all splits.
-* Paremeters are the ones with which the kenrel achieves the best results.
-* gram_matrix_time is the time spent on building the gram matrix.
+| Kernels                   | train_perf | valid_perf | test_perf  | Parameters                                       | gram_matrix_time          |
+|---------------------------|------------|------------|------------|--------------------------------------------------|---------------------------|
+| Shortest path             | 28.77±0.60 | 38.31±0.92 | 39.40±6.32 | 'alpha': '1.00'                                  | 13.54"                    |
+| Marginalized              | 12.95±0.37 | 19.02±1.73 | 18.24±5.00 | 'p_quit': 0.2, 'alpha': '1.00e-04'               | 437.04"/447.44"±5.32"     |
+| Extension of Marginalized | 20.65±0.44 | 26.06±1.83 | 26.84±4.81 | 'p_quit': 0.1, 'alpha': '5.62e-04'               | 6388.50"/6266.67"±149.16" |
+| Path                      | 8.71±0.63  | 19.28±1.75 | 17.42±6.57 | 'alpha': '2.82e-02'                              | 21.94"                    |
+| WL subtree                | 13.90±0.35 | 18.47±1.36 | 18.08±4.70 | 'height': 1.0, 'alpha': '1.50e-03'               | 0.79"/1.32"±0.76"         |
+| WL shortest path          | 28.74±0.60 | 38.20±0.62 | 39.02±6.09 | 'height': 10.0, 'alpha': '1.00'                  | 146.83"/80.63"±45.04"     |
+| WL edge                   | 30.21±0.64 | 36.53±1.02 | 38.42±6.42 | 'height': 5.0, 'alpha': '6.31e-01'               | 5.24"/5.15"±2.83"         |
+| Treelet                   | 7.33±0.64  | 13.86±0.80 | 15.38±3.56 | 'alpha': '1.12e+01'                              | 0.48"                     |
+| Path up to d              | 5.76±0.27  | 9.89±0.87  | 10.21±4.16 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha': '0.1' | 0.56"/1.16"±0.75"         |
+| Cyclic pattern            |            |            |            |                                                  |                           |
+| Walk up to n              | 20.88±0.74 | 23.34±1.11 | 24.46±6.57 | 'n': 2.0, 'alpha': '1.00e-03'                    | 0.56"/331.70"±753.44"     |
+
+In table above,last column is the time consumed to calculate the gram matrix. Note for
+kernels which need to tune hyper-parameters that are required to calculate gram
+matrices, average time consumption and its confidence are obtained over the
+hyper-parameters grids, which are shown after "/". The time shown before "/"
+is the one spent on building the gram matrix corresponding to the best test
+performance.
+
 * See detail results in [results.md](pygraph/kernels/results.md).
 
 ## References
@@ -67,27 +71,27 @@ The criteria used for prediction are SVM for classification and kernel Ridge reg
 * ADD *path kernel up to depth d* and its result on dataset Asyclic.
 * MOD treelet kernel, retrieve canonkeys of all graphs before calculate kernels, wildly speed it up.
 ### 2018.01.17
-* ADD comments to code of treelet kernel. - linlin
+* ADD comments to code of treelet kernel.
 ### 2018.01.16
-* ADD *treelet kernel* and its result on dataset Asyclic. - linlin
-* MOD the way to calculate WL subtree kernel, correct its results. - linlin
-* ADD *kernel_train_test* and *split_train_test* to wrap training and testing process. - linlin
+* ADD *treelet kernel* and its result on dataset Asyclic.
+* MOD the way to calculate WL subtree kernel, correct its results.
+* ADD *kernel_train_test* and *split_train_test* to wrap training and testing process.
 * MOD readme.md file, add detailed results of each kernel. - linlin
 ### 2017.12.22
-* ADD calculation of the time spend to acquire kernel matrices for each kernel. - linlin
-* MOD floydTransformation function, calculate shortest paths taking into consideration user-defined edge weight. - linlin
-* MOD implementation of nodes and edges attributes genericity for all kernels. - linlin
-* ADD detailed results file results.md. - linlin
+* ADD calculation of the time spend to acquire kernel matrices for each kernel.
+* MOD floydTransformation function, calculate shortest paths taking into consideration user-defined edge weight.
+* MOD implementation of nodes and edges attributes genericity for all kernels.
+* ADD detailed results file results.md.
 ### 2017.12.21
-* MOD Weisfeiler-Lehman subtree kernel and the test code. - linlin
+* MOD Weisfeiler-Lehman subtree kernel and the test code.
 ### 2017.12.20
-* ADD *Weisfeiler-Lehman subtree kernel* and its result on dataset Asyclic. - linlin
+* ADD *Weisfeiler-Lehman subtree kernel* and its result on dataset Asyclic.
 ### 2017.12.07
-* ADD *mean average path kernel* and its result on dataset Asyclic. - linlin
+* ADD *mean average path kernel* and its result on dataset Asyclic.
 * ADD delta kernel. - linlin
-* MOD reconstruction the code of marginalized kernel. - linlin
+* MOD reconstruction the code of marginalized kernel.
 ### 2017.12.05
 * ADD *marginalized kernel* and its result. - linlin
-* ADD list required python packages in file README.md. - linlin
+* ADD list required python packages in file README.md.
 ### 2017.11.24
-* ADD *shortest path kernel* and its result. - linlin
+* ADD *shortest path kernel* and its result.
