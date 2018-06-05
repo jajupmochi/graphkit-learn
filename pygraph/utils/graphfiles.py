@@ -21,8 +21,9 @@ def loadCT(filename):
     g = nx.Graph()
     with open(filename) as f:
         content = f.read().splitlines()
-        g = nx.Graph(name=str(content[0]), filename=basename(
-            filename))  # set name of the graph
+        g = nx.Graph(
+            name=str(content[0]),
+            filename=basename(filename))  # set name of the graph
         tmp = content[1].split(" ")
         if tmp[0] == '':
             nb_nodes = int(tmp[1])  # number of the nodes
@@ -38,8 +39,12 @@ def loadCT(filename):
         for i in range(0, nb_edges):
             tmp = content[i + g.number_of_nodes() + 2].split(" ")
             tmp = [x for x in tmp if x != '']
-            g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
-                       bond_type=tmp[3].strip(), label=tmp[3].strip())
+            g.add_edge(
+                int(tmp[0]) - 1,
+                int(tmp[1]) - 1,
+                bond_type=tmp[3].strip(),
+                label=tmp[3].strip())
+
 
 #         for i in range(0, nb_edges):
 #             tmp = content[i + g.number_of_nodes() + 2]
@@ -93,15 +98,20 @@ def saveGXL(graph, filename):
         for attr in graph.nodes[v].keys():
             cur_attr = ET.SubElement(
                 current_node, 'attr', attrib={'name': attr})
-            cur_value = ET.SubElement(
-                cur_attr, graph.nodes[v][attr].__class__.__name__)
+            cur_value = ET.SubElement(cur_attr,
+                                      graph.nodes[v][attr].__class__.__name__)
             cur_value.text = graph.nodes[v][attr]
 
     for v1 in graph:
         for v2 in graph[v1]:
-            if(v1 < v2):  # Non oriented graphs
-                cur_edge = ET.SubElement(graph_node, 'edge', attrib={'from': str(v1),
-                                                                     'to': str(v2)})
+            if (v1 < v2):  # Non oriented graphs
+                cur_edge = ET.SubElement(
+                    graph_node,
+                    'edge',
+                    attrib={
+                        'from': str(v1),
+                        'to': str(v2)
+                    })
                 for attr in graph[v1][v2].keys():
                     cur_attr = ET.SubElement(
                         cur_edge, 'attr', attrib={'name': attr})
@@ -119,7 +129,7 @@ def loadSDF(filename):
     Notes
     ------
     A SDF file contains a group of molecules, represented in the similar way as in MOL format.
-    see http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, 2018 for detailed structure.
+    Check http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, 2018 for detailed structure.
     """
     import networkx as nx
     from os.path import basename
@@ -145,9 +155,9 @@ def loadSDF(filename):
 
             for i in range(0, nb_edges):
                 tmp = content[i + index + g.number_of_nodes() + 4]
-                tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
-                g.add_edge(int(tmp[0]) - 1, int(tmp[1]) -
-                           1, bond_type=tmp[2].strip())
+                tmp = [tmp[i:i + 3] for i in range(0, len(tmp), 3)]
+                g.add_edge(
+                    int(tmp[0]) - 1, int(tmp[1]) - 1, bond_type=tmp[2].strip())
 
             data.append(g)
 
@@ -163,7 +173,166 @@ def loadSDF(filename):
     return data
 
 
-def loadDataset(filename, filename_y=''):
+def loadMAT(filename, extra_params):
+    """Load graph data from a MATLAB (up to version 7.1) .mat file.
+
+    Notes
+    ------
+    A MAT file contains a struct array containing graphs, and a column vector lx containing a class label for each graph.
+    Check README in downloadable file in http://mlcb.is.tuebingen.mpg.de/Mitarbeiter/Nino/WL/, 2018 for detailed structure.
+    """
+    from scipy.io import loadmat
+    import numpy as np
+    import networkx as nx
+    data = []
+    content = loadmat(filename)
+    order = extra_params['am_sp_al_nl_el']
+    # print(content)
+    # print('----')
+    for key, value in content.items():
+        if key[0] == 'l':  # class label
+            y = np.transpose(value)[0].tolist()
+            # print(y)
+        elif key[0] != '_':
+            # print(value[0][0][0])
+            # print()
+            # print(value[0][0][1])
+            # print()
+            # print(value[0][0][2])
+            # print()
+            # if len(value[0][0]) > 3:
+            #     print(value[0][0][3])
+            # print('----')
+            # if adjacency matrix is not compressed / edge label exists
+            if order[1] == 0:
+                for i, item in enumerate(value[0]):
+                    # print(item)
+                    # print('------')
+                    g = nx.Graph(name=i)  # set name of the graph
+                    nl = np.transpose(item[order[3]][0][0][0])  # node label
+                    # print(item[order[3]])
+                    # print()
+                    for index, label in enumerate(nl[0]):
+                        g.add_node(index, atom=str(label))
+                    el = item[order[4]][0][0][0]  # edge label
+                    for edge in el:
+                        g.add_edge(
+                            edge[0] - 1, edge[1] - 1, bond_type=str(edge[2]))
+                    data.append(g)
+            else:
+                from scipy.sparse import csc_matrix
+                for i, item in enumerate(value[0]):
+                    # print(item)
+                    # print('------')
+                    g = nx.Graph(name=i)  # set name of the graph
+                    nl = np.transpose(item[order[3]][0][0][0])  # node label
+                    # print(nl)
+                    # print()
+                    for index, label in enumerate(nl[0]):
+                        g.add_node(index, atom=str(label))
+                    sam = item[order[0]]  # sparse adjacency matrix
+                    index_no0 = sam.nonzero()
+                    for col, row in zip(index_no0[0], index_no0[1]):
+                        # print(col)
+                        # print(row)
+                        g.add_edge(col, row)
+                    data.append(g)
+                    # print(g.edges(data=True))
+    return data, y
+
+
+def loadTXT(dirname_dataset):
+    """Load graph data from a .txt file.
+
+    Notes
+    ------
+    The graph data is loaded from separate files.
+    Check README in downloadable file http://tiny.cc/PK_MLJ_data, 2018 for detailed structure.
+    """
+    import numpy as np
+    import networkx as nx
+    from os import listdir
+    from os.path import dirname
+
+    # load data file names
+    for name in listdir(dirname_dataset):
+        if '_A' in name:
+            fam = dirname_dataset + '/' + name
+        elif '_graph_indicator' in name:
+            fgi = dirname_dataset + '/' + name
+        elif '_graph_labels' in name:
+            fgl = dirname_dataset + '/' + name
+        elif '_node_labels' in name:
+            fnl = dirname_dataset + '/' + name
+        elif '_edge_labels' in name:
+            fel = dirname_dataset + '/' + name
+        elif '_edge_attributes' in name:
+            fea = dirname_dataset + '/' + name
+        elif '_node_attributes' in name:
+            fna = dirname_dataset + '/' + name
+        elif '_graph_attributes' in name:
+            fga = dirname_dataset + '/' + name
+        # this is supposed to be the node attrs, make sure to put this as the last 'elif'
+        elif '_attributes' in name:
+            fna = dirname_dataset + '/' + name
+
+    content_gi = open(fgi).read().splitlines()  # graph indicator
+    content_am = open(fam).read().splitlines()  # adjacency matrix
+    content_gl = open(fgl).read().splitlines()  # lass labels
+
+    # create graphs and add nodes
+    data = [nx.Graph(name=i) for i in range(0, len(content_gl))]
+    if 'fnl' in locals():
+        content_nl = open(fnl).read().splitlines()  # node labels
+        for i, line in enumerate(content_gi):
+            # transfer to int first in case of unexpected blanks
+            data[int(line) - 1].add_node(i, atom=str(int(content_nl[i])))
+    else:
+        for i, line in enumerate(content_gi):
+            data[int(line) - 1].add_node(i)
+            
+    # add edges
+    for line in content_am:
+        tmp = line.split(',')
+        n1 = int(tmp[0]) - 1
+        n2 = int(tmp[1]) - 1
+        # ignore edge weight here.
+        g = int(content_gi[n1]) - 1
+        data[g].add_edge(n1, n2)
+
+    # add edge labels
+    if 'fel' in locals():
+        content_el = open(fel).read().splitlines()
+        for index, line in enumerate(content_el):
+            label = line.strip()
+            n = [int(i) - 1 for i in content_am[index].split(',')]
+            g = int(content_gi[n[0]]) - 1
+            data[g].edges[n[0], n[1]]['bond_type'] = label
+
+    # add node attributes
+    if 'fna' in locals():
+        content_na = open(fna).read().splitlines()
+        for i, line in enumerate(content_na):
+            attrs = [i.strip() for i in line.split(',')]
+            g = int(content_gi[i]) - 1
+            data[g].nodes[i]['attributes'] = attrs
+
+    # add edge attributes
+    if 'fea' in locals():
+        content_ea = open(fea).read().splitlines()
+        for index, line in enumerate(content_ea):
+            attrs = [i.strip() for i in line.split(',')]
+            n = [int(i) - 1 for i in content_am[index].split(',')]
+            g = int(content_gi[n[0]]) - 1
+            data[g].edges[n[0], n[1]]['attributes'] = attrs
+
+    # load y
+    y = [int(i) for i in content_gl]
+
+    return data, y
+
+
+def loadDataset(filename, filename_y=None, extra_params=None):
     """load file list of the dataset.
     """
     from os.path import dirname, splitext
@@ -174,13 +343,26 @@ def loadDataset(filename, filename_y=''):
     y = []
     if extension == "ds":
         content = open(filename).read().splitlines()
-        for i in range(0, len(content)):
-            tmp = content[i].split(' ')
-            # remove the '#'s in file names
-            data.append(loadCT(dirname_dataset + '/' +
-                               tmp[0].replace('#', '', 1)))
-            y.append(float(tmp[1]))
-    elif(extension == "cxl"):
+        if filename_y is None or filename_y == '':
+            for i in range(0, len(content)):
+                tmp = content[i].split(' ')
+                # remove the '#'s in file names
+                data.append(
+                    loadCT(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
+                y.append(float(tmp[1]))
+        else:  # y in a seperate file
+            for i in range(0, len(content)):
+                tmp = content[i]
+                # remove the '#'s in file names
+                data.append(
+                    loadCT(dirname_dataset + '/' + tmp.replace('#', '', 1)))
+            content_y = open(filename_y).read().splitlines()
+            # assume entries in filename and filename_y have the same order.
+            for item in content_y:
+                tmp = item.split(' ')
+                # assume the 3rd entry in a line is y (for Alkane dataset)
+                y.append(float(tmp[2]))
+    elif extension == "cxl":
         import xml.etree.ElementTree as ET
 
         tree = ET.parse(filename)
@@ -215,5 +397,18 @@ def loadDataset(filename, filename_y=''):
             except ValueError:  # if data[i].name not in tmp0
                 data[i] = []
         data = list(filter(lambda a: a != [], data))
+    elif extension == "mat":
+        data, y = loadMAT(filename, extra_params)
+    elif extension == 'txt':
+        data, y = loadTXT(dirname_dataset)
+        # print(len(y))
+        # print(y)
+        # print(data[0].nodes(data=True))
+        # print('----')
+        # print(data[0].edges(data=True))
+        # for g in data:
+        #     print(g.nodes(data=True))
+        #     print('----')
+        #     print(g.edges(data=True))
 
     return data, y

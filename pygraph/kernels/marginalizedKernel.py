@@ -9,16 +9,16 @@ import sys
 import pathlib
 sys.path.insert(0, "../")
 import time
+from tqdm import tqdm
+tqdm.monitor_interval = 0
 
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-from tqdm import tqdm
-tqdm.monitor_interval = 0
-
 from pygraph.kernels.deltaKernel import deltakernel
 from pygraph.utils.utils import untotterTransformation
+from pygraph.utils.graphdataset import get_dataset_attributes
 
 
 def marginalizedkernel(*args,
@@ -55,15 +55,29 @@ def marginalizedkernel(*args,
     # arrange all graphs in a list
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
+    ds_attrs = get_dataset_attributes(
+        Gn,
+        attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
+        node_label=node_label,
+        edge_label=edge_label)
+    if not ds_attrs['node_labeled']:
+        for G in Gn:
+            nx.set_node_attributes(G, '0', 'atom')
+    if not ds_attrs['edge_labeled']:
+        for G in Gn:
+            nx.set_edge_attributes(G, '0', 'bond_type')
 
     start_time = time.time()
 
     if remove_totters:
-        Gn = [untotterTransformation(G, node_label, edge_label) for G in Gn]
+        Gn = [
+            untotterTransformation(G, node_label, edge_label)
+            for G in tqdm(Gn, desc='removing tottering', file=sys.stdout)
+        ]
 
     pbar = tqdm(
         total=(1 + len(Gn)) * len(Gn) / 2,
-        desc='calculate kernels',
+        desc='calculating kernels',
         file=sys.stdout)
     for i in range(0, len(Gn)):
         for j in range(i, len(Gn)):
