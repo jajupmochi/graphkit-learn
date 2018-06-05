@@ -3,7 +3,8 @@
 def model_selection_for_precomputed_kernel(datafile, estimator,
                                            param_grid_precomputed, param_grid,
                                            model_type, NUM_TRIALS=30,
-                                           datafile_y=''):
+                                           datafile_y=None,
+                                           extra_params=None):
     """Perform model selection, fitting and testing for precomputed kernels using nested cv. Print out neccessary data during the process then finally the results.
 
     Parameters
@@ -40,7 +41,6 @@ def model_selection_for_precomputed_kernel(datafile, estimator,
     """
     import numpy as np
     from matplotlib import pyplot as plt
-
     from sklearn.kernel_ridge import KernelRidge
     from sklearn.svm import SVC
     from sklearn.metrics import accuracy_score, mean_squared_error
@@ -51,7 +51,6 @@ def model_selection_for_precomputed_kernel(datafile, estimator,
     import os
     from os.path import basename
     from pygraph.utils.graphfiles import loadDataset
-
     from tqdm import tqdm
     tqdm.monitor_interval = 0
 
@@ -71,7 +70,12 @@ def model_selection_for_precomputed_kernel(datafile, estimator,
     # Load the dataset
     print()
     print('1. Loading dataset from file...')
-    dataset, y = loadDataset(datafile, filename_y=datafile_y)
+    dataset, y = loadDataset(datafile, filename_y=datafile_y, extra_params=extra_params)
+    
+#     import matplotlib.pyplot as plt      
+#     import networkx as nx
+#     nx.draw_networkx(dataset[30])
+#     plt.show()
 
     # Grid of parameters with a discrete number of values for each.
     param_list_precomputed = list(ParameterGrid(param_grid_precomputed))
@@ -91,14 +95,18 @@ def model_selection_for_precomputed_kernel(datafile, estimator,
     nb_gm_ignore = 0 # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)
     for params_out in param_list_precomputed:
         print()
-        print('gram matrix with parameters', params_out, 'is: ')
+        if params_out != {}:
+            print('gram matrix with parameters', params_out, 'is: ')
 
         Kmatrix, current_run_time = estimator(dataset, **params_out)
         Kmatrix_diag = Kmatrix.diagonal().copy()
 
         for i in range(len(Kmatrix)):
             for j in range(i, len(Kmatrix)):
+#                 print(Kmatrix[i][j])
+#                 if Kmatrix_diag[i] != 0 and Kmatrix_diag[j] != 0:
                 Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
+#                     print(i, j, Kmatrix[i][j], Kmatrix_diag[i], Kmatrix_diag[j])
                 Kmatrix[j][i] = Kmatrix[i][j]
 
         if np.isnan(Kmatrix).any(): # if the matrix contains elements that are not numbers
@@ -217,7 +225,7 @@ def model_selection_for_precomputed_kernel(datafile, estimator,
                     current_test_perf)
 
                 pbar.update(1)
-                pbar.clear()
+    pbar.clear()
     np.save(results_name_pre + 'train_pref.dt', train_pref)
     np.save(results_name_pre + 'val_pref.dt', val_pref)
     np.save(results_name_pre + 'test_pref.dt', test_pref)

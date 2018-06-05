@@ -13,7 +13,7 @@ def getSPLengths(G1):
     return distances
 
 
-def getSPGraph(G, edge_weight='bond_type'):
+def getSPGraph(G, edge_weight=None):
     """Transform graph G to its corresponding shortest-paths graph.
 
     Parameters
@@ -21,7 +21,7 @@ def getSPGraph(G, edge_weight='bond_type'):
     G : NetworkX graph
         The graph to be tramsformed.
     edge_weight : string
-        edge attribute corresponding to the edge weight. The default edge weight is bond_type.
+        edge attribute corresponding to the edge weight.
 
     Return
     ------
@@ -39,7 +39,7 @@ def getSPGraph(G, edge_weight='bond_type'):
     return floydTransformation(G, edge_weight=edge_weight)
 
 
-def floydTransformation(G, edge_weight='bond_type'):
+def floydTransformation(G, edge_weight=None):
     """Transform graph G to its corresponding shortest-paths graph using Floyd-transformation.
 
     Parameters
@@ -82,7 +82,7 @@ def untotterTransformation(G, node_label, edge_label):
     Return
     ------
     gt : NetworkX graph
-        The shortest-paths graph corresponding to G.
+        The transformed graph corresponding to G.
 
     References
     ----------
@@ -114,4 +114,58 @@ def untotterTransformation(G, node_label, edge_label):
     # relabel nodes using consecutive integers for convenience of kernel calculation.
     gt = nx.convert_node_labels_to_integers(
         gt, first_label=0, label_attribute='label_orignal')
+    return gt
+
+
+def direct_product(G1, G2, node_label, edge_label):
+    """Return the direct/tensor product of G1 and G2.
+
+    Parameters
+    ----------
+    G1, G2 : NetworkX graph
+        The original graphs.
+    node_label : string
+        node attribute used as label. The default node label is 'atom'.
+    edge_label : string
+        edge attribute used as label. The default edge label is 'bond_type'.
+
+    Return
+    ------
+    gt : NetworkX graph
+        The direct product graph of G1 and G2.
+
+    Notes
+    -----
+    This method differs from networkx.tensor_product in that this method only adds nodes and edges in G1 and G2 that have the same labels to direct product graph.
+
+    References
+    ----------
+    [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
+    """
+    # arrange all graphs in a list
+    from itertools import product
+
+    # G = G.to_directed()
+    gt = nx.Graph()
+    # add nodes
+    for u, v in product(G1, G2):
+        if G1.nodes[u][node_label] == G2.nodes[v][node_label]:
+            gt.add_node((u, v))
+            gt.nodes[(u, v)].update({node_label: G1.nodes[u][node_label]})
+    # add edges
+    for u, v in product(gt, gt):
+        if (u[0], v[0]) in G1.edges and (
+                u[1], v[1]
+        ) in G2.edges and G1.edges[u[0],
+                                   v[0]][edge_label] == G2.edges[u[1],
+                                                                 v[1]][edge_label]:
+            gt.add_edge((u[0], u[1]), (v[0], v[1]))
+            gt.edges[(u[0], u[1]), (v[0], v[1])].update({
+                edge_label:
+                G1.edges[u[0], v[0]][edge_label]
+            })
+
+    # relabel nodes using consecutive integers for convenience of kernel calculation.
+    # gt = nx.convert_node_labels_to_integers(
+    #     gt, first_label=0, label_attribute='label_orignal')
     return gt

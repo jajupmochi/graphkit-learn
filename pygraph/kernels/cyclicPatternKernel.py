@@ -46,10 +46,10 @@ def cyclicpatternkernel(*args, node_label = 'atom', edge_label = 'bond_type', la
     start_time = time.time()
 
     # get all cyclic and tree patterns of all graphs before calculating kernels to save time, but this may consume a lot of memory for large dataset.
-    all_patterns = [ get_patterns(Gn[i], node_label = node_label, edge_label = edge_label, labeled = labeled, cycle_bound = cycle_bound)
-        for i in tqdm(range(0, len(Gn)), desc = 'retrieve patterns', file=sys.stdout) ]
+    all_patterns = [ get_patterns(Gn[i], node_label=node_label, edge_label = edge_label, labeled = labeled, cycle_bound = cycle_bound)
+        for i in tqdm(range(0, len(Gn)), desc='retrieve patterns', file=sys.stdout) ]
 
-    for i in tqdm(range(0, len(Gn)), desc = 'calculate kernels', file=sys.stdout):
+    for i in tqdm(range(0, len(Gn)), desc='calculate kernels', file=sys.stdout):
         for j in range(i, len(Gn)):
             Kmatrix[i][j] = _cyclicpatternkernel_do(all_patterns[i], all_patterns[j])
             Kmatrix[j][i] = Kmatrix[i][j]
