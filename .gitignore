@@ -1,7 +1,9 @@
 # Jupyter Notebook
 .ipynb_checkpoints
-datasets
-notebooks/results
+datasets/*
+!datasets/ds.py
+notebooks/results/*
+requirements/*
 
 __pycache__
 ##*#

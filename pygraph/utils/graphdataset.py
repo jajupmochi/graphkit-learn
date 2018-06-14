@@ -111,7 +111,7 @@ def get_dataset_attributes(Gn,
         if 'attributes' in attrs:
             return len(attrs['attributes'])
         else:
-            return False
+            return 0
 
     def get_edge_attr_dim(Gn):
         for G in Gn:
@@ -120,8 +120,8 @@ def get_dataset_attributes(Gn,
                     if 'attributes' in e[2]:
                         return len(e[2]['attributes'])
                     else:
-                        return False
-        return False
+                        return 0
+        return 0
 
     if attr_names == []:
         attr_names = [

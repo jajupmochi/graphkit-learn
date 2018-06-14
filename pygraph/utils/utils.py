@@ -62,8 +62,9 @@ def floydTransformation(G, edge_weight=None):
     S = nx.Graph()
     S.add_nodes_from(G.nodes(data=True))
     for i in range(0, G.number_of_nodes()):
-        for j in range(i, G.number_of_nodes()):
-            S.add_edge(i, j, cost=spMatrix[i, j])
+        for j in range(i + 1, G.number_of_nodes()):
+            if spMatrix[i, j] != np.inf:
+                S.add_edge(i, j, cost=spMatrix[i, j])
     return S
 
 
