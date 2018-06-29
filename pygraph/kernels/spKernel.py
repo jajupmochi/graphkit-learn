@@ -8,6 +8,7 @@ import pathlib
 sys.path.insert(0, "../")
 from tqdm import tqdm
 import time
+from itertools import combinations_with_replacement, product
 
 import networkx as nx
 import numpy as np
@@ -38,8 +39,6 @@ def spkernel(*args, node_label='atom', edge_weight=None, node_kernels=None):
     """
     # pre-process
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
-
-    Gn = [nx.to_directed(G) for G in Gn]
 
     weight = None
     if edge_weight == None:
@@ -89,174 +88,158 @@ def spkernel(*args, node_label='atom', edge_weight=None, node_kernels=None):
         # node symb and non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             if ds_attrs['is_directed']:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['mix']
-                                    try:
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn(n11[node_label], n21[
-                                            node_label], [n11['attributes']],
-                                                 [n21['attributes']]) * kn(
-                                                     n12[node_label],
-                                                     n22[node_label],
-                                                     [n12['attributes']],
-                                                     [n22['attributes']])
-                                        Kmatrix[i][j] += kn1
-                                    except KeyError:  # missing labels or attributes
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['mix']
+                            try:
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn(n11[node_label], n21[node_label], [
+                                    n11['attributes']
+                                ], [n21['attributes']]) * kn(
+                                    n12[node_label], n22[node_label],
+                                    [n12['attributes']], [n22['attributes']])
+                                Kmatrix[i][j] += kn1
+                            except KeyError:  # missing labels or attributes
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
 
             else:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['mix']
-                                    try:
-                                        # each edge walk is counted twice, starting from both its extreme nodes.
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn(n11[node_label], n21[
-                                            node_label], [n11['attributes']],
-                                                 [n21['attributes']]) * kn(
-                                                     n12[node_label],
-                                                     n22[node_label],
-                                                     [n12['attributes']],
-                                                     [n22['attributes']])
-                                        kn2 = kn(n11[node_label], n22[
-                                            node_label], [n11['attributes']],
-                                                 [n22['attributes']]) * kn(
-                                                     n12[node_label],
-                                                     n21[node_label],
-                                                     [n12['attributes']],
-                                                     [n21['attributes']])
-                                        Kmatrix[i][j] += kn1 + kn2
-                                    except KeyError:  # missing labels or attributes
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['mix']
+                            try:
+                                # each edge walk is counted twice, starting from both its extreme nodes.
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn(n11[node_label], n21[node_label], [
+                                    n11['attributes']
+                                ], [n21['attributes']]) * kn(
+                                    n12[node_label], n22[node_label],
+                                    [n12['attributes']], [n22['attributes']])
+                                kn2 = kn(n11[node_label], n22[node_label], [
+                                    n11['attributes']
+                                ], [n22['attributes']]) * kn(
+                                    n12[node_label], n21[node_label],
+                                    [n12['attributes']], [n21['attributes']])
+                                Kmatrix[i][j] += kn1 + kn2
+                            except KeyError:  # missing labels or attributes
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
         # node symb labeled
         else:
             if ds_attrs['is_directed']:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['symb']
-                                    try:
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn(n11[node_label],
-                                                 n21[node_label]) * kn(
-                                                     n12[node_label],
-                                                     n22[node_label])
-                                        Kmatrix[i][j] += kn1
-                                    except KeyError:  # missing labels
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['symb']
+                            try:
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn(n11[node_label],
+                                         n21[node_label]) * kn(
+                                             n12[node_label], n22[node_label])
+                                Kmatrix[i][j] += kn1
+                            except KeyError:  # missing labels
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
 
             else:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['symb']
-                                    try:
-                                        # each edge walk is counted twice, starting from both its extreme nodes.
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn(n11[node_label],
-                                                 n21[node_label]) * kn(
-                                                     n12[node_label],
-                                                     n22[node_label])
-                                        kn2 = kn(n11[node_label],
-                                                 n22[node_label]) * kn(
-                                                     n12[node_label],
-                                                     n21[node_label])
-                                        Kmatrix[i][j] += kn1 + kn2
-                                    except KeyError:  # missing labels
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['symb']
+                            try:
+                                # each edge walk is counted twice, starting from both its extreme nodes.
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn(n11[node_label],
+                                         n21[node_label]) * kn(
+                                             n12[node_label], n22[node_label])
+                                kn2 = kn(n11[node_label],
+                                         n22[node_label]) * kn(
+                                             n12[node_label], n21[node_label])
+                                Kmatrix[i][j] += kn1 + kn2
+                            except KeyError:  # missing labels
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
     else:
         # node non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             if ds_attrs['is_directed']:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['nsymb']
-                                    try:
-                                        # each edge walk is counted twice, starting from both its extreme nodes.
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn([n11['attributes']],
-                                                 [n21['attributes']]) * kn(
-                                                     [n12['attributes']],
-                                                     [n22['attributes']])
-                                        Kmatrix[i][j] += kn1
-                                    except KeyError:  # missing attributes
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['nsymb']
+                            try:
+                                # each edge walk is counted twice, starting from both its extreme nodes.
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn([n11['attributes']],
+                                         [n21['attributes']]) * kn(
+                                             [n12['attributes']],
+                                             [n22['attributes']])
+                                Kmatrix[i][j] += kn1
+                            except KeyError:  # missing attributes
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
             else:
-                for i in range(0, len(Gn)):
-                    for j in range(i, len(Gn)):
-                        for e1 in Gn[i].edges(data=True):
-                            for e2 in Gn[j].edges(data=True):
-                                if e1[2]['cost'] == e2[2]['cost']:
-                                    kn = node_kernels['nsymb']
-                                    try:
-                                        # each edge walk is counted twice, starting from both its extreme nodes.
-                                        n11, n12, n21, n22 = Gn[i].nodes[e1[
-                                            0]], Gn[i].nodes[e1[1]], Gn[
-                                                j].nodes[e2[0]], Gn[j].nodes[
-                                                    e2[1]]
-                                        kn1 = kn([n11['attributes']],
-                                                 [n21['attributes']]) * kn(
-                                                     [n12['attributes']],
-                                                     [n22['attributes']])
-                                        kn2 = kn([n11['attributes']],
-                                                 [n22['attributes']]) * kn(
-                                                     [n12['attributes']],
-                                                     [n21['attributes']])
-                                        Kmatrix[i][j] += kn1 + kn2
-                                    except KeyError:  # missing attributes
-                                        pass
-                        Kmatrix[j][i] = Kmatrix[i][j]
-                        pbar.update(1)
+                for i, j in combinations_with_replacement(
+                        range(0, len(Gn)), 2):
+                    for e1, e2 in product(
+                            Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                        if e1[2]['cost'] == e2[2]['cost']:
+                            kn = node_kernels['nsymb']
+                            try:
+                                # each edge walk is counted twice, starting from both its extreme nodes.
+                                n11, n12, n21, n22 = Gn[i].nodes[e1[0]], Gn[
+                                    i].nodes[e1[1]], Gn[j].nodes[e2[0]], Gn[
+                                        j].nodes[e2[1]]
+                                kn1 = kn([n11['attributes']],
+                                         [n21['attributes']]) * kn(
+                                             [n12['attributes']],
+                                             [n22['attributes']])
+                                kn2 = kn([n11['attributes']],
+                                         [n22['attributes']]) * kn(
+                                             [n12['attributes']],
+                                             [n21['attributes']])
+                                Kmatrix[i][j] += kn1 + kn2
+                            except KeyError:  # missing attributes
+                                pass
+                    Kmatrix[j][i] = Kmatrix[i][j]
+                    pbar.update(1)
 
         # node unlabeled
         else:
-            for i in range(0, len(Gn)):
-                for j in range(i, len(Gn)):
-                    for e1 in Gn[i].edges(data=True):
-                        for e2 in Gn[j].edges(data=True):
-                            if e1[2]['cost'] == e2[2]['cost']:
-                                Kmatrix[i][j] += 1
-                    Kmatrix[j][i] = Kmatrix[i][j]
-                    pbar.update(1)
+            for i, j in combinations_with_replacement(range(0, len(Gn)), 2):
+                for e1, e2 in product(
+                        Gn[i].edges(data=True), Gn[j].edges(data=True)):
+                    if e1[2]['cost'] == e2[2]['cost']:
+                        Kmatrix[i][j] += 1
+                Kmatrix[j][i] = Kmatrix[i][j]
+                pbar.update(1)
 
     run_time = time.time() - start_time
     print(

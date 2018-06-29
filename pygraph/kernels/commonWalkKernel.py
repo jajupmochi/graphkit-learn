@@ -24,7 +24,7 @@ def commonwalkkernel(*args,
                      edge_label='bond_type',
                      n=None,
                      weight=1,
-                     compute_method='exp'):
+                     compute_method=None):
     """Calculate common walk graph kernels up to depth d between graphs.
     Parameters
     ----------
@@ -40,10 +40,11 @@ def commonwalkkernel(*args,
     n : integer
         Longest length of walks.
     weight: integer
-        Weight coefficient of different lengths of walks.
+        Weight coefficient of different lengths of walks, which represents beta in 'exp' method and gamma in 'geo'.
     compute_method : string
         Method used to compute walk kernel. The Following choices are available:
-        'direct' : direct product graph method, as shown in reference [1]. The time complexity is O(n^6) for unlabeled graphs with n vertices.
+        'exp' : exponential serial method applied on the direct product graph, as shown in reference [1]. The time complexity is O(n^6) for graphs with n vertices.
+        'geo' : geometric serial method applied on the direct product graph, as shown in reference [1]. The time complexity is O(n^6) for graphs with n vertices.
         'brute' : brute force, simply search for all walks and compare them.
 
     Return
@@ -66,6 +67,8 @@ def commonwalkkernel(*args,
     if not ds_attrs['edge_labeled']:
         for G in Gn:
             nx.set_edge_attributes(G, '0', 'bond_type')
+    if not ds_attrs['is_directed']:
+        Gn = [G.to_directed() for G in Gn]
 
     start_time = time.time()
 
@@ -77,7 +80,7 @@ def commonwalkkernel(*args,
             file=sys.stdout)
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _untilnwalkkernel_exp(Gn[i], Gn[j], node_label,
+                Kmatrix[i][j] = _commonwalkkernel_exp(Gn[i], Gn[j], node_label,
                                                       edge_label, weight)
                 Kmatrix[j][i] = Kmatrix[i][j]
                 pbar.update(1)
@@ -90,7 +93,7 @@ def commonwalkkernel(*args,
             file=sys.stdout)
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _untilnwalkkernel_geo(Gn[i], Gn[j], node_label,
+                Kmatrix[i][j] = _commonwalkkernel_geo(Gn[i], Gn[j], node_label,
                                                       edge_label, weight)
                 Kmatrix[j][i] = Kmatrix[i][j]
                 pbar.update(1)
@@ -106,7 +109,7 @@ def commonwalkkernel(*args,
 
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _untilnwalkkernel_brute(
+                Kmatrix[i][j] = _commonwalkkernel_brute(
                     all_walks[i],
                     all_walks[j],
                     node_label=node_label,
@@ -122,7 +125,7 @@ def commonwalkkernel(*args,
     return Kmatrix, run_time
 
 
-def _untilnwalkkernel_exp(G1, G2, node_label, edge_label, beta):
+def _commonwalkkernel_exp(G1, G2, node_label, edge_label, beta):
     """Calculate walk graph kernels up to n between 2 graphs using exponential series.
 
     Parameters
@@ -168,7 +171,7 @@ def _untilnwalkkernel_exp(G1, G2, node_label, edge_label, beta):
     D = np.zeros((len(ew), len(ew)))
     for i in range(len(ew)):
         D[i][i] = np.exp(beta * ew[i])
-    # print('D: ', D)
+        # print('D: ', D)
     # print('hshs: ', T.I * D * T)
 
     # print(np.exp(-2))
@@ -176,16 +179,16 @@ def _untilnwalkkernel_exp(G1, G2, node_label, edge_label, beta):
     # print(np.exp(weight * D))
     # print(ev)
     # print(np.linalg.inv(ev))
-    exp_D = ev * D * ev.I
+    exp_D = ev * D * ev.T
     # print(exp_D)
     # print(np.exp(weight * A))
     # print('-------')
 
-    return np.sum(exp_D.diagonal())
+    return exp_D.sum()
 
 
-def _untilnwalkkernel_geo(G1, G2, node_label, edge_label, gamma):
-    """Calculate walk graph kernels up to n between 2 graphs using geometric series.
+def _commonwalkkernel_geo(G1, G2, node_label, edge_label, gamma):
+    """Calculate common walk graph kernels up to n between 2 graphs using geometric series.
 
     Parameters
     ----------
@@ -207,46 +210,14 @@ def _untilnwalkkernel_geo(G1, G2, node_label, edge_label, gamma):
     # get tensor product / direct product
     gp = direct_product(G1, G2, node_label, edge_label)
     A = nx.adjacency_matrix(gp).todense()
-    # print(A)
-
-    # from matplotlib import pyplot as plt
-    # nx.draw_networkx(G1)
-    # plt.show()
-    # nx.draw_networkx(G2)
-    # plt.show()
-    # nx.draw_networkx(gp)
-    # plt.show()
-    # print(G1.nodes(data=True))
-    # print(G2.nodes(data=True))
-    # print(gp.nodes(data=True))
-    # print(gp.edges(data=True))
-
-    ew, ev = np.linalg.eig(A)
-    # print('ew: ', ew)
-    # print(ev)
-    # T = np.matrix(ev)
-    # print('T: ', T)
-    # T = ev.I
-    D = np.zeros((len(ew), len(ew)))
-    for i in range(len(ew)):
-        D[i][i] = np.exp(beta * ew[i])
-    # print('D: ', D)
-    # print('hshs: ', T.I * D * T)
-
-    # print(np.exp(-2))
-    # print(D)
-    # print(np.exp(weight * D))
-    # print(ev)
-    # print(np.linalg.inv(ev))
-    exp_D = ev * D * ev.I
-    # print(exp_D)
-    # print(np.exp(weight * A))
-    # print('-------')
-
-    return np.sum(exp_D.diagonal())
+    mat = np.identity(len(A)) - gamma * A
+    try:
+        return mat.I.sum()
+    except np.linalg.LinAlgError:
+        return np.nan
 
 
-def _untilnwalkkernel_brute(walks1,
+def _commonwalkkernel_brute(walks1,
                             walks2,
                             node_label='atom',
                             edge_label='bond_type',

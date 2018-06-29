@@ -119,7 +119,7 @@ def untotterTransformation(G, node_label, edge_label):
 
 
 def direct_product(G1, G2, node_label, edge_label):
-    """Return the direct/tensor product of G1 and G2.
+    """Return the direct/tensor product of directed graphs G1 and G2.
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ def direct_product(G1, G2, node_label, edge_label):
 
     Notes
     -----
-    This method differs from networkx.tensor_product in that this method only adds nodes and edges in G1 and G2 that have the same labels to direct product graph.
+    This method differs from networkx.tensor_product in that this method only adds nodes and edges in G1 and G2 that have the same labels to the direct product graph.
 
     References
     ----------
@@ -147,24 +147,36 @@ def direct_product(G1, G2, node_label, edge_label):
     from itertools import product
 
     # G = G.to_directed()
-    gt = nx.Graph()
+    gt = nx.DiGraph()
     # add nodes
     for u, v in product(G1, G2):
         if G1.nodes[u][node_label] == G2.nodes[v][node_label]:
             gt.add_node((u, v))
             gt.nodes[(u, v)].update({node_label: G1.nodes[u][node_label]})
-    # add edges
-    for u, v in product(gt, gt):
-        if (u[0], v[0]) in G1.edges and (
-                u[1], v[1]
-        ) in G2.edges and G1.edges[u[0],
-                                   v[0]][edge_label] == G2.edges[u[1],
-                                                                 v[1]][edge_label]:
-            gt.add_edge((u[0], u[1]), (v[0], v[1]))
-            gt.edges[(u[0], u[1]), (v[0], v[1])].update({
+    # add edges, faster for sparse graphs (no so many edges), which is the most case for now.
+    for (u1, v1), (u2, v2) in product(G1.edges, G2.edges):
+        if (u1, u2) in gt and (
+                v1, v2
+        ) in gt and G1.edges[u1, v1][edge_label] == G2.edges[u2,
+                                                             v2][edge_label]:
+            gt.add_edge((u1, u2), (v1, v2))
+            gt.edges[(u1, u2), (v1, v2)].update({
                 edge_label:
-                G1.edges[u[0], v[0]][edge_label]
+                G1.edges[u1, v1][edge_label]
             })
+
+    # # add edges, faster for dense graphs (a lot of edges, complete graph would be super).
+    # for u, v in product(gt, gt):
+    #     if (u[0], v[0]) in G1.edges and (
+    #             u[1], v[1]
+    #     ) in G2.edges and G1.edges[u[0],
+    #                                v[0]][edge_label] == G2.edges[u[1],
+    #                                                              v[1]][edge_label]:
+    #         gt.add_edge((u[0], u[1]), (v[0], v[1]))
+    #         gt.edges[(u[0], u[1]), (v[0], v[1])].update({
+    #             edge_label:
+    #             G1.edges[u[0], v[0]][edge_label]
+    #         })
 
     # relabel nodes using consecutive integers for convenience of kernel calculation.
     # gt = nx.convert_node_labels_to_integers(
