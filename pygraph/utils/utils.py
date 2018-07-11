@@ -61,10 +61,11 @@ def floydTransformation(G, edge_weight=None):
     spMatrix = nx.floyd_warshall_numpy(G, weight=edge_weight)
     S = nx.Graph()
     S.add_nodes_from(G.nodes(data=True))
+    ns = list(G.nodes())
     for i in range(0, G.number_of_nodes()):
         for j in range(i + 1, G.number_of_nodes()):
             if spMatrix[i, j] != np.inf:
-                S.add_edge(i, j, cost=spMatrix[i, j])
+                S.add_edge(ns[i], ns[j], cost=spMatrix[i, j])
     return S
 
 

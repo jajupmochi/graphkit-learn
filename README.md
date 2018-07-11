@@ -3,12 +3,15 @@ A python package for graph kernels.
 
 ## Requirements
 
-* numpy - 1.13.3
-* scipy - 1.0.0
-* matplotlib - 2.1.0
-* networkx - 2.0
-* sklearn - 0.19.1
-* tabulate - 0.8.2
+numpy==1.14.5
+scipy==1.1.0
+matplotlib==2.2.2
+networkx==2.1
+scikit-learn==0.19.1
+tabulate==0.8.2
+tqdm==4.23.4
+control==0.7.0 (for generalized random walk kernels only)
+slycot===0.3.2.dev-5263ada (for generalized random walk kernels only, requires fortran compiler, gfortran for example)
 
 ## Results with minimal test RMSE for each kernel on dataset Asyclic
 
@@ -28,7 +31,7 @@ For prediction we randomly divide the data in train and test subset, where 90\% 
 | WL shortest path          | 28.74±0.60 | 38.20±0.62 | 39.02±6.09 | 'height': 10.0, 'alpha': '1.00'                  | 146.83"/80.63"±45.04"     |
 | WL edge                   | 30.21±0.64 | 36.53±1.02 | 38.42±6.42 | 'height': 5.0, 'alpha': '6.31e-01'               | 5.24"/5.15"±2.83"         |
 | Treelet                   | 7.33±0.64  | 13.86±0.80 | 15.38±3.56 | 'alpha': '1.12e+01'                              | 0.48"                     |
-| Path up to d              | 5.76±0.27  | 9.89±0.87  | 10.21±4.16 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha': '0.1' | 0.56"/1.16"±0.75"         |
+| Path up to d              | 5.76±0.27  | 9.89±0.87  | 10.21±4.16 | 'depth': 2.0, 'k_func': 'MinMax', 'alpha	': '0.1' | 0.56"/1.16"±0.75"         |
 | Cyclic pattern            |            |            |            |                                                  |                           |
 | Walk up to n              | 20.88±0.74 | 23.34±1.11 | 24.46±6.57 | 'n': 2.0, 'alpha': '1.00e-03'                    | 0.56"/331.70"±753.44"     |
 
