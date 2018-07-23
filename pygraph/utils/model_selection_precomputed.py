@@ -190,24 +190,44 @@ def model_selection_for_precomputed_kernel(datafile,
         )
         pool =  Pool(n_jobs)
         trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-        result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
-        train_pref = [item[0] for item in result_perf]
-        val_pref = [item[1] for item in result_perf]
-        test_pref = [item[2] for item in result_perf]
+        train_pref = []
+        val_pref = []
+        test_pref = []
+        if NUM_TRIALS < 100:
+            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
+            if extra:
+                chunksize += 1
+        else:
+            chunksize = 100
+        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+            train_pref.append(o1)
+            val_pref.append(o2)
+            test_pref.append(o3)
         pool.close()
         pool.join()
 
+        # # ---- use pool.map to parallel. ----
+        # result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
+        # train_pref = [item[0] for item in result_perf]
+        # val_pref = [item[1] for item in result_perf]
+        # test_pref = [item[2] for item in result_perf]
+
+        # # ---- use joblib.Parallel to parallel and track progress. ----
         # trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
         # result_perf = Parallel(n_jobs=n_jobs, verbose=10)(delayed(trial_do_partial)(trial) for trial in range(NUM_TRIALS))
         # train_pref = [item[0] for item in result_perf]
         # val_pref = [item[1] for item in result_perf]
         # test_pref = [item[2] for item in result_perf]
 
-
-        # pbar.clear()
-        # np.save(results_name_pre + 'train_pref.dt', train_pref)
-        # np.save(results_name_pre + 'val_pref.dt', val_pref)
-        # np.save(results_name_pre + 'test_pref.dt', test_pref)
+        # # ---- direct running, normally use single CPU core. ----
+        # train_pref = []
+        # val_pref = []
+        # test_pref = []
+        # for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
+        #     o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
+        #     train_pref.append(o1)
+        #     val_pref.append(o2)
+        #     test_pref.append(o3)
 
         print()
         print('4. Getting final performance...')
