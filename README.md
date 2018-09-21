@@ -3,7 +3,7 @@ A python package for graph kernels.
 
 ## Requirements
 
-numpy==1.14.5
+numpy==1.15.1
 scipy==1.1.0
 matplotlib==2.2.2
 networkx==2.1

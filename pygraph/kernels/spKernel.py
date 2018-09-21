@@ -5,19 +5,20 @@
 
 import sys
 import pathlib
-sys.path.insert(0, "../")
-from tqdm import tqdm
 import time
 from itertools import combinations, combinations_with_replacement, product
 from functools import partial
 from joblib import Parallel, delayed
 from multiprocessing import Pool
+from tqdm import tqdm
 
 import networkx as nx
 import numpy as np
 
 from pygraph.utils.utils import getSPGraph
 from pygraph.utils.graphdataset import get_dataset_attributes
+
+sys.path.insert(0, "../")
 
 
 def spkernel(*args,
@@ -48,13 +49,13 @@ def spkernel(*args,
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
 
     weight = None
-    if edge_weight == None:
+    if edge_weight is None:
         print('\n None edge weight specified. Set all weight to 1.\n')
     else:
         try:
             some_weight = list(
                 nx.get_edge_attributes(Gn[0], edge_weight).values())[0]
-            if isinstance(some_weight, float) or isinstance(some_weight, int):
+            if isinstance(some_weight, (float, int)):
                 weight = edge_weight
             else:
                 print(
@@ -241,7 +242,7 @@ def spkernel_do(Gn, ds_attrs, node_label, node_kernels, ij):
                     nk11, nk22 = vk_dict[(e1[0], e2[0])], vk_dict[(e1[1],
                                                                    e2[1])]
                     kn1 = nk11 * nk22
-                    Kmatrix += kn1 + kn2
+                    Kmatrix += kn1
         else:
             for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
                 if e1[2]['cost'] == e2[2]['cost']:
