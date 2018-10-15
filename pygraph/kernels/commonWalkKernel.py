@@ -1,20 +1,24 @@
 """
 @author: linlin
 @references:
-    [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
+    [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: 
+        Hardness results and efficient alternatives. Learning Theory and Kernel
+        Machines, pages 129–143, 2003.
 """
 
 import sys
-import pathlib
-sys.path.insert(0, "../")
 import time
 from tqdm import tqdm
 from collections import Counter
-from itertools import product
+from itertools import combinations_with_replacement
+from functools import partial
+from multiprocessing import Pool
+#import traceback
 
 import networkx as nx
 import numpy as np
 
+sys.path.insert(0, "../")
 from pygraph.utils.utils import direct_product
 from pygraph.utils.graphdataset import get_dataset_attributes
 
@@ -24,8 +28,9 @@ def commonwalkkernel(*args,
                      edge_label='bond_type',
                      n=None,
                      weight=1,
-                     compute_method=None):
-    """Calculate common walk graph kernels up to depth d between graphs.
+                     compute_method=None,
+                     n_jobs=None):
+    """Calculate common walk graph kernels between graphs.
     Parameters
     ----------
     Gn : List of NetworkX graph
@@ -38,19 +43,26 @@ def commonwalkkernel(*args,
     edge_label : string
         edge attribute used as label. The default edge label is bond_type.
     n : integer
-        Longest length of walks.
+        Longest length of walks. Only useful when applying the 'brute' method.
     weight: integer
-        Weight coefficient of different lengths of walks, which represents beta in 'exp' method and gamma in 'geo'.
+        Weight coefficient of different lengths of walks, which represents beta
+        in 'exp' method and gamma in 'geo'.
     compute_method : string
-        Method used to compute walk kernel. The Following choices are available:
-        'exp' : exponential serial method applied on the direct product graph, as shown in reference [1]. The time complexity is O(n^6) for graphs with n vertices.
-        'geo' : geometric serial method applied on the direct product graph, as shown in reference [1]. The time complexity is O(n^6) for graphs with n vertices.
+        Method used to compute walk kernel. The Following choices are 
+        available:
+        'exp' : exponential serial method applied on the direct product graph, 
+        as shown in reference [1]. The time complexity is O(n^6) for graphs 
+        with n vertices.
+        'geo' : geometric serial method applied on the direct product graph, as
+        shown in reference [1]. The time complexity is O(n^6) for graphs with n
+        vertices.
         'brute' : brute force, simply search for all walks and compare them.
 
     Return
     ------
     Kmatrix : Numpy matrix
-        Kernel matrix, each element of which is the path kernel up to d between 2 graphs.
+        Kernel matrix, each element of which is a common walk kernel between 2 
+        graphs.
     """
     compute_method = compute_method.lower()
     # arrange all graphs in a list
@@ -59,63 +71,79 @@ def commonwalkkernel(*args,
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
-        node_label=node_label,
-        edge_label=edge_label)
+        node_label=node_label, edge_label=edge_label)
     if not ds_attrs['node_labeled']:
         for G in Gn:
             nx.set_node_attributes(G, '0', 'atom')
     if not ds_attrs['edge_labeled']:
         for G in Gn:
             nx.set_edge_attributes(G, '0', 'bond_type')
-    if not ds_attrs['is_directed']:
+    if not ds_attrs['is_directed']:  #  convert
         Gn = [G.to_directed() for G in Gn]
 
     start_time = time.time()
 
+    # ---- use pool.imap_unordered to parallel and track progress. ----
+    pool = Pool(n_jobs)
+    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+    if len_itr < 1000 * n_jobs:
+        chunksize = int(len_itr / n_jobs) + 1
+    else:
+        chunksize = 100
+
     # direct product graph method - exponential
     if compute_method == 'exp':
-        pbar = tqdm(
-            total=(1 + len(Gn)) * len(Gn) / 2,
-            desc='calculating kernels',
-            file=sys.stdout)
-        for i in range(0, len(Gn)):
-            for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _commonwalkkernel_exp(Gn[i], Gn[j], node_label,
-                                                      edge_label, weight)
-                Kmatrix[j][i] = Kmatrix[i][j]
-                pbar.update(1)
-
+        do_partial = partial(_commonwalkkernel_exp, Gn, node_label, edge_label,
+                             weight)
     # direct product graph method - geometric
-    if compute_method == 'geo':
-        pbar = tqdm(
-            total=(1 + len(Gn)) * len(Gn) / 2,
+    elif compute_method == 'geo':
+        do_partial = partial(_commonwalkkernel_geo, Gn, node_label, edge_label,
+                             weight)
+
+    for i, j, kernel in tqdm(
+            pool.imap_unordered(do_partial, itr, chunksize),
             desc='calculating kernels',
-            file=sys.stdout)
-        for i in range(0, len(Gn)):
-            for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _commonwalkkernel_geo(Gn[i], Gn[j], node_label,
-                                                      edge_label, weight)
-                Kmatrix[j][i] = Kmatrix[i][j]
-                pbar.update(1)
+            file=sys.stdout):
+        Kmatrix[i][j] = kernel
+        Kmatrix[j][i] = kernel
+    pool.close()
+    pool.join()
 
-    # search all paths use brute force.
-    elif compute_method == 'brute':
-        n = int(n)
-        # get all paths of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
-        all_walks = [
-            find_all_walks_until_length(Gn[i], n, node_label, edge_label,
-                                        labeled) for i in range(0, len(Gn))
-        ]
 
-        for i in range(0, len(Gn)):
-            for j in range(i, len(Gn)):
-                Kmatrix[i][j] = _commonwalkkernel_brute(
-                    all_walks[i],
-                    all_walks[j],
-                    node_label=node_label,
-                    edge_label=edge_label,
-                    labeled=labeled)
-                Kmatrix[j][i] = Kmatrix[i][j]
+#    # ---- direct running, normally use single CPU core. ----
+#    # direct product graph method - exponential
+#    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+#    if compute_method == 'exp':
+#        for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            i, j, Kmatrix[i][j] = _commonwalkkernel_exp(Gn, node_label,
+#                                                      edge_label, weight, gs)
+#            Kmatrix[j][i] = Kmatrix[i][j]
+#
+#    # direct product graph method - geometric
+#    elif compute_method == 'geo':
+#        for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            i, j, Kmatrix[i][j] = _commonwalkkernel_geo(Gn, node_label,
+#                                                      edge_label, weight, gs)
+#            Kmatrix[j][i] = Kmatrix[i][j]
+#
+#    # search all paths use brute force.
+#    elif compute_method == 'brute':
+#        n = int(n)
+#        # get all paths of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
+#        all_walks = [
+#            find_all_walks_until_length(Gn[i], n, node_label, edge_label)
+#                for i in range(0, len(Gn))
+#        ]
+#
+#        for i in range(0, len(Gn)):
+#            for j in range(i, len(Gn)):
+#                Kmatrix[i][j] = _commonwalkkernel_brute(
+#                    all_walks[i],
+#                    all_walks[j],
+#                    node_label=node_label,
+#                    edge_label=edge_label)
+#                Kmatrix[j][i] = Kmatrix[i][j]
 
     run_time = time.time() - start_time
     print(
@@ -125,28 +153,35 @@ def commonwalkkernel(*args,
     return Kmatrix, run_time
 
 
-def _commonwalkkernel_exp(G1, G2, node_label, edge_label, beta):
-    """Calculate walk graph kernels up to n between 2 graphs using exponential series.
+def _commonwalkkernel_exp(Gn, node_label, edge_label, beta, ij):
+    """Calculate walk graph kernels up to n between 2 graphs using exponential 
+    series.
 
     Parameters
     ----------
-    G1, G2 : NetworkX graph
-        Graphs between which the kernel is calculated.
+    Gn : List of NetworkX graph
+        List of graphs between which the kernels are calculated.
     node_label : string
         Node attribute used as label.
     edge_label : string
         Edge attribute used as label.
-    beta: integer
+    beta : integer
         Weight.
+    ij : tuple of integer
+        Index of graphs between which the kernel is computed.
 
     Return
     ------
     kernel : float
-        Treelet Kernel between 2 graphs.
+        The common walk Kernel between 2 graphs.
     """
+    iglobal = ij[0]
+    jglobal = ij[1]
+    g1 = Gn[iglobal]
+    g2 = Gn[jglobal]
 
     # get tensor product / direct product
-    gp = direct_product(G1, G2, node_label, edge_label)
+    gp = direct_product(g1, g2, node_label, edge_label)
     A = nx.adjacency_matrix(gp).todense()
     # print(A)
 
@@ -184,37 +219,44 @@ def _commonwalkkernel_exp(G1, G2, node_label, edge_label, beta):
     # print(np.exp(weight * A))
     # print('-------')
 
-    return exp_D.sum()
+    return iglobal, jglobal, exp_D.sum()
 
 
-def _commonwalkkernel_geo(G1, G2, node_label, edge_label, gamma):
-    """Calculate common walk graph kernels up to n between 2 graphs using geometric series.
+def _commonwalkkernel_geo(Gn, node_label, edge_label, gamma, ij):
+    """Calculate common walk graph kernels up to n between 2 graphs using 
+    geometric series.
 
     Parameters
     ----------
-    G1, G2 : NetworkX graph
-        Graphs between which the kernel is calculated.
+    Gn : List of NetworkX graph
+        List of graphs between which the kernels are calculated.
     node_label : string
         Node attribute used as label.
     edge_label : string
         Edge attribute used as label.
     gamma: integer
         Weight.
+    ij : tuple of integer
+        Index of graphs between which the kernel is computed.
 
     Return
     ------
     kernel : float
-        Treelet Kernel between 2 graphs.
+        The common walk Kernel between 2 graphs.
     """
+    iglobal = ij[0]
+    jglobal = ij[1]
+    g1 = Gn[iglobal]
+    g2 = Gn[jglobal]
 
     # get tensor product / direct product
-    gp = direct_product(G1, G2, node_label, edge_label)
+    gp = direct_product(g1, g2, node_label, edge_label)
     A = nx.adjacency_matrix(gp).todense()
     mat = np.identity(len(A)) - gamma * A
     try:
-        return mat.I.sum()
+        return iglobal, jglobal, mat.I.sum()
     except np.linalg.LinAlgError:
-        return np.nan
+        return iglobal, jglobal, np.nan
 
 
 def _commonwalkkernel_brute(walks1,
@@ -227,7 +269,10 @@ def _commonwalkkernel_brute(walks1,
     Parameters
     ----------
     walks1, walks2 : list
-        List of walks in 2 graphs, where for unlabeled graphs, each walk is represented by a list of nodes; while for labeled graphs, each walk is represented by a string consists of labels of nodes and edges on that walk.
+        List of walks in 2 graphs, where for unlabeled graphs, each walk is 
+        represented by a list of nodes; while for labeled graphs, each walk is 
+        represented by a string consists of labels of nodes and edges on that 
+        walk.
     node_label : string
         node attribute used as label. The default node label is atom.
     edge_label : string
@@ -259,7 +304,8 @@ def find_all_walks_until_length(G,
                                 node_label='atom',
                                 edge_label='bond_type',
                                 labeled=True):
-    """Find all walks with a certain maximum length in a graph. A recursive depth first search is applied.
+    """Find all walks with a certain maximum length in a graph. 
+    A recursive depth first search is applied.
 
     Parameters
     ----------
@@ -277,7 +323,10 @@ def find_all_walks_until_length(G,
     Return
     ------
     walk : list
-        List of walks retrieved, where for unlabeled graphs, each walk is represented by a list of nodes; while for labeled graphs, each walk is represented by a string consists of labels of nodes and edges on that walk.
+        List of walks retrieved, where for unlabeled graphs, each walk is 
+        represented by a list of nodes; while for labeled graphs, each walk 
+        is represented by a string consists of labels of nodes and edges on 
+        that walk.
     """
     all_walks = []
     # @todo: in this way, the time complexity is close to N(d^n+d^(n+1)+...+1), which could be optimized to O(Nd^n)
@@ -303,7 +352,8 @@ def find_all_walks_until_length(G,
 
 
 def find_walks(G, source_node, length):
-    """Find all walks with a certain length those start from a source node. A recursive depth first search is applied.
+    """Find all walks with a certain length those start from a source node. A 
+    recursive depth first search is applied.
 
     Parameters
     ----------
@@ -317,15 +367,17 @@ def find_walks(G, source_node, length):
     Return
     ------
     walk : list of list
-        List of walks retrieved, where each walk is represented by a list of nodes.
+        List of walks retrieved, where each walk is represented by a list of 
+        nodes.
     """
     return [[source_node]] if length == 0 else \
-        [ [source_node] + walk for neighbor in G[source_node] \
-        for walk in find_walks(G, neighbor, length - 1) ]
+        [[source_node] + walk for neighbor in G[source_node]
+         for walk in find_walks(G, neighbor, length - 1)]
 
 
 def find_all_walks(G, length):
-    """Find all walks with a certain length in a graph. A recursive depth first search is applied.
+    """Find all walks with a certain length in a graph. A recursive depth first
+    search is applied.
 
     Parameters
     ----------
@@ -337,13 +389,14 @@ def find_all_walks(G, length):
     Return
     ------
     walk : list of list
-        List of walks retrieved, where each walk is represented by a list of nodes.
+        List of walks retrieved, where each walk is represented by a list of 
+        nodes.
     """
     all_walks = []
     for node in G:
         all_walks.extend(find_walks(G, node, length))
 
-    ### The following process is not carried out according to the original article
+    # The following process is not carried out according to the original article
     # all_paths_r = [ path[::-1] for path in all_paths ]
 
     # # For each path, two presentation are retrieved from its two extremities. Remove one of them.

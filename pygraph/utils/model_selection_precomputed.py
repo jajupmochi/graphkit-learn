@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.svm import SVC
@@ -68,6 +70,8 @@ def model_selection_for_precomputed_kernel(datafile,
     tqdm.monitor_interval = 0
 
     results_dir = '../notebooks/results/' + estimator.__name__
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
     # a string to save all the results.
     str_fw = '###################### log time: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '. ######################\n\n'
     str_fw += '# This file contains results of ' + estimator.__name__ + ' on dataset ' + ds_name + ',\n# including gram matrices, serial numbers for gram matrix figures and performance.\n\n'
@@ -121,15 +125,15 @@ def model_selection_for_precomputed_kernel(datafile,
             # kernels' requirements for graph structure. These graphs are trimmed. 
             if len(rtn_data) == 3:
                 idx_trim = rtn_data[2]  # the index of trimmed graph list
-                y = [y[idx] for idx in idx_trim] # trim y accordingly
+                y = [y[idxt] for idxt in idx_trim] # trim y accordingly
     
             Kmatrix_diag = Kmatrix.diagonal().copy()
             # remove graphs whose kernels with themselves are zeros
             nb_g_ignore = 0
-            for idx, diag in enumerate(Kmatrix_diag):
+            for idxk, diag in enumerate(Kmatrix_diag):
                 if diag == 0:
-                    Kmatrix = np.delete(Kmatrix, (idx - nb_g_ignore), axis=0)
-                    Kmatrix = np.delete(Kmatrix, (idx - nb_g_ignore), axis=1)
+                    Kmatrix = np.delete(Kmatrix, (idxk - nb_g_ignore), axis=0)
+                    Kmatrix = np.delete(Kmatrix, (idxk - nb_g_ignore), axis=1)
                     nb_g_ignore += 1
             # normalization
             for i in range(len(Kmatrix)):
@@ -155,7 +159,7 @@ def model_selection_for_precomputed_kernel(datafile,
                     print('ignored, as it contains elements that are not numbers.')
                     str_fw += 'ignored, as it contains elements that are not numbers.\n\n'
                 else:
-                    print(Kmatrix)
+#                    print(Kmatrix)
                     str_fw += np.array2string(
                             Kmatrix,
                             separator=',') + '\n\n'
@@ -169,7 +173,8 @@ def model_selection_for_precomputed_kernel(datafile,
                     plt.imshow(Kmatrix)
                     plt.colorbar()
                     plt.savefig(fig_file_name + '.eps', format='eps', dpi=300)
-                    plt.show()
+#                    plt.show()
+                    plt.clf()
                     gram_matrices.append(Kmatrix)
                     gram_matrix_time.append(current_run_time)
                     param_list_pre_revised.append(params_out)
@@ -206,12 +211,13 @@ def model_selection_for_precomputed_kernel(datafile,
             train_pref = []
             val_pref = []
             test_pref = []
-            if NUM_TRIALS < 100:
-                chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
-                if extra:
-                    chunksize += 1
-            else:
-                chunksize = 100
+#            if NUM_TRIALS < 100:
+#                chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
+#                if extra:
+#                    chunksize += 1
+#            else:
+#                chunksize = 100
+            chunksize = 1
             for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
                 train_pref.append(o1)
                 val_pref.append(o2)
@@ -399,7 +405,7 @@ def model_selection_for_precomputed_kernel(datafile,
                     sorted(table_dict.items(),
                            key=lambda i: keyorder.index(i[0]))),
                 headers='keys')
-            print(tb_print)
+#            print(tb_print)
             str_fw += 'table of performance v.s. hyper-params:\n\n%s\n\n' % tb_print
     
     # read gram matrices from file.
@@ -423,23 +429,23 @@ def model_selection_for_precomputed_kernel(datafile,
             '3. Fitting and predicting using nested cross validation. This could really take a while...'
         )
         
-        pool =  Pool(n_jobs)
-        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-        train_pref = []
-        val_pref = []
-        test_pref = []
-        if NUM_TRIALS < 100:
-            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
-            if extra:
-                chunksize += 1
-        else:
-            chunksize = 100
-        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
-            train_pref.append(o1)
-            val_pref.append(o2)
-            test_pref.append(o3)
-        pool.close()
-        pool.join()
+#        pool =  Pool(n_jobs)
+#        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
+#        train_pref = []
+#        val_pref = []
+#        test_pref = []
+#        if NUM_TRIALS < 100:
+#            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
+#            if extra:
+#                chunksize += 1
+#        else:
+#            chunksize = 100
+#        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+#            train_pref.append(o1)
+#            val_pref.append(o2)
+#            test_pref.append(o3)
+#        pool.close()
+#        pool.join()
         
         # # ---- use pool.map to parallel. ----
         # result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
@@ -454,15 +460,15 @@ def model_selection_for_precomputed_kernel(datafile,
         # val_pref = [item[1] for item in result_perf]
         # test_pref = [item[2] for item in result_perf]
 
-#        # ---- direct running, normally use a single CPU core. ----
-#        train_pref = []
-#        val_pref = []
-#        test_pref = []
-#        for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
-#            o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
-#            train_pref.append(o1)
-#            val_pref.append(o2)
-#            test_pref.append(o3)
+        # ---- direct running, normally use a single CPU core. ----
+        train_pref = []
+        val_pref = []
+        test_pref = []
+        for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
+            o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
+            train_pref.append(o1)
+            val_pref.append(o2)
+            test_pref.append(o3)
 
         print()
         print('4. Getting final performance...')
@@ -600,8 +606,6 @@ def model_selection_for_precomputed_kernel(datafile,
             os.makedirs(results_dir)
             
     # open file to save all results for this dataset.
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
     if not os.path.exists(results_dir + '/' + ds_name + '.output.txt'):
         with open(results_dir + '/' + ds_name + '.output.txt', 'w') as f:
             f.write(str_fw)
@@ -633,6 +637,8 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
 
         # loop for each inner param tuple
         for index_in, params_in in enumerate(param_list):
+#            print(index_in, params_in)
+#            st = time.time()
             inner_cv = KFold(n_splits=10, shuffle=True, random_state=trial)
             current_train_perf = []
             current_valid_perf = []
@@ -708,5 +714,6 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
                 current_valid_perf)
             test_pref[index_out][index_in] = np.mean(
                 current_test_perf)
+#            print(time.time() - st)
 
     return train_pref, val_pref, test_pref

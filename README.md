@@ -3,15 +3,23 @@ A python package for graph kernels.
 
 ## Requirements
 
-numpy==1.15.1
+python==3.6.5
+numpy==1.15.2
 scipy==1.1.0
-matplotlib==2.2.2
-networkx==2.1
-scikit-learn==0.19.1
+matplotlib==3.0.0
+networkx==2.2
+scikit-learn==0.20.0
 tabulate==0.8.2
-tqdm==4.23.4
-control==0.7.0 (for generalized random walk kernels only)
+tqdm==4.26.0
+suffix-tree==0.0.6 (for the path kernel up to length h only)
+control==0.8.0 (for generalized random walk kernels only)
 slycot===0.3.2.dev-5263ada (for generalized random walk kernels only, requires fortran compiler, gfortran for example)
+
+Modules better be upgraded.
+ipython==7.0.1
+ipykernel=5.1.0
+ipython-genutils=0.2.0
+ipywidgets==7.4.2
 
 ## Results with minimal test RMSE for each kernel on dataset Asyclic
 

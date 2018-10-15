@@ -1,32 +1,40 @@
 """
 @author: linlin
 @references:
-    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between labeled graphs. In Proceedings of the 20th International Conference on Machine Learning, Washington, DC, United States, 2003.
-    [2] Pierre Mahé, Nobuhisa Ueda, Tatsuya Akutsu, Jean-Luc Perret, and Jean-Philippe Vert. Extensions of marginalized graph kernels. In Proceedings of the twenty-first international conference on Machine learning, page 70. ACM, 2004.
+    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between 
+    labeled graphs. In Proceedings of the 20th International Conference on 
+    Machine Learning, Washington, DC, United States, 2003.
+    [2] Pierre Mahé, Nobuhisa Ueda, Tatsuya Akutsu, Jean-Luc Perret, and 
+    Jean-Philippe Vert. Extensions of marginalized graph kernels. In 
+    Proceedings of the twenty-first international conference on Machine 
+    learning, page 70. ACM, 2004.
 """
 
 import sys
-import pathlib
-sys.path.insert(0, "../")
 import time
+from itertools import combinations_with_replacement
+from functools import partial
+from multiprocessing import Pool
 from tqdm import tqdm
 tqdm.monitor_interval = 0
+import traceback
 
 import networkx as nx
 import numpy as np
-from matplotlib import pyplot as plt
 
-from pygraph.kernels.deltaKernel import deltakernel
+from pygraph.utils.kernels import deltakernel
 from pygraph.utils.utils import untotterTransformation
 from pygraph.utils.graphdataset import get_dataset_attributes
+sys.path.insert(0, "../")
 
 
 def marginalizedkernel(*args,
                        node_label='atom',
                        edge_label='bond_type',
                        p_quit=0.5,
-                       itr=20,
-                       remove_totters=True):
+                       n_iteration=20,
+                       remove_totters=True,
+                       n_jobs=None):
     """Calculate marginalized graph kernels between graphs.
 
     Parameters
@@ -42,7 +50,7 @@ def marginalizedkernel(*args,
         edge attribute used as label. The default edge label is bond_type.
     p_quit : integer
         the termination probability in the random walks generating step
-    itr : integer
+    n_iteration : integer
         time of iterations to calculate R_inf
     remove_totters : boolean
         whether to remove totters. The default value is True.
@@ -50,16 +58,16 @@ def marginalizedkernel(*args,
     Return
     ------
     Kmatrix : Numpy matrix
-        Kernel matrix, each element of which is the marginalized kernel between 2 praphs.
+        Kernel matrix, each element of which is the marginalized kernel between
+        2 praphs.
     """
-    # arrange all graphs in a list
+    # pre-process
+    n_iteration = int(n_iteration)
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
-    Kmatrix = np.zeros((len(Gn), len(Gn)))
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
-        node_label=node_label,
-        edge_label=edge_label)
+        node_label=node_label, edge_label=edge_label)
     if not ds_attrs['node_labeled']:
         for G in Gn:
             nx.set_node_attributes(G, '0', 'atom')
@@ -69,22 +77,63 @@ def marginalizedkernel(*args,
 
     start_time = time.time()
 
+    
     if remove_totters:
-        Gn = [
-            untotterTransformation(G, node_label, edge_label)
-            for G in tqdm(Gn, desc='removing tottering', file=sys.stdout)
-        ]
+        # ---- use pool.imap_unordered to parallel and track progress. ----
+        pool = Pool(n_jobs)
+        untotter_partial = partial(wrap_untotter, Gn, node_label, edge_label)
+        if len(Gn) < 1000 * n_jobs:
+            chunksize = int(len(Gn) / n_jobs) + 1
+        else:
+            chunksize = 1000
+        for i, g in tqdm(
+                pool.imap_unordered(
+                    untotter_partial, range(0, len(Gn)), chunksize),
+                desc='removing tottering',
+                file=sys.stdout):
+            Gn[i] = g
+        pool.close()
+        pool.join()
 
-    pbar = tqdm(
-        total=(1 + len(Gn)) * len(Gn) / 2,
-        desc='calculating kernels',
-        file=sys.stdout)
-    for i in range(0, len(Gn)):
-        for j in range(i, len(Gn)):
-            Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label,
-                                                   edge_label, p_quit, itr)
-            Kmatrix[j][i] = Kmatrix[i][j]
-            pbar.update(1)
+#        # ---- direct running, normally use single CPU core. ----
+#        Gn = [
+#            untotterTransformation(G, node_label, edge_label)
+#            for G in tqdm(Gn, desc='removing tottering', file=sys.stdout)
+#        ]
+
+    Kmatrix = np.zeros((len(Gn), len(Gn)))
+
+    # ---- use pool.imap_unordered to parallel and track progress. ----
+    pool = Pool(n_jobs)
+    do_partial = partial(_marginalizedkernel_do, Gn, node_label, edge_label,
+                         p_quit, n_iteration)
+    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+    if len_itr < 1000 * n_jobs:
+        chunksize = int(len_itr / n_jobs) + 1
+    else:
+        chunksize = 1000
+    for i, j, kernel in tqdm(
+            pool.imap_unordered(do_partial, itr, chunksize),
+            desc='calculating kernels',
+            file=sys.stdout):
+        Kmatrix[i][j] = kernel
+        Kmatrix[j][i] = kernel
+    pool.close()
+    pool.join()
+
+
+#    # ---- direct running, normally use single CPU core. ----
+#    pbar = tqdm(
+#        total=(1 + len(Gn)) * len(Gn) / 2,
+#        desc='calculating kernels',
+#        file=sys.stdout)
+#    for i in range(0, len(Gn)):
+#        for j in range(i, len(Gn)):
+#            Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label,
+#                                                   edge_label, p_quit, n_iteration)
+#            Kmatrix[j][i] = Kmatrix[i][j]
+#            pbar.update(1)
 
     run_time = time.time() - start_time
     print(
@@ -94,7 +143,7 @@ def marginalizedkernel(*args,
     return Kmatrix, run_time
 
 
-def _marginalizedkernel_do(G1, G2, node_label, edge_label, p_quit, itr):
+def _marginalizedkernel_do(Gn, node_label, edge_label, p_quit, n_iteration, ij):
     """Calculate marginalized graph kernel between 2 graphs.
 
     Parameters
@@ -107,7 +156,7 @@ def _marginalizedkernel_do(G1, G2, node_label, edge_label, p_quit, itr):
         edge attribute used as label.
     p_quit : integer
         the termination probability in the random walks generating step.
-    itr : integer
+    n_iteration : integer
         time of iterations to calculate R_inf.
 
     Return
@@ -115,49 +164,69 @@ def _marginalizedkernel_do(G1, G2, node_label, edge_label, p_quit, itr):
     kernel : float
         Marginalized Kernel between 2 graphs.
     """
-    # init parameters
-    kernel = 0
-    num_nodes_G1 = nx.number_of_nodes(G1)
-    num_nodes_G2 = nx.number_of_nodes(G2)
-    p_init_G1 = 1 / num_nodes_G1  # the initial probability distribution in the random walks generating step (uniform distribution over |G|)
-    p_init_G2 = 1 / num_nodes_G2
+    try:
+        # init parameters
+        iglobal = ij[0]
+        jglobal = ij[1]
+        g1 = Gn[iglobal]
+        g2 = Gn[jglobal]
+        kernel = 0
+        num_nodes_G1 = nx.number_of_nodes(g1)
+        num_nodes_G2 = nx.number_of_nodes(g2)
+        # the initial probability distribution in the random walks generating step
+        # (uniform distribution over |G|)
+        p_init_G1 = 1 / num_nodes_G1
+        p_init_G2 = 1 / num_nodes_G2
+    
+        q = p_quit * p_quit
+        r1 = q
+    
+        # initial R_inf
+        # matrix to save all the R_inf for all pairs of nodes
+        R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
+    
+        # calculate R_inf with a simple interative method
+        for i in range(1, n_iteration):
+            R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
+            R_inf_new.fill(r1)
+    
+            # calculate R_inf for each pair of nodes
+            for node1 in g1.nodes(data=True):
+                neighbor_n1 = g1[node1[0]]
+                # the transition probability distribution in the random walks
+                # generating step (uniform distribution over the vertices adjacent
+                # to the current vertex)
+                p_trans_n1 = (1 - p_quit) / len(neighbor_n1)
+                for node2 in g2.nodes(data=True):
+                    neighbor_n2 = g2[node2[0]]
+                    p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
+    
+                    for neighbor1 in neighbor_n1:
+                        for neighbor2 in neighbor_n2:
+                            t = p_trans_n1 * p_trans_n2 * \
+                                deltakernel(g1.node[neighbor1][node_label],
+                                            g2.node[neighbor2][node_label]) * \
+                                deltakernel(
+                                    neighbor_n1[neighbor1][edge_label],
+                                    neighbor_n2[neighbor2][edge_label])
+    
+                            R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][
+                                neighbor2]  # ref [1] equation (8)
+            R_inf[:] = R_inf_new
+    
+        # add elements of R_inf up and calculate kernel
+        for node1 in g1.nodes(data=True):
+            for node2 in g2.nodes(data=True):
+                s = p_init_G1 * p_init_G2 * deltakernel(
+                    node1[1][node_label], node2[1][node_label])
+                kernel += s * R_inf[node1[0]][node2[0]]  # ref [1] equation (6)
+    
+        return iglobal, jglobal, kernel
+    except Exception as e:
+        traceback.print_exc()
+        print('')
+        raise e
 
-    q = p_quit * p_quit
-    r1 = q
 
-    # initial R_inf
-    # matrix to save all the R_inf for all pairs of nodes
-    R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
-
-    # calculate R_inf with a simple interative method
-    for i in range(1, itr):
-        R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
-        R_inf_new.fill(r1)
-
-        # calculate R_inf for each pair of nodes
-        for node1 in G1.nodes(data=True):
-            neighbor_n1 = G1[node1[0]]
-            # the transition probability distribution in the random walks generating step (uniform distribution over the vertices adjacent to the current vertex)
-            p_trans_n1 = (1 - p_quit) / len(neighbor_n1)
-            for node2 in G2.nodes(data=True):
-                neighbor_n2 = G2[node2[0]]
-                p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
-
-                for neighbor1 in neighbor_n1:
-                    for neighbor2 in neighbor_n2:
-                        t = p_trans_n1 * p_trans_n2 * \
-                            deltakernel(G1.node[neighbor1][node_label] == G2.node[neighbor2][node_label]) * \
-                            deltakernel(neighbor_n1[neighbor1][edge_label] == neighbor_n2[neighbor2][edge_label])
-
-                        R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][
-                            neighbor2]  # ref [1] equation (8)
-        R_inf[:] = R_inf_new
-
-    # add elements of R_inf up and calculate kernel
-    for node1 in G1.nodes(data=True):
-        for node2 in G2.nodes(data=True):
-            s = p_init_G1 * p_init_G2 * deltakernel(
-                node1[1][node_label] == node2[1][node_label])
-            kernel += s * R_inf[node1[0]][node2[0]]  # ref [1] equation (6)
-
-    return kernel
+def wrap_untotter(Gn, node_label, edge_label, i):
+    return i, untotterTransformation(Gn[i], node_label, edge_label)
