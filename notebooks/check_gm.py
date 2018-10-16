@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from numpy.linalg import eig
 
 # read gram matrices from file.
-results_dir = 'results/marginalizedkernel/myria'
-ds_name = 'MUTAG'
+results_dir = 'results/structuralspkernel/'
+ds_name = 'Letter-med'
 gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
 #print('gm time: ', gmfile['gmtime'])
 # a list to store gram matrices for all param_grid_precomputed
@@ -32,6 +32,12 @@ for x in gram_matrices:
     print('diag: ', np.diag(x))
     print('sum diag < 0.1: ', np.sum(np.diag(x) < 0.1))
     print('min, max diag: ', min(np.diag(x)), max(np.diag(x)))
+    print('min, max matrix: ', np.min(x), np.max(x))
+    for i in range(len(x)):
+        for j in range(len(x)):
+            if x[i][j] > 1:
+                print(i, j)
+                raise Exception('value bigger than 1 with index', i, j)
     print('mean x: ', np.mean(np.mean(x)))
     
     [lamnda, v] = eig(x)

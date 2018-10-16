@@ -13,18 +13,20 @@ from pygraph.kernels.marginalizedKernel import marginalizedkernel
 
 dslist = [
     {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-             'task': 'regression'},  # node symb
+        'task': 'regression'},  # node symb
     {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  # contains single node graph, node symb
+             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
+    # contains single node graph, node symb
     {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
     {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
     {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
              'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node symb/nsymb
+    # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node/edge symb
+    # node symb/nsymb
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
+#    # node/edge symb
 #    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
 #     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
 

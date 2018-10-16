@@ -18,18 +18,20 @@ dslist = [
 #    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
 #        'task': 'regression'},  # node symb
 #    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  # contains single node graph, node symb
-    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
-    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
-    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
-             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
+#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
+#    # contains single node graph, node symb
+#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
+#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
+#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
+#             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node symb/nsymb
-    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node/edge symb
-    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
-    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
-     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
+    # node nsymb
+#    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
+#    # node symb/nsymb
+#    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
+#    # node/edge symb
+#    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
+#     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
 
     #     {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
     # # #     {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
@@ -38,8 +40,8 @@ dslist = [
     #
     # #     {'name': 'DHFR', 'dataset': '../datasets/DHFR_txt/DHFR_A_sparse.txt'}, # node symb/nsymb
     # #     {'name': 'SYNTHETIC', 'dataset': '../datasets/SYNTHETIC_txt/SYNTHETIC_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb
-    # #     {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb
+    # #     {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb, missing values
+    # #     {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb, missing values
     # #     {'name': 'FIRSTMM_DB', 'dataset': '../datasets/FIRSTMM_DB/FIRSTMM_DB_A.txt'}, # node symb/nsymb ,edge nsymb
 
     # #     {'name': 'PROTEINS', 'dataset': '../datasets/PROTEINS_txt/PROTEINS_A_sparse.txt'}, # node symb/nsymb
