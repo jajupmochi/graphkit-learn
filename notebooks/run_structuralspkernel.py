@@ -9,10 +9,9 @@ Created on Fri Sep 28 16:37:29 2018
 import functools
 from libs import *
 import multiprocessing
-from sklearn.metrics.pairwise import rbf_kernel
 
 from pygraph.kernels.structuralspKernel import structuralspkernel
-from pygraph.utils.kernels import deltakernel, kernelproduct
+from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 dslist = [
 #    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
@@ -61,11 +60,11 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = structuralspkernel
-mixkernel = functools.partial(kernelproduct, deltakernel, rbf_kernel)
+mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 param_grid_precomputed = {'node_kernels': 
-    [{'symb': deltakernel, 'nsymb': rbf_kernel, 'mix': mixkernel}],
+    [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
     'edge_kernels': 
-    [{'symb': deltakernel, 'nsymb': rbf_kernel, 'mix': mixkernel}]}
+    [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

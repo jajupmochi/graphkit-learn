@@ -1,29 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Sep 28 16:37:29 2018
+
+@author: ljia
+"""
+
 import functools
 from libs import *
 import multiprocessing
+from sklearn.metrics.pairwise import rbf_kernel
 
-from pygraph.kernels.spKernel import spkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-#from pygraph.utils.model_selection_precomputed import trial_do
+from pygraph.kernels.structuralspKernel import structuralspkernel
+from pygraph.utils.kernels import deltakernel, kernelproduct
 
 dslist = [
 #    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
 #        'task': 'regression'},  # node symb
 #    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
-#    # contains single node graph, node symb
-#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
-#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
-#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
-#             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
-    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node nsymb
-    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node symb/nsymb
-#    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
-#    # node/edge symb
-#    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
-#     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
+#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  # contains single node graph, node symb
+    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
+    
 
     #     {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
     # # #     {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
@@ -52,11 +49,13 @@ dslist = [
     #     {'name': 'PTC_MM', 'dataset': '../datasets/PTC/Train/MM.ds',},
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
-estimator = spkernel
-mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-param_grid_precomputed = {'node_kernels': [
-    {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]}
-param_grid = [{'C': np.logspace(-10, 3, num=27, base=10)},
+estimator = structuralspkernel
+mixkernel = functools.partial(kernelproduct, deltakernel, rbf_kernel)
+param_grid_precomputed = {'node_kernels': 
+    [{'symb': deltakernel, 'nsymb': rbf_kernel, 'mix': mixkernel}],
+    'edge_kernels': 
+    [{'symb': deltakernel, 'nsymb': rbf_kernel, 'mix': mixkernel}]}
+param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 
 for ds in dslist:

@@ -1,6 +1,7 @@
 """Those who are not graph kernels. We can be kernels for nodes or edges!
+These kernels are defined between pairs of vectors.
 """
-
+import numpy as np
 
 def deltakernel(x, y):
     """Delta kernel. Return 1 if x == y, 0 otherwise.
@@ -17,15 +18,47 @@ def deltakernel(x, y):
 
     References
     ----------
-    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between labeled graphs. In Proceedings of the 20th International Conference on Machine Learning, Washington, DC, United States, 2003.
+    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between 
+    labeled graphs. In Proceedings of the 20th International Conference on 
+    Machine Learning, Washington, DC, United States, 2003.
     """
     return x == y  #(1 if condition else 0)
 
 
-def gaussiankernel(x, y):
+def gaussiankernel(x, y, gamma=None):
     """Gaussian kernel. Use sklearn.metrics.pairwise.rbf_kernel instead.
+    Compute the rbf (gaussian) kernel between X and Y:
+
+        K(x, y) = exp(-gamma ||x-y||^2)
+
+    for each pair of rows x in X and y in Y.
+
+    Read more in the :ref:`User Guide <rbf_kernel>`.
+
+    Parameters
+    ----------
+    X : array of shape (n_features)
+
+    Y : array of shape (n_features)
+
+    gamma : float, default None
+        If None, defaults to 1.0 / n_features
+
+    Returns
+    -------
+    kernel : integer
     """
-    pass
+    if gamma is None:
+        gamma = 1.0 / len(x)
+
+    xt = np.array([float(itm) for itm in x])
+    yt = np.array([float(itm) for itm in y])
+    kernel = xt - yt
+    kernel = kernel ** 2
+    kernel = np.sum(kernel)
+    kernel *= -gamma
+    kernel = np.exp(kernel)
+    return kernel
 
 
 def kernelsum(k1, k2, d11, d12, d21=None, d22=None, lamda1=1, lamda2=1):

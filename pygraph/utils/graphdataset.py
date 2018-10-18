@@ -15,29 +15,29 @@ def get_dataset_attributes(Gn,
     def get_dataset_size(Gn):
         return len(Gn)
 
-    def get_all_graph_size(Gn):
+    def get_all_node_num(Gn):
         return [nx.number_of_nodes(G) for G in Gn]
 
-    def get_ave_graph_size(all_graph_size):
-        return np.mean(all_graph_size)
+    def get_ave_node_num(all_node_num):
+        return np.mean(all_node_num)
 
-    def get_min_graph_size(all_graph_size):
-        return np.amin(all_graph_size)
+    def get_min_node_num(all_node_num):
+        return np.amin(all_node_num)
 
-    def get_max_graph_size(Gn):
-        return np.amax(all_graph_size)
+    def get_max_node_num(all_node_num):
+        return np.amax(all_node_num)
 
-    def get_all_graph_edge_num(Gn):
+    def get_all_edge_num(Gn):
         return [nx.number_of_edges(G) for G in Gn]
 
-    def get_ave_graph_edge_num(all_graph_edge_num):
-        return np.mean(all_graph_edge_num)
+    def get_ave_edge_num(all_edge_num):
+        return np.mean(all_edge_num)
 
-    def get_min_graph_edge_num(all_graph_edge_num):
-        return np.amin(all_graph_edge_num)
+    def get_min_edge_num(all_edge_num):
+        return np.amin(all_edge_num)
 
-    def get_max_graph_edge_num(all_graph_edge_num):
-        return np.amax(all_graph_edge_num)
+    def get_max_edge_num(all_edge_num):
+        return np.amax(all_edge_num)
 
     def is_node_labeled(Gn):
         return False if node_label is None else True
@@ -60,13 +60,13 @@ def get_dataset_attributes(Gn,
     def is_directed(Gn):
         return nx.is_directed(Gn[0])
 
-    def get_ave_graph_degree(Gn):
+    def get_ave_node_degree(Gn):
         return np.mean([np.amax(list(dict(G.degree()).values())) for G in Gn])
 
-    def get_max_graph_degree(Gn):
+    def get_max_node_degree(Gn):
         return np.amax([np.amax(list(dict(G.degree()).values())) for G in Gn])
 
-    def get_min_graph_degree(Gn):
+    def get_min_node_degree(Gn):
         return np.amin([np.amax(list(dict(G.degree()).values())) for G in Gn])
 
     def get_substructures(Gn):
@@ -107,11 +107,11 @@ def get_dataset_attributes(Gn,
         return len(set(target))
 
     def get_node_attr_dim(Gn):
-        attrs = Gn[0].nodes[0]
-        if 'attributes' in attrs:
-            return len(attrs['attributes'])
-        else:
-            return 0
+        for G in Gn:
+            for n in G.nodes(data=True):
+                if 'attributes' in n[1]:
+                    return len(n[1]['attributes'])
+        return 0
 
     def get_edge_attr_dim(Gn):
         for G in Gn:
@@ -119,8 +119,6 @@ def get_dataset_attributes(Gn,
                 for e in G.edges(data=True):
                     if 'attributes' in e[2]:
                         return len(e[2]['attributes'])
-                    else:
-                        return 0
         return 0
 
     if attr_names == []:
@@ -130,15 +128,15 @@ def get_dataset_attributes(Gn,
             'edge_labeled',
             'is_directed',
             'dataset_size',
-            'ave_graph_size',
-            'min_graph_size',
-            'max_graph_size',
-            'ave_graph_edge_num',
-            'min_graph_edge_num',
-            'max_graph_edge_num',
-            'ave_graph_degree',
-            'min_graph_degree',
-            'max_graph_degree',
+            'ave_node_num',
+            'min_node_num',
+            'max_node_num',
+            'ave_edge_num',
+            'min_edge_num',
+            'max_edge_num',
+            'ave_node_degree',
+            'min_node_degree',
+            'max_node_degree',
             'node_label_num',
             'edge_label_num',
             'node_attr_dim',
@@ -151,50 +149,41 @@ def get_dataset_attributes(Gn,
 
         attrs.update({'dataset_size': get_dataset_size(Gn)})
 
-    # graph size
+    # graph node number
     if any(i in attr_names
-           for i in ['ave_graph_size', 'min_graph_size', 'max_graph_size']):
+           for i in ['ave_node_num', 'min_node_num', 'max_node_num']):
 
-        all_graph_size = get_all_graph_size(Gn)
+        all_node_num = get_all_node_num(Gn)
 
-    if 'ave_graph_size' in attr_names:
+    if 'ave_node_num' in attr_names:
 
-        attrs.update({'ave_graph_size': get_ave_graph_size(all_graph_size)})
+        attrs.update({'ave_node_num': get_ave_node_num(all_node_num)})
 
-    if 'min_graph_size' in attr_names:
+    if 'min_node_num' in attr_names:
 
-        attrs.update({'min_graph_size': get_min_graph_size(all_graph_size)})
+        attrs.update({'min_node_num': get_min_node_num(all_node_num)})
 
-    if 'max_graph_size' in attr_names:
+    if 'max_node_num' in attr_names:
 
-        attrs.update({'max_graph_size': get_max_graph_size(all_graph_size)})
+        attrs.update({'max_node_num': get_max_node_num(all_node_num)})
 
     # graph edge number
     if any(i in attr_names for i in
-           ['ave_graph_edge_num', 'min_graph_edge_num', 'max_graph_edge_num']):
+           ['ave_edge_num', 'min_edge_num', 'max_edge_num']):
 
-        all_graph_edge_num = get_all_graph_edge_num(Gn)
+        all_edge_num = get_all_edge_num(Gn)
 
-    if 'ave_graph_edge_num' in attr_names:
+    if 'ave_edge_num' in attr_names:
 
-        attrs.update({
-            'ave_graph_edge_num':
-            get_ave_graph_edge_num(all_graph_edge_num)
-        })
+        attrs.update({'ave_edge_num': get_ave_edge_num(all_edge_num)})
 
-    if 'max_graph_edge_num' in attr_names:
+    if 'max_edge_num' in attr_names:
 
-        attrs.update({
-            'max_graph_edge_num':
-            get_max_graph_edge_num(all_graph_edge_num)
-        })
+        attrs.update({'max_edge_num': get_max_edge_num(all_edge_num)})
 
-    if 'min_graph_edge_num' in attr_names:
+    if 'min_edge_num' in attr_names:
 
-        attrs.update({
-            'min_graph_edge_num':
-            get_min_graph_edge_num(all_graph_edge_num)
-        })
+        attrs.update({'min_edge_num': get_min_edge_num(all_edge_num)})
 
     # label number
     if any(i in attr_names for i in ['node_labeled', 'node_label_num']):
@@ -222,14 +211,14 @@ def get_dataset_attributes(Gn,
     if 'is_directed' in attr_names:
         attrs.update({'is_directed': is_directed(Gn)})
 
-    if 'ave_graph_degree' in attr_names:
-        attrs.update({'ave_graph_degree': get_ave_graph_degree(Gn)})
+    if 'ave_node_degree' in attr_names:
+        attrs.update({'ave_node_degree': get_ave_node_degree(Gn)})
 
-    if 'max_graph_degree' in attr_names:
-        attrs.update({'max_graph_degree': get_max_graph_degree(Gn)})
+    if 'max_node_degree' in attr_names:
+        attrs.update({'max_node_degree': get_max_node_degree(Gn)})
 
-    if 'min_graph_degree' in attr_names:
-        attrs.update({'min_graph_degree': get_min_graph_degree(Gn)})
+    if 'min_node_degree' in attr_names:
+        attrs.update({'min_node_degree': get_min_node_degree(Gn)})
 
     if 'substructures' in attr_names:
         attrs.update({'substructures': get_substructures(Gn)})

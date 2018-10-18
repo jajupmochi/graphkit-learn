@@ -194,13 +194,12 @@ def structuralspkernel(*args,
 #    # ---- direct running, normally use single CPU core. ----
 #    itr = combinations_with_replacement(range(0, len(Gn)), 2)
 #    for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        if gs[0] == 24 and gs[1] == 411:
-#            i, j, kernel = structuralspkernel_do(Gn, splist, ds_attrs, 
-#             node_label, edge_label, node_kernels, edge_kernels, gs)
-#            if(kernel > 1):
-#                print("error here ")
-#            Kmatrix[i][j] = kernel
-#            Kmatrix[j][i] = kernel
+#        i, j, kernel = structuralspkernel_do(Gn, splist, ds_attrs, 
+#         node_label, edge_label, node_kernels, edge_kernels, gs)
+#        if(kernel > 1):
+#            print("error here ")
+#        Kmatrix[i][j] = kernel
+#        Kmatrix[j][i] = kernel
 
     run_time = time.time() - start_time
     print(
@@ -232,7 +231,7 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
                     g1.nodes(data=True), g2.nodes(data=True)):
                 vk_dict[(n1[0], n2[0])] = kn(
                     n1[1][node_label], n2[1][node_label],
-                    [n1[1]['attributes']], [n2[1]['attributes']])
+                    n1[1]['attributes'], n2[1]['attributes'])
         # node symb labeled
         else:
             kn = node_kernels['symb']
@@ -248,8 +247,8 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
             vk_dict = {}  # shortest path matrices dict
             for n1 in g1.nodes(data=True):
                 for n2 in g2.nodes(data=True):
-                    vk_dict[(n1[0], n2[0])] = kn([n1[1]['attributes']],
-                                                 [n2[1]['attributes']])
+                    vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
+                                                 n2[1]['attributes'])
         # node unlabeled
         else:
             vk_dict = {}
@@ -265,7 +264,7 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
             for e1, e2 in product(
                     g1.edges(data=True), g2.edges(data=True)):
                 ek_temp = ke(e1[2][edge_label], e2[2][edge_label],
-                    [e1[2]['attributes']], [e2[2]['attributes']])
+                    e1[2]['attributes'], e2[2]['attributes'])
                 ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
                 ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
                 ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
@@ -288,7 +287,7 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
             ek_dict = {}
             for e1 in g1.edges(data=True):
                 for e2 in g2.edges(data=True):
-                    ek_temp = kn([e1[2]['attributes']], [e2[2]['attributes']])
+                    ek_temp = kn(e1[2]['attributes'], e2[2]['attributes'])
                     ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
                     ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
                     ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
@@ -374,8 +373,6 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
     #    print("toto")
     #    pass
 
-    if(kernel > 1):
-        print("kernel error : ", ij)
     return iglobal, jglobal, kernel
 
 

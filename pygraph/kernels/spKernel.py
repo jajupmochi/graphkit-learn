@@ -53,7 +53,6 @@ def spkernel(*args,
     """
     # pre-process
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
-
     weight = None
     if edge_weight is None:
         print('\n None edge weight specified. Set all weight to 1.\n')
@@ -76,7 +75,8 @@ def spkernel(*args,
         attr_names=['node_labeled', 'node_attr_dim', 'is_directed'],
         node_label=node_label)
 
-    # remove graphs with no edges, as no sp can be found in their structures, so the kernel between such a graph and itself will be zero.
+    # remove graphs with no edges, as no sp can be found in their structures, 
+    # so the kernel between such a graph and itself will be zero.
     len_gn = len(Gn)
     Gn = [(idx, G) for idx, G in enumerate(Gn) if nx.number_of_edges(G) != 0]
     idx = [G[0] for G in Gn]
@@ -208,93 +208,93 @@ def spkernel_do(Gn, ds_attrs, node_label, node_kernels, ij):
     g2 = Gn[j]
     kernel = 0
 
-    try:
-        # compute shortest path matrices first, method borrowed from FCSP.
-        if ds_attrs['node_labeled']:
-            # node symb and non-synb labeled
-            if ds_attrs['node_attr_dim'] > 0:
-                kn = node_kernels['mix']
-                vk_dict = {}  # shortest path matrices dict
-                for n1, n2 in product(
-                        g1.nodes(data=True), g2.nodes(data=True)):
-                    vk_dict[(n1[0], n2[0])] = kn(
-                        n1[1][node_label], n2[1][node_label],
-                        [n1[1]['attributes']], [n2[1]['attributes']])
-            # node symb labeled
-            else:
-                kn = node_kernels['symb']
-                vk_dict = {}  # shortest path matrices dict
-                for n1 in g1.nodes(data=True):
-                    for n2 in g2.nodes(data=True):
-                        vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
-                                                     n2[1][node_label])
+#    try:
+    # compute shortest path matrices first, method borrowed from FCSP.
+    if ds_attrs['node_labeled']:
+        # node symb and non-synb labeled
+        if ds_attrs['node_attr_dim'] > 0:
+            kn = node_kernels['mix']
+            vk_dict = {}  # shortest path matrices dict
+            for n1, n2 in product(
+                    g1.nodes(data=True), g2.nodes(data=True)):
+                vk_dict[(n1[0], n2[0])] = kn(
+                    n1[1][node_label], n2[1][node_label],
+                    n1[1]['attributes'], n2[1]['attributes'])
+        # node symb labeled
         else:
-            # node non-synb labeled
-            if ds_attrs['node_attr_dim'] > 0:
-                kn = node_kernels['nsymb']
-                vk_dict = {}  # shortest path matrices dict
-                for n1 in g1.nodes(data=True):
-                    for n2 in g2.nodes(data=True):
-                        vk_dict[(n1[0], n2[0])] = kn([n1[1]['attributes']],
-                                                     [n2[1]['attributes']])
-            # node unlabeled
-            else:
-                for e1, e2 in product(
-                        g1.edges(data=True), g2.edges(data=True)):
-                    if e1[2]['cost'] == e2[2]['cost']:
-                        kernel += 1
-                return i, j, kernel
-
-        # compute graph kernels
-        if ds_attrs['is_directed']:
-            for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
-                if e1[2]['cost'] == e2[2]['cost']:
-                    nk11, nk22 = vk_dict[(e1[0], e2[0])], vk_dict[(e1[1],
-                                                                   e2[1])]
-                    kn1 = nk11 * nk22
-                    kernel += kn1
+            kn = node_kernels['symb']
+            vk_dict = {}  # shortest path matrices dict
+            for n1 in g1.nodes(data=True):
+                for n2 in g2.nodes(data=True):
+                    vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
+                                                 n2[1][node_label])
+    else:
+        # node non-synb labeled
+        if ds_attrs['node_attr_dim'] > 0:
+            kn = node_kernels['nsymb']
+            vk_dict = {}  # shortest path matrices dict
+            for n1 in g1.nodes(data=True):
+                for n2 in g2.nodes(data=True):
+                    vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
+                                                 n2[1]['attributes'])
+        # node unlabeled
         else:
-            for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+            for e1, e2 in product(
+                    g1.edges(data=True), g2.edges(data=True)):
                 if e1[2]['cost'] == e2[2]['cost']:
-                    # each edge walk is counted twice, starting from both its extreme nodes.
-                    nk11, nk12, nk21, nk22 = vk_dict[(e1[0], e2[0])], vk_dict[(
-                        e1[0], e2[1])], vk_dict[(e1[1],
-                                                 e2[0])], vk_dict[(e1[1],
-                                                                   e2[1])]
-                    kn1 = nk11 * nk22
-                    kn2 = nk12 * nk21
-                    kernel += kn1 + kn2
+                    kernel += 1
+            return i, j, kernel
 
-            # # ---- exact implementation of the Fast Computation of Shortest Path Kernel (FCSP), reference [2], sadly it is slower than the current implementation
-            # # compute vertex kernels
-            # try:
-            #     vk_mat = np.zeros((nx.number_of_nodes(g1),
-            #                        nx.number_of_nodes(g2)))
-            #     g1nl = enumerate(g1.nodes(data=True))
-            #     g2nl = enumerate(g2.nodes(data=True))
-            #     for i1, n1 in g1nl:
-            #         for i2, n2 in g2nl:
-            #             vk_mat[i1][i2] = kn(
-            #                 n1[1][node_label], n2[1][node_label],
-            #                 [n1[1]['attributes']], [n2[1]['attributes']])
+    # compute graph kernels
+    if ds_attrs['is_directed']:
+        for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+            if e1[2]['cost'] == e2[2]['cost']:
+                nk11, nk22 = vk_dict[(e1[0], e2[0])], vk_dict[(e1[1],
+                                                               e2[1])]
+                kn1 = nk11 * nk22
+                kernel += kn1
+    else:
+        for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+            if e1[2]['cost'] == e2[2]['cost']:
+                # each edge walk is counted twice, starting from both its extreme nodes.
+                nk11, nk12, nk21, nk22 = vk_dict[(e1[0], e2[0])], vk_dict[(
+                    e1[0], e2[1])], vk_dict[(e1[1],
+                                             e2[0])], vk_dict[(e1[1],
+                                                               e2[1])]
+                kn1 = nk11 * nk22
+                kn2 = nk12 * nk21
+                kernel += kn1 + kn2
 
-            #     range1 = range(0, len(edge_w_g[i]))
-            #     range2 = range(0, len(edge_w_g[j]))
-            #     for i1 in range1:
-            #         x1 = edge_x_g[i][i1]
-            #         y1 = edge_y_g[i][i1]
-            #         w1 = edge_w_g[i][i1]
-            #         for i2 in range2:
-            #             x2 = edge_x_g[j][i2]
-            #             y2 = edge_y_g[j][i2]
-            #             w2 = edge_w_g[j][i2]
-            #             ke = (w1 == w2)
-            #             if ke > 0:
-            #                 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
-            #                 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
-            #                 kernel += kn1 + kn2
-    except KeyError:  # missing labels or attributes
-        pass
+        # # ---- exact implementation of the Fast Computation of Shortest Path Kernel (FCSP), reference [2], sadly it is slower than the current implementation
+        # # compute vertex kernels
+        # try:
+        #     vk_mat = np.zeros((nx.number_of_nodes(g1),
+        #                        nx.number_of_nodes(g2)))
+        #     g1nl = enumerate(g1.nodes(data=True))
+        #     g2nl = enumerate(g2.nodes(data=True))
+        #     for i1, n1 in g1nl:
+        #         for i2, n2 in g2nl:
+        #             vk_mat[i1][i2] = kn(
+        #                 n1[1][node_label], n2[1][node_label],
+        #                 [n1[1]['attributes']], [n2[1]['attributes']])
+
+        #     range1 = range(0, len(edge_w_g[i]))
+        #     range2 = range(0, len(edge_w_g[j]))
+        #     for i1 in range1:
+        #         x1 = edge_x_g[i][i1]
+        #         y1 = edge_y_g[i][i1]
+        #         w1 = edge_w_g[i][i1]
+        #         for i2 in range2:
+        #             x2 = edge_x_g[j][i2]
+        #             y2 = edge_y_g[j][i2]
+        #             w2 = edge_w_g[j][i2]
+        #             ke = (w1 == w2)
+        #             if ke > 0:
+        #                 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
+        #                 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
+        #                 kernel += kn1 + kn2
+#    except KeyError:  # missing labels or attributes
+#        pass
 
     return i, j, kernel
 
