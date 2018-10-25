@@ -206,54 +206,50 @@ def model_selection_for_precomputed_kernel(datafile,
                 '3. Fitting and predicting using nested cross validation. This could really take a while...'
             )
             
+#            pool =  Pool(n_jobs)
+#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
+#            train_pref = []
+#            val_pref = []
+#            test_pref = []
+##            if NUM_TRIALS < 1000 * n_jobs:
+##                chunksize = int(NUM_TRIALS / n_jobs) + 1
+##            else:
+##                chunksize = 1000
+#            chunksize = 1
+#            for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+#                train_pref.append(o1)
+#                val_pref.append(o2)
+#                test_pref.append(o3)
+#            pool.close()
+#            pool.join()
+    
+            # ---- use pool.map to parallel. ----
             pool =  Pool(n_jobs)
             trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-            train_pref = []
-            val_pref = []
-            test_pref = []
-#            if NUM_TRIALS < 100:
-#                chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
-#                if extra:
-#                    chunksize += 1
-#            else:
-#                chunksize = 100
-            chunksize = 1
-            for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
-                train_pref.append(o1)
-                val_pref.append(o2)
-                test_pref.append(o3)
-            pool.close()
-            pool.join()
+            result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
+            train_pref = [item[0] for item in result_perf]
+            val_pref = [item[1] for item in result_perf]
+            test_pref = [item[2] for item in result_perf]
     
-            # # ---- use pool.map to parallel. ----
-            # result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
-            # train_pref = [item[0] for item in result_perf]
-            # val_pref = [item[1] for item in result_perf]
-            # test_pref = [item[2] for item in result_perf]
-    
-            # # ---- use joblib.Parallel to parallel and track progress. ----
-            # trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-            # result_perf = Parallel(n_jobs=n_jobs, verbose=10)(delayed(trial_do_partial)(trial) for trial in range(NUM_TRIALS))
-            # train_pref = [item[0] for item in result_perf]
-            # val_pref = [item[1] for item in result_perf]
-            # test_pref = [item[2] for item in result_perf]
-    
-            # # ---- direct running, normally use a single CPU core. ----
-            # train_pref = []
-            # val_pref = []
-            # test_pref = []
-            # for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
-            #     o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
-            #     train_pref.append(o1)
-            #     val_pref.append(o2)
-            #     test_pref.append(o3)
+#            # ---- direct running, normally use a single CPU core. ----
+#            train_pref = []
+#            val_pref = []
+#            test_pref = []
+#            for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
+#                o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
+#                train_pref.append(o1)
+#                val_pref.append(o2)
+#                test_pref.append(o3)
+#            print()
     
             print()
             print('4. Getting final performance...')
             str_fw += '\nIII. Performance.\n\n'
             # averages and confidences of performances on outer trials for each combination of parameters
             average_train_scores = np.mean(train_pref, axis=0)
+#            print('val_pref: ', val_pref[0][0])
             average_val_scores = np.mean(val_pref, axis=0)
+#            print('test_pref: ', test_pref[0][0])
             average_perf_scores = np.mean(test_pref, axis=0)
             # sample std is used here
             std_train_scores = np.std(train_pref, axis=0, ddof=1)
@@ -264,6 +260,9 @@ def model_selection_for_precomputed_kernel(datafile,
                 best_val_perf = np.amin(average_val_scores)
             else:
                 best_val_perf = np.amax(average_val_scores)
+#            print('average_val_scores: ', average_val_scores)
+#            print('best_val_perf: ', best_val_perf)
+#            print()
             best_params_index = np.where(average_val_scores == best_val_perf)
             # find smallest val std with best val perf.
             best_val_stds = [
@@ -286,6 +285,9 @@ def model_selection_for_precomputed_kernel(datafile,
             str_fw += 'best_val_perf: %s\n' % best_val_perf
             str_fw += 'best_val_std: %s\n' % min_val_std
     
+#            print(best_params_index)
+#            print(best_params_index[0])
+#            print(average_perf_scores)
             final_performance = [
                 average_perf_scores[value][best_params_index[1][idx]]
                 for idx, value in enumerate(best_params_index[0])
@@ -429,23 +431,23 @@ def model_selection_for_precomputed_kernel(datafile,
             '3. Fitting and predicting using nested cross validation. This could really take a while...'
         )
         
-#        pool =  Pool(n_jobs)
-#        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-#        train_pref = []
-#        val_pref = []
-#        test_pref = []
-#        if NUM_TRIALS < 100:
-#            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
-#            if extra:
-#                chunksize += 1
-#        else:
-#            chunksize = 100
-#        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
-#            train_pref.append(o1)
-#            val_pref.append(o2)
-#            test_pref.append(o3)
-#        pool.close()
-#        pool.join()
+        pool =  Pool(n_jobs)
+        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
+        train_pref = []
+        val_pref = []
+        test_pref = []
+        if NUM_TRIALS < 100:
+            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
+            if extra:
+                chunksize += 1
+        else:
+            chunksize = 100
+        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+            train_pref.append(o1)
+            val_pref.append(o2)
+            test_pref.append(o3)
+        pool.close()
+        pool.join()
         
         # # ---- use pool.map to parallel. ----
         # result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
@@ -460,15 +462,15 @@ def model_selection_for_precomputed_kernel(datafile,
         # val_pref = [item[1] for item in result_perf]
         # test_pref = [item[2] for item in result_perf]
 
-        # ---- direct running, normally use a single CPU core. ----
-        train_pref = []
-        val_pref = []
-        test_pref = []
-        for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
-            o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
-            train_pref.append(o1)
-            val_pref.append(o2)
-            test_pref.append(o3)
+#        # ---- direct running, normally use a single CPU core. ----
+#        train_pref = []
+#        val_pref = []
+#        test_pref = []
+#        for i in tqdm(range(NUM_TRIALS), desc='cross validation', file=sys.stdout):
+#            o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)
+#            train_pref.append(o1)
+#            val_pref.append(o2)
+#            test_pref.append(o3)
 
         print()
         print('4. Getting final performance...')
@@ -623,89 +625,142 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
     val_pref = np.zeros((len(param_list_pre_revised), len(param_list)))
     test_pref = np.zeros((len(param_list_pre_revised), len(param_list)))
 
+    # randomness added to seeds of split function below. "high" is "size" times
+    # 10 so that at least 10 different random output will be yielded. Remove
+    # these lines if identical outputs is required.
+    rdm_out = np.random.RandomState(seed=None)
+    rdm_seed_out_l = rdm_out.uniform(high=len(param_list_pre_revised) * 10, 
+                                   size=len(param_list_pre_revised))
+#    print(trial, rdm_seed_out_l)
+#    print()
     # loop for each outer param tuple
     for index_out, params_out in enumerate(param_list_pre_revised):
         # split gram matrix and y to app and test sets.
         indices = range(len(y))
+        # The argument "random_state" in function "train_test_split" can not be
+        # set to None, because it will use RandomState instance used by 
+        # np.random, which is possible for multiple subprocesses to inherit the
+        # same seed if they forked at the same time, leading to identical 
+        # random variates for different subprocesses. Instead, we use "trial" 
+        # and "index_out" parameters to generate different seeds for different 
+        # trials/subprocesses and outer loops. "rdm_seed_out_l" is used to add 
+        # randomness into seeds, so that it yields a different output every 
+        # time the program is run. To yield identical outputs every time,
+        # remove the second line below. Same method is used to the "KFold"
+        # function in the inner loop.
+        rdm_seed_out = (trial + 1) * (index_out + 1)
+        rdm_seed_out = (rdm_seed_out + int(rdm_seed_out_l[index_out])) % (2 ** 32 - 1)
+#        print(trial, rdm_seed_out)
         X_app, X_test, y_app, y_test, idx_app, idx_test = train_test_split(
             gram_matrices[index_out], y, indices, test_size=0.1, 
-            random_state=None, shuffle=True)
+            random_state=rdm_seed_out, shuffle=True)
+#        print(trial, idx_app, idx_test)
+#        print()
         X_app = X_app[:, idx_app]
         X_test = X_test[:, idx_app]
         y_app = np.array(y_app)
         y_test = np.array(y_test)
 
+        rdm_seed_in_l = rdm_out.uniform(high=len(param_list) * 10, 
+                                   size=len(param_list))
         # loop for each inner param tuple
         for index_in, params_in in enumerate(param_list):
-#            print(index_in, params_in)
+#            if trial == 0:
+#                print(index_out, index_in)
+#                print('params_in: ', params_in)
 #            st = time.time()
-            inner_cv = KFold(n_splits=10, shuffle=True, random_state=trial)
+            rdm_seed_in = (trial + 1) * (index_out + 1) * (index_in + 1)
+#            print("rdm_seed_in1: ", trial, index_in, rdm_seed_in)
+            rdm_seed_in = (rdm_seed_in + int(rdm_seed_in_l[index_in])) % (2 ** 32 - 1)
+#            print("rdm_seed_in2: ", trial, index_in, rdm_seed_in)
+            inner_cv = KFold(n_splits=10, shuffle=True, random_state=rdm_seed_in)
             current_train_perf = []
             current_valid_perf = []
             current_test_perf = [] 
 
             # For regression use the Kernel Ridge method
-            try:
-                if model_type == 'regression':
-                    kr = KernelRidge(kernel='precomputed', **params_in)
-                    # loop for each split on validation set level
-                    # validation set level
-                    for train_index, valid_index in inner_cv.split(X_app):
-                        kr.fit(X_app[train_index, :][:, train_index],
-                               y_app[train_index])
+#            try:
+            if model_type == 'regression':
+                kr = KernelRidge(kernel='precomputed', **params_in)
+                # loop for each split on validation set level
+                # validation set level
+                for train_index, valid_index in inner_cv.split(X_app):
+#                    print("train_index, valid_index: ", trial, index_in, train_index, valid_index)
+#                    if trial == 0:
+#                        print('train_index: ', train_index)
+#                        print('valid_index: ', valid_index)
+#                        print('idx_test: ', idx_test)
+#                        print('y_app[train_index]: ', y_app[train_index])
+#                        print('X_app[train_index, :][:, train_index]: ', X_app[train_index, :][:, train_index])
+#                        print('X_app[valid_index, :][:, train_index]: ', X_app[valid_index, :][:, train_index])
+                    kr.fit(X_app[train_index, :][:, train_index],
+                           y_app[train_index])
 
-                        # predict on the train, validation and test set
-                        y_pred_train = kr.predict(
-                            X_app[train_index, :][:, train_index])
-                        y_pred_valid = kr.predict(
-                            X_app[valid_index, :][:, train_index])
-                        y_pred_test = kr.predict(
-                            X_test[:, train_index])
+                    # predict on the train, validation and test set
+                    y_pred_train = kr.predict(
+                        X_app[train_index, :][:, train_index])
+                    y_pred_valid = kr.predict(
+                        X_app[valid_index, :][:, train_index])
+#                    if trial == 0:     
+#                        print('y_pred_valid: ', y_pred_valid)
+#                        print()
+                    y_pred_test = kr.predict(
+                        X_test[:, train_index])
 
-                        # root mean squared errors
-                        current_train_perf.append(
-                            np.sqrt(
-                                mean_squared_error(
-                                    y_app[train_index], y_pred_train)))
-                        current_valid_perf.append(
-                            np.sqrt(
-                                mean_squared_error(
-                                    y_app[valid_index], y_pred_valid)))
-                        current_test_perf.append(
-                            np.sqrt(
-                                mean_squared_error(
-                                    y_test, y_pred_test)))
-                # For clcassification use SVM
-                else:
-                    svc = SVC(kernel='precomputed', cache_size=200, 
-                              verbose=False, **params_in)
-                    # loop for each split on validation set level
-                    # validation set level
-                    for train_index, valid_index in inner_cv.split(X_app):
+                    # root mean squared errors
+                    current_train_perf.append(
+                        np.sqrt(
+                            mean_squared_error(
+                                y_app[train_index], y_pred_train)))
+                    current_valid_perf.append(
+                        np.sqrt(
+                            mean_squared_error(
+                                y_app[valid_index], y_pred_valid)))
+#                    if trial == 0:
+#                        print(mean_squared_error(
+#                                y_app[valid_index], y_pred_valid))
+                    current_test_perf.append(
+                        np.sqrt(
+                            mean_squared_error(
+                                y_test, y_pred_test)))
+            # For clcassification use SVM
+            else:
+                svc = SVC(kernel='precomputed', cache_size=200, 
+                          verbose=False, **params_in)
+                # loop for each split on validation set level
+                # validation set level
+                for train_index, valid_index in inner_cv.split(X_app):
 #                        np.savez("bug.npy",X_app[train_index, :][:, train_index],y_app[train_index])
-                        svc.fit(X_app[train_index, :][:, train_index],
-                               y_app[train_index])
-                        
-                        # predict on the train, validation and test set
-                        y_pred_train = svc.predict(
-                            X_app[train_index, :][:, train_index])
-                        y_pred_valid = svc.predict(
-                            X_app[valid_index, :][:, train_index])
-                        y_pred_test = svc.predict(
-                            X_test[:, train_index])
+#                    if trial == 0:
+#                        print('train_index: ', train_index)
+#                        print('valid_index: ', valid_index)
+#                        print('idx_test: ', idx_test)
+#                        print('y_app[train_index]: ', y_app[train_index])
+#                        print('X_app[train_index, :][:, train_index]: ', X_app[train_index, :][:, train_index])
+#                        print('X_app[valid_index, :][:, train_index]: ', X_app[valid_index, :][:, train_index])
+                    svc.fit(X_app[train_index, :][:, train_index],
+                           y_app[train_index])
+                    
+                    # predict on the train, validation and test set
+                    y_pred_train = svc.predict(
+                        X_app[train_index, :][:, train_index])
+                    y_pred_valid = svc.predict(
+                        X_app[valid_index, :][:, train_index])
+                    y_pred_test = svc.predict(
+                        X_test[:, train_index])
 
-                        # root mean squared errors
-                        current_train_perf.append(
-                            accuracy_score(y_app[train_index],
-                                           y_pred_train))
-                        current_valid_perf.append(
-                            accuracy_score(y_app[valid_index],
-                                           y_pred_valid))
-                        current_test_perf.append(
-                            accuracy_score(y_test, y_pred_test))
-            except ValueError:
-                print(sys.exc_info()[0])
-                print(params_out, params_in)
+                    # root mean squared errors
+                    current_train_perf.append(
+                        accuracy_score(y_app[train_index],
+                                       y_pred_train))
+                    current_valid_perf.append(
+                        accuracy_score(y_app[valid_index],
+                                       y_pred_valid))
+                    current_test_perf.append(
+                        accuracy_score(y_test, y_pred_test))
+#            except ValueError:
+#                print(sys.exc_info()[0])
+#                print(params_out, params_in)
 
             # average performance on inner splits
             train_pref[index_out][index_in] = np.mean(
@@ -715,5 +770,8 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
             test_pref[index_out][index_in] = np.mean(
                 current_test_perf)
 #            print(time.time() - st)
+#    if trial == 0:
+#        print('val_pref: ', val_pref)
+#        print('test_pref: ', test_pref)
 
     return train_pref, val_pref, test_pref

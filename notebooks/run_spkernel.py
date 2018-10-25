@@ -7,21 +7,21 @@ from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 #from pygraph.utils.model_selection_precomputed import trial_do
 
 dslist = [
-#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-#        'task': 'regression'},  # node symb
-#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
-#    # contains single node graph, node symb
-#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
-#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
-#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
-#             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
+    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+        'task': 'regression'},  # node symb
+    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
+    # contains single node graph, node symb
+    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
+    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
+    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
+             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
     # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
     # node symb/nsymb
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
-#    # node/edge symb
+    # node/edge symb
 #    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
 #     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
 
@@ -56,7 +56,7 @@ estimator = spkernel
 mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 param_grid_precomputed = {'node_kernels': [
     {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]}
-param_grid = [{'C': np.logspace(-10, 3, num=27, base=10)},
+param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 
 for ds in dslist:

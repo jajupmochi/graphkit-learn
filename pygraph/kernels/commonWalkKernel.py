@@ -85,21 +85,20 @@ def commonwalkkernel(*args,
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
     pool = Pool(n_jobs)
-    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+    itr = zip(combinations_with_replacement(Gn, 2),
+              combinations_with_replacement(range(0, len(Gn)), 2))
     len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
     if len_itr < 1000 * n_jobs:
         chunksize = int(len_itr / n_jobs) + 1
     else:
-        chunksize = 100
+        chunksize = 1000
 
     # direct product graph method - exponential
     if compute_method == 'exp':
-        do_partial = partial(_commonwalkkernel_exp, Gn, node_label, edge_label,
-                             weight)
+        do_partial = partial(wrapper_cw_exp, node_label, edge_label, weight)
     # direct product graph method - geometric
     elif compute_method == 'geo':
-        do_partial = partial(_commonwalkkernel_geo, Gn, node_label, edge_label,
-                             weight)
+        do_partial = partial(wrapper_cw_geo, node_label, edge_label, weight)
 
     for i, j, kernel in tqdm(
             pool.imap_unordered(do_partial, itr, chunksize),
@@ -153,7 +152,7 @@ def commonwalkkernel(*args,
     return Kmatrix, run_time
 
 
-def _commonwalkkernel_exp(Gn, node_label, edge_label, beta, ij):
+def _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta):
     """Calculate walk graph kernels up to n between 2 graphs using exponential 
     series.
 
@@ -175,10 +174,6 @@ def _commonwalkkernel_exp(Gn, node_label, edge_label, beta, ij):
     kernel : float
         The common walk Kernel between 2 graphs.
     """
-    iglobal = ij[0]
-    jglobal = ij[1]
-    g1 = Gn[iglobal]
-    g2 = Gn[jglobal]
 
     # get tensor product / direct product
     gp = direct_product(g1, g2, node_label, edge_label)
@@ -219,10 +214,18 @@ def _commonwalkkernel_exp(Gn, node_label, edge_label, beta, ij):
     # print(np.exp(weight * A))
     # print('-------')
 
-    return iglobal, jglobal, exp_D.sum()
+    return exp_D.sum()
 
 
-def _commonwalkkernel_geo(Gn, node_label, edge_label, gamma, ij):
+def wrapper_cw_exp(node_label, edge_label, beta, itr_item):
+    g1 = itr_item[0][0]
+    g2 = itr_item[0][1]
+    i = itr_item[1][0]
+    j = itr_item[1][1]
+    return i, j, _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta)
+
+
+def _commonwalkkernel_geo(g1, g2, node_label, edge_label, gamma):
     """Calculate common walk graph kernels up to n between 2 graphs using 
     geometric series.
 
@@ -244,19 +247,22 @@ def _commonwalkkernel_geo(Gn, node_label, edge_label, gamma, ij):
     kernel : float
         The common walk Kernel between 2 graphs.
     """
-    iglobal = ij[0]
-    jglobal = ij[1]
-    g1 = Gn[iglobal]
-    g2 = Gn[jglobal]
-
     # get tensor product / direct product
     gp = direct_product(g1, g2, node_label, edge_label)
     A = nx.adjacency_matrix(gp).todense()
     mat = np.identity(len(A)) - gamma * A
     try:
-        return iglobal, jglobal, mat.I.sum()
+        return mat.I.sum()
     except np.linalg.LinAlgError:
-        return iglobal, jglobal, np.nan
+        return np.nan
+    
+    
+def wrapper_cw_geo(node_label, edge_label, gama, itr_item):
+    g1 = itr_item[0][0]
+    g2 = itr_item[0][1]
+    i = itr_item[1][0]
+    j = itr_item[1][1]
+    return i, j, _commonwalkkernel_geo(g1, g2, node_label, edge_label, gama)
 
 
 def _commonwalkkernel_brute(walks1,

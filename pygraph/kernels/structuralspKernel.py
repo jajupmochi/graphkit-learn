@@ -12,7 +12,6 @@ import sys
 import time
 from itertools import combinations, combinations_with_replacement, product
 from functools import partial
-from joblib import Parallel, delayed
 from multiprocessing import Pool
 from tqdm import tqdm
 
@@ -71,7 +70,6 @@ def structuralspkernel(*args,
     """
     # pre-process
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
-
     weight = None
     if edge_weight is None:
         print('\n None edge weight specified. Set all weight to 1.\n')
@@ -98,34 +96,61 @@ def structuralspkernel(*args,
     start_time = time.time()
 
     # get shortest paths of each graph in Gn
-    splist = [[] for _ in range(len(Gn))]
+    splist = [None] * len(Gn)
     pool = Pool(n_jobs)
     # get shortest path graphs of Gn
-    getsp_partial = partial(wrap_getSP, Gn, weight, ds_attrs['is_directed'])
+    getsp_partial = partial(wrapper_getSP, weight, ds_attrs['is_directed'])
+    itr = zip(Gn, range(0, len(Gn)))
     if len(Gn) < 1000 * n_jobs:
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
         chunksize = 1000
     # chunksize = 300  # int(len(list(itr)) / n_jobs)
     for i, sp in tqdm(
-            pool.imap_unordered(getsp_partial, range(0, len(Gn)), chunksize),
+            pool.imap_unordered(getsp_partial, itr, chunksize),
             desc='getting shortest paths',
             file=sys.stdout):
         splist[i] = sp
+#        time.sleep(10)
     pool.close()
     pool.join()
-
-    # # ---- use pool.map to parallel ----
-    # result_sp = pool.map(getsp_partial, range(0, len(Gn)))
-    # for i in result_sp:
-    #     Gn[i[0]] = i[1]
-    # or
-    # getsp_partial = partial(wrap_getSP, Gn, weight)
-    # for i, g in tqdm(
-    #         pool.map(getsp_partial, range(0, len(Gn))),
-    #         desc='getting sp graphs',
-    #         file=sys.stdout):
-    #     Gn[i] = g
+    
+    
+#    # get shortest paths of each graph in Gn
+#    splist = [[] for _ in range(len(Gn))]
+#    # get shortest path graphs of Gn
+#    getsp_partial = partial(wrapper_getSP, weight, ds_attrs['is_directed'])
+#    itr = zip(Gn, range(0, len(Gn)))
+#    if len(Gn) < 1000 * n_jobs:
+#        chunksize = int(len(Gn) / n_jobs) + 1
+#    else:
+#        chunksize = 1000
+#    # chunksize = 300  # int(len(list(itr)) / n_jobs)
+#    from contextlib import closing  
+#    with closing(Pool(n_jobs)) as pool:
+##        for i, sp in tqdm(
+#        res = pool.imap_unordered(getsp_partial, itr, 10)
+##                desc='getting shortest paths',
+##                file=sys.stdout):
+##            splist[i] = sp
+##        time.sleep(10)
+#    pool.close()
+#    pool.join()
+    
+#    ss = 0
+#    ss += sys.getsizeof(splist)
+#    for spss in splist:
+#        ss += sys.getsizeof(spss)
+#        for spp in spss:
+#            ss += sys.getsizeof(spp)
+    
+    
+#    time.sleep(20)
+    
+#    # ---- direct running, normally use single CPU core. ----
+#    splist = []
+#    for g in tqdm(Gn, desc='getting sp graphs', file=sys.stdout):
+#        splist.append(get_shortest_paths(g, weight, ds_attrs['is_directed']))
 
     # # ---- only for the Fast Computation of Shortest Path Kernel (FCSP)
     # sp_ml = [0] * len(Gn)  # shortest path matrices
@@ -149,9 +174,11 @@ def structuralspkernel(*args,
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
     pool = Pool(n_jobs)
-    do_partial = partial(structuralspkernel_do, Gn, splist, ds_attrs,
-                         node_label, edge_label, node_kernels, edge_kernels)
-    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+                         node_kernels, edge_kernels)
+    itr = zip(combinations_with_replacement(Gn, 2),
+              combinations_with_replacement(splist, 2),
+              combinations_with_replacement(range(0, len(Gn)), 2))
     len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
     if len_itr < 1000 * n_jobs:
         chunksize = int(len_itr / n_jobs) + 1
@@ -166,36 +193,36 @@ def structuralspkernel(*args,
     pool.close()
     pool.join()
 
-    # # ---- use pool.map to parallel. ----
-    # # result_perf = pool.map(do_partial, itr)
-    # do_partial = partial(spkernel_do, Gn, ds_attrs, node_label, node_kernels)
-    # itr = combinations_with_replacement(range(0, len(Gn)), 2)
-    # for i, j, kernel in tqdm(
-    #         pool.map(do_partial, itr), desc='calculating kernels',
-    #         file=sys.stdout):
-    #     Kmatrix[i][j] = kernel
-    #     Kmatrix[j][i] = kernel
-    # pool.close()
-    # pool.join()
+#    # ---- use pool.imap_unordered to parallel and track progress. ----
+#    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+#                         node_kernels, edge_kernels)
+#    itr = zip(combinations_with_replacement(Gn, 2),
+#              combinations_with_replacement(splist, 2),
+#              combinations_with_replacement(range(0, len(Gn)), 2))
+#    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+#    if len_itr < 1000 * n_jobs:
+#        chunksize = int(len_itr / n_jobs) + 1
+#    else:
+#        chunksize = 1000
+#    from contextlib import closing
+#    with closing(Pool(n_jobs)) as pool:
+#        for i, j, kernel in tqdm(
+#                pool.imap_unordered(do_partial, itr, 1000),
+#                desc='calculating kernels',
+#                file=sys.stdout):
+#            Kmatrix[i][j] = kernel
+#            Kmatrix[j][i] = kernel
+#    pool.close()
+#    pool.join()
 
-    # # ---- use joblib.Parallel to parallel and track progress. ----
-    # result_perf = Parallel(
-    #     n_jobs=n_jobs, verbose=10)(
-    #         delayed(do_partial)(ij)
-    #         for ij in combinations_with_replacement(range(0, len(Gn)), 2))
-    # result_perf = [
-    #     do_partial(ij)
-    #     for ij in combinations_with_replacement(range(0, len(Gn)), 2)
-    # ]
-    # for i in result_perf:
-    #     Kmatrix[i[0]][i[1]] = i[2]
-    #     Kmatrix[i[1]][i[0]] = i[2]
 
 #    # ---- direct running, normally use single CPU core. ----
-#    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+#    itr = zip(combinations_with_replacement(Gn, 2),
+#              combinations_with_replacement(splist, 2),
+#              combinations_with_replacement(range(0, len(Gn)), 2))
 #    for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        i, j, kernel = structuralspkernel_do(Gn, splist, ds_attrs, 
-#         node_label, edge_label, node_kernels, edge_kernels, gs)
+#        i, j, kernel = wrapper_ssp_do(ds_attrs, node_label, edge_label, 
+#                                      node_kernels, edge_kernels, gs)
 #        if(kernel > 1):
 #            print("error here ")
 #        Kmatrix[i][j] = kernel
@@ -209,18 +236,11 @@ def structuralspkernel(*args,
     return Kmatrix, run_time
 
 
-def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
-                          node_kernels, edge_kernels, ij):
-
-    iglobal = ij[0]
-    jglobal = ij[1]
-    g1 = Gn[iglobal]
-    g2 = Gn[jglobal]
-    spl1 = splist[iglobal]
-    spl2 = splist[jglobal]
+def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
+                          node_kernels, edge_kernels):
+    
     kernel = 0
 
-    #try:
     # First, compute shortest path matrices, method borrowed from FCSP.
     if ds_attrs['node_labeled']:
         # node symb and non-synb labeled
@@ -369,11 +389,19 @@ def structuralspkernel_do(Gn, splist, ds_attrs, node_label, edge_label,
     #                 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
     #                 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
     #                 Kmatrix += kn1 + kn2
-#except KeyError:  # missing labels or attributes
-    #    print("toto")
-    #    pass
+    return kernel
 
-    return iglobal, jglobal, kernel
+
+def wrapper_ssp_do(ds_attrs, node_label, edge_label, node_kernels, 
+                   edge_kernels, itr_item):
+    g1 = itr_item[0][0]
+    g2 = itr_item[0][1]
+    spl1 = itr_item[1][0]
+    spl2 = itr_item[1][1]
+    i = itr_item[2][0]
+    j = itr_item[2][1]
+    return i, j, structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, 
+        node_label, edge_label, node_kernels, edge_kernels)
 
 
 def get_shortest_paths(G, weight, directed):
@@ -397,17 +425,21 @@ def get_shortest_paths(G, weight, directed):
     for n1, n2 in combinations(G.nodes(), 2):
         try:
             spltemp = list(nx.all_shortest_paths(G, n1, n2, weight=weight))
+        except nx.NetworkXNoPath:  # nodes not connected
+            #            sp.append([])
+            pass
+        else:
             sp += spltemp
             # each edge walk is counted twice, starting from both its extreme nodes.
             if not directed:
                 sp += [sptemp[::-1] for sptemp in spltemp]
-        except nx.NetworkXNoPath:  # nodes not connected
-            #            sp.append([])
-            pass
+                
     # add single nodes as length 0 paths.
     sp += [[n] for n in G.nodes()]
     return sp
 
 
-def wrap_getSP(Gn, weight, directed, i):
-    return i, get_shortest_paths(Gn[i], weight, directed)
+def wrapper_getSP(weight, directed, itr_item):
+    g = itr_item[0]
+    i = itr_item[1]
+    return i, get_shortest_paths(g, weight, directed)

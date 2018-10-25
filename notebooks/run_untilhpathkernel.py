@@ -62,7 +62,7 @@ dslist = [
 ]
 estimator = untilhpathkernel
 mixkernel = functools.partial(kernelproduct, deltakernel, rbf_kernel)
-param_grid_precomputed = {'depth': np.linspace(7, 10, 10), 
+param_grid_precomputed = {'depth': np.linspace(1, 10, 10), 
                           'k_func': ['tanimoto', 'MinMax']}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]

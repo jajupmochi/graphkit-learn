@@ -13,7 +13,6 @@ from itertools import chain, combinations_with_replacement
 from functools import partial
 from multiprocessing import Pool
 from tqdm import tqdm
-import traceback
 
 import networkx as nx
 import numpy as np
@@ -77,15 +76,15 @@ def untilhpathkernel(*args,
     # but this may cost a lot of memory for large datasets.
     pool = Pool(n_jobs)
     all_paths = [[] for _ in range(len(Gn))]
-    getps_partial = partial(wrap_find_all_paths_until_length, Gn, depth, 
+    getps_partial = partial(wrapper_find_all_paths_until_length, depth, 
                             ds_attrs, node_label, edge_label)
+    itr = zip(Gn, range(0, len(Gn)))
     if len(Gn) < 1000 * n_jobs:
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
         chunksize = 1000
-    # chunksize = 300  # int(len(list(itr)) / n_jobs)
     for i, ps in tqdm(
-            pool.imap_unordered(getps_partial, range(0, len(Gn)), chunksize),
+            pool.imap_unordered(getps_partial, itr, chunksize),
             desc='getting paths', file=sys.stdout):
         all_paths[i] = ps
     pool.close()
@@ -110,8 +109,9 @@ def untilhpathkernel(*args,
         pass
     else:
         pool = Pool(n_jobs)
-        do_partial = partial(_untilhpathkernel_do_naive, all_paths, k_func)
-        itr = combinations_with_replacement(range(0, len(Gn)), 2)
+        do_partial = partial(wrapper_uhpath_do_naive, k_func)
+        itr = zip(combinations_with_replacement(all_paths, 2),
+              combinations_with_replacement(range(0, len(Gn)), 2))
         len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
         if len_itr < 1000 * n_jobs:
             chunksize = int(len_itr / n_jobs) + 1
@@ -216,7 +216,7 @@ def _untilhpathkernel_do_gst(gst1, gst2, paths1, paths2, k_func):
     return kernel
 
 
-def _untilhpathkernel_do_naive(paths_list, k_func, ij):
+def _untilhpathkernel_do_naive(paths1, paths2, k_func):
     """Calculate path graph kernels up to depth d between 2 graphs naively.
 
     Parameters
@@ -235,10 +235,6 @@ def _untilhpathkernel_do_naive(paths_list, k_func, ij):
     kernel : float
         Path kernel up to h between 2 graphs.
     """
-    iglobal = ij[0]
-    jglobal = ij[1]
-    paths1 = paths_list[iglobal]
-    paths2 = paths_list[jglobal]
     all_paths = list(set(paths1 + paths2))
 
     if k_func == 'tanimoto':
@@ -260,12 +256,18 @@ def _untilhpathkernel_do_naive(paths_list, k_func, ij):
         kernel = np.sum(np.minimum(vector1, vector2)) / \
             np.sum(np.maximum(vector1, vector2))
 
-    return iglobal, jglobal, kernel
+    return kernel
+
+
+def wrapper_uhpath_do_naive(k_func, itr_item):
+    plist1 = itr_item[0][0]
+    plist2 = itr_item[0][1]
+    i = itr_item[1][0]
+    j = itr_item[1][1]
+    return i, j, _untilhpathkernel_do_naive(plist1, plist2, k_func)
 
 
 # @todo: (can be removed maybe)  this method find paths repetively, it could be faster.
-
-
 def find_all_paths_until_length(G,
                                 length,
                                 ds_attrs,
@@ -368,15 +370,12 @@ def find_all_paths_until_length(G,
             return [tuple([len(path)]) for path in all_paths]
         
         
-def wrap_find_all_paths_until_length(Gn, length, ds_attrs, node_label, 
-                                     edge_label, i):
-    try:
-        return i, find_all_paths_until_length(Gn[i], length, ds_attrs,
+def wrapper_find_all_paths_until_length(length, ds_attrs, node_label, 
+                                     edge_label, itr_item):
+    g = itr_item[0]
+    i = itr_item[1]
+    return i, find_all_paths_until_length(g, length, ds_attrs,
                 node_label=node_label, edge_label=edge_label)
-    except Exception as e:
-        traceback.print_exc()
-        print('')
-        raise e
 
 
 def paths2GSuffixTree(paths):

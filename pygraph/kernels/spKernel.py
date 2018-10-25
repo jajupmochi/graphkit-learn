@@ -8,7 +8,6 @@ import sys
 import time
 from itertools import combinations_with_replacement, product
 from functools import partial
-from joblib import Parallel, delayed
 from multiprocessing import Pool
 from tqdm import tqdm
 
@@ -89,7 +88,8 @@ def spkernel(*args,
 
     pool = Pool(n_jobs)
     # get shortest path graphs of Gn
-    getsp_partial = partial(wrap_getSPGraph, Gn, weight)
+    getsp_partial = partial(wrapper_getSPGraph, weight)
+    itr = zip(Gn, range(0, len(Gn)))
     if len(Gn) < 1000 * n_jobs:
 #        # use default chunksize as pool.map when iterable is less than 100
 #        chunksize, extra = divmod(len(Gn), n_jobs * 4)
@@ -98,9 +98,8 @@ def spkernel(*args,
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
         chunksize = 1000
-    # chunksize = 300  # int(len(list(itr)) / n_jobs)
     for i, g in tqdm(
-            pool.imap_unordered(getsp_partial, range(0, len(Gn)), chunksize),
+            pool.imap_unordered(getsp_partial, itr, chunksize),
             desc='getting sp graphs', file=sys.stdout):
         Gn[i] = g
     pool.close()
@@ -144,8 +143,9 @@ def spkernel(*args,
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
     pool = Pool(n_jobs)
-    do_partial = partial(spkernel_do, Gn, ds_attrs, node_label, node_kernels)
-    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+    do_partial = partial(wrapper_sp_do, ds_attrs, node_label, node_kernels)
+    itr = zip(combinations_with_replacement(Gn, 2),
+              combinations_with_replacement(range(0, len(Gn)), 2))
     len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
     if len_itr < 1000 * n_jobs:
         chunksize = int(len_itr / n_jobs) + 1
@@ -200,15 +200,10 @@ def spkernel(*args,
     return Kmatrix, run_time, idx
 
 
-def spkernel_do(Gn, ds_attrs, node_label, node_kernels, ij):
-
-    i = ij[0]
-    j = ij[1]
-    g1 = Gn[i]
-    g2 = Gn[j]
+def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
+    
     kernel = 0
 
-#    try:
     # compute shortest path matrices first, method borrowed from FCSP.
     if ds_attrs['node_labeled']:
         # node symb and non-synb labeled
@@ -243,7 +238,7 @@ def spkernel_do(Gn, ds_attrs, node_label, node_kernels, ij):
                     g1.edges(data=True), g2.edges(data=True)):
                 if e1[2]['cost'] == e2[2]['cost']:
                     kernel += 1
-            return i, j, kernel
+            return kernel
 
     # compute graph kernels
     if ds_attrs['is_directed']:
@@ -293,12 +288,20 @@ def spkernel_do(Gn, ds_attrs, node_label, node_kernels, ij):
         #                 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
         #                 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
         #                 kernel += kn1 + kn2
-#    except KeyError:  # missing labels or attributes
-#        pass
 
-    return i, j, kernel
+    return kernel
 
 
-def wrap_getSPGraph(Gn, weight, i):
-    return i, getSPGraph(Gn[i], edge_weight=weight)
-    # return i, nx.floyd_warshall_numpy(Gn[i], weight=weight)
+def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr_item):
+    g1 = itr_item[0][0]
+    g2 = itr_item[0][1]
+    i = itr_item[1][0]
+    j = itr_item[1][1]
+    return i, j, spkernel_do(g1, g2, ds_attrs, node_label, node_kernels)
+
+
+def wrapper_getSPGraph(weight, itr_item):
+    g = itr_item[0]
+    i = itr_item[1]
+    return i, getSPGraph(g, edge_weight=weight)
+    # return i, nx.floyd_warshall_numpy(g, weight=weight)

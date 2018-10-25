@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import eig
 
 # read gram matrices from file.
-results_dir = 'results/structuralspkernel/'
+results_dir = 'results/untilhpathkernel/myria'
 ds_name = 'Letter-med'
 gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
 #print('gm time: ', gmfile['gmtime'])
