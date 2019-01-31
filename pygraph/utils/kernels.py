@@ -26,27 +26,23 @@ def deltakernel(x, y):
 
 
 def gaussiankernel(x, y, gamma=None):
-    """Gaussian kernel. Use sklearn.metrics.pairwise.rbf_kernel instead.
-    Compute the rbf (gaussian) kernel between X and Y:
+    """Gaussian kernel.
+    Compute the rbf (gaussian) kernel between x and y:
 
-        K(x, y) = exp(-gamma ||x-y||^2)
-
-    for each pair of rows x in X and y in Y.
+        K(x, y) = exp(-gamma ||x-y||^2).
 
     Read more in the :ref:`User Guide <rbf_kernel>`.
 
     Parameters
     ----------
-    X : array of shape (n_features)
-
-    Y : array of shape (n_features)
+    x, y : array
 
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
     Returns
     -------
-    kernel : integer
+    kernel : float
     """
     if gamma is None:
         gamma = 1.0 / len(x)

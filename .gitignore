@@ -4,6 +4,9 @@ datasets/*
 !datasets/ds.py
 notebooks/results/*
 requirements/*
+*.npy
+*.eps
+*.dat
 
 __pycache__
 ##*#

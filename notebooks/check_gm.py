@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import eig
 
 # read gram matrices from file.
-results_dir = 'results/untilhpathkernel/myria'
+results_dir = 'results/marginalizedkernel'
 ds_name = 'Letter-med'
 gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
 #print('gm time: ', gmfile['gmtime'])
@@ -22,11 +22,13 @@ gram_matrices = gmfile['gms']
 #y = gmfile['y'].tolist()
 #x = gram_matrices[0]
 
-for x in gram_matrices:
+for idx, x in enumerate(gram_matrices):
+    print()
+    print(idx)
     plt.imshow(x)
     plt.colorbar()
     plt.savefig('check_gm/' + ds_name + '.gm.eps', format='eps', dpi=300)
-    # print(np.transpose(x))
+#    print(np.transpose(x))
     print('if symmetric: ', np.array_equal(x, np.transpose(x)))
     
     print('diag: ', np.diag(x))
@@ -35,7 +37,7 @@ for x in gram_matrices:
     print('min, max matrix: ', np.min(x), np.max(x))
     for i in range(len(x)):
         for j in range(len(x)):
-            if x[i][j] > 1:
+            if x[i][j] > 1 + 1e-9:
                 print(i, j)
                 raise Exception('value bigger than 1 with index', i, j)
     print('mean x: ', np.mean(np.mean(x)))

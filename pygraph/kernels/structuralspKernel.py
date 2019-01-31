@@ -10,7 +10,7 @@ Measuring Similarity of Shapes. InESANN 2007 Apr 25 (pp. 355-360).
 
 import sys
 import time
-from itertools import combinations, combinations_with_replacement, product
+from itertools import combinations, product
 from functools import partial
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -19,6 +19,7 @@ import networkx as nx
 import numpy as np
 
 from pygraph.utils.graphdataset import get_dataset_attributes
+from pygraph.utils.parallel import parallel_gm
 
 sys.path.insert(0, "../")
 
@@ -101,10 +102,10 @@ def structuralspkernel(*args,
     # get shortest path graphs of Gn
     getsp_partial = partial(wrapper_getSP, weight, ds_attrs['is_directed'])
     itr = zip(Gn, range(0, len(Gn)))
-    if len(Gn) < 1000 * n_jobs:
+    if len(Gn) < 100 * n_jobs:
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
-        chunksize = 1000
+        chunksize = 100
     # chunksize = 300  # int(len(list(itr)) / n_jobs)
     for i, sp in tqdm(
             pool.imap_unordered(getsp_partial, itr, chunksize),
@@ -171,27 +172,53 @@ def structuralspkernel(*args,
     # print(len(edge_w_g[0]))
 
     Kmatrix = np.zeros((len(Gn), len(Gn)))
-
+    
     # ---- use pool.imap_unordered to parallel and track progress. ----
-    pool = Pool(n_jobs)
+    def init_worker(spl_toshare, gs_toshare):
+        global G_spl, G_gs
+        G_spl = spl_toshare
+        G_gs = gs_toshare      
     do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
-                         node_kernels, edge_kernels)
-    itr = zip(combinations_with_replacement(Gn, 2),
-              combinations_with_replacement(splist, 2),
-              combinations_with_replacement(range(0, len(Gn)), 2))
-    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-    if len_itr < 1000 * n_jobs:
-        chunksize = int(len_itr / n_jobs) + 1
-    else:
-        chunksize = 1000
-    for i, j, kernel in tqdm(
-            pool.imap_unordered(do_partial, itr, chunksize),
-            desc='calculating kernels',
-            file=sys.stdout):
-        Kmatrix[i][j] = kernel
-        Kmatrix[j][i] = kernel
-    pool.close()
-    pool.join()
+                         node_kernels, edge_kernels)   
+    parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                        glbv=(splist, Gn), n_jobs=n_jobs) 
+    
+
+#    # ---- use pool.imap_unordered to parallel and track progress. ----
+#    pool = Pool(n_jobs)
+#    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+#                         node_kernels, edge_kernels)
+#    itr = zip(combinations_with_replacement(Gn, 2),
+#              combinations_with_replacement(splist, 2),
+#              combinations_with_replacement(range(0, len(Gn)), 2))
+#    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+#    if len_itr < 1000 * n_jobs:
+#        chunksize = int(len_itr / n_jobs) + 1
+#    else:
+#        chunksize = 1000
+#    for i, j, kernel in tqdm(
+#            pool.imap_unordered(do_partial, itr, chunksize),
+#            desc='calculating kernels',
+#            file=sys.stdout):
+#        Kmatrix[i][j] = kernel
+#        Kmatrix[j][i] = kernel
+#    pool.close()
+#    pool.join()
+    
+#    # ---- use pool.map to parallel. ----
+#    pool = Pool(n_jobs)
+#    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+#                         node_kernels, edge_kernels)
+#    itr = zip(combinations_with_replacement(Gn, 2),
+#              combinations_with_replacement(splist, 2),
+#              combinations_with_replacement(range(0, len(Gn)), 2))
+#    for i, j, kernel in tqdm(
+#            pool.map(do_partial, itr), desc='calculating kernels',
+#            file=sys.stdout):
+#        Kmatrix[i][j] = kernel
+#        Kmatrix[j][i] = kernel
+#    pool.close()
+#    pool.join()
 
 #    # ---- use pool.imap_unordered to parallel and track progress. ----
 #    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
@@ -217,14 +244,12 @@ def structuralspkernel(*args,
 
 
 #    # ---- direct running, normally use single CPU core. ----
-#    itr = zip(combinations_with_replacement(Gn, 2),
-#              combinations_with_replacement(splist, 2),
-#              combinations_with_replacement(range(0, len(Gn)), 2))
-#    for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        i, j, kernel = wrapper_ssp_do(ds_attrs, node_label, edge_label, 
-#                                      node_kernels, edge_kernels, gs)
-#        if(kernel > 1):
-#            print("error here ")
+#    itr = combinations_with_replacement(range(0, len(Gn)), 2)
+#    for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#        kernel = structuralspkernel_do(Gn[i], Gn[j], splist[i], splist[j],
+#                ds_attrs, node_label, edge_label, node_kernels, edge_kernels)
+##        if(kernel > 1):
+##            print("error here ")
 #        Kmatrix[i][j] = kernel
 #        Kmatrix[j][i] = kernel
 
@@ -242,11 +267,11 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
     kernel = 0
 
     # First, compute shortest path matrices, method borrowed from FCSP.
+    vk_dict = {}  # shortest path matrices dict
     if ds_attrs['node_labeled']:
         # node symb and non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             kn = node_kernels['mix']
-            vk_dict = {}  # shortest path matrices dict
             for n1, n2 in product(
                     g1.nodes(data=True), g2.nodes(data=True)):
                 vk_dict[(n1[0], n2[0])] = kn(
@@ -255,7 +280,6 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
         # node symb labeled
         else:
             kn = node_kernels['symb']
-            vk_dict = {}  # shortest path matrices dict
             for n1 in g1.nodes(data=True):
                 for n2 in g2.nodes(data=True):
                     vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
@@ -264,23 +288,22 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
         # node non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             kn = node_kernels['nsymb']
-            vk_dict = {}  # shortest path matrices dict
             for n1 in g1.nodes(data=True):
                 for n2 in g2.nodes(data=True):
                     vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
                                                  n2[1]['attributes'])
         # node unlabeled
         else:
-            vk_dict = {}
+            pass
 
     # Then, compute kernels between all pairs of edges, which idea is an
     # extension of FCSP. It suits sparse graphs, which is the most case we
-    # went though. For dense graphs, it would be slow.
+    # went though. For dense graphs, this would be slow.
+    ek_dict = {}  # dict of edge kernels
     if ds_attrs['edge_labeled']:
         # edge symb and non-synb labeled
         if ds_attrs['edge_attr_dim'] > 0:
             ke = edge_kernels['mix']
-            ek_dict = {}  # dict of edge kernels
             for e1, e2 in product(
                     g1.edges(data=True), g2.edges(data=True)):
                 ek_temp = ke(e1[2][edge_label], e2[2][edge_label],
@@ -292,7 +315,6 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
         # edge symb labeled
         else:
             ke = edge_kernels['symb']
-            ek_dict = {}
             for e1 in g1.edges(data=True):
                 for e2 in g2.edges(data=True):
                     ek_temp = ke(e1[2][edge_label], e2[2][edge_label])
@@ -304,7 +326,6 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
         # edge non-synb labeled
         if ds_attrs['edge_attr_dim'] > 0:
             ke = edge_kernels['nsymb']
-            ek_dict = {}
             for e1 in g1.edges(data=True):
                 for e2 in g2.edges(data=True):
                     ek_temp = kn(e1[2]['attributes'], e2[2]['attributes'])
@@ -314,7 +335,7 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
                     ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
         # edge unlabeled
         else:
-            ek_dict = {}
+            pass
 
     # compute graph kernels
     if vk_dict:
@@ -393,15 +414,12 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
 
 
 def wrapper_ssp_do(ds_attrs, node_label, edge_label, node_kernels, 
-                   edge_kernels, itr_item):
-    g1 = itr_item[0][0]
-    g2 = itr_item[0][1]
-    spl1 = itr_item[1][0]
-    spl2 = itr_item[1][1]
-    i = itr_item[2][0]
-    j = itr_item[2][1]
-    return i, j, structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, 
-        node_label, edge_label, node_kernels, edge_kernels)
+                   edge_kernels, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, structuralspkernel_do(G_gs[i], G_gs[j], G_spl[i], G_spl[j], 
+                                       ds_attrs, node_label, edge_label, 
+                                       node_kernels, edge_kernels)
 
 
 def get_shortest_paths(G, weight, directed):

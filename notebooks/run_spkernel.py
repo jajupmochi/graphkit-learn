@@ -21,7 +21,7 @@ dslist = [
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
     # node symb/nsymb
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
-    # node/edge symb
+#    # node/edge symb
 #    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
 #     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
 

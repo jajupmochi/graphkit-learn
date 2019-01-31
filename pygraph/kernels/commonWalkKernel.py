@@ -8,12 +8,8 @@
 
 import sys
 import time
-from tqdm import tqdm
 from collections import Counter
-from itertools import combinations_with_replacement
 from functools import partial
-from multiprocessing import Pool
-#import traceback
 
 import networkx as nx
 import numpy as np
@@ -21,6 +17,7 @@ import numpy as np
 sys.path.insert(0, "../")
 from pygraph.utils.utils import direct_product
 from pygraph.utils.graphdataset import get_dataset_attributes
+from pygraph.utils.parallel import parallel_gm
 
 
 def commonwalkkernel(*args,
@@ -67,7 +64,16 @@ def commonwalkkernel(*args,
     compute_method = compute_method.lower()
     # arrange all graphs in a list
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
-    Kmatrix = np.zeros((len(Gn), len(Gn)))
+    
+    # remove graphs with only 1 node, as they do not have adjacency matrices 
+    len_gn = len(Gn)
+    Gn = [(idx, G) for idx, G in enumerate(Gn) if nx.number_of_nodes(G) != 1]
+    idx = [G[0] for G in Gn]
+    Gn = [G[1] for G in Gn]
+    if len(Gn) != len_gn:
+        print('\n %d graphs are removed as they have only 1 node.\n' %
+              (len_gn - len(Gn)))
+        
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
@@ -82,50 +88,66 @@ def commonwalkkernel(*args,
         Gn = [G.to_directed() for G in Gn]
 
     start_time = time.time()
+    
+    Kmatrix = np.zeros((len(Gn), len(Gn)))
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
-    pool = Pool(n_jobs)
-    itr = zip(combinations_with_replacement(Gn, 2),
-              combinations_with_replacement(range(0, len(Gn)), 2))
-    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-    if len_itr < 1000 * n_jobs:
-        chunksize = int(len_itr / n_jobs) + 1
-    else:
-        chunksize = 1000
-
+    def init_worker(gn_toshare):
+        global G_gn
+        G_gn = gn_toshare
     # direct product graph method - exponential
     if compute_method == 'exp':
         do_partial = partial(wrapper_cw_exp, node_label, edge_label, weight)
     # direct product graph method - geometric
     elif compute_method == 'geo':
-        do_partial = partial(wrapper_cw_geo, node_label, edge_label, weight)
-
-    for i, j, kernel in tqdm(
-            pool.imap_unordered(do_partial, itr, chunksize),
-            desc='calculating kernels',
-            file=sys.stdout):
-        Kmatrix[i][j] = kernel
-        Kmatrix[j][i] = kernel
-    pool.close()
-    pool.join()
+        do_partial = partial(wrapper_cw_geo, node_label, edge_label, weight)  
+    parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                glbv=(Gn,), n_jobs=n_jobs)  
+    
+    
+#    pool = Pool(n_jobs)
+#    itr = zip(combinations_with_replacement(Gn, 2),
+#              combinations_with_replacement(range(0, len(Gn)), 2))
+#    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+#    if len_itr < 1000 * n_jobs:
+#        chunksize = int(len_itr / n_jobs) + 1
+#    else:
+#        chunksize = 1000
+#
+#    # direct product graph method - exponential
+#    if compute_method == 'exp':
+#        do_partial = partial(wrapper_cw_exp, node_label, edge_label, weight)
+#    # direct product graph method - geometric
+#    elif compute_method == 'geo':
+#        do_partial = partial(wrapper_cw_geo, node_label, edge_label, weight)
+#
+#    for i, j, kernel in tqdm(
+#            pool.imap_unordered(do_partial, itr, chunksize),
+#            desc='calculating kernels',
+#            file=sys.stdout):
+#        Kmatrix[i][j] = kernel
+#        Kmatrix[j][i] = kernel
+#    pool.close()
+#    pool.join()
 
 
 #    # ---- direct running, normally use single CPU core. ----
 #    # direct product graph method - exponential
 #    itr = combinations_with_replacement(range(0, len(Gn)), 2)
 #    if compute_method == 'exp':
-#        for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#            i, j, Kmatrix[i][j] = _commonwalkkernel_exp(Gn, node_label,
-#                                                      edge_label, weight, gs)
+#        for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            Kmatrix[i][j] = _commonwalkkernel_exp(Gn[i], Gn[j], node_label,
+#                                                      edge_label, weight)
 #            Kmatrix[j][i] = Kmatrix[i][j]
 #
 #    # direct product graph method - geometric
 #    elif compute_method == 'geo':
-#        for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#            i, j, Kmatrix[i][j] = _commonwalkkernel_geo(Gn, node_label,
-#                                                      edge_label, weight, gs)
+#        for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            Kmatrix[i][j] = _commonwalkkernel_geo(Gn[i], Gn[j], node_label,
+#                                                      edge_label, weight)
 #            Kmatrix[j][i] = Kmatrix[i][j]
-#
+
+
 #    # search all paths use brute force.
 #    elif compute_method == 'brute':
 #        n = int(n)
@@ -149,7 +171,7 @@ def commonwalkkernel(*args,
         "\n --- kernel matrix of common walk kernel of size %d built in %s seconds ---"
         % (len(Gn), run_time))
 
-    return Kmatrix, run_time
+    return Kmatrix, run_time, idx
 
 
 def _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta):
@@ -177,6 +199,9 @@ def _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta):
 
     # get tensor product / direct product
     gp = direct_product(g1, g2, node_label, edge_label)
+    # return 0 if the direct product graph have no more than 1 node.
+    if nx.number_of_nodes(gp) < 2:
+        return 0
     A = nx.adjacency_matrix(gp).todense()
     # print(A)
 
@@ -217,12 +242,10 @@ def _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta):
     return exp_D.sum()
 
 
-def wrapper_cw_exp(node_label, edge_label, beta, itr_item):
-    g1 = itr_item[0][0]
-    g2 = itr_item[0][1]
-    i = itr_item[1][0]
-    j = itr_item[1][1]
-    return i, j, _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta)
+def wrapper_cw_exp(node_label, edge_label, beta, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, _commonwalkkernel_exp(G_gn[i], G_gn[j], node_label, edge_label, beta)
 
 
 def _commonwalkkernel_geo(g1, g2, node_label, edge_label, gamma):
@@ -249,20 +272,21 @@ def _commonwalkkernel_geo(g1, g2, node_label, edge_label, gamma):
     """
     # get tensor product / direct product
     gp = direct_product(g1, g2, node_label, edge_label)
+    # return 0 if the direct product graph have no more than 1 node.
+    if nx.number_of_nodes(gp) < 2:
+        return 0
     A = nx.adjacency_matrix(gp).todense()
     mat = np.identity(len(A)) - gamma * A
-    try:
-        return mat.I.sum()
-    except np.linalg.LinAlgError:
-        return np.nan
+#    try:
+    return mat.I.sum()
+#    except np.linalg.LinAlgError:
+#        return np.nan
     
     
-def wrapper_cw_geo(node_label, edge_label, gama, itr_item):
-    g1 = itr_item[0][0]
-    g2 = itr_item[0][1]
-    i = itr_item[1][0]
-    j = itr_item[1][1]
-    return i, j, _commonwalkkernel_geo(g1, g2, node_label, edge_label, gama)
+def wrapper_cw_geo(node_label, edge_label, gama, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, _commonwalkkernel_geo(G_gn[i], G_gn[j], node_label, edge_label, gama)
 
 
 def _commonwalkkernel_brute(walks1,

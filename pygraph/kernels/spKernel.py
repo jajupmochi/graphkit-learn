@@ -6,7 +6,7 @@ Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
 
 import sys
 import time
-from itertools import combinations_with_replacement, product
+from itertools import product
 from functools import partial
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -16,6 +16,7 @@ import numpy as np
 
 from pygraph.utils.utils import getSPGraph
 from pygraph.utils.graphdataset import get_dataset_attributes
+from pygraph.utils.parallel import parallel_gm
 sys.path.insert(0, "../")
 
 def spkernel(*args,
@@ -90,14 +91,14 @@ def spkernel(*args,
     # get shortest path graphs of Gn
     getsp_partial = partial(wrapper_getSPGraph, weight)
     itr = zip(Gn, range(0, len(Gn)))
-    if len(Gn) < 1000 * n_jobs:
+    if len(Gn) < 100 * n_jobs:
 #        # use default chunksize as pool.map when iterable is less than 100
 #        chunksize, extra = divmod(len(Gn), n_jobs * 4)
 #        if extra:
 #            chunksize += 1
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
-        chunksize = 1000
+        chunksize = 100
     for i, g in tqdm(
             pool.imap_unordered(getsp_partial, itr, chunksize),
             desc='getting sp graphs', file=sys.stdout):
@@ -107,7 +108,7 @@ def spkernel(*args,
         
 #    # ---- direct running, normally use single CPU core. ----
 #    for i in tqdm(range(len(Gn)), desc='getting sp graphs', file=sys.stdout):
-#        i, Gn[i] = wrap_getSPGraph(Gn, weight, i)
+#        i, Gn[i] = wrapper_getSPGraph(weight, (Gn[i], i))
 
     # # ---- use pool.map to parallel ----
     # result_sp = pool.map(getsp_partial, range(0, len(Gn)))
@@ -142,23 +143,13 @@ def spkernel(*args,
     Kmatrix = np.zeros((len(Gn), len(Gn)))
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
-    pool = Pool(n_jobs)
-    do_partial = partial(wrapper_sp_do, ds_attrs, node_label, node_kernels)
-    itr = zip(combinations_with_replacement(Gn, 2),
-              combinations_with_replacement(range(0, len(Gn)), 2))
-    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-    if len_itr < 1000 * n_jobs:
-        chunksize = int(len_itr / n_jobs) + 1
-    else:
-        chunksize = 1000
-    for i, j, kernel in tqdm(
-            pool.imap_unordered(do_partial, itr, chunksize),
-            desc='calculating kernels',
-            file=sys.stdout):
-        Kmatrix[i][j] = kernel
-        Kmatrix[j][i] = kernel
-    pool.close()
-    pool.join()
+    def init_worker(gn_toshare):
+        global G_gn
+        G_gn = gn_toshare
+    do_partial = partial(wrapper_sp_do, ds_attrs, node_label, node_kernels)   
+    parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                glbv=(Gn,), n_jobs=n_jobs)
+
 
     # # ---- use pool.map to parallel. ----
     # # result_perf = pool.map(do_partial, itr)
@@ -186,9 +177,10 @@ def spkernel(*args,
     #     Kmatrix[i[1]][i[0]] = i[2]
 
 #    # ---- direct running, normally use single CPU core. ----
+#    from itertools import combinations_with_replacement
 #    itr = combinations_with_replacement(range(0, len(Gn)), 2)
-#    for gs in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        i, j, kernel = spkernel_do(Gn, ds_attrs, node_label, node_kernels, gs)
+#    for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#        kernel = spkernel_do(Gn[i], Gn[j], ds_attrs, node_label, node_kernels)
 #        Kmatrix[i][j] = kernel
 #        Kmatrix[j][i] = kernel
 
@@ -205,11 +197,11 @@ def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
     kernel = 0
 
     # compute shortest path matrices first, method borrowed from FCSP.
+    vk_dict = {}  # shortest path matrices dict
     if ds_attrs['node_labeled']:
         # node symb and non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             kn = node_kernels['mix']
-            vk_dict = {}  # shortest path matrices dict
             for n1, n2 in product(
                     g1.nodes(data=True), g2.nodes(data=True)):
                 vk_dict[(n1[0], n2[0])] = kn(
@@ -218,7 +210,6 @@ def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
         # node symb labeled
         else:
             kn = node_kernels['symb']
-            vk_dict = {}  # shortest path matrices dict
             for n1 in g1.nodes(data=True):
                 for n2 in g2.nodes(data=True):
                     vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
@@ -227,7 +218,6 @@ def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
         # node non-synb labeled
         if ds_attrs['node_attr_dim'] > 0:
             kn = node_kernels['nsymb']
-            vk_dict = {}  # shortest path matrices dict
             for n1 in g1.nodes(data=True):
                 for n2 in g2.nodes(data=True):
                     vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
@@ -292,12 +282,17 @@ def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
     return kernel
 
 
-def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr_item):
-    g1 = itr_item[0][0]
-    g2 = itr_item[0][1]
-    i = itr_item[1][0]
-    j = itr_item[1][1]
-    return i, j, spkernel_do(g1, g2, ds_attrs, node_label, node_kernels)
+def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, spkernel_do(G_gn[i], G_gn[j], ds_attrs, node_label, node_kernels)
+
+#def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr_item):
+#    g1 = itr_item[0][0]
+#    g2 = itr_item[0][1]
+#    i = itr_item[1][0]
+#    j = itr_item[1][1]
+#    return i, j, spkernel_do(g1, g2, ds_attrs, node_label, node_kernels)
 
 
 def wrapper_getSPGraph(weight, itr_item):

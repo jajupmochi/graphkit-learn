@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+#from itertools import product
 
 # from tqdm import tqdm
 
@@ -146,7 +147,6 @@ def direct_product(G1, G2, node_label, edge_label):
     """
     # arrange all graphs in a list
     from itertools import product
-
     # G = G.to_directed()
     gt = nx.DiGraph()
     # add nodes

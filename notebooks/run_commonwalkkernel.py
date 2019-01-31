@@ -6,7 +6,6 @@ Created on Fri Sep 28 17:01:13 2018
 @author: ljia
 """
 
-import functools
 from libs import *
 import multiprocessing
 from sklearn.metrics.pairwise import rbf_kernel
@@ -61,10 +60,10 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = commonwalkkernel
-mixkernel = functools.partial(kernelproduct, deltakernel, rbf_kernel)
 param_grid_precomputed = [{'compute_method': ['geo'], 
-                           'weight': np.logspace(0, -10, num=11, base=10)},
-                          {'compute_method': ['exp'], 'weight': range(0, 10)}]
+                           'weight': np.linspace(0.01, 0.15, 15)},
+#                           'weight': np.logspace(-1, -10, num=10, base=10)},
+                          {'compute_method': ['exp'], 'weight': range(0, 15)}]
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

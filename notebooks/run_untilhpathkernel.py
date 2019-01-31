@@ -6,10 +6,8 @@ Created on Fri Oct  5 19:19:33 2018
 @author: ljia
 """
 
-import functools
 from libs import *
 import multiprocessing
-from sklearn.metrics.pairwise import rbf_kernel
 
 from pygraph.kernels.untilHPathKernel import untilhpathkernel
 from pygraph.utils.kernels import deltakernel, kernelproduct
@@ -61,9 +59,9 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = untilhpathkernel
-mixkernel = functools.partial(kernelproduct, deltakernel, rbf_kernel)
-param_grid_precomputed = {'depth': np.linspace(1, 10, 10), 
-                          'k_func': ['tanimoto', 'MinMax']}
+param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
+                          'k_func': ['MinMax', 'tanimoto'],
+                          'compute_method': ['trie']} # ['MinMax']}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

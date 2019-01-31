@@ -12,12 +12,11 @@
 
 import sys
 import time
-from itertools import combinations_with_replacement
 from functools import partial
 from multiprocessing import Pool
 from tqdm import tqdm
 tqdm.monitor_interval = 0
-import traceback
+#import traceback
 
 import networkx as nx
 import numpy as np
@@ -25,6 +24,7 @@ import numpy as np
 from pygraph.utils.kernels import deltakernel
 from pygraph.utils.utils import untotterTransformation
 from pygraph.utils.graphdataset import get_dataset_attributes
+from pygraph.utils.parallel import parallel_gm
 sys.path.insert(0, "../")
 
 
@@ -64,6 +64,7 @@ def marginalizedkernel(*args,
     # pre-process
     n_iteration = int(n_iteration)
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
@@ -76,16 +77,15 @@ def marginalizedkernel(*args,
             nx.set_edge_attributes(G, '0', 'bond_type')
 
     start_time = time.time()
-
     
     if remove_totters:
         # ---- use pool.imap_unordered to parallel and track progress. ----
         pool = Pool(n_jobs)
-        untotter_partial = partial(wrap_untotter, Gn, node_label, edge_label)
-        if len(Gn) < 1000 * n_jobs:
+        untotter_partial = partial(wrapper_untotter, Gn, node_label, edge_label)
+        if len(Gn) < 100 * n_jobs:
             chunksize = int(len(Gn) / n_jobs) + 1
         else:
-            chunksize = 1000
+            chunksize = 100
         for i, g in tqdm(
                 pool.imap_unordered(
                     untotter_partial, range(0, len(Gn)), chunksize),
@@ -104,23 +104,13 @@ def marginalizedkernel(*args,
     Kmatrix = np.zeros((len(Gn), len(Gn)))
 
     # ---- use pool.imap_unordered to parallel and track progress. ----
-    pool = Pool(n_jobs)
-    do_partial = partial(_marginalizedkernel_do, Gn, node_label, edge_label,
-                         p_quit, n_iteration)
-    itr = combinations_with_replacement(range(0, len(Gn)), 2)
-    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-    if len_itr < 1000 * n_jobs:
-        chunksize = int(len_itr / n_jobs) + 1
-    else:
-        chunksize = 1000
-    for i, j, kernel in tqdm(
-            pool.imap_unordered(do_partial, itr, chunksize),
-            desc='calculating kernels',
-            file=sys.stdout):
-        Kmatrix[i][j] = kernel
-        Kmatrix[j][i] = kernel
-    pool.close()
-    pool.join()
+    def init_worker(gn_toshare):
+                global G_gn
+                G_gn = gn_toshare
+    do_partial = partial(wrapper_marg_do, node_label, edge_label,
+                         p_quit, n_iteration)   
+    parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                glbv=(Gn,), n_jobs=n_jobs)
 
 
 #    # ---- direct running, normally use single CPU core. ----
@@ -130,6 +120,7 @@ def marginalizedkernel(*args,
 #        file=sys.stdout)
 #    for i in range(0, len(Gn)):
 #        for j in range(i, len(Gn)):
+#            print(i, j)
 #            Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label,
 #                                                   edge_label, p_quit, n_iteration)
 #            Kmatrix[j][i] = Kmatrix[i][j]
@@ -143,7 +134,7 @@ def marginalizedkernel(*args,
     return Kmatrix, run_time
 
 
-def _marginalizedkernel_do(Gn, node_label, edge_label, p_quit, n_iteration, ij):
+def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
     """Calculate marginalized graph kernel between 2 graphs.
 
     Parameters
@@ -164,69 +155,136 @@ def _marginalizedkernel_do(Gn, node_label, edge_label, p_quit, n_iteration, ij):
     kernel : float
         Marginalized Kernel between 2 graphs.
     """
-    try:
-        # init parameters
-        iglobal = ij[0]
-        jglobal = ij[1]
-        g1 = Gn[iglobal]
-        g2 = Gn[jglobal]
-        kernel = 0
-        num_nodes_G1 = nx.number_of_nodes(g1)
-        num_nodes_G2 = nx.number_of_nodes(g2)
-        # the initial probability distribution in the random walks generating step
-        # (uniform distribution over |G|)
-        p_init_G1 = 1 / num_nodes_G1
-        p_init_G2 = 1 / num_nodes_G2
+    # init parameters
+    kernel = 0
+    num_nodes_G1 = nx.number_of_nodes(g1)
+    num_nodes_G2 = nx.number_of_nodes(g2)
+    # the initial probability distribution in the random walks generating step
+    # (uniform distribution over |G|)
+    p_init_G1 = 1 / num_nodes_G1
+    p_init_G2 = 1 / num_nodes_G2
+
+    q = p_quit * p_quit
+    r1 = q
+
+#    # initial R_inf
+#    # matrix to save all the R_inf for all pairs of nodes
+#    R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
+#
+#    # calculate R_inf with a simple interative method
+#    for i in range(1, n_iteration):
+#        R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
+#        R_inf_new.fill(r1)
+#
+#        # calculate R_inf for each pair of nodes
+#        for node1 in g1.nodes(data=True):
+#            neighbor_n1 = g1[node1[0]]
+#            # the transition probability distribution in the random walks
+#            # generating step (uniform distribution over the vertices adjacent
+#            # to the current vertex)
+#            if len(neighbor_n1) > 0:
+#                p_trans_n1 = (1 - p_quit) / len(neighbor_n1)
+#                for node2 in g2.nodes(data=True):
+#                    neighbor_n2 = g2[node2[0]]
+#                    if len(neighbor_n2) > 0:
+#                        p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
+#        
+#                        for neighbor1 in neighbor_n1:
+#                            for neighbor2 in neighbor_n2:
+#                                t = p_trans_n1 * p_trans_n2 * \
+#                                    deltakernel(g1.node[neighbor1][node_label],
+#                                                g2.node[neighbor2][node_label]) * \
+#                                    deltakernel(
+#                                        neighbor_n1[neighbor1][edge_label],
+#                                        neighbor_n2[neighbor2][edge_label])
+#        
+#                                R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][
+#                                    neighbor2]  # ref [1] equation (8)
+#        R_inf[:] = R_inf_new
+#
+#    # add elements of R_inf up and calculate kernel
+#    for node1 in g1.nodes(data=True):
+#        for node2 in g2.nodes(data=True):
+#            s = p_init_G1 * p_init_G2 * deltakernel(
+#                node1[1][node_label], node2[1][node_label])
+#            kernel += s * R_inf[node1[0]][node2[0]]  # ref [1] equation (6)
     
-        q = p_quit * p_quit
-        r1 = q
     
-        # initial R_inf
-        # matrix to save all the R_inf for all pairs of nodes
-        R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
-    
-        # calculate R_inf with a simple interative method
-        for i in range(1, n_iteration):
-            R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
-            R_inf_new.fill(r1)
-    
-            # calculate R_inf for each pair of nodes
-            for node1 in g1.nodes(data=True):
-                neighbor_n1 = g1[node1[0]]
-                # the transition probability distribution in the random walks
-                # generating step (uniform distribution over the vertices adjacent
-                # to the current vertex)
+    R_inf = {} # dict to save all the R_inf for all pairs of nodes
+    # initial R_inf, the 1st iteration.
+    for node1 in g1.nodes(data=True):
+        for node2 in g2.nodes(data=True):
+#            R_inf[(node1[0], node2[0])] = r1
+            if len(g1[node1[0]]) > 0:
+                if len(g2[node2[0]]) > 0:
+                    R_inf[(node1[0], node2[0])] = r1
+                else:
+                    R_inf[(node1[0], node2[0])] = p_quit
+            else:
+                if len(g2[node2[0]]) > 0:
+                    R_inf[(node1[0], node2[0])] = p_quit
+                else:
+                    R_inf[(node1[0], node2[0])] = 1
+            
+    # compute all transition probability first.
+    t_dict = {}
+    if n_iteration > 1:
+        for node1 in g1.nodes(data=True):
+            neighbor_n1 = g1[node1[0]]
+            # the transition probability distribution in the random walks
+            # generating step (uniform distribution over the vertices adjacent
+            # to the current vertex)
+            if len(neighbor_n1) > 0:
                 p_trans_n1 = (1 - p_quit) / len(neighbor_n1)
                 for node2 in g2.nodes(data=True):
                     neighbor_n2 = g2[node2[0]]
-                    p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
-    
-                    for neighbor1 in neighbor_n1:
-                        for neighbor2 in neighbor_n2:
-                            t = p_trans_n1 * p_trans_n2 * \
-                                deltakernel(g1.node[neighbor1][node_label],
-                                            g2.node[neighbor2][node_label]) * \
-                                deltakernel(
-                                    neighbor_n1[neighbor1][edge_label],
-                                    neighbor_n2[neighbor2][edge_label])
-    
-                            R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][
-                                neighbor2]  # ref [1] equation (8)
-            R_inf[:] = R_inf_new
-    
-        # add elements of R_inf up and calculate kernel
+                    if len(neighbor_n2) > 0:
+                        p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
+                        for neighbor1 in neighbor_n1:
+                            for neighbor2 in neighbor_n2:
+                                t_dict[(node1[0], node2[0], neighbor1, neighbor2)] = \
+                                    p_trans_n1 * p_trans_n2 * \
+                                    deltakernel(g1.node[neighbor1][node_label],
+                                                g2.node[neighbor2][node_label]) * \
+                                    deltakernel(
+                                        neighbor_n1[neighbor1][edge_label],
+                                        neighbor_n2[neighbor2][edge_label])
+
+    # calculate R_inf with a simple interative method
+    for i in range(2, n_iteration + 1):
+        R_inf_old = R_inf.copy()
+
+        # calculate R_inf for each pair of nodes
         for node1 in g1.nodes(data=True):
-            for node2 in g2.nodes(data=True):
-                s = p_init_G1 * p_init_G2 * deltakernel(
-                    node1[1][node_label], node2[1][node_label])
-                kernel += s * R_inf[node1[0]][node2[0]]  # ref [1] equation (6)
+            neighbor_n1 = g1[node1[0]]
+            # the transition probability distribution in the random walks
+            # generating step (uniform distribution over the vertices adjacent
+            # to the current vertex)
+            if len(neighbor_n1) > 0:
+                for node2 in g2.nodes(data=True):
+                    neighbor_n2 = g2[node2[0]]
+                    if len(neighbor_n2) > 0:   
+                        R_inf[(node1[0], node2[0])] = r1
+                        for neighbor1 in neighbor_n1:
+                            for neighbor2 in neighbor_n2:
+                                R_inf[(node1[0], node2[0])] += \
+                                    (t_dict[(node1[0], node2[0], neighbor1, neighbor2)] * \
+                                    R_inf_old[(neighbor1, neighbor2)])  # ref [1] equation (8)
+
+    # add elements of R_inf up and calculate kernel
+    for (n1, n2), value in R_inf.items():
+        s = p_init_G1 * p_init_G2 * deltakernel(
+                g1.nodes[n1][node_label], g2.nodes[n2][node_label])
+        kernel += s * value  # ref [1] equation (6)
+
+    return kernel
+        
+        
+def wrapper_marg_do(node_label, edge_label, p_quit, n_iteration, itr):
+    i= itr[0]
+    j = itr[1]
+    return i, j, _marginalizedkernel_do(G_gn[i], G_gn[j], node_label, edge_label, p_quit, n_iteration)
     
-        return iglobal, jglobal, kernel
-    except Exception as e:
-        traceback.print_exc()
-        print('')
-        raise e
 
-
-def wrap_untotter(Gn, node_label, edge_label, i):
+def wrapper_untotter(Gn, node_label, edge_label, i):
     return i, untotterTransformation(Gn[i], node_label, edge_label)

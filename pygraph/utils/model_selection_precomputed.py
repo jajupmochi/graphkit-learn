@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import KFold, train_test_split, ParameterGrid
 
 #from joblib import Parallel, delayed
-from multiprocessing import Pool
+from multiprocessing import Pool, Array
 from functools import partial
 import sys
 sys.path.insert(0, "../")
@@ -19,7 +19,9 @@ import datetime
 from pygraph.utils.graphfiles import loadDataset
 from tqdm import tqdm
 
+#from memory_profiler import profile
 
+#@profile
 def model_selection_for_precomputed_kernel(datafile,
                                            estimator,
                                            param_grid_precomputed,
@@ -91,8 +93,12 @@ def model_selection_for_precomputed_kernel(datafile,
         # Load the dataset
         print()
         print('\n1. Loading dataset from file...')
-        dataset, y = loadDataset(
-                datafile, filename_y=datafile_y, extra_params=extra_params)
+        if isinstance(datafile, str):
+            dataset, y_all = loadDataset(
+                    datafile, filename_y=datafile_y, extra_params=extra_params)
+        else: # load data directly from variable.
+            dataset = datafile
+            y_all = datafile_y                
 
         #     import matplotlib.pyplot as plt
         #     import networkx as nx
@@ -117,8 +123,13 @@ def model_selection_for_precomputed_kernel(datafile,
         tts = time.time()  # start training time
         nb_gm_ignore = 0  # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)
         for idx, params_out in enumerate(param_list_precomputed):
+            y = y_all[:]
             params_out['n_jobs'] = n_jobs
-            rtn_data = estimator(dataset, **params_out)
+#            print(dataset)
+#            import networkx as nx
+#            nx.draw_networkx(dataset[1])
+#            plt.show()
+            rtn_data = estimator(dataset[:], **params_out)
             Kmatrix = rtn_data[0]
             current_run_time = rtn_data[1]
             # for some kernels, some graphs in datasets may not meet the 
@@ -126,6 +137,8 @@ def model_selection_for_precomputed_kernel(datafile,
             if len(rtn_data) == 3:
                 idx_trim = rtn_data[2]  # the index of trimmed graph list
                 y = [y[idxt] for idxt in idx_trim] # trim y accordingly
+#            Kmatrix = np.random.rand(2250, 2250)
+#            current_run_time = 0.1
     
             Kmatrix_diag = Kmatrix.diagonal().copy()
             # remove graphs whose kernels with themselves are zeros
@@ -146,7 +159,7 @@ def model_selection_for_precomputed_kernel(datafile,
                 print('the gram matrix is: ')
                 str_fw += 'the gram matrix is:\n\n'
             else:
-                print('the gram matrix with parameters', params_out, 'is: ')
+                print('the gram matrix with parameters', params_out, 'is: \n\n')
                 str_fw += 'the gram matrix with parameters %s is:\n\n' % params_out
             if len(Kmatrix) < 2:
                 nb_gm_ignore += 1
@@ -206,30 +219,52 @@ def model_selection_for_precomputed_kernel(datafile,
                 '3. Fitting and predicting using nested cross validation. This could really take a while...'
             )
             
-#            pool =  Pool(n_jobs)
-#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
+            # ---- use pool.imap_unordered to parallel and track progress. ----
 #            train_pref = []
 #            val_pref = []
 #            test_pref = []
-##            if NUM_TRIALS < 1000 * n_jobs:
-##                chunksize = int(NUM_TRIALS / n_jobs) + 1
-##            else:
-##                chunksize = 1000
-#            chunksize = 1
-#            for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
-#                train_pref.append(o1)
-#                val_pref.append(o2)
-#                test_pref.append(o3)
-#            pool.close()
-#            pool.join()
+#            def func_assign(result, var_to_assign):
+#                for idx, itm in enumerate(var_to_assign):
+#                    itm.append(result[idx])                
+#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)
+#                      
+#            parallel_me(trial_do_partial, range(NUM_TRIALS), func_assign, 
+#                        [train_pref, val_pref, test_pref], glbv=gram_matrices,
+#                        method='imap_unordered', n_jobs=n_jobs, chunksize=1,
+#                        itr_desc='cross validation')
+            
+            def init_worker(gms_toshare):
+                global G_gms
+                G_gms = gms_toshare
+            
+#            gram_matrices = np.array(gram_matrices)
+#            gms_shape = gram_matrices.shape
+#            gms_array = Array('d', np.reshape(gram_matrices.copy(), -1, order='C'))
+#            pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gms_array, gms_shape))
+            pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gram_matrices,))
+            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)
+            train_pref = []
+            val_pref = []
+            test_pref = []
+#            if NUM_TRIALS < 1000 * n_jobs:
+#                chunksize = int(NUM_TRIALS / n_jobs) + 1
+#            else:
+#                chunksize = 1000
+            chunksize = 1
+            for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+                train_pref.append(o1)
+                val_pref.append(o2)
+                test_pref.append(o3)
+            pool.close()
+            pool.join()
     
-            # ---- use pool.map to parallel. ----
-            pool =  Pool(n_jobs)
-            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
-            result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
-            train_pref = [item[0] for item in result_perf]
-            val_pref = [item[1] for item in result_perf]
-            test_pref = [item[2] for item in result_perf]
+#            # ---- use pool.map to parallel. ----
+#            pool =  Pool(n_jobs)
+#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y[0:250], model_type)
+#            result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))
+#            train_pref = [item[0] for item in result_perf]
+#            val_pref = [item[1] for item in result_perf]
+#            test_pref = [item[2] for item in result_perf]
     
 #            # ---- direct running, normally use a single CPU core. ----
 #            train_pref = []
@@ -422,6 +457,7 @@ def model_selection_for_precomputed_kernel(datafile,
         str_fw += '\nII. Gram matrices.\n\nGram matrices are read from file, see last log for detail.\n'
         gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
         gram_matrices = gmfile['gms'] # a list to store gram matrices for all param_grid_precomputed
+        gram_matrix_time = gmfile['gmtime'] # time used to compute the gram matrices
         param_list_pre_revised = gmfile['params'] # list to store param grids precomputed ignoring the useless ones
         y = gmfile['y'].tolist()
         
@@ -430,18 +466,18 @@ def model_selection_for_precomputed_kernel(datafile,
         print(
             '3. Fitting and predicting using nested cross validation. This could really take a while...'
         )
-        
-        pool =  Pool(n_jobs)
-        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)
+ 
+        # ---- use pool.imap_unordered to parallel and track progress. ----
+        def init_worker(gms_toshare):
+            global G_gms
+            G_gms = gms_toshare
+
+        pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gram_matrices,))
+        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)
         train_pref = []
         val_pref = []
         test_pref = []
-        if NUM_TRIALS < 100:
-            chunksize, extra = divmod(NUM_TRIALS, n_jobs * 4)
-            if extra:
-                chunksize += 1
-        else:
-            chunksize = 100
+        chunksize = 1
         for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
             train_pref.append(o1)
             val_pref.append(o2)
@@ -536,22 +572,24 @@ def model_selection_for_precomputed_kernel(datafile,
         str_fw += 'train_std: %s\n\n' % train_std
 
         print()
+        average_gram_matrix_time = np.mean(gram_matrix_time)
+        std_gram_matrix_time = np.std(gram_matrix_time, ddof=1)
+        best_gram_matrix_time = [
+            gram_matrix_time[i] for i in best_params_index[0]
+        ]
+        ave_bgmt = np.mean(best_gram_matrix_time)
+        std_bgmt = np.std(best_gram_matrix_time, ddof=1)
+        print(
+            'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
+            .format(average_gram_matrix_time, std_gram_matrix_time))
+        print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
+            ave_bgmt, std_bgmt))
         tt_poster = time.time() - tts  # training time with hyper-param choices who did not participate in calculation of gram matrices
-#        average_gram_matrix_time = np.mean(gram_matrix_time)
-#        std_gram_matrix_time = np.std(gram_matrix_time, ddof=1)
-#        best_gram_matrix_time = [
-#            gram_matrix_time[i] for i in best_params_index[0]
-#        ]
-#        ave_bgmt = np.mean(best_gram_matrix_time)
-#        std_bgmt = np.std(best_gram_matrix_time, ddof=1)
-#        print(
-#            'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
-#            .format(average_gram_matrix_time, std_gram_matrix_time))
-#        print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
-#            ave_bgmt, std_bgmt))
         print(
             'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s'.format(
                 tt_poster))
+        print('total training time with all hyper-param choices: {:.2f}s'.format(
+                tt_poster + np.sum(gram_matrix_time)))
 #        str_fw += 'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s\n'.format(average_gram_matrix_time, std_gram_matrix_time)
 #        str_fw += 'time to calculate best gram matrix: {:.2f}±{:.2f}s\n'.format(ave_bgmt, std_bgmt)
         str_fw += 'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s\n\n'.format(tt_poster)
@@ -600,7 +638,7 @@ def model_selection_for_precomputed_kernel(datafile,
                 sorted(table_dict.items(),
                        key=lambda i: keyorder.index(i[0]))),
             headers='keys')
-        print(tb_print)
+#        print(tb_print)
         str_fw += 'table of performance v.s. hyper-params:\n\n%s\n\n' % tb_print
 
         # open file to save all results for this dataset.
@@ -618,8 +656,11 @@ def model_selection_for_precomputed_kernel(datafile,
             f.write(str_fw + '\n\n\n' + content)
 
 
-def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, trial): # Test set level
+def trial_do(param_list_pre_revised, param_list, y, model_type, trial): # Test set level
 
+#    # get gram matrices from global variables.
+#    gram_matrices = np.reshape(G_gms.copy(), G_gms_shape, order='C')
+    
     # Arrays to store scores
     train_pref = np.zeros((len(param_list_pre_revised), len(param_list)))
     val_pref = np.zeros((len(param_list_pre_revised), len(param_list)))
@@ -635,6 +676,11 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
 #    print()
     # loop for each outer param tuple
     for index_out, params_out in enumerate(param_list_pre_revised):
+        # get gram matrices from global variables.
+#        gm_now = G_gms[index_out * G_gms_shape[1] * G_gms_shape[2]:(index_out + 1) * G_gms_shape[1] * G_gms_shape[2]]
+#        gm_now = np.reshape(gm_now.copy(), (G_gms_shape[1], G_gms_shape[2]), order='C')
+        gm_now = G_gms[index_out].copy()
+    
         # split gram matrix and y to app and test sets.
         indices = range(len(y))
         # The argument "random_state" in function "train_test_split" can not be
@@ -652,7 +698,7 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
         rdm_seed_out = (rdm_seed_out + int(rdm_seed_out_l[index_out])) % (2 ** 32 - 1)
 #        print(trial, rdm_seed_out)
         X_app, X_test, y_app, y_test, idx_app, idx_test = train_test_split(
-            gram_matrices[index_out], y, indices, test_size=0.1, 
+            gm_now, y, indices, test_size=0.1, 
             random_state=rdm_seed_out, shuffle=True)
 #        print(trial, idx_app, idx_test)
 #        print()
@@ -775,3 +821,112 @@ def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, t
 #        print('test_pref: ', test_pref)
 
     return train_pref, val_pref, test_pref
+
+
+def compute_gram_matrices(dataset, y, estimator, param_list_precomputed, 
+                          results_dir, ds_name,
+                          n_jobs=1, str_fw='', verbose=True):
+    gram_matrices = [
+        ]  # a list to store gram matrices for all param_grid_precomputed
+    gram_matrix_time = [
+        ]  # a list to store time to calculate gram matrices
+    param_list_pre_revised = [
+        ]  # list to store param grids precomputed ignoring the useless ones
+    
+    nb_gm_ignore = 0  # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)
+    for idx, params_out in enumerate(param_list_precomputed):
+        params_out['n_jobs'] = n_jobs
+#            print(dataset)
+#            import networkx as nx
+#            nx.draw_networkx(dataset[1])
+#            plt.show()
+        rtn_data = estimator(dataset[:], **params_out)
+        Kmatrix = rtn_data[0]
+        current_run_time = rtn_data[1]
+        # for some kernels, some graphs in datasets may not meet the 
+        # kernels' requirements for graph structure. These graphs are trimmed. 
+        if len(rtn_data) == 3:
+            idx_trim = rtn_data[2]  # the index of trimmed graph list
+            y = [y[idxt] for idxt in idx_trim] # trim y accordingly
+
+        Kmatrix_diag = Kmatrix.diagonal().copy()
+        # remove graphs whose kernels with themselves are zeros
+        nb_g_ignore = 0
+        for idxk, diag in enumerate(Kmatrix_diag):
+            if diag == 0:
+                Kmatrix = np.delete(Kmatrix, (idxk - nb_g_ignore), axis=0)
+                Kmatrix = np.delete(Kmatrix, (idxk - nb_g_ignore), axis=1)
+                nb_g_ignore += 1
+        # normalization
+        for i in range(len(Kmatrix)):
+            for j in range(i, len(Kmatrix)):
+                Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
+                Kmatrix[j][i] = Kmatrix[i][j]
+
+        if verbose:
+            print()
+        if params_out == {}:
+            if verbose:
+                print('the gram matrix is: ')
+            str_fw += 'the gram matrix is:\n\n'
+        else:
+            if verbose:
+                print('the gram matrix with parameters', params_out, 'is: ')
+            str_fw += 'the gram matrix with parameters %s is:\n\n' % params_out
+        if len(Kmatrix) < 2:
+            nb_gm_ignore += 1
+            if verbose:
+                print('ignored, as at most only one of all its diagonal value is non-zero.')
+            str_fw += 'ignored, as at most only one of all its diagonal value is non-zero.\n\n'
+        else:                
+            if np.isnan(Kmatrix).any(
+            ):  # if the matrix contains elements that are not numbers
+                nb_gm_ignore += 1
+                if verbose:
+                    print('ignored, as it contains elements that are not numbers.')
+                str_fw += 'ignored, as it contains elements that are not numbers.\n\n'
+            else:
+#                    print(Kmatrix)
+                str_fw += np.array2string(
+                        Kmatrix,
+                        separator=',') + '\n\n'
+#                            separator=',',
+#                            threshold=np.inf,
+#                            floatmode='unique') + '\n\n'
+
+                fig_file_name = results_dir + '/GM[ds]' + ds_name
+                if params_out != {}:
+                    fig_file_name += '[params]' + str(idx)
+                plt.imshow(Kmatrix)
+                plt.colorbar()
+                plt.savefig(fig_file_name + '.eps', format='eps', dpi=300)
+#                    plt.show()
+                plt.clf()
+                gram_matrices.append(Kmatrix)
+                gram_matrix_time.append(current_run_time)
+                param_list_pre_revised.append(params_out)
+                if nb_g_ignore > 0:
+                    if verbose:
+                        print(', where %d graphs are ignored as their graph kernels with themselves are zeros.' % nb_g_ignore)
+                    str_fw += ', where %d graphs are ignored as their graph kernels with themselves are zeros.' % nb_g_ignore
+    if verbose:
+        print()
+        print(
+            '{} gram matrices are calculated, {} of which are ignored.'.format(
+                len(param_list_precomputed), nb_gm_ignore))
+    str_fw += '{} gram matrices are calculated, {} of which are ignored.\n\n'.format(len(param_list_precomputed), nb_gm_ignore)
+    str_fw += 'serial numbers of gram matrix figures and their corresponding parameters settings:\n\n'
+    str_fw += ''.join([
+        '{}: {}\n'.format(idx, params_out)
+        for idx, params_out in enumerate(param_list_precomputed)
+    ])
+            
+    return gram_matrices, gram_matrix_time, param_list_pre_revised, y, str_fw
+
+
+def read_gram_matrices_from_file(results_dir, ds_name):
+    gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
+    gram_matrices = gmfile['gms'] # a list to store gram matrices for all param_grid_precomputed
+    param_list_pre_revised = gmfile['params'] # list to store param grids precomputed ignoring the useless ones
+    y = gmfile['y'].tolist()
+    return gram_matrices, param_list_pre_revised, y

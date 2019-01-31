@@ -61,13 +61,26 @@ def get_dataset_attributes(Gn,
         return nx.is_directed(Gn[0])
 
     def get_ave_node_degree(Gn):
-        return np.mean([np.amax(list(dict(G.degree()).values())) for G in Gn])
+        return np.mean([np.mean(list(dict(G.degree()).values())) for G in Gn])
 
     def get_max_node_degree(Gn):
-        return np.amax([np.amax(list(dict(G.degree()).values())) for G in Gn])
+        return np.amax([np.mean(list(dict(G.degree()).values())) for G in Gn])
 
     def get_min_node_degree(Gn):
-        return np.amin([np.amax(list(dict(G.degree()).values())) for G in Gn])
+        return np.amin([np.mean(list(dict(G.degree()).values())) for G in Gn])
+    
+    # get fill factor, the number of non-zero entries in the adjacency matrix.
+    def get_ave_fill_factor(Gn):
+        return np.mean([nx.number_of_edges(G) / (nx.number_of_nodes(G) 
+                                           * nx.number_of_nodes(G)) for G in Gn])
+
+    def get_max_fill_factor(Gn):
+        return np.amax([nx.number_of_edges(G) / (nx.number_of_nodes(G) 
+                                           * nx.number_of_nodes(G)) for G in Gn])
+
+    def get_min_fill_factor(Gn):
+        return np.amin([nx.number_of_edges(G) / (nx.number_of_nodes(G) 
+                                           * nx.number_of_nodes(G)) for G in Gn])
 
     def get_substructures(Gn):
         subs = set()
@@ -137,6 +150,9 @@ def get_dataset_attributes(Gn,
             'ave_node_degree',
             'min_node_degree',
             'max_node_degree',
+            'ave_fill_factor',
+            'min_fill_factor',
+            'max_fill_factor',
             'node_label_num',
             'edge_label_num',
             'node_attr_dim',
@@ -219,6 +235,15 @@ def get_dataset_attributes(Gn,
 
     if 'min_node_degree' in attr_names:
         attrs.update({'min_node_degree': get_min_node_degree(Gn)})
+        
+    if 'ave_fill_factor' in attr_names:
+        attrs.update({'ave_fill_factor': get_ave_fill_factor(Gn)})
+
+    if 'max_fill_factor' in attr_names:
+        attrs.update({'max_fill_factor': get_max_fill_factor(Gn)})
+
+    if 'min_fill_factor' in attr_names:
+        attrs.update({'min_fill_factor': get_min_fill_factor(Gn)})
 
     if 'substructures' in attr_names:
         attrs.update({'substructures': get_substructures(Gn)})
