@@ -96,7 +96,10 @@ def untilhpathkernel(*args,
     pool.join()
     
 #    for g in Gn:
-#        find_all_path_as_trie(g, depth, ds_attrs, node_label, edge_label)
+#        if compute_method == 'trie':
+#            find_all_path_as_trie(g, depth, ds_attrs, node_label, edge_label)
+#        else:
+#            find_all_paths_until_length(g, depth, ds_attrs, node_label, edge_label)
         
 ##    size = sys.getsizeof(all_paths)
 ##    for item in all_paths:
@@ -112,7 +115,7 @@ def untilhpathkernel(*args,
 ##            desc='getting paths', file=sys.stdout):
 ##        all_paths[i] = ps
 ##    print(time.time() - ttt)
-#        
+     
     if compute_method == 'trie':
         def init_worker(trie_toshare):
             global G_trie
@@ -127,24 +130,20 @@ def untilhpathkernel(*args,
         do_partial = partial(wrapper_uhpath_do_naive, k_func)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
                     glbv=(all_paths,), n_jobs=n_jobs) 
-#    
-#    
-##    # ---- direct running, normally use single CPU core. ----
-##    all_paths = [
-##        find_all_paths_until_length(
-##            Gn[i],
-##            depth,
-##            ds_attrs,
-##            node_label=node_label,
-##            edge_label=edge_label) for i in tqdm(
-##                range(0, len(Gn)), desc='getting paths', file=sys.stdout)
-##    ]
-##
-#    if compute_method == 'trie':
-#        # build generalized suffix tree of sets of paths for each graph.
-##        all_gstree = [paths2GSuffixTree(all_paths[i]) for i in tqdm(
-##            range(0, len(Gn)), desc='getting generalized suffix trees', file=sys.stdout)]
+    
+    
+#    # ---- direct running, normally use single CPU core. ----
+#    all_paths = [
+#        find_all_paths_until_length(
+#            Gn[i],
+#            depth,
+#            ds_attrs,
+#            node_label=node_label,
+#            edge_label=edge_label) for i in tqdm(
+#                range(0, len(Gn)), desc='getting paths', file=sys.stdout)
+#    ]
 #
+#    if compute_method == 'trie':
 #        pbar = tqdm(
 #            total=((len(Gn) + 1) * len(Gn) / 2),
 #            desc='calculating kernels',
@@ -155,18 +154,18 @@ def untilhpathkernel(*args,
 #                       all_paths[j], k_func)
 #                Kmatrix[j][i] = Kmatrix[i][j]
 #                pbar.update(1)
-##    else:
-##        pbar = tqdm(
-##            total=((len(Gn) + 1) * len(Gn) / 2),
-##            desc='calculating kernels',
-##            file=sys.stdout)
-##        for i in range(0, len(Gn)):
-##            for j in range(i, len(Gn)):
-##                Kmatrix[i][j] = _untilhpathkernel_do_naive(all_paths[i], all_paths[j],
-##                                                     k_func)
-##                Kmatrix[j][i] = Kmatrix[i][j]
-##                pbar.update(1)
-#
+#    else:
+#        pbar = tqdm(
+#            total=((len(Gn) + 1) * len(Gn) / 2),
+#            desc='calculating kernels',
+#            file=sys.stdout)
+#        for i in range(0, len(Gn)):
+#            for j in range(i, len(Gn)):
+#                Kmatrix[i][j] = _untilhpathkernel_do_naive(all_paths[i], all_paths[j],
+#                                                     k_func)
+#                Kmatrix[j][i] = Kmatrix[i][j]
+#                pbar.update(1)
+
     run_time = time.time() - start_time
     print(
         "\n --- kernel matrix of path kernel up to %d of size %d built in %s seconds ---"
@@ -197,8 +196,8 @@ def _untilhpathkernel_do_trie(trie1, trie2, k_func):
         # search is applied.
         def traverseTrie1t(root, trie2, setlist, pcurrent=[]):
             for key, node in root['children'].items():
-                if node['isEndOfWord']:
-                    pcurrent.append(key)
+                pcurrent.append(key)
+                if node['isEndOfWord']:                    
                     setlist[1] += 1
                     count2 = trie2.searchWord(pcurrent)
                     if count2 != 0:
@@ -215,8 +214,8 @@ def _untilhpathkernel_do_trie(trie1, trie2, k_func):
         # graph1. Deep-first search is applied. 
         def traverseTrie2t(root, trie1, setlist, pcurrent=[]):
             for key, node in root['children'].items():
+                pcurrent.append(key)
                 if node['isEndOfWord']:
-                    pcurrent.append(key)
         #                    print(node['count'])
                     count1 = trie1.searchWord(pcurrent)
                     if count1 == 0:    
@@ -242,8 +241,8 @@ def _untilhpathkernel_do_trie(trie1, trie2, k_func):
         # search is applied.
         def traverseTrie1m(root, trie2, sumlist, pcurrent=[]):
             for key, node in root['children'].items():
+                pcurrent.append(key)
                 if node['isEndOfWord']:
-                    pcurrent.append(key)
         #                    print(node['count'])
                     count1 = node['count']
                     count2 = trie2.searchWord(pcurrent)
@@ -260,8 +259,8 @@ def _untilhpathkernel_do_trie(trie1, trie2, k_func):
         # graph1. Deep-first search is applied.                
         def traverseTrie2m(root, trie1, sumlist, pcurrent=[]):
             for key, node in root['children'].items():
-                if node['isEndOfWord']:
-                    pcurrent.append(key)
+                pcurrent.append(key)
+                if node['isEndOfWord']:                   
         #                    print(node['count'])
                     count1 = trie1.searchWord(pcurrent)
                     if count1 == 0:    
@@ -405,6 +404,7 @@ def find_all_paths_until_length(G,
     #     all_paths.extend(new_paths)
 
     # consider labels
+#    print(paths2labelseqs(all_paths, G, ds_attrs, node_label, edge_label))
     return paths2labelseqs(all_paths, G, ds_attrs, node_label, edge_label)
         
         
@@ -479,7 +479,32 @@ def find_all_path_as_trie(G,
     for n in G.nodes:
         traverseGraph(n, ptrie, length, G, ds_attrs, node_label, edge_label, 
                        pcurrent=[n])
+        
+        
+#    def traverseGraph(root, all_paths, length, G, ds_attrs, node_label, edge_label,
+#                      pcurrent=[]):
+#        if len(pcurrent) < length + 1:
+#            for neighbor in G[root]:
+#                if neighbor not in pcurrent:
+#                    pcurrent.append(neighbor)
+#                    plstr = paths2labelseqs([pcurrent], G, ds_attrs, 
+#                                            node_label, edge_label)
+#                    all_paths.append(pcurrent[:])
+#                    traverseGraph(neighbor, all_paths, length, G, ds_attrs, 
+#                                   node_label, edge_label, pcurrent)
+#        del pcurrent[-1]
+#
+#
+#    path_l = [[n] for n in G.nodes]  # paths of length l
+#    all_paths = path_l[:]
+#    path_l_str = paths2labelseqs(path_l, G, ds_attrs, node_label, edge_label)
+##    for p in path_l_str:
+##        ptrie.insertWord(p)
+#    for n in G.nodes:
+#        traverseGraph(n, all_paths, length, G, ds_attrs, node_label, edge_label, 
+#                       pcurrent=[n])
     
+#    print(ptrie.root)
     return ptrie
 
 
