@@ -319,7 +319,7 @@ def wrapper_cg_labled_do(ds_attrs, node_kernels, node_label, edge_kernels,
 
 def _cg_labled_do(g1, g2, ds_attrs, node_kernels, node_label, 
                   edge_kernels, edge_label, lmda):
-    # Frist, ompute kernels between all pairs of nodes, method borrowed
+    # Frist, compute kernels between all pairs of nodes, method borrowed
     # from FCSP. It is faster than directly computing all edge kernels 
     # when $d_1d_2>2$, where $d_1$ and $d_2$ are vertex degrees of the
     # graphs compared, which is the most case we went though. For very 
@@ -417,7 +417,7 @@ def wrapper_fp_labled_do(ds_attrs, node_kernels, node_label, edge_kernels,
 
 def _fp_labled_do(g1, g2, ds_attrs, node_kernels, node_label, 
                   edge_kernels, edge_label, lmda):
-    # Frist, ompute kernels between all pairs of nodes, method borrowed
+    # Frist, compute kernels between all pairs of nodes, method borrowed
     # from FCSP. It is faster than directly computing all edge kernels 
     # when $d_1d_2>2$, where $d_1$ and $d_2$ are vertex degrees of the
     # graphs compared, which is the most case we went though. For very 

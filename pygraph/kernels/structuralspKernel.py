@@ -20,6 +20,7 @@ import numpy as np
 
 from pygraph.utils.graphdataset import get_dataset_attributes
 from pygraph.utils.parallel import parallel_gm
+from pygraph.utils.trie import Trie
 
 sys.path.insert(0, "../")
 
@@ -30,6 +31,7 @@ def structuralspkernel(*args,
                        edge_label='bond_type',
                        node_kernels=None,
                        edge_kernels=None,
+                       compute_method='trie',
                        n_jobs=None):
     """Calculate mean average structural shortest path kernels between graphs.
 
@@ -99,14 +101,16 @@ def structuralspkernel(*args,
     # get shortest paths of each graph in Gn
     splist = [None] * len(Gn)
     pool = Pool(n_jobs)
-    # get shortest path graphs of Gn
-    getsp_partial = partial(wrapper_getSP, weight, ds_attrs['is_directed'])
     itr = zip(Gn, range(0, len(Gn)))
     if len(Gn) < 100 * n_jobs:
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
         chunksize = 100
-    # chunksize = 300  # int(len(list(itr)) / n_jobs)
+    # get shortest path graphs of Gn
+    if compute_method == 'trie':
+        getsp_partial = partial(wrapper_getSP_trie, weight, ds_attrs['is_directed'])    
+    else:
+        getsp_partial = partial(wrapper_getSP_naive, weight, ds_attrs['is_directed'])    
     for i, sp in tqdm(
             pool.imap_unordered(getsp_partial, itr, chunksize),
             desc='getting shortest paths',
@@ -116,27 +120,6 @@ def structuralspkernel(*args,
     pool.close()
     pool.join()
     
-    
-#    # get shortest paths of each graph in Gn
-#    splist = [[] for _ in range(len(Gn))]
-#    # get shortest path graphs of Gn
-#    getsp_partial = partial(wrapper_getSP, weight, ds_attrs['is_directed'])
-#    itr = zip(Gn, range(0, len(Gn)))
-#    if len(Gn) < 1000 * n_jobs:
-#        chunksize = int(len(Gn) / n_jobs) + 1
-#    else:
-#        chunksize = 1000
-#    # chunksize = 300  # int(len(list(itr)) / n_jobs)
-#    from contextlib import closing  
-#    with closing(Pool(n_jobs)) as pool:
-##        for i, sp in tqdm(
-#        res = pool.imap_unordered(getsp_partial, itr, 10)
-##                desc='getting shortest paths',
-##                file=sys.stdout):
-##            splist[i] = sp
-##        time.sleep(10)
-#    pool.close()
-#    pool.join()
     
 #    ss = 0
 #    ss += sys.getsizeof(splist)
@@ -150,8 +133,12 @@ def structuralspkernel(*args,
     
 #    # ---- direct running, normally use single CPU core. ----
 #    splist = []
-#    for g in tqdm(Gn, desc='getting sp graphs', file=sys.stdout):
-#        splist.append(get_shortest_paths(g, weight, ds_attrs['is_directed']))
+#    if compute_method == 'trie':
+#        for g in tqdm(Gn, desc='getting sp graphs', file=sys.stdout):
+#            splist.append(get_sps_as_trie(g, weight, ds_attrs['is_directed']))
+#    else:
+#        for g in tqdm(Gn, desc='getting sp graphs', file=sys.stdout):
+#            splist.append(get_shortest_paths(g, weight, ds_attrs['is_directed']))
 
     # # ---- only for the Fast Computation of Shortest Path Kernel (FCSP)
     # sp_ml = [0] * len(Gn)  # shortest path matrices
@@ -177,33 +164,17 @@ def structuralspkernel(*args,
     def init_worker(spl_toshare, gs_toshare):
         global G_spl, G_gs
         G_spl = spl_toshare
-        G_gs = gs_toshare      
-    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
-                         node_kernels, edge_kernels)   
-    parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                        glbv=(splist, Gn), n_jobs=n_jobs) 
-    
-
-#    # ---- use pool.imap_unordered to parallel and track progress. ----
-#    pool = Pool(n_jobs)
-#    do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
-#                         node_kernels, edge_kernels)
-#    itr = zip(combinations_with_replacement(Gn, 2),
-#              combinations_with_replacement(splist, 2),
-#              combinations_with_replacement(range(0, len(Gn)), 2))
-#    len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-#    if len_itr < 1000 * n_jobs:
-#        chunksize = int(len_itr / n_jobs) + 1
-#    else:
-#        chunksize = 1000
-#    for i, j, kernel in tqdm(
-#            pool.imap_unordered(do_partial, itr, chunksize),
-#            desc='calculating kernels',
-#            file=sys.stdout):
-#        Kmatrix[i][j] = kernel
-#        Kmatrix[j][i] = kernel
-#    pool.close()
-#    pool.join()
+        G_gs = gs_toshare     
+    if compute_method == 'trie':       
+        do_partial = partial(wrapper_ssp_do_trie, ds_attrs, node_label, edge_label, 
+                             node_kernels, edge_kernels)   
+        parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                            glbv=(splist, Gn), n_jobs=n_jobs) 
+    else:  
+        do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+                             node_kernels, edge_kernels)   
+        parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                            glbv=(splist, Gn), n_jobs=n_jobs) 
     
 #    # ---- use pool.map to parallel. ----
 #    pool = Pool(n_jobs)
@@ -244,14 +215,22 @@ def structuralspkernel(*args,
 
 
 #    # ---- direct running, normally use single CPU core. ----
+#    from itertools import combinations_with_replacement
 #    itr = combinations_with_replacement(range(0, len(Gn)), 2)
-#    for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        kernel = structuralspkernel_do(Gn[i], Gn[j], splist[i], splist[j],
-#                ds_attrs, node_label, edge_label, node_kernels, edge_kernels)
-##        if(kernel > 1):
-##            print("error here ")
-#        Kmatrix[i][j] = kernel
-#        Kmatrix[j][i] = kernel
+#    if compute_method == 'trie':
+#        for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            kernel = ssp_do_trie(Gn[i], Gn[j], splist[i], splist[j],
+#                    ds_attrs, node_label, edge_label, node_kernels, edge_kernels)
+#            Kmatrix[i][j] = kernel
+#            Kmatrix[j][i] = kernel
+#    else:
+#        for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#            kernel = structuralspkernel_do(Gn[i], Gn[j], splist[i], splist[j],
+#                    ds_attrs, node_label, edge_label, node_kernels, edge_kernels)
+#    #        if(kernel > 1):
+#    #            print("error here ")
+#            Kmatrix[i][j] = kernel
+#            Kmatrix[j][i] = kernel
 
     run_time = time.time() - start_time
     print(
@@ -267,75 +246,11 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
     kernel = 0
 
     # First, compute shortest path matrices, method borrowed from FCSP.
-    vk_dict = {}  # shortest path matrices dict
-    if ds_attrs['node_labeled']:
-        # node symb and non-synb labeled
-        if ds_attrs['node_attr_dim'] > 0:
-            kn = node_kernels['mix']
-            for n1, n2 in product(
-                    g1.nodes(data=True), g2.nodes(data=True)):
-                vk_dict[(n1[0], n2[0])] = kn(
-                    n1[1][node_label], n2[1][node_label],
-                    n1[1]['attributes'], n2[1]['attributes'])
-        # node symb labeled
-        else:
-            kn = node_kernels['symb']
-            for n1 in g1.nodes(data=True):
-                for n2 in g2.nodes(data=True):
-                    vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
-                                                 n2[1][node_label])
-    else:
-        # node non-synb labeled
-        if ds_attrs['node_attr_dim'] > 0:
-            kn = node_kernels['nsymb']
-            for n1 in g1.nodes(data=True):
-                for n2 in g2.nodes(data=True):
-                    vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
-                                                 n2[1]['attributes'])
-        # node unlabeled
-        else:
-            pass
-
-    # Then, compute kernels between all pairs of edges, which idea is an
+    vk_dict = getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs)
+    # Then, compute kernels between all pairs of edges, which is an idea of
     # extension of FCSP. It suits sparse graphs, which is the most case we
     # went though. For dense graphs, this would be slow.
-    ek_dict = {}  # dict of edge kernels
-    if ds_attrs['edge_labeled']:
-        # edge symb and non-synb labeled
-        if ds_attrs['edge_attr_dim'] > 0:
-            ke = edge_kernels['mix']
-            for e1, e2 in product(
-                    g1.edges(data=True), g2.edges(data=True)):
-                ek_temp = ke(e1[2][edge_label], e2[2][edge_label],
-                    e1[2]['attributes'], e2[2]['attributes'])
-                ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
-                ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
-                ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
-                ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
-        # edge symb labeled
-        else:
-            ke = edge_kernels['symb']
-            for e1 in g1.edges(data=True):
-                for e2 in g2.edges(data=True):
-                    ek_temp = ke(e1[2][edge_label], e2[2][edge_label])
-                    ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
-                    ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
-                    ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
-                    ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
-    else:
-        # edge non-synb labeled
-        if ds_attrs['edge_attr_dim'] > 0:
-            ke = edge_kernels['nsymb']
-            for e1 in g1.edges(data=True):
-                for e2 in g2.edges(data=True):
-                    ek_temp = kn(e1[2]['attributes'], e2[2]['attributes'])
-                    ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
-                    ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
-                    ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
-                    ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
-        # edge unlabeled
-        else:
-            pass
+    ek_dict = getAllEdgeKernels(g1, g2, edge_kernels, edge_label, ds_attrs)
 
     # compute graph kernels
     if vk_dict:
@@ -420,6 +335,399 @@ def wrapper_ssp_do(ds_attrs, node_label, edge_label, node_kernels,
     return i, j, structuralspkernel_do(G_gs[i], G_gs[j], G_spl[i], G_spl[j], 
                                        ds_attrs, node_label, edge_label, 
                                        node_kernels, edge_kernels)
+    
+    
+def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
+                          node_kernels, edge_kernels):
+    
+#    # traverse all paths in graph1. Deep-first search is applied.
+#    def traverseBothTrie(root, trie2, kernel, pcurrent=[]):
+#        for key, node in root['children'].items():
+#            pcurrent.append(key)
+#            if node['isEndOfWord']:
+#    #                    print(node['count'])
+#                traverseTrie2(trie2.root, pcurrent, kernel, 
+#                              pcurrent=[])
+#            if node['children'] != {}:
+#                traverseBothTrie(node, trie2, kernel, pcurrent)
+#            else:
+#                del pcurrent[-1]
+#        if pcurrent != []:
+#            del pcurrent[-1]
+#            
+#            
+#    # traverse all paths in graph2 and find out those that are not in 
+#    # graph1. Deep-first search is applied.                
+#    def traverseTrie2(root, p1, kernel, pcurrent=[]):
+#        for key, node in root['children'].items():
+#            pcurrent.append(key)
+#            if node['isEndOfWord']:                   
+#    #                    print(node['count'])
+#                kernel[0] += computePathKernel(p1, pcurrent, vk_dict, ek_dict)
+#            if node['children'] != {}:
+#                traverseTrie2(node, p1, kernel, pcurrent)
+#            else:
+#                del pcurrent[-1]
+#        if pcurrent != []:
+#            del pcurrent[-1]
+# 
+#    
+#    kernel = [0]
+#
+#    # First, compute shortest path matrices, method borrowed from FCSP.
+#    vk_dict = getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs)
+#    # Then, compute kernels between all pairs of edges, which is an idea of
+#    # extension of FCSP. It suits sparse graphs, which is the most case we
+#    # went though. For dense graphs, this would be slow.
+#    ek_dict = getAllEdgeKernels(g1, g2, edge_kernels, edge_label, ds_attrs)
+#
+#    # compute graph kernels
+#    traverseBothTrie(trie1[0].root, trie2[0], kernel)
+#
+#    kernel = kernel[0] / (trie1[1] * trie2[1])  # calculate mean average
+
+#    # traverse all paths in graph1. Deep-first search is applied.
+#    def traverseBothTrie(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
+#        for key, node in root['children'].items():
+#            pcurrent.append(key)
+#            if node['isEndOfWord']:
+#    #                    print(node['count'])
+#                traverseTrie2(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+#                              pcurrent=[])
+#            if node['children'] != {}:
+#                traverseBothTrie(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
+#            else:
+#                del pcurrent[-1]
+#        if pcurrent != []:
+#            del pcurrent[-1]
+#            
+#            
+#    # traverse all paths in graph2 and find out those that are not in 
+#    # graph1. Deep-first search is applied.                
+#    def traverseTrie2(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
+#        for key, node in root['children'].items():
+#            pcurrent.append(key)
+#            if node['isEndOfWord']:                   
+#    #                    print(node['count'])
+#                kernel[0] += computePathKernel(p1, pcurrent, vk_dict, ek_dict)
+#            if node['children'] != {}:
+#                traverseTrie2(node, p1, kernel, vk_dict, ek_dict, pcurrent)
+#            else:
+#                del pcurrent[-1]
+#        if pcurrent != []:
+#            del pcurrent[-1]
+ 
+    
+    kernel = [0]
+
+    # First, compute shortest path matrices, method borrowed from FCSP.
+    vk_dict = getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs)
+    # Then, compute kernels between all pairs of edges, which is an idea of
+    # extension of FCSP. It suits sparse graphs, which is the most case we
+    # went though. For dense graphs, this would be slow.
+    ek_dict = getAllEdgeKernels(g1, g2, edge_kernels, edge_label, ds_attrs)
+
+    # compute graph kernels
+#    traverseBothTrie(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
+    if vk_dict:
+        if ek_dict:
+            traverseBothTriem(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
+        else:
+            traverseBothTriev(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
+    else:
+        if ek_dict:
+            traverseBothTriee(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
+        else:
+            traverseBothTrieu(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)                
+
+    kernel = kernel[0] / (trie1[1] * trie2[1])  # calculate mean average
+
+    return kernel
+
+
+def wrapper_ssp_do_trie(ds_attrs, node_label, edge_label, node_kernels, 
+                   edge_kernels, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, ssp_do_trie(G_gs[i], G_gs[j], G_spl[i], G_spl[j], ds_attrs, 
+                             node_label, edge_label, node_kernels, edge_kernels)
+    
+
+def getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs):
+    # compute shortest path matrices, method borrowed from FCSP.
+    vk_dict = {}  # shortest path matrices dict
+    if ds_attrs['node_labeled']:
+        # node symb and non-synb labeled
+        if ds_attrs['node_attr_dim'] > 0:
+            kn = node_kernels['mix']
+            for n1, n2 in product(
+                    g1.nodes(data=True), g2.nodes(data=True)):
+                vk_dict[(n1[0], n2[0])] = kn(
+                    n1[1][node_label], n2[1][node_label],
+                    n1[1]['attributes'], n2[1]['attributes'])
+        # node symb labeled
+        else:
+            kn = node_kernels['symb']
+            for n1 in g1.nodes(data=True):
+                for n2 in g2.nodes(data=True):
+                    vk_dict[(n1[0], n2[0])] = kn(n1[1][node_label],
+                                                 n2[1][node_label])
+    else:
+        # node non-synb labeled
+        if ds_attrs['node_attr_dim'] > 0:
+            kn = node_kernels['nsymb']
+            for n1 in g1.nodes(data=True):
+                for n2 in g2.nodes(data=True):
+                    vk_dict[(n1[0], n2[0])] = kn(n1[1]['attributes'],
+                                                 n2[1]['attributes'])
+        # node unlabeled
+        else:
+            pass
+        
+    return vk_dict
+
+
+def getAllEdgeKernels(g1, g2, edge_kernels, edge_label, ds_attrs):
+    # compute kernels between all pairs of edges, which is an idea of
+    # extension of FCSP. It suits sparse graphs, which is the most case we
+    # went though. For dense graphs, this would be slow.
+    ek_dict = {}  # dict of edge kernels
+    if ds_attrs['edge_labeled']:
+        # edge symb and non-synb labeled
+        if ds_attrs['edge_attr_dim'] > 0:
+            ke = edge_kernels['mix']
+            for e1, e2 in product(
+                    g1.edges(data=True), g2.edges(data=True)):
+                ek_temp = ke(e1[2][edge_label], e2[2][edge_label],
+                    e1[2]['attributes'], e2[2]['attributes'])
+                ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
+                ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
+                ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
+                ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
+        # edge symb labeled
+        else:
+            ke = edge_kernels['symb']
+            for e1 in g1.edges(data=True):
+                for e2 in g2.edges(data=True):
+                    ek_temp = ke(e1[2][edge_label], e2[2][edge_label])
+                    ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
+                    ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
+                    ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
+                    ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
+    else:
+        # edge non-synb labeled
+        if ds_attrs['edge_attr_dim'] > 0:
+            ke = edge_kernels['nsymb']
+            for e1 in g1.edges(data=True):
+                for e2 in g2.edges(data=True):
+                    ek_temp = ke(e1[2]['attributes'], e2[2]['attributes'])
+                    ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
+                    ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
+                    ek_dict[((e1[0], e1[1]), (e2[1], e2[0]))] = ek_temp
+                    ek_dict[((e1[1], e1[0]), (e2[1], e2[0]))] = ek_temp
+        # edge unlabeled
+        else:
+            pass
+        
+        return ek_dict
+    
+    
+# traverse all paths in graph1. Deep-first search is applied.
+def traverseBothTriem(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:
+#                    print(node['count'])
+            traverseTrie2m(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+                          pcurrent=[])
+        if node['children'] != {}:
+            traverseBothTriem(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+        
+        
+# traverse all paths in graph2 and find out those that are not in 
+# graph1. Deep-first search is applied.                
+def traverseTrie2m(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:                   
+#                    print(node['count'])
+            if len(p1) == len(pcurrent):
+                kpath = vk_dict[(p1[0], pcurrent[0])]
+                if kpath:
+                    for idx in range(1, len(p1)):
+                        kpath *= vk_dict[(p1[idx], pcurrent[idx])] * \
+                            ek_dict[((p1[idx-1], p1[idx]),
+                                     (pcurrent[idx-1], pcurrent[idx]))]
+                        if not kpath:
+                            break
+                    kernel[0] += kpath  # add up kernels of all paths
+        if node['children'] != {}:
+            traverseTrie2m(node, p1, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+        
+
+# traverse all paths in graph1. Deep-first search is applied.
+def traverseBothTriev(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:
+#                    print(node['count'])
+            traverseTrie2v(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+                          pcurrent=[])
+        if node['children'] != {}:
+            traverseBothTriev(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+        
+        
+# traverse all paths in graph2 and find out those that are not in 
+# graph1. Deep-first search is applied.                
+def traverseTrie2v(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:                   
+#                    print(node['count'])
+            if len(p1) == len(pcurrent):
+                kpath = vk_dict[(p1[0], pcurrent[0])]
+                if kpath:
+                    for idx in range(1, len(p1)):
+                        kpath *= vk_dict[(p1[idx], pcurrent[idx])]
+                        if not kpath:
+                            break
+                    kernel[0] += kpath  # add up kernels of all paths
+        if node['children'] != {}:
+            traverseTrie2v(node, p1, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+            
+            
+# traverse all paths in graph1. Deep-first search is applied.
+def traverseBothTriee(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:
+#                    print(node['count'])
+            traverseTrie2e(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+                          pcurrent=[])
+        if node['children'] != {}:
+            traverseBothTriee(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+        
+        
+# traverse all paths in graph2 and find out those that are not in 
+# graph1. Deep-first search is applied.                
+def traverseTrie2e(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:                   
+#                    print(node['count'])
+            if len(p1) == len(pcurrent):
+                if len(p1) == 0:
+                    kernel += 1
+                else:
+                    kpath = 1
+                    for idx in range(0, len(p1) - 1):
+                        kpath *= ek_dict[((p1[idx], p1[idx+1]),
+                                          (pcurrent[idx], pcurrent[idx+1]))]
+                        if not kpath:
+                            break
+                    kernel[0] += kpath  # add up kernels of all paths
+        if node['children'] != {}:
+            traverseTrie2e(node, p1, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+            
+            
+# traverse all paths in graph1. Deep-first search is applied.
+def traverseBothTrieu(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:
+#                    print(node['count'])
+            traverseTrie2u(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+                          pcurrent=[])
+        if node['children'] != {}:
+            traverseBothTrieu(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+        
+        
+# traverse all paths in graph2 and find out those that are not in 
+# graph1. Deep-first search is applied.                
+def traverseTrie2u(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
+    for key, node in root['children'].items():
+        pcurrent.append(key)
+        if node['isEndOfWord']:                   
+#                    print(node['count'])
+            if len(p1) == len(pcurrent):
+                kernel[0] += 1
+        if node['children'] != {}:
+            traverseTrie2u(node, p1, kernel, vk_dict, ek_dict, pcurrent)
+        else:
+            del pcurrent[-1]
+    if pcurrent != []:
+        del pcurrent[-1]
+    
+    
+#def computePathKernel(p1, p2, vk_dict, ek_dict):
+#    kernel = 0
+#    if vk_dict:
+#        if ek_dict:
+#            if len(p1) == len(p2):
+#                kpath = vk_dict[(p1[0], p2[0])]
+#                if kpath:
+#                    for idx in range(1, len(p1)):
+#                        kpath *= vk_dict[(p1[idx], p2[idx])] * \
+#                            ek_dict[((p1[idx-1], p1[idx]),
+#                                     (p2[idx-1], p2[idx]))]
+#                        if not kpath:
+#                            break
+#                    kernel += kpath  # add up kernels of all paths
+#        else:
+#            if len(p1) == len(p2):
+#                kpath = vk_dict[(p1[0], p2[0])]
+#                if kpath:
+#                    for idx in range(1, len(p1)):
+#                        kpath *= vk_dict[(p1[idx], p2[idx])]
+#                        if not kpath:
+#                            break
+#                    kernel += kpath  # add up kernels of all paths
+#    else:
+#        if ek_dict:
+#            if len(p1) == len(p2):
+#                if len(p1) == 0:
+#                    kernel += 1
+#                else:
+#                    kpath = 1
+#                    for idx in range(0, len(p1) - 1):
+#                        kpath *= ek_dict[((p1[idx], p1[idx+1]),
+#                                          (p2[idx], p2[idx+1]))]
+#                        if not kpath:
+#                            break
+#                    kernel += kpath  # add up kernels of all paths
+#        else:
+#            if len(p1) == len(p2):
+#                kernel += 1
+#                
+#    return kernel
 
 
 def get_shortest_paths(G, weight, directed):
@@ -457,7 +765,54 @@ def get_shortest_paths(G, weight, directed):
     return sp
 
 
-def wrapper_getSP(weight, directed, itr_item):
+def wrapper_getSP_naive(weight, directed, itr_item):
     g = itr_item[0]
     i = itr_item[1]
     return i, get_shortest_paths(g, weight, directed)
+
+
+def get_sps_as_trie(G, weight, directed):
+    """Get all shortest paths of a graph and insert them into a trie.
+
+    Parameters
+    ----------
+    G : NetworkX graphs
+        The graphs whose paths are calculated.
+    weight : string/None
+        edge attribute used as weight to calculate the shortest path.
+    directed: boolean
+        Whether graph is directed.
+
+    Return
+    ------
+    sp : list of list
+        List of shortest paths of the graph, where each path is represented by a list of nodes.
+    """
+    sptrie = Trie()
+    lensp = 0
+    for n1, n2 in combinations(G.nodes(), 2):
+        try:
+            spltemp = list(nx.all_shortest_paths(G, n1, n2, weight=weight))
+        except nx.NetworkXNoPath:  # nodes not connected
+            pass
+        else:
+            lensp += len(spltemp)
+            if not directed:
+                lensp += len(spltemp)
+            for sp in spltemp:
+                sptrie.insertWord(sp)
+            # each edge walk is counted twice, starting from both its extreme nodes.
+                if not directed:
+                    sptrie.insertWord(sp[::-1])
+                
+    # add single nodes as length 0 paths.
+    for n in G.nodes():
+        sptrie.insertWord([n])
+
+    return sptrie, lensp + nx.number_of_nodes(G)
+
+
+def wrapper_getSP_trie(weight, directed, itr_item):
+    g = itr_item[0]
+    i = itr_item[1]
+    return i, get_sps_as_trie(g, weight, directed)

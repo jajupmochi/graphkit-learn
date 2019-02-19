@@ -27,7 +27,7 @@ def untilhpathkernel(*args,
                      edge_label='bond_type',
                      depth=10,
                      k_func='tanimoto',
-                     compute_method='naive',
+                     compute_method='trie',
                      n_jobs=None):
     """Calculate path graph kernels up to depth/hight h between graphs.
     Parameters

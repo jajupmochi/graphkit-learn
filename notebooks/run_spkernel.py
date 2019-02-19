@@ -6,6 +6,7 @@ from pygraph.kernels.spKernel import spkernel
 from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 #from pygraph.utils.model_selection_precomputed import trial_do
 
+# datasets
 dslist = [
     {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
         'task': 'regression'},  # node symb
@@ -20,31 +21,31 @@ dslist = [
     # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
     # node symb/nsymb
+
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb
 #    {'name': 'D&D', 'dataset': '../datasets/D&D/DD.mat',
 #     'extra_params': {'am_sp_al_nl_el': [0, 1, 2, 1, -1]}},  # node symb
-
-    #     {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
-    # # #     {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
-    # # #     {'name': 'COX2', 'dataset': '../datasets/COX2_txt/COX2_A_sparse.txt'}, # node symb/nsymb
-    #     {'name': 'Fingerprint', 'dataset': '../datasets/Fingerprint/Fingerprint_A.txt'},
-    #
-    # #     {'name': 'DHFR', 'dataset': '../datasets/DHFR_txt/DHFR_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'SYNTHETIC', 'dataset': '../datasets/SYNTHETIC_txt/SYNTHETIC_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb
-    # #     {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb
-    # #     {'name': 'FIRSTMM_DB', 'dataset': '../datasets/FIRSTMM_DB/FIRSTMM_DB_A.txt'}, # node symb/nsymb ,edge nsymb
-
-    # #     {'name': 'PROTEINS', 'dataset': '../datasets/PROTEINS_txt/PROTEINS_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'PROTEINS_full', 'dataset': '../datasets/PROTEINS_full_txt/PROTEINS_full_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
-    #     {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
-    #     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
-    #     {'name': 'NCI-HIV', 'dataset': '../datasets/NCI-HIV/AIDO99SD.sdf',
-    #         'dataset_y': '../datasets/NCI-HIV/aids_conc_may04.txt',}, # node/edge symb
+#
+#    {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
+#    {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'COX2', 'dataset': '../datasets/COX2_txt/COX2_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'Fingerprint', 'dataset': '../datasets/Fingerprint/Fingerprint_A.txt'},
+#    {'name': 'DHFR', 'dataset': '../datasets/DHFR_txt/DHFR_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'SYNTHETIC', 'dataset': '../datasets/SYNTHETIC_txt/SYNTHETIC_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb
+#    {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb
+#    {'name': 'FIRSTMM_DB', 'dataset': '../datasets/FIRSTMM_DB/FIRSTMM_DB_A.txt'}, # node symb/nsymb ,edge nsymb
+#
+#    {'name': 'PROTEINS', 'dataset': '../datasets/PROTEINS_txt/PROTEINS_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'PROTEINS_full', 'dataset': '../datasets/PROTEINS_full_txt/PROTEINS_full_A_sparse.txt'}, # node symb/nsymb
+#    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
+#    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1.mat',
+#         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
+#    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109.mat',
+#         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
+#    {'name': 'NCI-HIV', 'dataset': '../datasets/NCI-HIV/AIDO99SD.sdf',
+#         'dataset_y': '../datasets/NCI-HIV/aids_conc_may04.txt',}, # node/edge symb
 
     #     # not working below
     #     {'name': 'PTC_FM', 'dataset': '../datasets/PTC/Train/FM.ds',},
@@ -53,12 +54,14 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = spkernel
+# hyper-parameters
 mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 param_grid_precomputed = {'node_kernels': [
     {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 
+# for each dataset, do model selection.
 for ds in dslist:
     print()
     print(ds['name'])

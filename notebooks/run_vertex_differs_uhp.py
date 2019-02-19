@@ -38,7 +38,8 @@ def run_ms(dataset, y, ds):
     from pygraph.kernels.untilHPathKernel import untilhpathkernel
     estimator = untilhpathkernel
     param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
-                              'k_func': ['MinMax', 'tanimoto']} # ['MinMax']}
+                              'k_func': ['MinMax', 'tanimoto'],
+                              'compute_method': ['trie']} # ['MinMax']}
     param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
                   {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

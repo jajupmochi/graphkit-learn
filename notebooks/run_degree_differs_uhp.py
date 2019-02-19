@@ -27,7 +27,8 @@ def run_ms(dataset, y, ds):
     from pygraph.kernels.untilHPathKernel import untilhpathkernel
     estimator = untilhpathkernel
     param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
-                              'k_func': ['MinMax', 'tanimoto']} # ['MinMax']}
+                              'k_func': ['MinMax', 'tanimoto'],
+                              'compute_method': ['trie']} # ['MinMax']}
     param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
                   {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 
@@ -58,7 +59,7 @@ for ds in dslist:
     ave_time = []
     std_time = []
     ave_degree = []
-    for piece in range(1, 5):
+    for piece in range(0, 5):
         print('piece', str(piece), ':')
         Gn_p = Gn[len_1piece * piece:len_1piece * (piece + 1)]
         y_all_p = y_all[len_1piece * piece:len_1piece * (piece + 1)]
