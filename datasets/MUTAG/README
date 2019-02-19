@@ -1,0 +1,68 @@
+=== Introduction ===
+
+This folder contains 6 data sets of undirected labeled graphs in Matlab format for graph 
+classification: MUTAG, PTC, NCI1, NCI109, ENZYMES, and D&D.
+
+=== Usage ===
+
+For each data set X, the Matlab command
+  load X
+loads into the memory a struct array containing graphs, and a column vector lx containing 
+a class label for each graph.
+X(i).am is the adjacency matrix of the i'th graph, 
+X(i).al is the adjacency list of the i'th graph, 
+X(i).nl.values is a column vector of node labels for the i'th graph,
+X(i).el (not always available) contains edge labels for the i'th graph.
+
+Example: 
+typing "load MUTAG" in MATLAB
+loads a 188 element array of graph structures, called MUTAG, and a column of 188 numbers, 
+each of which indicates the class that the corresponding graph belongs to.
+
+=== Description ===
+
+MUTAG (Debnath et al., 1991) is a data set of 188 mutagenic aromatic and heteroaromatic
+nitro compounds labeled according to whether or not they have a mutagenic effect on the
+Gram-negative bacterium Salmonella typhimurium. 
+
+PTC (Toivonen et al., 2003) contains 344 chemical compounds tested for carcinogenicity
+in mice and rats. The classification task is to predict the carcinogenicity of compounds.
+
+NCI1 and NCI109 represent two balanced subsets of data sets of chemical compounds screened 
+for activity against non-small cell lung cancer and ovarian cancer cell lines respectively
+(Wale and Karypis (2006) and http://pubchem.ncbi.nlm.nih.gov). 
+
+ENZYMES is a data set of protein tertiary structures obtained from (Borgwardt et al., 
+2005) consisting of 600 enzymes from the BRENDA enzyme database (Schomburg et al., 2004). 
+In this case the task is to correctly assign each enzyme to one of the 6 EC top-level 
+classes. 
+
+D&D is a data set of 1178 protein structures (Dobson and Doig, 2003). Each protein is 
+represented by a graph, in which the nodes are amino acids and two nodes are connected 
+by an edge if they are less than 6 Angstroms apart. The prediction task is to classify 
+the protein structures into enzymes and non-enzymes.
+
+=== References ===
+
+K. M. Borgwardt, C. S. Ong, S. Schoenauer, S. V. N. Vishwanathan, A. J. Smola, and H. P. 
+Kriegel. Protein function prediction via graph kernels. Bioinformatics, 21(Suppl 1):i47–i56, 
+Jun 2005.
+
+A. K. Debnath, R. L. Lopez de Compadre, G. Debnath, A. J. Shusterman, and C. Hansch. 
+Structure-activity relationship of mutagenic aromatic and heteroaromatic nitro compounds. 
+Correlation with molecular orbital energies and hydrophobicity. J Med Chem, 34: 786–797, 
+1991.
+
+P. D. Dobson and A. J. Doig. Distinguishing enzyme structures from non-enzymes without 
+alignments. J Mol Biol, 330(4):771–783, Jul 2003.
+
+I. Schomburg, A. Chang, C. Ebeling, M. Gremse, C. Heldt, G. Huhn, and D. Schomburg. Brenda, 
+the enzyme database: updates and major new developments. Nucleic Acids Research, 32D:431–433, 
+2004.
+
+H. Toivonen, A. Srinivasan, R.D. King, S. Kramer, and C. Helma (2003). Statistical 
+evaluation of the predictive toxicology challenge 2000-2001. Bioinformatics, 19(10):1183–1193.
+
+N. Wale and G. Karypis. Comparison of descriptor spaces for chemical compound retrieval and 
+classification. In Proc. of ICDM, pages 678–689, Hong Kong, 2006.
+
