@@ -12,17 +12,17 @@ import multiprocessing
 from pygraph.kernels.marginalizedKernel import marginalizedkernel
 
 dslist = [
-#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-#        'task': 'regression'},  # node symb
-#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-#             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
-#    # contains single node graph, node symb
-#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
-#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
-#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
-#             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
-#    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-#    # node nsymb
+    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+        'task': 'regression'},  # node symb
+    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+             'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt', },  
+    # contains single node graph, node symb
+    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds', },  # node/edge symb
+    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds', },  # unlabeled
+    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG.mat',
+             'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}},  # node/edge symb
+    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
+    # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
     # node symb/nsymb
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
@@ -81,5 +81,5 @@ for ds in dslist:
         extra_params=(ds['extra_params'] if 'extra_params' in ds else None),
         ds_name=ds['name'],
         n_jobs=multiprocessing.cpu_count(),
-        read_gm_from_file=True)
+        read_gm_from_file=False)
     print()

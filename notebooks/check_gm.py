@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from numpy.linalg import eig
 
 # read gram matrices from file.
-results_dir = 'results/marginalizedkernel'
-ds_name = 'Letter-med'
+results_dir = 'results/marginalizedkernel/myria'
+ds_name = 'ENZYMES'
 gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
 #print('gm time: ', gmfile['gmtime'])
 # a list to store gram matrices for all param_grid_precomputed

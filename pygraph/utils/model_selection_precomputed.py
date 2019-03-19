@@ -242,7 +242,7 @@ def model_selection_for_precomputed_kernel(datafile,
 #            gms_array = Array('d', np.reshape(gram_matrices.copy(), -1, order='C'))
 #            pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gms_array, gms_shape))
             pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gram_matrices,))
-            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)
+            trial_do_partial = partial(parallel_trial_do, param_list_pre_revised, param_list, y, model_type)
             train_pref = []
             val_pref = []
             test_pref = []
@@ -473,7 +473,7 @@ def model_selection_for_precomputed_kernel(datafile,
             G_gms = gms_toshare
 
         pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gram_matrices,))
-        trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)
+        trial_do_partial = partial(parallel_trial_do, param_list_pre_revised, param_list, y, model_type)
         train_pref = []
         val_pref = []
         test_pref = []
@@ -656,7 +656,7 @@ def model_selection_for_precomputed_kernel(datafile,
             f.write(str_fw + '\n\n\n' + content)
 
 
-def trial_do(param_list_pre_revised, param_list, y, model_type, trial): # Test set level
+def trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, trial): # Test set level
 
 #    # get gram matrices from global variables.
 #    gram_matrices = np.reshape(G_gms.copy(), G_gms_shape, order='C')
@@ -679,7 +679,7 @@ def trial_do(param_list_pre_revised, param_list, y, model_type, trial): # Test s
         # get gram matrices from global variables.
 #        gm_now = G_gms[index_out * G_gms_shape[1] * G_gms_shape[2]:(index_out + 1) * G_gms_shape[1] * G_gms_shape[2]]
 #        gm_now = np.reshape(gm_now.copy(), (G_gms_shape[1], G_gms_shape[2]), order='C')
-        gm_now = G_gms[index_out].copy()
+        gm_now = gram_matrices[index_out].copy()
     
         # split gram matrix and y to app and test sets.
         indices = range(len(y))
@@ -820,6 +820,12 @@ def trial_do(param_list_pre_revised, param_list, y, model_type, trial): # Test s
 #        print('val_pref: ', val_pref)
 #        print('test_pref: ', test_pref)
 
+    return train_pref, val_pref, test_pref
+
+def parallel_trial_do(param_list_pre_revised, param_list, y, model_type, trial):
+    train_pref, val_pref, test_pref = trial_do(param_list_pre_revised, 
+                                               param_list, G_gms, y, 
+                                               model_type, trial)
     return train_pref, val_pref, test_pref
 
 

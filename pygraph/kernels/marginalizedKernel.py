@@ -33,8 +33,9 @@ def marginalizedkernel(*args,
                        edge_label='bond_type',
                        p_quit=0.5,
                        n_iteration=20,
-                       remove_totters=True,
-                       n_jobs=None):
+                       remove_totters=False,
+                       n_jobs=None,
+                       verbose=True):
     """Calculate marginalized graph kernels between graphs.
 
     Parameters
@@ -63,16 +64,18 @@ def marginalizedkernel(*args,
     """
     # pre-process
     n_iteration = int(n_iteration)
-    Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    Gn = args[0][:] if len(args) == 1 else [args[0].copy(), args[1].copy()]
     
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
         node_label=node_label, edge_label=edge_label)
-    if not ds_attrs['node_labeled']:
+    if not ds_attrs['node_labeled'] or node_label == None:
+        node_label = 'atom'
         for G in Gn:
             nx.set_node_attributes(G, '0', 'atom')
-    if not ds_attrs['edge_labeled']:
+    if not ds_attrs['edge_labeled'] or edge_label == None:
+        edge_label = 'bond_type'
         for G in Gn:
             nx.set_edge_attributes(G, '0', 'bond_type')
 
@@ -110,26 +113,26 @@ def marginalizedkernel(*args,
     do_partial = partial(wrapper_marg_do, node_label, edge_label,
                          p_quit, n_iteration)   
     parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                glbv=(Gn,), n_jobs=n_jobs)
+                glbv=(Gn,), n_jobs=n_jobs, verbose=verbose)
 
 
 #    # ---- direct running, normally use single CPU core. ----
-#    pbar = tqdm(
-#        total=(1 + len(Gn)) * len(Gn) / 2,
-#        desc='calculating kernels',
-#        file=sys.stdout)
+##    pbar = tqdm(
+##        total=(1 + len(Gn)) * len(Gn) / 2,
+##        desc='calculating kernels',
+##        file=sys.stdout)
 #    for i in range(0, len(Gn)):
 #        for j in range(i, len(Gn)):
-#            print(i, j)
+##            print(i, j)
 #            Kmatrix[i][j] = _marginalizedkernel_do(Gn[i], Gn[j], node_label,
 #                                                   edge_label, p_quit, n_iteration)
 #            Kmatrix[j][i] = Kmatrix[i][j]
-#            pbar.update(1)
+##            pbar.update(1)
 
     run_time = time.time() - start_time
-    print(
-        "\n --- marginalized kernel matrix of size %d built in %s seconds ---"
-        % (len(Gn), run_time))
+    if verbose:
+        print("\n --- marginalized kernel matrix of size %d built in %s seconds ---"
+              % (len(Gn), run_time))
 
     return Kmatrix, run_time
 

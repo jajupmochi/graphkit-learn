@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-@author: linlin
-@references: Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData 
-Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
+Created on Fri Dec 21 18:02:00 2018
+
+@author: ljia
 """
 
 import sys
@@ -23,8 +25,7 @@ def spkernel(*args,
              node_label='atom',
              edge_weight=None,
              node_kernels=None,
-             n_jobs=None,
-             verbose=True):
+             n_jobs=None):
     """Calculate shortest-path kernels between graphs.
 
     Parameters
@@ -75,6 +76,7 @@ def spkernel(*args,
         Gn,
         attr_names=['node_labeled', 'node_attr_dim', 'is_directed'],
         node_label=node_label)
+    ds_attrs['node_attr_dim'] = 0
 
     # remove graphs with no edges, as no sp can be found in their structures, 
     # so the kernel between such a graph and itself will be zero.
@@ -106,40 +108,6 @@ def spkernel(*args,
         Gn[i] = g
     pool.close()
     pool.join()
-        
-#    # ---- direct running, normally use single CPU core. ----
-#    for i in tqdm(range(len(Gn)), desc='getting sp graphs', file=sys.stdout):
-#        i, Gn[i] = wrapper_getSPGraph(weight, (Gn[i], i))
-
-    # # ---- use pool.map to parallel ----
-    # result_sp = pool.map(getsp_partial, range(0, len(Gn)))
-    # for i in result_sp:
-    #     Gn[i[0]] = i[1]
-    # or
-    # getsp_partial = partial(wrap_getSPGraph, Gn, weight)
-    # for i, g in tqdm(
-    #         pool.map(getsp_partial, range(0, len(Gn))),
-    #         desc='getting sp graphs',
-    #         file=sys.stdout):
-    #     Gn[i] = g
-
-    # # ---- only for the Fast Computation of Shortest Path Kernel (FCSP)
-    # sp_ml = [0] * len(Gn)  # shortest path matrices
-    # for i in result_sp:
-    #     sp_ml[i[0]] = i[1]
-    # edge_x_g = [[] for i in range(len(sp_ml))]
-    # edge_y_g = [[] for i in range(len(sp_ml))]
-    # edge_w_g = [[] for i in range(len(sp_ml))]
-    # for idx, item in enumerate(sp_ml):
-    #     for i1 in range(len(item)):
-    #         for i2 in range(i1 + 1, len(item)):
-    #             if item[i1, i2] != np.inf:
-    #                 edge_x_g[idx].append(i1)
-    #                 edge_y_g[idx].append(i2)
-    #                 edge_w_g[idx].append(item[i1, i2])
-    # print(len(edge_x_g[0]))
-    # print(len(edge_y_g[0]))
-    # print(len(edge_w_g[0]))
 
     Kmatrix = np.zeros((len(Gn), len(Gn)))
 
@@ -149,41 +117,7 @@ def spkernel(*args,
         G_gn = gn_toshare
     do_partial = partial(wrapper_sp_do, ds_attrs, node_label, node_kernels)   
     parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                glbv=(Gn,), n_jobs=n_jobs, verbose=verbose)
-
-
-    # # ---- use pool.map to parallel. ----
-    # # result_perf = pool.map(do_partial, itr)
-    # do_partial = partial(spkernel_do, Gn, ds_attrs, node_label, node_kernels)
-    # itr = combinations_with_replacement(range(0, len(Gn)), 2)
-    # for i, j, kernel in tqdm(
-    #         pool.map(do_partial, itr), desc='calculating kernels',
-    #         file=sys.stdout):
-    #     Kmatrix[i][j] = kernel
-    #     Kmatrix[j][i] = kernel
-    # pool.close()
-    # pool.join()
-
-    # # ---- use joblib.Parallel to parallel and track progress. ----
-    # result_perf = Parallel(
-    #     n_jobs=n_jobs, verbose=10)(
-    #         delayed(do_partial)(ij)
-    #         for ij in combinations_with_replacement(range(0, len(Gn)), 2))
-    # result_perf = [
-    #     do_partial(ij)
-    #     for ij in combinations_with_replacement(range(0, len(Gn)), 2)
-    # ]
-    # for i in result_perf:
-    #     Kmatrix[i[0]][i[1]] = i[2]
-    #     Kmatrix[i[1]][i[0]] = i[2]
-
-#    # ---- direct running, normally use single CPU core. ----
-#    from itertools import combinations_with_replacement
-#    itr = combinations_with_replacement(range(0, len(Gn)), 2)
-#    for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
-#        kernel = spkernel_do(Gn[i], Gn[j], ds_attrs, node_label, node_kernels)
-#        Kmatrix[i][j] = kernel
-#        Kmatrix[j][i] = kernel
+                glbv=(Gn,), n_jobs=n_jobs)
 
     run_time = time.time() - start_time
     print(
@@ -251,35 +185,6 @@ def spkernel_do(g1, g2, ds_attrs, node_label, node_kernels):
                 kn2 = nk12 * nk21
                 kernel += kn1 + kn2
 
-        # # ---- exact implementation of the Fast Computation of Shortest Path Kernel (FCSP), reference [2], sadly it is slower than the current implementation
-        # # compute vertex kernels
-        # try:
-        #     vk_mat = np.zeros((nx.number_of_nodes(g1),
-        #                        nx.number_of_nodes(g2)))
-        #     g1nl = enumerate(g1.nodes(data=True))
-        #     g2nl = enumerate(g2.nodes(data=True))
-        #     for i1, n1 in g1nl:
-        #         for i2, n2 in g2nl:
-        #             vk_mat[i1][i2] = kn(
-        #                 n1[1][node_label], n2[1][node_label],
-        #                 [n1[1]['attributes']], [n2[1]['attributes']])
-
-        #     range1 = range(0, len(edge_w_g[i]))
-        #     range2 = range(0, len(edge_w_g[j]))
-        #     for i1 in range1:
-        #         x1 = edge_x_g[i][i1]
-        #         y1 = edge_y_g[i][i1]
-        #         w1 = edge_w_g[i][i1]
-        #         for i2 in range2:
-        #             x2 = edge_x_g[j][i2]
-        #             y2 = edge_y_g[j][i2]
-        #             w2 = edge_w_g[j][i2]
-        #             ke = (w1 == w2)
-        #             if ke > 0:
-        #                 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
-        #                 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
-        #                 kernel += kn1 + kn2
-
     return kernel
 
 
@@ -288,16 +193,8 @@ def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr):
     j = itr[1]
     return i, j, spkernel_do(G_gn[i], G_gn[j], ds_attrs, node_label, node_kernels)
 
-#def wrapper_sp_do(ds_attrs, node_label, node_kernels, itr_item):
-#    g1 = itr_item[0][0]
-#    g2 = itr_item[0][1]
-#    i = itr_item[1][0]
-#    j = itr_item[1][1]
-#    return i, j, spkernel_do(g1, g2, ds_attrs, node_label, node_kernels)
-
 
 def wrapper_getSPGraph(weight, itr_item):
     g = itr_item[0]
     i = itr_item[1]
     return i, getSPGraph(g, edge_weight=weight)
-    # return i, nx.floyd_warshall_numpy(g, weight=weight)

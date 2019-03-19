@@ -65,7 +65,7 @@ param_grid_precomputed = {'node_kernels':
     [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
     'edge_kernels': 
     [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
-    'compute_method': ['trie']}
+    'compute_method': ['naive']}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

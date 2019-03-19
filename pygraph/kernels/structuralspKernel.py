@@ -31,7 +31,7 @@ def structuralspkernel(*args,
                        edge_label='bond_type',
                        node_kernels=None,
                        edge_kernels=None,
-                       compute_method='trie',
+                       compute_method='naive',
                        n_jobs=None):
     """Calculate mean average structural shortest path kernels between graphs.
 
