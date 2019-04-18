@@ -56,7 +56,8 @@ def spkernel(*args,
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
     weight = None
     if edge_weight is None:
-        print('\n None edge weight specified. Set all weight to 1.\n')
+        if verbose:
+            print('\n None edge weight specified. Set all weight to 1.\n')
     else:
         try:
             some_weight = list(
@@ -64,13 +65,15 @@ def spkernel(*args,
             if isinstance(some_weight, (float, int)):
                 weight = edge_weight
             else:
-                print(
-                    '\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
-                    % edge_weight)
+                if verbose:
+                    print(
+                            '\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
+                            % edge_weight)
         except:
-            print(
-                '\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
-                % edge_weight)
+            if verbose:
+                print(
+                        '\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
+                        % edge_weight)
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'node_attr_dim', 'is_directed'],
@@ -83,8 +86,9 @@ def spkernel(*args,
     idx = [G[0] for G in Gn]
     Gn = [G[1] for G in Gn]
     if len(Gn) != len_gn:
-        print('\n %d graphs are removed as they don\'t contain edges.\n' %
-              (len_gn - len(Gn)))
+        if verbose:
+            print('\n %d graphs are removed as they don\'t contain edges.\n' %
+                  (len_gn - len(Gn)))
 
     start_time = time.time()
 
@@ -100,9 +104,12 @@ def spkernel(*args,
         chunksize = int(len(Gn) / n_jobs) + 1
     else:
         chunksize = 100
-    for i, g in tqdm(
-            pool.imap_unordered(getsp_partial, itr, chunksize),
-            desc='getting sp graphs', file=sys.stdout):
+    if verbose:
+        iterator = tqdm(pool.imap_unordered(getsp_partial, itr, chunksize),
+                        desc='getting sp graphs', file=sys.stdout)
+    else:
+        iterator = pool.imap_unordered(getsp_partial, itr, chunksize)
+    for i, g in iterator:
         Gn[i] = g
     pool.close()
     pool.join()
@@ -186,9 +193,10 @@ def spkernel(*args,
 #        Kmatrix[j][i] = kernel
 
     run_time = time.time() - start_time
-    print(
-        "\n --- shortest path kernel matrix of size %d built in %s seconds ---"
-        % (len(Gn), run_time))
+    if verbose:
+        print(
+                "\n --- shortest path kernel matrix of size %d built in %s seconds ---"
+                % (len(Gn), run_time))
 
     return Kmatrix, run_time, idx
 

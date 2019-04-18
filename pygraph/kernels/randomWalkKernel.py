@@ -32,7 +32,8 @@ def randomwalkkernel(*args,
                      edge_label='bond_type',
                      # params for spectral method.
                      sub_kernel=None,                                          
-                     n_jobs=None):
+                     n_jobs=None,
+                     verbose=True):
     """Calculate random walk graph kernels.
     Parameters
     ----------
@@ -60,7 +61,8 @@ def randomwalkkernel(*args,
 
     eweight = None
     if edge_weight == None:
-        print('\n None edge weight specified. Set all weight to 1.\n')
+        if verbose:
+            print('\n None edge weight specified. Set all weight to 1.\n')
     else:
         try:
             some_weight = list(
@@ -68,13 +70,13 @@ def randomwalkkernel(*args,
             if isinstance(some_weight, float) or isinstance(some_weight, int):
                 eweight = edge_weight
             else:
-                print(
-                    '\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
-                    % edge_weight)
+                if verbose:
+                    print('\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
+                          % edge_weight)
         except:
-            print(
-                '\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
-                % edge_weight)
+            if verbose:
+                print('\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
+                      % edge_weight)
 
     ds_attrs = get_dataset_attributes(
         Gn,
@@ -90,8 +92,9 @@ def randomwalkkernel(*args,
     idx = [G[0] for G in Gn]
     Gn = [G[1] for G in Gn]
     if len(Gn) != len_gn:
-        print('\n %d graphs are removed as they don\'t contain edges.\n' %
-              (len_gn - len(Gn)))
+        if verbose:
+            print('\n %d graphs are removed as they don\'t contain edges.\n' %
+                  (len_gn - len(Gn)))
 
     start_time = time.time()
     
@@ -100,26 +103,30 @@ def randomwalkkernel(*args,
 #    gmf = filterGramMatrix(A_wave_list[0], label_list[0], ('C', '0', 'O'), ds_attrs['is_directed'])
 
     if compute_method == 'sylvester':
-        import warnings
-        warnings.warn('All labels are ignored.')
-        Kmatrix = _sylvester_equation(Gn, weight, p, q, eweight, n_jobs)
+        if verbose:
+            import warnings
+            warnings.warn('All labels are ignored.')
+        Kmatrix = _sylvester_equation(Gn, weight, p, q, eweight, n_jobs, verbose=verbose)
 
     elif compute_method == 'conjugate':
-        Kmatrix = _conjugate_gradient(Gn, weight, p, q, ds_attrs, 
-                                              node_kernels, edge_kernels, 
-                                              node_label, edge_label, eweight, n_jobs)
+        Kmatrix = _conjugate_gradient(Gn, weight, p, q, ds_attrs, node_kernels, 
+                                      edge_kernels, node_label, edge_label, 
+                                      eweight, n_jobs, verbose=verbose)
         
     elif compute_method == 'fp':
         Kmatrix = _fixed_point(Gn, weight, p, q, ds_attrs, node_kernels, 
-                                       edge_kernels, node_label, edge_label, 
-                                       eweight, n_jobs)
+                               edge_kernels, node_label, edge_label, 
+                               eweight, n_jobs, verbose=verbose)
 
     elif compute_method == 'spectral':
-        import warnings
-        warnings.warn('All labels are ignored. Only works for undirected graphs.')
-        Kmatrix = _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs)
+        if verbose:
+            import warnings
+            warnings.warn('All labels are ignored. Only works for undirected graphs.')
+        Kmatrix = _spectral_decomposition(Gn, weight, p, q, sub_kernel, 
+                                          eweight, n_jobs, verbose=verbose)
 
     elif compute_method == 'kron':
+        pass
         for i in range(0, len(Gn)):
             for j in range(i, len(Gn)):
                 Kmatrix[i][j] = _randomwalkkernel_kron(Gn[i], Gn[j],
@@ -131,15 +138,15 @@ def randomwalkkernel(*args,
         )
 
     run_time = time.time() - start_time
-    print(
-        "\n --- kernel matrix of random walk kernel of size %d built in %s seconds ---"
-        % (len(Gn), run_time))
+    if verbose:
+        print("\n --- kernel matrix of random walk kernel of size %d built in %s seconds ---"
+              % (len(Gn), run_time))
 
     return Kmatrix, run_time, idx
 
 
 ###############################################################################
-def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs):
+def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, verbose=True):
     """Calculate walk graph kernels up to n between 2 graphs using Sylvester method.
 
     Parameters
@@ -162,8 +169,9 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs):
         # don't normalize adjacency matrices if q is a uniform vector. Note
         # A_wave_list accually contains the transposes of the adjacency matrices.
         A_wave_list = [
-            nx.adjacency_matrix(G, eweight).todense().transpose() for G in tqdm(
-                Gn, desc='compute adjacency matrices', file=sys.stdout)
+            nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
+            (tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout) if
+             verbose else Gn)
         ]
 #        # normalized adjacency matrices
 #        A_wave_list = []
@@ -178,7 +186,7 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs):
                 G_Awl = Awl_toshare
             do_partial = partial(wrapper_se_do, lmda)   
             parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                        glbv=(A_wave_list,), n_jobs=n_jobs)
+                        glbv=(A_wave_list,), n_jobs=n_jobs, verbose=verbose)
             
 #            pbar = tqdm(
 #                total=(1 + len(Gn)) * len(Gn) / 2,
@@ -226,7 +234,7 @@ def _se_do(A_wave1, A_wave2, lmda):
 
 ###############################################################################
 def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels, 
-                        node_label, edge_label, eweight, n_jobs):
+                        node_label, edge_label, eweight, n_jobs, verbose=True):
     """Calculate walk graph kernels up to n between 2 graphs using conjugate method.
 
     Parameters
@@ -265,8 +273,8 @@ def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #    else:  
     # reindex nodes using consecutive integers for convenience of kernel calculation.
     Gn = [nx.convert_node_labels_to_integers(
-            g, first_label=0, label_attribute='label_orignal') for g in tqdm(
-                Gn, desc='reindex vertices', file=sys.stdout)]
+            g, first_label=0, label_attribute='label_orignal') for g in (tqdm(
+                Gn, desc='reindex vertices', file=sys.stdout) if verbose else Gn)]
     
     if p == None and q == None: # p and q are uniform distributions as default.
         def init_worker(gn_toshare):
@@ -275,7 +283,7 @@ def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
         do_partial = partial(wrapper_cg_labled_do, ds_attrs, node_kernels, 
                              node_label, edge_kernels, edge_label, lmda)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                    glbv=(Gn,), n_jobs=n_jobs)  
+                    glbv=(Gn,), n_jobs=n_jobs, verbose=verbose)  
             
 #            pbar = tqdm(
 #                total=(1 + len(Gn)) * len(Gn) / 2,
@@ -341,7 +349,7 @@ def _cg_labled_do(g1, g2, ds_attrs, node_kernels, node_label,
 
 ###############################################################################
 def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels, 
-                         node_label, edge_label, eweight, n_jobs):
+                         node_label, edge_label, eweight, n_jobs, verbose=True):
     """Calculate walk graph kernels up to n between 2 graphs using Fixed-Point method.
 
     Parameters
@@ -393,8 +401,8 @@ def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #    else:  
     # reindex nodes using consecutive integers for convenience of kernel calculation.
     Gn = [nx.convert_node_labels_to_integers(
-            g, first_label=0, label_attribute='label_orignal') for g in tqdm(
-                Gn, desc='reindex vertices', file=sys.stdout)]
+            g, first_label=0, label_attribute='label_orignal') for g in (tqdm(
+                Gn, desc='reindex vertices', file=sys.stdout) if verbose else Gn)]
     
     if p == None and q == None: # p and q are uniform distributions as default.
         def init_worker(gn_toshare):
@@ -403,7 +411,7 @@ def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
         do_partial = partial(wrapper_fp_labled_do, ds_attrs, node_kernels, 
                              node_label, edge_kernels, edge_label, lmda)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                    glbv=(Gn,), n_jobs=n_jobs)
+                    glbv=(Gn,), n_jobs=n_jobs, verbose=verbose)
     return Kmatrix
 
 
@@ -445,7 +453,7 @@ def func_fp(x, p_times, lmda, w_times):
 
 
 ###############################################################################
-def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs):
+def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, verbose=True):
     """Calculate walk graph kernels up to n between 2 unlabeled graphs using 
     spectral decomposition method. Labels will be ignored.
 
@@ -469,7 +477,8 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs):
         # precompute the spectral decomposition of each graph.
         P_list = []
         D_list = []
-        for G in tqdm(Gn, desc='spectral decompose', file=sys.stdout):
+        for G in (tqdm(Gn, desc='spectral decompose', file=sys.stdout) if 
+                  verbose else Gn):
             # don't normalize adjacency matrices if q is a uniform vector. Note
             # A accually is the transpose of the adjacency matrix.
             A = nx.adjacency_matrix(G, eweight).todense().transpose()
@@ -488,7 +497,8 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs):
                 G_D = D_toshare
             do_partial = partial(wrapper_sd_do, weight, sub_kernel)   
             parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                        glbv=(q_T_list, P_list, D_list), n_jobs=n_jobs)
+                        glbv=(q_T_list, P_list, D_list), n_jobs=n_jobs, 
+                        verbose=verbose)
             
             
 #            pbar = tqdm(

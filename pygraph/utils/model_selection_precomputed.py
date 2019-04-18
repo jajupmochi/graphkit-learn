@@ -32,7 +32,8 @@ def model_selection_for_precomputed_kernel(datafile,
                                            extra_params=None,
                                            ds_name='ds-unknown',
                                            n_jobs=1,
-                                           read_gm_from_file=False):
+                                           read_gm_from_file=False,
+                                           verbose=True):
     """Perform model selection, fitting and testing for precomputed kernels using nested cv. Print out neccessary data during the process then finally the results.
 
     Parameters
@@ -84,15 +85,17 @@ def model_selection_for_precomputed_kernel(datafile,
         raise Exception(
             'The model type is incorrect! Please choose from regression or classification.'
         )
-    print()
-    print('--- This is a %s problem ---' % model_type)
+    if verbose:
+        print()
+        print('--- This is a %s problem ---' % model_type)
     str_fw += 'This is a %s problem.\n' % model_type
     
     # calculate gram matrices rather than read them from file.
     if read_gm_from_file == False:
         # Load the dataset
-        print()
-        print('\n1. Loading dataset from file...')
+        if verbose:
+            print()
+            print('\n1. Loading dataset from file...')
         if isinstance(datafile, str):
             dataset, y_all = loadDataset(
                     datafile, filename_y=datafile_y, extra_params=extra_params)
@@ -117,14 +120,16 @@ def model_selection_for_precomputed_kernel(datafile,
         ]  # list to store param grids precomputed ignoring the useless ones
     
         # calculate all gram matrices
-        print()
-        print('2. Calculating gram matrices. This could take a while...')
+        if verbose:
+            print()
+            print('2. Calculating gram matrices. This could take a while...')
         str_fw += '\nII. Gram matrices.\n\n'
         tts = time.time()  # start training time
         nb_gm_ignore = 0  # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)
         for idx, params_out in enumerate(param_list_precomputed):
             y = y_all[:]
             params_out['n_jobs'] = n_jobs
+            params_out['verbose'] = verbose
 #            print(dataset)
 #            import networkx as nx
 #            nx.draw_networkx(dataset[1])
@@ -154,23 +159,27 @@ def model_selection_for_precomputed_kernel(datafile,
                 for j in range(i, len(Kmatrix)):
                     Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
                     Kmatrix[j][i] = Kmatrix[i][j]
-    
-            print()
+            if verbose:
+                print()
             if params_out == {}:
-                print('the gram matrix is: ')
+                if verbose:
+                    print('the gram matrix is: ')
                 str_fw += 'the gram matrix is:\n\n'
             else:
-                print('the gram matrix with parameters', params_out, 'is: \n\n')
+                if verbose:
+                    print('the gram matrix with parameters', params_out, 'is: \n\n')
                 str_fw += 'the gram matrix with parameters %s is:\n\n' % params_out
             if len(Kmatrix) < 2:
                 nb_gm_ignore += 1
-                print('ignored, as at most only one of all its diagonal value is non-zero.')
+                if verbose:
+                    print('ignored, as at most only one of all its diagonal value is non-zero.')
                 str_fw += 'ignored, as at most only one of all its diagonal value is non-zero.\n\n'
             else:                
                 if np.isnan(Kmatrix).any(
                 ):  # if the matrix contains elements that are not numbers
                     nb_gm_ignore += 1
-                    print('ignored, as it contains elements that are not numbers.')
+                    if verbose:
+                        print('ignored, as it contains elements that are not numbers.')
                     str_fw += 'ignored, as it contains elements that are not numbers.\n\n'
                 else:
 #                    print(Kmatrix)
@@ -193,10 +202,12 @@ def model_selection_for_precomputed_kernel(datafile,
                     gram_matrix_time.append(current_run_time)
                     param_list_pre_revised.append(params_out)
                     if nb_g_ignore > 0:
-                        print(', where %d graphs are ignored as their graph kernels with themselves are zeros.' % nb_g_ignore)
+                        if verbose:
+                            print(', where %d graphs are ignored as their graph kernels with themselves are zeros.' % nb_g_ignore)
                         str_fw += ', where %d graphs are ignored as their graph kernels with themselves are zeros.' % nb_g_ignore
-        print()
-        print(
+        if verbose:
+            print()
+            print(
             '{} gram matrices are calculated, {} of which are ignored.'.format(
                 len(param_list_precomputed), nb_gm_ignore))
         str_fw += '{} gram matrices are calculated, {} of which are ignored.\n\n'.format(len(param_list_precomputed), nb_gm_ignore)
@@ -205,20 +216,22 @@ def model_selection_for_precomputed_kernel(datafile,
             '{}: {}\n'.format(idx, params_out)
             for idx, params_out in enumerate(param_list_precomputed)
         ])
-    
-        print()
+
+        if verbose:
+            print()
         if len(gram_matrices) == 0:
-            print('all gram matrices are ignored, no results obtained.')
+            if verbose:
+                print('all gram matrices are ignored, no results obtained.')
             str_fw += '\nall gram matrices are ignored, no results obtained.\n\n'
         else:
             # save gram matrices to file.
             np.savez(results_dir + '/' + ds_name + '.gm', 
                      gms=gram_matrices, params=param_list_pre_revised, y=y, 
                      gmtime=gram_matrix_time)
-            
-            print(
+            if verbose:
+                print(
                 '3. Fitting and predicting using nested cross validation. This could really take a while...'
-            )
+                )
             
             # ---- use pool.imap_unordered to parallel and track progress. ----
 #            train_pref = []
@@ -252,7 +265,12 @@ def model_selection_for_precomputed_kernel(datafile,
 #            else:
 #                chunksize = 1000
             chunksize = 1
-            for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+            if verbose:
+                iterator = tqdm(pool.imap_unordered(trial_do_partial, 
+                        range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout)
+            else:
+                iterator = pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize)
+            for o1, o2, o3 in iterator:
                 train_pref.append(o1)
                 val_pref.append(o2)
                 test_pref.append(o3)
@@ -278,8 +296,9 @@ def model_selection_for_precomputed_kernel(datafile,
 #                test_pref.append(o3)
 #            print()
     
-            print()
-            print('4. Getting final performance...')
+            if verbose:
+                print()
+                print('4. Getting final performance...')
             str_fw += '\nIII. Performance.\n\n'
             # averages and confidences of performances on outer trials for each combination of parameters
             average_train_scores = np.mean(train_pref, axis=0)
@@ -311,11 +330,12 @@ def model_selection_for_precomputed_kernel(datafile,
                 param_list_pre_revised[i] for i in best_params_index[0]
             ]
             best_params_in = [param_list[i] for i in best_params_index[1]]
-            print('best_params_out: ', best_params_out)
-            print('best_params_in: ', best_params_in)
-            print()
-            print('best_val_perf: ', best_val_perf)
-            print('best_val_std: ', min_val_std)
+            if verbose:
+                print('best_params_out: ', best_params_out)
+                print('best_params_in: ', best_params_in)
+                print()
+                print('best_val_perf: ', best_val_perf)
+                print('best_val_std: ', min_val_std)
             str_fw += 'best settings of hyper-params to build gram matrix: %s\n' % best_params_out
             str_fw += 'best settings of other hyper-params: %s\n\n' % best_params_in
             str_fw += 'best_val_perf: %s\n' % best_val_perf
@@ -332,8 +352,9 @@ def model_selection_for_precomputed_kernel(datafile,
                 std_perf_scores[value][best_params_index[1][idx]]
                 for idx, value in enumerate(best_params_index[0])
             ]
-            print('final_performance: ', final_performance)
-            print('final_confidence: ', final_confidence)
+            if verbose:
+                print('final_performance: ', final_performance)
+                print('final_confidence: ', final_confidence)
             str_fw += 'final_performance: %s\n' % final_performance
             str_fw += 'final_confidence: %s\n' % final_confidence
             train_performance = [
@@ -344,28 +365,29 @@ def model_selection_for_precomputed_kernel(datafile,
                 std_train_scores[value][best_params_index[1][idx]]
                 for idx, value in enumerate(best_params_index[0])
             ]
-            print('train_performance: %s' % train_performance)
-            print('train_std: ', train_std)
+            if verbose:
+                print('train_performance: %s' % train_performance)
+                print('train_std: ', train_std)
             str_fw += 'train_performance: %s\n' % train_performance
             str_fw += 'train_std: %s\n\n' % train_std
-    
-            print()
+
+            if verbose:
+                print()
             tt_total = time.time() - tts  # training time for all hyper-parameters
             average_gram_matrix_time = np.mean(gram_matrix_time)
-            std_gram_matrix_time = np.std(gram_matrix_time, ddof=1)
+            std_gram_matrix_time = np.std(gram_matrix_time, ddof=1) if len(gram_matrix_time) > 1 else 0
             best_gram_matrix_time = [
                 gram_matrix_time[i] for i in best_params_index[0]
             ]
             ave_bgmt = np.mean(best_gram_matrix_time)
-            std_bgmt = np.std(best_gram_matrix_time, ddof=1)
-            print(
-                'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
-                .format(average_gram_matrix_time, std_gram_matrix_time))
-            print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
-                ave_bgmt, std_bgmt))
-            print(
-                'total training time with all hyper-param choices: {:.2f}s'.format(
-                    tt_total))
+            std_bgmt = np.std(best_gram_matrix_time, ddof=1) if len(best_gram_matrix_time) > 1 else 0
+            if verbose:
+                print('time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
+                      .format(average_gram_matrix_time, std_gram_matrix_time))
+                print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
+                        ave_bgmt, std_bgmt))
+                print('total training time with all hyper-param choices: {:.2f}s'.format(
+                        tt_total))
             str_fw += 'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s\n'.format(average_gram_matrix_time, std_gram_matrix_time)
             str_fw += 'time to calculate best gram matrix: {:.2f}±{:.2f}s\n'.format(ave_bgmt, std_bgmt)
             str_fw += 'total training time with all hyper-param choices: {:.2f}s\n\n'.format(tt_total)
@@ -437,7 +459,8 @@ def model_selection_for_precomputed_kernel(datafile,
                 'params', 'train_perf', 'valid_perf', 'test_perf',
                 'gram_matrix_time'
             ]
-            print()
+            if verbose:
+                print()
             tb_print = tabulate(
                 OrderedDict(
                     sorted(table_dict.items(),
@@ -453,8 +476,9 @@ def model_selection_for_precomputed_kernel(datafile,
         param_list = list(ParameterGrid(param_grid))
     
         # read gram matrices from file.
-        print()
-        print('2. Reading gram matrices from file...')
+        if verbose:
+            print()
+            print('2. Reading gram matrices from file...')
         str_fw += '\nII. Gram matrices.\n\nGram matrices are read from file, see last log for detail.\n'
         gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
         gram_matrices = gmfile['gms'] # a list to store gram matrices for all param_grid_precomputed
@@ -464,9 +488,10 @@ def model_selection_for_precomputed_kernel(datafile,
         
         tts = time.time()  # start training time
 #        nb_gm_ignore = 0  # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)            
-        print(
-            '3. Fitting and predicting using nested cross validation. This could really take a while...'
-        )
+        if verbose:
+            print(
+                    '3. Fitting and predicting using nested cross validation. This could really take a while...'
+                    )
  
         # ---- use pool.imap_unordered to parallel and track progress. ----
         def init_worker(gms_toshare):
@@ -479,7 +504,12 @@ def model_selection_for_precomputed_kernel(datafile,
         val_pref = []
         test_pref = []
         chunksize = 1
-        for o1, o2, o3 in tqdm(pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout):
+        if verbose:
+            iterator = tqdm(pool.imap_unordered(trial_do_partial, 
+                    range(NUM_TRIALS), chunksize), desc='cross validation', file=sys.stdout)
+        else:
+            iterator = pool.imap_unordered(trial_do_partial, range(NUM_TRIALS), chunksize)
+        for o1, o2, o3 in iterator:
             train_pref.append(o1)
             val_pref.append(o2)
             test_pref.append(o3)
@@ -509,8 +539,9 @@ def model_selection_for_precomputed_kernel(datafile,
 #            val_pref.append(o2)
 #            test_pref.append(o3)
 
-        print()
-        print('4. Getting final performance...')
+        if verbose:
+            print()
+            print('4. Getting final performance...')
         str_fw += '\nIII. Performance.\n\n'
         # averages and confidences of performances on outer trials for each combination of parameters
         average_train_scores = np.mean(train_pref, axis=0)
@@ -537,11 +568,12 @@ def model_selection_for_precomputed_kernel(datafile,
             param_list_pre_revised[i] for i in best_params_index[0]
         ]
         best_params_in = [param_list[i] for i in best_params_index[1]]
-        print('best_params_out: ', best_params_out)
-        print('best_params_in: ', best_params_in)
-        print()
-        print('best_val_perf: ', best_val_perf)
-        print('best_val_std: ', min_val_std)
+        if verbose:
+            print('best_params_out: ', best_params_out)
+            print('best_params_in: ', best_params_in)
+            print()
+            print('best_val_perf: ', best_val_perf)
+            print('best_val_std: ', min_val_std)
         str_fw += 'best settings of hyper-params to build gram matrix: %s\n' % best_params_out
         str_fw += 'best settings of other hyper-params: %s\n\n' % best_params_in
         str_fw += 'best_val_perf: %s\n' % best_val_perf
@@ -555,8 +587,9 @@ def model_selection_for_precomputed_kernel(datafile,
             std_perf_scores[value][best_params_index[1][idx]]
             for idx, value in enumerate(best_params_index[0])
         ]
-        print('final_performance: ', final_performance)
-        print('final_confidence: ', final_confidence)
+        if verbose:
+            print('final_performance: ', final_performance)
+            print('final_confidence: ', final_confidence)
         str_fw += 'final_performance: %s\n' % final_performance
         str_fw += 'final_confidence: %s\n' % final_confidence
         train_performance = [
@@ -567,30 +600,34 @@ def model_selection_for_precomputed_kernel(datafile,
             std_train_scores[value][best_params_index[1][idx]]
             for idx, value in enumerate(best_params_index[0])
         ]
-        print('train_performance: %s' % train_performance)
-        print('train_std: ', train_std)
+        if verbose:
+            print('train_performance: %s' % train_performance)
+            print('train_std: ', train_std)
         str_fw += 'train_performance: %s\n' % train_performance
         str_fw += 'train_std: %s\n\n' % train_std
 
-        print()
+        if verbose:
+            print()
         average_gram_matrix_time = np.mean(gram_matrix_time)
-        std_gram_matrix_time = np.std(gram_matrix_time, ddof=1)
+        std_gram_matrix_time = np.std(gram_matrix_time, ddof=1) if len(gram_matrix_time) > 1 else 0
         best_gram_matrix_time = [
             gram_matrix_time[i] for i in best_params_index[0]
         ]
         ave_bgmt = np.mean(best_gram_matrix_time)
-        std_bgmt = np.std(best_gram_matrix_time, ddof=1)
-        print(
-            'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
-            .format(average_gram_matrix_time, std_gram_matrix_time))
-        print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
-            ave_bgmt, std_bgmt))
+        std_bgmt = np.std(best_gram_matrix_time, ddof=1) if len(best_gram_matrix_time) > 1 else 0
+        if verbose:        
+            print(
+                    'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s'
+                    .format(average_gram_matrix_time, std_gram_matrix_time))
+            print('time to calculate best gram matrix: {:.2f}±{:.2f}s'.format(
+                    ave_bgmt, std_bgmt))
         tt_poster = time.time() - tts  # training time with hyper-param choices who did not participate in calculation of gram matrices
-        print(
-            'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s'.format(
-                tt_poster))
-        print('total training time with all hyper-param choices: {:.2f}s'.format(
-                tt_poster + np.sum(gram_matrix_time)))
+        if verbose:
+            print(
+                    'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s'.format(
+                            tt_poster))
+            print('total training time with all hyper-param choices: {:.2f}s'.format(
+                    tt_poster + np.sum(gram_matrix_time)))
 #        str_fw += 'time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s\n'.format(average_gram_matrix_time, std_gram_matrix_time)
 #        str_fw += 'time to calculate best gram matrix: {:.2f}±{:.2f}s\n'.format(ave_bgmt, std_bgmt)
         str_fw += 'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s\n\n'.format(tt_poster)
@@ -633,7 +670,8 @@ def model_selection_for_precomputed_kernel(datafile,
         keyorder = [
             'params', 'train_perf', 'valid_perf', 'test_perf'
         ]
-        print()
+        if verbose:
+            print()
         tb_print = tabulate(
             OrderedDict(
                 sorted(table_dict.items(),

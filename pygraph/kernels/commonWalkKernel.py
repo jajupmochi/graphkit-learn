@@ -26,7 +26,8 @@ def commonwalkkernel(*args,
                      n=None,
                      weight=1,
                      compute_method=None,
-                     n_jobs=None):
+                     n_jobs=None,
+                     verbose=True):
     """Calculate common walk graph kernels between graphs.
     Parameters
     ----------
@@ -71,8 +72,9 @@ def commonwalkkernel(*args,
     idx = [G[0] for G in Gn]
     Gn = [G[1] for G in Gn]
     if len(Gn) != len_gn:
-        print('\n %d graphs are removed as they have only 1 node.\n' %
-              (len_gn - len(Gn)))
+        if verbose:
+            print('\n %d graphs are removed as they have only 1 node.\n' %
+                  (len_gn - len(Gn)))
         
     ds_attrs = get_dataset_attributes(
         Gn,
@@ -102,7 +104,7 @@ def commonwalkkernel(*args,
     elif compute_method == 'geo':
         do_partial = partial(wrapper_cw_geo, node_label, edge_label, weight)  
     parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                glbv=(Gn,), n_jobs=n_jobs)  
+                glbv=(Gn,), n_jobs=n_jobs, verbose=verbose)  
     
     
 #    pool = Pool(n_jobs)
@@ -167,9 +169,9 @@ def commonwalkkernel(*args,
 #                Kmatrix[j][i] = Kmatrix[i][j]
 
     run_time = time.time() - start_time
-    print(
-        "\n --- kernel matrix of common walk kernel of size %d built in %s seconds ---"
-        % (len(Gn), run_time))
+    if verbose:
+        print("\n --- kernel matrix of common walk kernel of size %d built in %s seconds ---"
+              % (len(Gn), run_time))
 
     return Kmatrix, run_time, idx
 

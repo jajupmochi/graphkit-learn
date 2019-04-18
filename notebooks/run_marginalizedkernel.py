@@ -81,5 +81,6 @@ for ds in dslist:
         extra_params=(ds['extra_params'] if 'extra_params' in ds else None),
         ds_name=ds['name'],
         n_jobs=multiprocessing.cpu_count(),
-        read_gm_from_file=False)
+        read_gm_from_file=False,
+        verbose=True)
     print()

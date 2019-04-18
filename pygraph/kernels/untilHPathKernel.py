@@ -28,7 +28,8 @@ def untilhpathkernel(*args,
                      depth=10,
                      k_func='tanimoto',
                      compute_method='trie',
-                     n_jobs=None):
+                     n_jobs=None,
+                     verbose=True):
     """Calculate path graph kernels up to depth/hight h between graphs.
     Parameters
     ----------
@@ -88,9 +89,12 @@ def untilhpathkernel(*args,
     else:  
         getps_partial = partial(wrapper_find_all_paths_until_length, depth, 
                                 ds_attrs, node_label, edge_label)    
-    for i, ps in tqdm(
-            pool.imap_unordered(getps_partial, itr, chunksize),
-            desc='getting paths', file=sys.stdout):
+    if verbose:
+        iterator = tqdm(pool.imap_unordered(getps_partial, itr, chunksize),
+                        desc='getting paths', file=sys.stdout)
+    else:
+        iterator = pool.imap_unordered(getps_partial, itr, chunksize)
+    for i, ps in iterator:
         all_paths[i] = ps
     pool.close()
     pool.join()
@@ -122,14 +126,14 @@ def untilhpathkernel(*args,
             G_trie = trie_toshare
         do_partial = partial(wrapper_uhpath_do_trie, k_func)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                    glbv=(all_paths,), n_jobs=n_jobs) 
+                    glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
     else:
         def init_worker(plist_toshare):
             global G_plist
             G_plist = plist_toshare
         do_partial = partial(wrapper_uhpath_do_naive, k_func)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                    glbv=(all_paths,), n_jobs=n_jobs) 
+                    glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
     
     
 #    # ---- direct running, normally use single CPU core. ----
@@ -167,9 +171,9 @@ def untilhpathkernel(*args,
 #                pbar.update(1)
 
     run_time = time.time() - start_time
-    print(
-        "\n --- kernel matrix of path kernel up to %d of size %d built in %s seconds ---"
-        % (depth, len(Gn), run_time))
+    if verbose:
+        print("\n --- kernel matrix of path kernel up to %d of size %d built in %s seconds ---"
+              % (depth, len(Gn), run_time))
 
 #    print(Kmatrix[0][0:10])
     return Kmatrix, run_time

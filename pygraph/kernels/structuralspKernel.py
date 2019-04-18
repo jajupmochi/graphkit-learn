@@ -32,7 +32,8 @@ def structuralspkernel(*args,
                        node_kernels=None,
                        edge_kernels=None,
                        compute_method='naive',
-                       n_jobs=None):
+                       n_jobs=None,
+                       verbose=True):
     """Calculate mean average structural shortest path kernels between graphs.
 
     Parameters
@@ -75,7 +76,8 @@ def structuralspkernel(*args,
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
     weight = None
     if edge_weight is None:
-        print('\n None edge weight specified. Set all weight to 1.\n')
+        if verbose:
+            print('\n None edge weight specified. Set all weight to 1.\n')
     else:
         try:
             some_weight = list(
@@ -83,13 +85,15 @@ def structuralspkernel(*args,
             if isinstance(some_weight, (float, int)):
                 weight = edge_weight
             else:
-                print(
-                    '\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
-                    % edge_weight)
+                if verbose:
+                    print(
+                            '\n Edge weight with name %s is not float or integer. Set all weight to 1.\n'
+                            % edge_weight)
         except:
-            print(
-                '\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
-                % edge_weight)
+            if verbose:
+                print(
+                        '\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n'
+                        % edge_weight)
     ds_attrs = get_dataset_attributes(
         Gn,
         attr_names=['node_labeled', 'node_attr_dim', 'edge_labeled',
@@ -110,11 +114,13 @@ def structuralspkernel(*args,
     if compute_method == 'trie':
         getsp_partial = partial(wrapper_getSP_trie, weight, ds_attrs['is_directed'])    
     else:
-        getsp_partial = partial(wrapper_getSP_naive, weight, ds_attrs['is_directed'])    
-    for i, sp in tqdm(
-            pool.imap_unordered(getsp_partial, itr, chunksize),
-            desc='getting shortest paths',
-            file=sys.stdout):
+        getsp_partial = partial(wrapper_getSP_naive, weight, ds_attrs['is_directed'])   
+    if verbose:
+        iterator = tqdm(pool.imap_unordered(getsp_partial, itr, chunksize),
+                        desc='getting shortest paths', file=sys.stdout)
+    else:
+        iterator = pool.imap_unordered(getsp_partial, itr, chunksize)
+    for i, sp in iterator:
         splist[i] = sp
 #        time.sleep(10)
     pool.close()
@@ -169,12 +175,12 @@ def structuralspkernel(*args,
         do_partial = partial(wrapper_ssp_do_trie, ds_attrs, node_label, edge_label, 
                              node_kernels, edge_kernels)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                            glbv=(splist, Gn), n_jobs=n_jobs) 
+                            glbv=(splist, Gn), n_jobs=n_jobs, verbose=verbose) 
     else:  
         do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
                              node_kernels, edge_kernels)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-                            glbv=(splist, Gn), n_jobs=n_jobs) 
+                            glbv=(splist, Gn), n_jobs=n_jobs, verbose=verbose) 
     
 #    # ---- use pool.map to parallel. ----
 #    pool = Pool(n_jobs)
@@ -233,9 +239,9 @@ def structuralspkernel(*args,
 #            Kmatrix[j][i] = kernel
 
     run_time = time.time() - start_time
-    print(
-        "\n --- shortest path kernel matrix of size %d built in %s seconds ---"
-        % (len(Gn), run_time))
+    if verbose:
+        print("\n --- shortest path kernel matrix of size %d built in %s seconds ---"
+              % (len(Gn), run_time))
 
     return Kmatrix, run_time
 
