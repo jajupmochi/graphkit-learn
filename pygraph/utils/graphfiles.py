@@ -22,8 +22,8 @@ def loadCT(filename):
     with open(filename) as f:
         content = f.read().splitlines()
         g = nx.Graph(
-            name=str(content[0]),
-            filename=basename(filename))  # set name of the graph
+            name = str(content[0]),
+            filename = basename(filename))  # set name of the graph
         tmp = content[1].split(" ")
         if tmp[0] == '':
             nb_nodes = int(tmp[1])  # number of the nodes
@@ -84,43 +84,63 @@ def loadGXL(filename):
     return g
 
 
-def saveGXL(graph, filename):
-    import xml.etree.ElementTree as ET
-    root_node = ET.Element('gxl')
-    attr = dict()
-    attr['id'] = graph.graph['name']
-    attr['edgeids'] = 'true'
-    attr['edgemode'] = 'undirected'
-    graph_node = ET.SubElement(root_node, 'graph', attrib=attr)
-
-    for v in graph:
-        current_node = ET.SubElement(graph_node, 'node', attrib={'id': str(v)})
-        for attr in graph.nodes[v].keys():
-            cur_attr = ET.SubElement(
-                current_node, 'attr', attrib={'name': attr})
-            cur_value = ET.SubElement(cur_attr,
-                                      graph.nodes[v][attr].__class__.__name__)
-            cur_value.text = graph.nodes[v][attr]
-
-    for v1 in graph:
-        for v2 in graph[v1]:
-            if (v1 < v2):  # Non oriented graphs
-                cur_edge = ET.SubElement(
-                    graph_node,
-                    'edge',
-                    attrib={
-                        'from': str(v1),
-                        'to': str(v2)
-                    })
-                for attr in graph[v1][v2].keys():
-                    cur_attr = ET.SubElement(
-                        cur_edge, 'attr', attrib={'name': attr})
-                    cur_value = ET.SubElement(
-                        cur_attr, graph[v1][v2][attr].__class__.__name__)
-                    cur_value.text = str(graph[v1][v2][attr])
-
-    tree = ET.ElementTree(root_node)
-    tree.write(filename)
+def saveGXL(graph, filename, method='benoit'):
+    if method == 'benoit':
+        import xml.etree.ElementTree as ET
+        root_node = ET.Element('gxl')
+        attr = dict()
+        attr['id'] = str(graph.graph['name'])
+        attr['edgeids'] = 'true'
+        attr['edgemode'] = 'undirected'
+        graph_node = ET.SubElement(root_node, 'graph', attrib=attr)
+    
+        for v in graph:
+            current_node = ET.SubElement(graph_node, 'node', attrib={'id': str(v)})
+            for attr in graph.nodes[v].keys():
+                cur_attr = ET.SubElement(
+                    current_node, 'attr', attrib={'name': attr})
+                cur_value = ET.SubElement(cur_attr,
+                                          graph.nodes[v][attr].__class__.__name__)
+                cur_value.text = graph.nodes[v][attr]
+    
+        for v1 in graph:
+            for v2 in graph[v1]:
+                if (v1 < v2):  # Non oriented graphs
+                    cur_edge = ET.SubElement(
+                        graph_node,
+                        'edge',
+                        attrib={
+                            'from': str(v1),
+                            'to': str(v2)
+                        })
+                    for attr in graph[v1][v2].keys():
+                        cur_attr = ET.SubElement(
+                            cur_edge, 'attr', attrib={'name': attr})
+                        cur_value = ET.SubElement(
+                            cur_attr, graph[v1][v2][attr].__class__.__name__)
+                        cur_value.text = str(graph[v1][v2][attr])
+    
+        tree = ET.ElementTree(root_node)
+        tree.write(filename)
+    elif method == 'gedlib':
+        # reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22
+        pass
+#        gxl_file = open(filename, 'w')
+#        gxl_file.write("<?xml version=\"1.0\"?>\n")
+#        gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
+#        gxl_file.write("<gxl>\n")
+#        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"false\" edgemode=\"undirected\">\n")
+#        for v in graph:
+#            gxl_file.write("<node id=\"_" + str(v) + "\">\n")
+#            gxl_file.write("<attr name=\"chem\"><int>" + str(self.node_labels[node]) + "</int></attr>\n")
+#            gxl_file.write("</node>\n")
+#        for edge in self.edge_list:
+#            gxl_file.write("<edge from=\"_" + str(edge[0]) + "\" to=\"_" + str(edge[1]) + "\">\n")
+#            gxl_file.write("<attr name=\"valence\"><int>1</int></attr>\n")
+#            gxl_file.write("</edge>\n")
+#        gxl_file.write("</graph>\n")
+#        gxl_file.write("</gxl>\n")
+#        gxl_file.close()
 
 
 def loadSDF(filename):
@@ -412,3 +432,33 @@ def loadDataset(filename, filename_y=None, extra_params=None):
         #     print(g.edges(data=True))
 
     return data, y
+
+
+def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile'):
+    """Save list of graphs.
+    """
+    import os
+    dirname_ds = os.path.dirname(filename)
+    if dirname_ds != '':
+        dirname_ds += '/'
+        if not os.path.exists(dirname_ds) :
+            os.makedirs(dirname_ds)
+            
+    if group == 'xml' and gformat == 'gxl':
+        with open(filename + '.xml', 'w') as fgroup:
+            fgroup.write("<?xml version=\"1.0\"?>")
+            fgroup.write("\n<!DOCTYPE GraphCollection SYSTEM \"https://dbblumenthal.github.io/gedlib/GraphCollection_8dtd_source.html\">")
+            fgroup.write("\n<GraphCollection>")
+            for idx, g in enumerate(Gn):
+                fname_tmp = "graph" + str(idx) + ".gxl"
+                saveGXL(g, dirname_ds + fname_tmp)
+                fgroup.write("\n\t<graph file=\"" + fname_tmp + "\" class=\"" + str(y[idx]) + "\"/>")
+            fgroup.write("\n</GraphCollection>")
+            fgroup.close()
+            
+            
+if __name__ == '__main__':    
+    ds = {'name': 'MUTAG', 'dataset': '../../datasets/MUTAG/MUTAG.mat',
+          'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb
+    Gn, y = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
+    saveDataset(Gn, y, group='xml', filename='temp/temp')

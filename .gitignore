@@ -20,5 +20,8 @@ pygraph/kernels/*_sym.py
 *.dat
 *.pyc
 
+preimage/*
+!preimage/*.py
+
 __pycache__
 ##*#

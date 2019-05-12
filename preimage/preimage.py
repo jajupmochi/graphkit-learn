@@ -126,6 +126,7 @@ for alpha in alpha_range:
                     dhat = dnew
                     gnew = gtemp.copy()
                     found = True # found better graph.
+                    r = 0
         if found:
             gihat_list = [gnew]
             dis_gs.append(dhat)

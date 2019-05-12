@@ -420,55 +420,6 @@ def model_selection_for_precomputed_kernel(datafile,
             # np.save(results_name_pre + 'best_gram_matrix_time.dt',
             #         best_gram_matrix_time)
     
-            # print out as table.
-            from collections import OrderedDict
-            from tabulate import tabulate
-            table_dict = {}
-            if model_type == 'regression':
-                for param_in in param_list:
-                    param_in['alpha'] = '{:.2e}'.format(param_in['alpha'])
-            else:
-                for param_in in param_list:
-                    param_in['C'] = '{:.2e}'.format(param_in['C'])
-            table_dict['params'] = [{**param_out, **param_in}
-                                    for param_in in param_list for param_out in param_list_pre_revised]
-            table_dict['gram_matrix_time'] = [
-                '{:.2f}'.format(gram_matrix_time[index_out])
-                for param_in in param_list
-                for index_out, _ in enumerate(param_list_pre_revised)
-            ]
-            table_dict['valid_perf'] = [
-                '{:.2f}±{:.2f}'.format(average_val_scores[index_out][index_in],
-                                       std_val_scores[index_out][index_in])
-                for index_in, _ in enumerate(param_list)
-                for index_out, _ in enumerate(param_list_pre_revised)
-            ]
-            table_dict['test_perf'] = [
-                '{:.2f}±{:.2f}'.format(average_perf_scores[index_out][index_in],
-                                       std_perf_scores[index_out][index_in])
-                for index_in, _ in enumerate(param_list)
-                for index_out, _ in enumerate(param_list_pre_revised)
-            ]
-            table_dict['train_perf'] = [
-                '{:.2f}±{:.2f}'.format(average_train_scores[index_out][index_in],
-                                       std_train_scores[index_out][index_in])
-                for index_in, _ in enumerate(param_list)
-                for index_out, _ in enumerate(param_list_pre_revised)
-            ]
-            keyorder = [
-                'params', 'train_perf', 'valid_perf', 'test_perf',
-                'gram_matrix_time'
-            ]
-            if verbose:
-                print()
-            tb_print = tabulate(
-                OrderedDict(
-                    sorted(table_dict.items(),
-                           key=lambda i: keyorder.index(i[0]))),
-                headers='keys')
-#            print(tb_print)
-            str_fw += 'table of performance v.s. hyper-params:\n\n%s\n\n' % tb_print
-    
     # read gram matrices from file.
     else:    
         # Grid of parameters with a discrete number of values for each.
@@ -632,57 +583,15 @@ def model_selection_for_precomputed_kernel(datafile,
 #        str_fw += 'time to calculate best gram matrix: {:.2f}±{:.2f}s\n'.format(ave_bgmt, std_bgmt)
         str_fw += 'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s\n\n'.format(tt_poster)
 
-        # print out as table.
-        from collections import OrderedDict
-        from tabulate import tabulate
-        table_dict = {}
-        if model_type == 'regression':
-            for param_in in param_list:
-                param_in['alpha'] = '{:.2e}'.format(param_in['alpha'])
-        else:
-            for param_in in param_list:
-                param_in['C'] = '{:.2e}'.format(param_in['C'])
-        table_dict['params'] = [{**param_out, **param_in}
-                                for param_in in param_list for param_out in param_list_pre_revised]
-#        table_dict['gram_matrix_time'] = [
-#            '{:.2f}'.format(gram_matrix_time[index_out])
-#            for param_in in param_list
-#            for index_out, _ in enumerate(param_list_pre_revised)
-#        ]
-        table_dict['valid_perf'] = [
-            '{:.2f}±{:.2f}'.format(average_val_scores[index_out][index_in],
-                                   std_val_scores[index_out][index_in])
-            for index_in, _ in enumerate(param_list)
-            for index_out, _ in enumerate(param_list_pre_revised)
-        ]
-        table_dict['test_perf'] = [
-            '{:.2f}±{:.2f}'.format(average_perf_scores[index_out][index_in],
-                                   std_perf_scores[index_out][index_in])
-            for index_in, _ in enumerate(param_list)
-            for index_out, _ in enumerate(param_list_pre_revised)
-        ]
-        table_dict['train_perf'] = [
-            '{:.2f}±{:.2f}'.format(average_train_scores[index_out][index_in],
-                                   std_train_scores[index_out][index_in])
-            for index_in, _ in enumerate(param_list)
-            for index_out, _ in enumerate(param_list_pre_revised)
-        ]
-        keyorder = [
-            'params', 'train_perf', 'valid_perf', 'test_perf'
-        ]
-        if verbose:
-            print()
-        tb_print = tabulate(
-            OrderedDict(
-                sorted(table_dict.items(),
-                       key=lambda i: keyorder.index(i[0]))),
-            headers='keys')
-#        print(tb_print)
-        str_fw += 'table of performance v.s. hyper-params:\n\n%s\n\n' % tb_print
-
         # open file to save all results for this dataset.
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
+            
+    # print out results as table.
+    str_fw += printResultsInTable(param_list, param_list_pre_revised, average_val_scores,
+              std_val_scores, average_perf_scores, std_perf_scores,
+              average_train_scores, std_train_scores, gram_matrix_time,
+              model_type, verbose)
             
     # open file to save all results for this dataset.
     if not os.path.exists(results_dir + '/' + ds_name + '.output.txt'):
@@ -975,3 +884,54 @@ def read_gram_matrices_from_file(results_dir, ds_name):
     param_list_pre_revised = gmfile['params'] # list to store param grids precomputed ignoring the useless ones
     y = gmfile['y'].tolist()
     return gram_matrices, param_list_pre_revised, y
+
+
+def printResultsInTable(param_list, param_list_pre_revised, average_val_scores,
+                        std_val_scores, average_perf_scores, std_perf_scores,
+                        average_train_scores, std_train_scores, gram_matrix_time,
+                        model_type, verbose):
+    from collections import OrderedDict
+    from tabulate import tabulate
+    table_dict = {}
+    if model_type == 'regression':
+        for param_in in param_list:
+            param_in['alpha'] = '{:.2e}'.format(param_in['alpha'])
+    else:
+        for param_in in param_list:
+            param_in['C'] = '{:.2e}'.format(param_in['C'])
+    table_dict['params'] = [{**param_out, **param_in}
+                            for param_in in param_list for param_out in param_list_pre_revised]
+    table_dict['gram_matrix_time'] = [
+        '{:.2f}'.format(gram_matrix_time[index_out])
+        for param_in in param_list
+        for index_out, _ in enumerate(param_list_pre_revised)
+    ]
+    table_dict['valid_perf'] = [
+        '{:.2f}±{:.2f}'.format(average_val_scores[index_out][index_in],
+                               std_val_scores[index_out][index_in])
+        for index_in, _ in enumerate(param_list)
+        for index_out, _ in enumerate(param_list_pre_revised)
+    ]
+    table_dict['test_perf'] = [
+        '{:.2f}±{:.2f}'.format(average_perf_scores[index_out][index_in],
+                               std_perf_scores[index_out][index_in])
+        for index_in, _ in enumerate(param_list)
+        for index_out, _ in enumerate(param_list_pre_revised)
+    ]
+    table_dict['train_perf'] = [
+        '{:.2f}±{:.2f}'.format(average_train_scores[index_out][index_in],
+                               std_train_scores[index_out][index_in])
+        for index_in, _ in enumerate(param_list)
+        for index_out, _ in enumerate(param_list_pre_revised)
+    ]
+    
+    keyorder = [
+        'params', 'train_perf', 'valid_perf', 'test_perf',
+        'gram_matrix_time'
+    ]
+    if verbose:
+        print()
+    tb_print = tabulate(OrderedDict(sorted(table_dict.items(), 
+                        key=lambda i: keyorder.index(i[0]))), headers='keys')
+#            print(tb_print)
+    return 'table of performance v.s. hyper-params:\n\n%s\n\n' % tb_print

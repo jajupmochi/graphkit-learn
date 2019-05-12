@@ -52,10 +52,10 @@ def get_dataset_attributes(Gn,
         return False if edge_label is None else True
 
     def get_edge_label_num(Gn):
-        nl = set()
+        el = set()
         for G in Gn:
-            nl = nl | set(nx.get_edge_attributes(G, edge_label).values())
-        return len(nl)
+            el = el | set(nx.get_edge_attributes(G, edge_label).values())
+        return len(el)
 
     def is_directed(Gn):
         return nx.is_directed(Gn[0])
