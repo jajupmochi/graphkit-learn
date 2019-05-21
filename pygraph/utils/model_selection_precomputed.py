@@ -145,7 +145,8 @@ def model_selection_for_precomputed_kernel(datafile,
 #            Kmatrix = np.random.rand(2250, 2250)
 #            current_run_time = 0.1
             
-            # remove graphs whose kernels with themselves are zeros
+            # remove graphs whose kernels with themselves are zeros 
+            # @todo: y not changed accordingly?
             Kmatrix_diag = Kmatrix.diagonal().copy()
             nb_g_ignore = 0
             for idxk, diag in enumerate(Kmatrix_diag):
@@ -154,6 +155,7 @@ def model_selection_for_precomputed_kernel(datafile,
                     Kmatrix = np.delete(Kmatrix, (idxk - nb_g_ignore), axis=1)
                     nb_g_ignore += 1
             # normalization
+            # @todo: works only for undirected graph?
             Kmatrix_diag = Kmatrix.diagonal().copy()
             for i in range(len(Kmatrix)):
                 for j in range(i, len(Kmatrix)):

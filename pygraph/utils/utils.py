@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+from copy import deepcopy
 #from itertools import product
 
 # from tqdm import tqdm
@@ -183,3 +184,61 @@ def direct_product(G1, G2, node_label, edge_label):
     # gt = nx.convert_node_labels_to_integers(
     #     gt, first_label=0, label_attribute='label_orignal')
     return gt
+
+
+def graph_deepcopy(G):
+    """Deep copy a graph, including deep copy of all nodes, edges and 
+    attributes of the graph, nodes and edges.
+    
+    Note
+    ----
+    It is the same as the NetworkX function graph.copy(), as far as I know.
+    """
+    # add graph attributes.
+    labels = {}
+    for k, v in G.graph.items():
+        labels[k] = deepcopy(v)
+    if G.is_directed():
+        G_copy = nx.DiGraph(**labels)
+    else:
+        G_copy = nx.Graph(**labels)
+        
+    # add nodes    
+    for nd, attrs in G.nodes(data=True):
+        labels = {}
+        for k, v in attrs.items():
+            labels[k] = deepcopy(v)
+        G_copy.add_node(nd, **labels)
+        
+    # add edges.
+    for nd1, nd2, attrs in G.edges(data=True):
+        labels = {}
+        for k, v in attrs.items():
+            labels[k] = deepcopy(v)
+        G_copy.add_edge(nd1, nd2, **labels)
+    
+    return G_copy
+
+
+def graph_isIdentical(G1, G2):
+    """Check if two graphs are identical, including: same nodes, edges, node
+    labels/attributes, edge labels/attributes.
+    
+    Notes
+    ----
+    1. The type of graphs has to be the same.
+    2. Global/Graph attributes are neglected as they may contain names for graphs.
+    """
+    # check nodes.
+    nlist1 = [n for n in G1.nodes(data=True)]
+    nlist2 = [n for n in G2.nodes(data=True)]
+    if not nlist1 == nlist2:
+        return False
+    # check edges.
+    elist1 = [n for n in G1.edges(data=True)]
+    elist2 = [n for n in G2.edges(data=True)]
+    if not elist1 == elist2:
+        return False
+    # check graph attributes.
+    
+    return True

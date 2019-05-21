@@ -57,6 +57,27 @@ def gaussiankernel(x, y, gamma=None):
     return kernel
 
 
+def polynomialkernel(x, y, d=1, c=0):
+    """Polynomial kernel.
+    Compute the polynomial kernel between x and y:
+
+        K(x, y) = (x^Ty)^d + c.
+
+    Parameters
+    ----------
+    x, y : array
+
+    d : integer, default 1
+    
+    c : float, default 0
+
+    Returns
+    -------
+    kernel : float
+    """
+    return np.dot(x, y) ** d + c
+
+
 def kernelsum(k1, k2, d11, d12, d21=None, d22=None, lamda1=1, lamda2=1):
     """Sum of a pair of kernels.
 
@@ -110,3 +131,7 @@ def kernelproduct(k1, k2, d11, d12, d21=None, d22=None, lamda=1):
     else:
         kernel = lamda * k1(d11, d12) * k2(d21, d22)
     return kernel
+
+
+if __name__ == '__main__':
+    o = polynomialkernel([1, 2], [3, 4], 2, 3)

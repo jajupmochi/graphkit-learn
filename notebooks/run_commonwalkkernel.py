@@ -8,10 +8,8 @@ Created on Fri Sep 28 17:01:13 2018
 
 from libs import *
 import multiprocessing
-from sklearn.metrics.pairwise import rbf_kernel
 
 from pygraph.kernels.commonWalkKernel import commonwalkkernel
-from pygraph.utils.kernels import deltakernel, kernelproduct
 
 dslist = [
     {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',

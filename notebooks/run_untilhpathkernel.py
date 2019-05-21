@@ -10,7 +10,6 @@ from libs import *
 import multiprocessing
 
 from pygraph.kernels.untilHPathKernel import untilhpathkernel
-from pygraph.utils.kernels import deltakernel, kernelproduct
 
 dslist = [
     {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',

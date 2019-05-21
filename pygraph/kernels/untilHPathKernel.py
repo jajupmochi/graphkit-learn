@@ -31,6 +31,7 @@ def untilhpathkernel(*args,
                      n_jobs=None,
                      verbose=True):
     """Calculate path graph kernels up to depth/hight h between graphs.
+    
     Parameters
     ----------
     Gn : List of NetworkX graph
@@ -124,7 +125,7 @@ def untilhpathkernel(*args,
         def init_worker(trie_toshare):
             global G_trie
             G_trie = trie_toshare
-        do_partial = partial(wrapper_uhpath_do_trie, k_func)   
+        do_partial = partial(wrapper_uhpath_do_trie, k_func)
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
                     glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
     else:

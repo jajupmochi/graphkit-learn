@@ -84,7 +84,7 @@ def loadGXL(filename):
     return g
 
 
-def saveGXL(graph, filename, method='benoit'):
+def saveGXL(graph, filename, method='gedlib'):
     if method == 'benoit':
         import xml.etree.ElementTree as ET
         root_node = ET.Element('gxl')
@@ -124,23 +124,24 @@ def saveGXL(graph, filename, method='benoit'):
         tree.write(filename)
     elif method == 'gedlib':
         # reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22
-        pass
-#        gxl_file = open(filename, 'w')
-#        gxl_file.write("<?xml version=\"1.0\"?>\n")
-#        gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
-#        gxl_file.write("<gxl>\n")
-#        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"false\" edgemode=\"undirected\">\n")
-#        for v in graph:
-#            gxl_file.write("<node id=\"_" + str(v) + "\">\n")
-#            gxl_file.write("<attr name=\"chem\"><int>" + str(self.node_labels[node]) + "</int></attr>\n")
-#            gxl_file.write("</node>\n")
-#        for edge in self.edge_list:
-#            gxl_file.write("<edge from=\"_" + str(edge[0]) + "\" to=\"_" + str(edge[1]) + "\">\n")
-#            gxl_file.write("<attr name=\"valence\"><int>1</int></attr>\n")
-#            gxl_file.write("</edge>\n")
-#        gxl_file.write("</graph>\n")
-#        gxl_file.write("</gxl>\n")
-#        gxl_file.close()
+#        pass
+        gxl_file = open(filename, 'w')
+        gxl_file.write("<?xml version=\"1.0\"?>\n")
+        gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
+        gxl_file.write("<gxl>\n")
+        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"true\" edgemode=\"undirected\">\n")
+        for v, attrs in graph.nodes(data=True):
+            gxl_file.write("<node id=\"_" + str(v) + "\">\n")
+            gxl_file.write("<attr name=\"" + "chem" + "\"><int>" + str(attrs['atom']) + "</int></attr>\n")
+            gxl_file.write("</node>\n")
+        for v1, v2, attrs in graph.edges(data=True):
+            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\">\n")
+#            gxl_file.write("<attr name=\"valence\"><int>" + str(attrs['bond_type']) + "</int></attr>\n")
+            gxl_file.write("<attr name=\"valence\"><int>" + "1" + "</int></attr>\n")
+            gxl_file.write("</edge>\n")
+        gxl_file.write("</graph>\n")
+        gxl_file.write("</gxl>\n")
+        gxl_file.close()
 
 
 def loadSDF(filename):
