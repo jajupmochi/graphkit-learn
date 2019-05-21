@@ -42,6 +42,8 @@ Simply clone this repository and voilà! Then check [`notebooks`](https://github
   * The path kernel up to length h [6]
     * The Tanimoto kernel
     * The MinMax kernel
+* Non-linear kernels
+  * The treelet kernel [10]
 
 ## Computation optimization methods
 
@@ -87,6 +89,8 @@ Linlin Jia, Benoit Gaüzère, and Paul Honeine. Graph Kernels Based on Linear Pa
 [8] Lifan Xu, Wei Wang, M Alvarez, John Cavazos, and Dongping Zhang. Parallelization of shortest path graph kernels on multi-core cpus and gpus. Proceedings of the Programmability Issues for Heterogeneous Multicores (MultiProg), Vienna, Austria, 2014.
 
 [9] Edward Fredkin. Trie memory. Communications of the ACM, 3(9):490–499, 1960.
+
+[10] Gaüzere, B., Brun, L., Villemin, D., 2012. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters 33, 2038–2047.
 
 ## Authors
 
