@@ -65,6 +65,7 @@ def marginalizedkernel(*args,
     # pre-process
     n_iteration = int(n_iteration)
     Gn = args[0][:] if len(args) == 1 else [args[0].copy(), args[1].copy()]
+    Gn = [g.copy() for g in Gn]
     
     ds_attrs = get_dataset_attributes(
         Gn,
@@ -215,37 +216,37 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
     
     R_inf = {} # dict to save all the R_inf for all pairs of nodes
     # initial R_inf, the 1st iteration.
-    for node1 in g1.nodes(data=True):
-        for node2 in g2.nodes(data=True):
+    for node1 in g1.nodes():
+        for node2 in g2.nodes():
 #            R_inf[(node1[0], node2[0])] = r1
-            if len(g1[node1[0]]) > 0:
-                if len(g2[node2[0]]) > 0:
-                    R_inf[(node1[0], node2[0])] = r1
+            if len(g1[node1]) > 0:
+                if len(g2[node2]) > 0:
+                    R_inf[(node1, node2)] = r1
                 else:
-                    R_inf[(node1[0], node2[0])] = p_quit
+                    R_inf[(node1, node2)] = p_quit
             else:
-                if len(g2[node2[0]]) > 0:
-                    R_inf[(node1[0], node2[0])] = p_quit
+                if len(g2[node2]) > 0:
+                    R_inf[(node1, node2)] = p_quit
                 else:
-                    R_inf[(node1[0], node2[0])] = 1
+                    R_inf[(node1, node2)] = 1
             
     # compute all transition probability first.
     t_dict = {}
     if n_iteration > 1:
-        for node1 in g1.nodes(data=True):
-            neighbor_n1 = g1[node1[0]]
+        for node1 in g1.nodes():
+            neighbor_n1 = g1[node1]
             # the transition probability distribution in the random walks
             # generating step (uniform distribution over the vertices adjacent
             # to the current vertex)
             if len(neighbor_n1) > 0:
                 p_trans_n1 = (1 - p_quit) / len(neighbor_n1)
-                for node2 in g2.nodes(data=True):
-                    neighbor_n2 = g2[node2[0]]
+                for node2 in g2.nodes():
+                    neighbor_n2 = g2[node2]
                     if len(neighbor_n2) > 0:
                         p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
                         for neighbor1 in neighbor_n1:
                             for neighbor2 in neighbor_n2:
-                                t_dict[(node1[0], node2[0], neighbor1, neighbor2)] = \
+                                t_dict[(node1, node2, neighbor1, neighbor2)] = \
                                     p_trans_n1 * p_trans_n2 * \
                                     deltakernel(g1.node[neighbor1][node_label],
                                                 g2.node[neighbor2][node_label]) * \
@@ -258,20 +259,20 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
         R_inf_old = R_inf.copy()
 
         # calculate R_inf for each pair of nodes
-        for node1 in g1.nodes(data=True):
-            neighbor_n1 = g1[node1[0]]
+        for node1 in g1.nodes():
+            neighbor_n1 = g1[node1]
             # the transition probability distribution in the random walks
             # generating step (uniform distribution over the vertices adjacent
             # to the current vertex)
             if len(neighbor_n1) > 0:
-                for node2 in g2.nodes(data=True):
-                    neighbor_n2 = g2[node2[0]]
+                for node2 in g2.nodes():
+                    neighbor_n2 = g2[node2]
                     if len(neighbor_n2) > 0:   
-                        R_inf[(node1[0], node2[0])] = r1
+                        R_inf[(node1, node2)] = r1
                         for neighbor1 in neighbor_n1:
                             for neighbor2 in neighbor_n2:
-                                R_inf[(node1[0], node2[0])] += \
-                                    (t_dict[(node1[0], node2[0], neighbor1, neighbor2)] * \
+                                R_inf[(node1, node2)] += \
+                                    (t_dict[(node1, node2, neighbor1, neighbor2)] * \
                                     R_inf_old[(neighbor1, neighbor2)])  # ref [1] equation (8)
 
     # add elements of R_inf up and calculate kernel

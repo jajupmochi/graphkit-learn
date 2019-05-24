@@ -58,6 +58,7 @@ def randomwalkkernel(*args,
     """
     compute_method = compute_method.lower()
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    Gn = [g.copy() for g in Gn]
 
     eweight = None
     if edge_weight == None:

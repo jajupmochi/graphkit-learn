@@ -1,6 +1,8 @@
 """
 @author: linlin
-@references: Gaüzère B, Brun L, Villemin D. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
+@references: 
+    [1] Gaüzère B, Brun L, Villemin D. Two new graphs kernels in 
+    chemoinformatics. Pattern Recognition Letters. 2012 Nov 1;33(15):2038-47.
 """
 
 import sys
@@ -50,6 +52,7 @@ def treeletkernel(*args,
     """
     # pre-process
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    Gn = [g.copy() for g in Gn]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     ds_attrs = get_dataset_attributes(Gn,
         attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
@@ -76,13 +79,13 @@ def treeletkernel(*args,
     else:
         chunksize = 100
     canonkeys = [[] for _ in range(len(Gn))]
-    getps_partial = partial(wrapper_get_canonkeys, node_label, edge_label, 
+    get_partial = partial(wrapper_get_canonkeys, node_label, edge_label, 
                             labeled, ds_attrs['is_directed'])
     if verbose:
-        iterator = tqdm(pool.imap_unordered(getps_partial, itr, chunksize),
+        iterator = tqdm(pool.imap_unordered(get_partial, itr, chunksize),
                         desc='getting canonkeys', file=sys.stdout)
     else:
-        iterator = pool.imap_unordered(getps_partial, itr, chunksize)
+        iterator = pool.imap_unordered(get_partial, itr, chunksize)
     for i, ck in iterator:
         canonkeys[i] = ck
     pool.close()

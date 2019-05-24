@@ -60,6 +60,7 @@ def untilhpathkernel(*args,
     # pre-process
     depth = int(depth)
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    Gn = [g.copy() for g in Gn]
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     ds_attrs = get_dataset_attributes(
         Gn,

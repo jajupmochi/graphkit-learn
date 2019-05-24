@@ -74,6 +74,7 @@ def structuralspkernel(*args,
     """
     # pre-process
     Gn = args[0] if len(args) == 1 else [args[0], args[1]]
+    Gn = [g.copy() for g in Gn]
     weight = None
     if edge_weight is None:
         if verbose:

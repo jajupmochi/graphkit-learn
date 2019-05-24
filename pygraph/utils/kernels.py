@@ -61,7 +61,7 @@ def polynomialkernel(x, y, d=1, c=0):
     """Polynomial kernel.
     Compute the polynomial kernel between x and y:
 
-        K(x, y) = (x^Ty)^d + c.
+        K(x, y) = <x, y> ^d + c.
 
     Parameters
     ----------
@@ -76,6 +76,27 @@ def polynomialkernel(x, y, d=1, c=0):
     kernel : float
     """
     return np.dot(x, y) ** d + c
+
+
+def linearkernel(x, y):
+    """Polynomial kernel.
+    Compute the polynomial kernel between x and y:
+
+        K(x, y) = <x, y>.
+
+    Parameters
+    ----------
+    x, y : array
+
+    d : integer, default 1
+    
+    c : float, default 0
+
+    Returns
+    -------
+    kernel : float
+    """
+    return np.dot(x, y)
 
 
 def kernelsum(k1, k2, d11, d12, d21=None, d22=None, lamda1=1, lamda2=1):

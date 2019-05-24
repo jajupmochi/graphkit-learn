@@ -44,6 +44,8 @@ Simply clone this repository and voilà! Then check [`notebooks`](https://github
     * The MinMax kernel
 * Non-linear kernels
   * The treelet kernel [10]
+  * Weisfeiler-Lehman kernel [11]
+    * Subtree
 
 ## Computation optimization methods
 
@@ -91,6 +93,8 @@ Linlin Jia, Benoit Gaüzère, and Paul Honeine. Graph Kernels Based on Linear Pa
 [9] Edward Fredkin. Trie memory. Communications of the ACM, 3(9):490–499, 1960.
 
 [10] Gaüzere, B., Brun, L., Villemin, D., 2012. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters 33, 2038–2047.
+
+[11] Shervashidze, N., Schweitzer, P., Leeuwen, E.J.v., Mehlhorn, K., Borgwardt, K.M., 2011. Weisfeiler-lehman graph kernels. Journal of Machine Learning Research 12, 2539–2561.
 
 ## Authors
 

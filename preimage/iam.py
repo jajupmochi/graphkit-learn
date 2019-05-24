@@ -16,7 +16,7 @@ import librariesImport, script
 sys.path.insert(0, "../")
 from pygraph.utils.graphfiles import saveDataset
 from pygraph.utils.graphdataset import get_dataset_attributes
-from pygraph.utils.utils import graph_isIdentical
+from pygraph.utils.utils import graph_isIdentical, get_node_labels, get_edge_labels
 #from pygraph.utils.utils import graph_deepcopy
 
 
@@ -158,9 +158,9 @@ def GED(g1, g2, lib='gedlib'):
         script.PyRestartEnv()
         script.PyLoadGXLGraph('ged_tmp/', 'ged_tmp/tmp.xml')
         listID = script.PyGetGraphIds()
-        script.PySetEditCost("CHEM_2")
+        script.PySetEditCost("CHEM_1")
         script.PyInitEnv()
-        script.PySetMethod("BIPARTITE", "")
+        script.PySetMethod("IPFP", "")
         script.PyInitMethod()
         g = listID[0]
         h = listID[1]
@@ -171,20 +171,6 @@ def GED(g1, g2, lib='gedlib'):
         dis = (upper + lower) / 2
         
     return dis, pi_forward, pi_backward
-
-
-def get_node_labels(Gn, node_label):
-    nl = set()
-    for G in Gn:
-        nl = nl | set(nx.get_node_attributes(G, node_label).values())
-    return nl
-
-
-def get_edge_labels(Gn, edge_label):
-    el = set()
-    for G in Gn:
-        el = el | set(nx.get_edge_attributes(G, edge_label).values())
-    return el
 
 
 # --------------------------- These are tests --------------------------------#

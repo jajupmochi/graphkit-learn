@@ -9,8 +9,9 @@ Created on Mon Mar  21 11:19:33 2019
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.treeletKernel import treeletkernel
-from pygraph.utils.kernels import gaussiankernel, linearkernel, polynomialkernel
+from pygraph.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
+from pygraph.utils.kernels import gaussiankernel, polynomialkernel
+
 
 dslist = [
     {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
@@ -21,14 +22,14 @@ dslist = [
     {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
     {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
     {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
-#    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-#    # node nsymb
+    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
+    # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
     # node symb/nsymb
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb
-#    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
-
+    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
+#
     #     {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
     # # #     {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
     # # #     {'name': 'COX2', 'dataset': '../datasets/COX2_txt/COX2_A_sparse.txt'}, # node symb/nsymb
@@ -42,11 +43,9 @@ dslist = [
 
     # #     {'name': 'PROTEINS', 'dataset': '../datasets/PROTEINS_txt/PROTEINS_A_sparse.txt'}, # node symb/nsymb
     # #     {'name': 'PROTEINS_full', 'dataset': '../datasets/PROTEINS_full_txt/PROTEINS_full_A_sparse.txt'}, # node symb/nsymb
-    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
-    #     {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
-    #     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
+#    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
+    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
+    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
     #     {'name': 'NCI-HIV', 'dataset': '../datasets/NCI-HIV/AIDO99SD.sdf',
     #         'dataset_y': '../datasets/NCI-HIV/aids_conc_may04.txt',}, # node/edge symb
 
@@ -56,9 +55,10 @@ dslist = [
     #     {'name': 'PTC_MM', 'dataset': '../datasets/PTC/Train/MM.ds',},
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
-estimator = treeletkernel
-param_grid_precomputed = {'sub_kernel': [gaussiankernel, linearkernel, polynomialkernel]}
-param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
+estimator = weisfeilerlehmankernel
+param_grid_precomputed = {'base_kernel': ['subtree'], 
+                          'height': np.linspace(0, 10, 11)}
+param_grid = [{'C': np.logspace(-10, 4, num=29, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 
 for ds in dslist:
