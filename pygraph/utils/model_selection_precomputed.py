@@ -227,9 +227,9 @@ def model_selection_for_precomputed_kernel(datafile,
             str_fw += '\nall gram matrices are ignored, no results obtained.\n\n'
         else:
             # save gram matrices to file.
-            np.savez(results_dir + '/' + ds_name + '.gm', 
-                     gms=gram_matrices, params=param_list_pre_revised, y=y, 
-                     gmtime=gram_matrix_time)
+#            np.savez(results_dir + '/' + ds_name + '.gm', 
+#                     gms=gram_matrices, params=param_list_pre_revised, y=y, 
+#                     gmtime=gram_matrix_time)
             if verbose:
                 print(
                 '3. Fitting and predicting using nested cross validation. This could really take a while...'

@@ -17,22 +17,25 @@ import numpy as np
 
 
 dslist = [
-    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-        'task': 'regression'},  # node symb
-    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
-    # contains single node graph, node symb
-    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
-    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
-    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
-    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node nsymb
-    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node symb/nsymb
+#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+#        'task': 'regression'},  # node symb
+#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+#        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
+#    # contains single node graph, node symb
+#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
+#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
+#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
+#    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
+#    # node symb/nsymb
+#    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
+#    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
+    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
+#    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
+#    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
+#    # node nsymb
+#
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb
-#    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
-
     #     {'name': 'COIL-DEL', 'dataset': '../datasets/COIL-DEL/COIL-DEL_A.txt'}, # edge symb, node nsymb
     # # #     {'name': 'BZR', 'dataset': '../datasets/BZR_txt/BZR_A_sparse.txt'}, # node symb/nsymb
     # # #     {'name': 'COX2', 'dataset': '../datasets/COX2_txt/COX2_A_sparse.txt'}, # node symb/nsymb
@@ -40,22 +43,17 @@ dslist = [
     #
     # #     {'name': 'DHFR', 'dataset': '../datasets/DHFR_txt/DHFR_A_sparse.txt'}, # node symb/nsymb
     # #     {'name': 'SYNTHETIC', 'dataset': '../datasets/SYNTHETIC_txt/SYNTHETIC_A_sparse.txt'}, # node symb/nsymb
-#    {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb, missing values
-#    {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb, missing values
+    # #     {'name': 'MSRC9', 'dataset': '../datasets/MSRC_9_txt/MSRC_9_A.txt'}, # node symb
+    # #     {'name': 'MSRC21', 'dataset': '../datasets/MSRC_21_txt/MSRC_21_A.txt'}, # node symb
     # #     {'name': 'FIRSTMM_DB', 'dataset': '../datasets/FIRSTMM_DB/FIRSTMM_DB_A.txt'}, # node symb/nsymb ,edge nsymb
 
     # #     {'name': 'PROTEINS', 'dataset': '../datasets/PROTEINS_txt/PROTEINS_A_sparse.txt'}, # node symb/nsymb
     # #     {'name': 'PROTEINS_full', 'dataset': '../datasets/PROTEINS_full_txt/PROTEINS_full_A_sparse.txt'}, # node symb/nsymb
-    # #     {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
-    #     {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
-    #     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109.mat',
-    #         'extra_params': {'am_sp_al_nl_el': [1, 1, 2, 0, -1]}}, # node symb
     #     {'name': 'NCI-HIV', 'dataset': '../datasets/NCI-HIV/AIDO99SD.sdf',
     #         'dataset_y': '../datasets/NCI-HIV/aids_conc_may04.txt',}, # node/edge symb
 
-#     # not working below
-#     {'name': 'PTC_FM', 'dataset': '../datasets/PTC/Train/FM.ds',},
+    #     # not working below
+    #     {'name': 'PTC_FM', 'dataset': '../datasets/PTC/Train/FM.ds',},
     #     {'name': 'PTC_FR', 'dataset': '../datasets/PTC/Train/FR.ds',},
     #     {'name': 'PTC_MM', 'dataset': '../datasets/PTC/Train/MM.ds',},
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
@@ -63,12 +61,25 @@ dslist = [
 estimator = randomwalkkernel
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
-gaussiankernel = functools.partial(gaussiankernel, gamma=0.5)
+
+
+## for non-symbolic labels.
+#gkernels = [functools.partial(gaussiankernel, gamma=1 / ga) 
+#            for ga in np.logspace(0, 10, num=11, base=10)]
+#mixkernels = [functools.partial(kernelproduct, deltakernel, gk) for gk in gkernels]
+#sub_kernels = [{'symb': deltakernel, 'nsymb': gkernels[i], 'mix': mixkernels[i]}
+#                for i in range(len(gkernels))]
+
+# for symbolic labels only.
+#gaussiankernel = functools.partial(gaussiankernel, gamma=0.5)
+mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+sub_kernels = [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]
 
 for ds in dslist:
     print()
     print(ds['name'])
-    for compute_method in ['sylvester', 'conjugate', 'fp', 'spectral']:
+#    for compute_method in ['sylvester', 'conjugate', 'fp', 'spectral']:
+    for compute_method in ['conjugate', 'fp']:
         if compute_method == 'sylvester':
             param_grid_precomputed = {'compute_method': ['sylvester'],
 #                          'weight': np.linspace(0.01, 0.10, 10)}
@@ -76,18 +87,12 @@ for ds in dslist:
         elif compute_method == 'conjugate':
             mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
             param_grid_precomputed = {'compute_method': ['conjugate'], 
-                          'node_kernels': 
-                          [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
-                          'edge_kernels': 
-                          [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
+                          'node_kernels': sub_kernels, 'edge_kernels': sub_kernels,
                           'weight': np.logspace(-1, -10, num=10, base=10)}
         elif compute_method == 'fp':
             mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
             param_grid_precomputed = {'compute_method': ['fp'], 
-                          'node_kernels': 
-                          [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
-                          'edge_kernels': 
-                          [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}],
+                          'node_kernels': sub_kernels, 'edge_kernels': sub_kernels,
                           'weight': np.logspace(-3, -10, num=8, base=10)}
         elif compute_method == 'spectral':
             param_grid_precomputed = {'compute_method': ['spectral'],

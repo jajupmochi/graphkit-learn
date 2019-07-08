@@ -158,7 +158,7 @@ def GED(g1, g2, lib='gedlib'):
         script.PyRestartEnv()
         script.PyLoadGXLGraph('ged_tmp/', 'ged_tmp/tmp.xml')
         listID = script.PyGetGraphIds()
-        script.PySetEditCost("CHEM_1")
+        script.PySetEditCost("LETTER") #("CHEM_1")
         script.PyInitEnv()
         script.PySetMethod("IPFP", "")
         script.PyInitMethod()
@@ -168,7 +168,15 @@ def GED(g1, g2, lib='gedlib'):
         pi_forward, pi_backward = script.PyGetAllMap(g, h)
         upper = script.PyGetUpperBound(g, h)
         lower = script.PyGetLowerBound(g, h)        
-        dis = (upper + lower) / 2
+        dis = upper
+        
+        # make the map label correct (label remove map as np.inf)
+        nodes1 = [n for n in g1.nodes()]
+        nodes2 = [n for n in g2.nodes()]
+        nb1 = nx.number_of_nodes(g1)
+        nb2 = nx.number_of_nodes(g2)
+        pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
+        pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]                
         
     return dis, pi_forward, pi_backward
 
@@ -319,7 +327,7 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
     from tqdm import tqdm
 #    Gn_median = Gn_median[0:10]
 #    Gn_median = [nx.convert_node_labels_to_integers(g) for g in Gn_median]
-    node_ir = sys.maxsize * 2 # Max number for c++, corresponding to the node remove and insertion.
+    node_ir = np.inf # corresponding to the node remove and insertion.
     label_r = 'thanksdanny' # the label for node remove. # @todo: make this label unrepeatable.
     ds_attrs = get_dataset_attributes(Gn_median + Gn_candidate, 
                                       attr_names=['edge_labeled', 'node_attr_dim'], 
@@ -347,7 +355,7 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
                     h_i0 = 0
                     for idx, g in enumerate(Gn_median):
                         pi_i = pi_p_forward[idx][ndi]
-                        if g.has_node(pi_i) and g.nodes[pi_i][node_label] == label:
+                        if pi_i != node_ir and g.nodes[pi_i][node_label] == label:
                             h_i0 += 1
                     h_i0_list.append(h_i0)
                     label_list.append(label)
@@ -364,7 +372,7 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
                 nlabel_best = [label_list[idx] for idx in idx_max]
                 # generate "best" graphs with regard to "best" node labels.
                 G_new_list_nd = []
-                for g in G_new_list:
+                for g in G_new_list: # @todo: seems it can be simplified. The G_new_list will only contain 1 graph for now.
                     for nl in nlabel_best:
                         g_tmp = g.copy()
                         if nl == label_r:
@@ -380,16 +388,16 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
                 G_new_list = G_new_list_nd[:]
 
         else: # labels are non-symbolic
-            for nd in G.nodes():
+            for ndi, (nd, _) in enumerate(G.nodes(data=True)):
                 Si_norm = 0
                 phi_i_bar = np.array([0.0 for _ in range(ds_attrs['node_attr_dim'])])
                 for idx, g in enumerate(Gn_median):
-                    pi_i = pi_p_forward[idx][nd]
+                    pi_i = pi_p_forward[idx][ndi]
                     if g.has_node(pi_i): #@todo: what if no g has node? phi_i_bar = 0?
                         Si_norm += 1
                         phi_i_bar += np.array([float(itm) for itm in g.nodes[pi_i]['attributes']])                
                 phi_i_bar /= Si_norm
-                G_new.nodes[nd]['attributes'] = phi_i_bar
+                G_new_list[0].nodes[nd]['attributes'] = phi_i_bar
                                             
         # update edge labels and adjacency matrix.
         if ds_attrs['edge_labeled']:
@@ -467,12 +475,12 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
 #        pi_forward_list = [pi_forward_list[idx] for idx in idx_min_list]
 #        G_new_list = [G_new_list[idx] for idx in idx_min_list] 
         
-        for g in G_new_list:
-            import matplotlib.pyplot as plt 
-            nx.draw_networkx(g)
-            plt.show()
-            print(g.nodes(data=True))
-            print(g.edges(data=True))
+#        for g in G_new_list:
+#            import matplotlib.pyplot as plt 
+#            nx.draw_networkx(g)
+#            plt.show()
+#            print(g.nodes(data=True))
+#            print(g.edges(data=True))
         
         return G_new_list, pi_forward_list
     
@@ -504,7 +512,7 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
         G_list = [G]
         pi_forward_list = [pi_p_forward]
         # iterations.
-        for itr in range(0, 10): # @todo: the convergence condition?
+        for itr in range(0, 5): # @todo: the convergence condition?
 #            print('itr is', itr)
             G_new_list = []
             pi_forward_new_list = []
@@ -562,7 +570,7 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
     # phase 1: initilize.
     # compute set-median.
     dis_min = np.inf
-    dis_all, pi_all_forward = median_distance(Gn_candidate[::-1], Gn_median)
+    dis_all, pi_all_forward = median_distance(Gn_candidate, Gn_median)
     # find all smallest distances.
     idx_min_list = np.argwhere(dis_all == np.min(dis_all)).flatten().tolist()
     dis_min = dis_all[idx_min_list[0]]
@@ -580,24 +588,27 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
         
     G_list, _ = remove_duplicates(G_list)
     if connected == True:
-        G_list, _ = remove_disconnected(G_list)
+        G_list_con, _ = remove_disconnected(G_list)
+    # if there is no connected graphs at all, then remain the disconnected ones.
+    if len(G_list_con) > 0: # @todo: ??????????????????????????
+        G_list = G_list_con
 
-    import matplotlib.pyplot as plt 
-    for g in G_list:
-        nx.draw_networkx(g)
-        plt.show()
-        print(g.nodes(data=True))
-        print(g.edges(data=True))
+#    import matplotlib.pyplot as plt 
+#    for g in G_list:
+#        nx.draw_networkx(g)
+#        plt.show()
+#        print(g.nodes(data=True))
+#        print(g.edges(data=True))
     
     # get the best median graphs
     dis_all, pi_all_forward = median_distance(G_list, Gn_median)
     G_min_list, pi_forward_min_list, dis_min = best_median_graphs(
             G_list, dis_all, pi_all_forward)
-    for g in G_min_list:
-        nx.draw_networkx(g)
-        plt.show()
-        print(g.nodes(data=True))
-        print(g.edges(data=True))
+#    for g in G_min_list:
+#        nx.draw_networkx(g)
+#        plt.show()
+#        print(g.nodes(data=True))
+#        print(g.edges(data=True))
     return G_min_list
 
 

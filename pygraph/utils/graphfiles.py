@@ -84,7 +84,7 @@ def loadGXL(filename):
     return g
 
 
-def saveGXL(graph, filename, method='gedlib'):
+def saveGXL(graph, filename, method='gedlib-letter'):
     if method == 'benoit':
         import xml.etree.ElementTree as ET
         root_node = ET.Element('gxl')
@@ -141,6 +141,24 @@ def saveGXL(graph, filename, method='gedlib'):
             gxl_file.write("</edge>\n")
         gxl_file.write("</graph>\n")
         gxl_file.write("</gxl>\n")
+        gxl_file.close()
+    elif method == 'gedlib-letter':
+        # reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22
+        # and https://github.com/dbblumenthal/gedlib/blob/master/data/datasets/Letter/HIGH/AP1_0000.gxl
+        gxl_file = open(filename, 'w')
+        gxl_file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
+        gxl_file.write("<gxl xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n")
+        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"false\" edgemode=\"undirected\">")
+        for v, attrs in graph.nodes(data=True):
+            gxl_file.write("<node id=\"_" + str(v) + "\">")
+            gxl_file.write("<attr name=\"x\"><float>" + str(attrs['attributes'][0]) + "</float></attr>")
+            gxl_file.write("<attr name=\"y\"><float>" + str(attrs['attributes'][1]) + "</float></attr>")
+            gxl_file.write("</node>")
+        for v1, v2, attrs in graph.edges(data=True):
+            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\"/>")
+        gxl_file.write("</graph>")
+        gxl_file.write("</gxl>")
         gxl_file.close()
 
 

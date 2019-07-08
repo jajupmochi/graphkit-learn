@@ -9,6 +9,10 @@ datasets/*
 !datasets/MUTAG/
 !datasets/Letter-med/
 !datasets/ENZYMES_txt/
+!datasets/DD/
+!datasets/NCI1/
+!datasets/NCI109/
+!datasets/AIDS/
 notebooks/results/*
 notebooks/check_gm/*
 notebooks/test_parallel/*
