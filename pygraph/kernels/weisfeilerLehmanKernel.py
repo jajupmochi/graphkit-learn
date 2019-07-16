@@ -38,15 +38,28 @@ def weisfeilerlehmankernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.        
+        Two graphs between which the kernel is calculated.        
     node_label : string
-        node attribute used as label. The default node label is atom.        
+        Node attribute used as label. The default node label is atom.        
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.        
+        Edge attribute used as label. The default edge label is bond_type.        
     height : int
-        subtree height
+        Subtree height.
     base_kernel : string
-        base kernel used in each iteration of WL kernel. The default base kernel is subtree kernel. For user-defined kernel, base_kernel is the name of the base kernel function used in each iteration of WL kernel. This function returns a Numpy matrix, each element of which is the user-defined Weisfeiler-Lehman kernel between 2 praphs.
+        Base kernel used in each iteration of WL kernel. Only default 'subtree' 
+        kernel can be applied for now.
+#        The default base 
+#        kernel is subtree kernel. For user-defined kernel, base_kernel is the 
+#        name of the base kernel function used in each iteration of WL kernel. 
+#        This function returns a Numpy matrix, each element of which is the 
+#        user-defined Weisfeiler-Lehman kernel between 2 praphs.
+    parallel : None
+        Which paralleliztion method is applied to compute the kernel. No 
+        parallelization can be applied for now.
+    n_jobs : int
+        Number of jobs for parallelization. The default is to use all 
+        computational cores. This argument is only valid when one of the 
+        parallelization method is applied and can be ignored for now.
 
     Return
     ------

@@ -44,17 +44,20 @@ def marginalizedkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+        Two graphs between which the kernel is calculated.
     node_label : string
-        node attribute used as label. The default node label is atom.
+        Node attribute used as symbolic label. The default node label is 'atom'.
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
+        Edge attribute used as symbolic label. The default edge label is 'bond_type'.
     p_quit : integer
-        the termination probability in the random walks generating step
+        The termination probability in the random walks generating step.
     n_iteration : integer
-        time of iterations to calculate R_inf
+        Time of iterations to calculate R_inf.
     remove_totters : boolean
-        whether to remove totters. The default value is True.
+        Whether to remove totterings by method introduced in [2]. The default 
+        value is False.
+    n_jobs : int
+        Number of jobs for parallelization.   
 
     Return
     ------

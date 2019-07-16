@@ -40,11 +40,19 @@ def treeletkernel(*args,
         The sub-kernel between 2 real number vectors. Each vector counts the
         numbers of isomorphic treelets in a graph.
     node_label : string
-        Node attribute used as label. The default node label is atom.        
+        Node attribute used as label. The default node label is atom.   
     edge_label : string
         Edge attribute used as label. The default edge label is bond_type.
-    labeled : boolean
-        Whether the graphs are labeled. The default is True.
+    parallel : string/None
+        Which paralleliztion method is applied to compute the kernel. The 
+        Following choices are available:
+        'imap_unordered': use Python's multiprocessing.Pool.imap_unordered
+        method.
+        None: no parallelization is applied.
+    n_jobs : int
+        Number of jobs for parallelization. The default is to use all 
+        computational cores. This argument is only valid when one of the 
+        parallelization method is applied.
 
     Return
     ------

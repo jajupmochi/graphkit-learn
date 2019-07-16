@@ -42,14 +42,15 @@ def structuralspkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+        Two graphs between which the kernel is calculated.
     node_label : string
-        node attribute used as label. The default node label is atom.
+        Node attribute used as label. The default node label is atom.
     edge_weight : string
-        Edge attribute name corresponding to the edge weight.
+        Edge attribute name corresponding to the edge weight. Applied for the 
+        computation of the shortest paths.
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
-    node_kernels: dict
+        Edge attribute used as label. The default edge label is bond_type.
+    node_kernels : dict
         A dictionary of kernel functions for nodes, including 3 items: 'symb' 
         for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
         for both labels. The first 2 functions take two node labels as 
@@ -57,7 +58,7 @@ def structuralspkernel(*args,
         non-symbolic label for each the two nodes. Each label is in form of 2-D
         dimension array (n_samples, n_features). Each function returns a number
         as the kernel value. Ignored when nodes are unlabeled.
-    edge_kernels: dict
+    edge_kernels : dict
         A dictionary of kernel functions for edges, including 3 items: 'symb' 
         for symbolic edge labels, 'nsymb' for non-symbolic edge labels, 'mix' 
         for both labels. The first 2 functions take two edge labels as 
@@ -65,6 +66,13 @@ def structuralspkernel(*args,
         non-symbolic label for each the two edges. Each label is in form of 2-D
         dimension array (n_samples, n_features). Each function returns a number
         as the kernel value. Ignored when edges are unlabeled.
+    compute_method : string
+        Computation method to store the shortest paths and compute the graph
+        kernel. The Following choices are available:
+        'trie': store paths as tries.
+        'naive': store paths to lists.
+    n_jobs : int
+        Number of jobs for parallelization.
 
     Return
     ------

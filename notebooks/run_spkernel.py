@@ -8,14 +8,14 @@ from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 # datasets
 dslist = [
-#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-#        'task': 'regression'},  # node symb
-#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-#        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
-#    # contains single node graph, node symb
-#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
-#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
-#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
+    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
+    # contains single node graph, node symb
+    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+        'task': 'regression'},  # node symb
+    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
+    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
+    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
     # node nsymb
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},

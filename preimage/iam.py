@@ -9,6 +9,7 @@ Iterative alternate minimizations using GED.
 import numpy as np
 import random
 import networkx as nx
+from tqdm import tqdm
 
 import sys
 #from Cython_GedLib_2 import librariesImport, script
@@ -181,13 +182,27 @@ def GED(g1, g2, lib='gedlib'):
     return dis, pi_forward, pi_backward
 
 
+def median_distance(Gn, Gn_median, measure='ged', verbose=False):
+    dis_list = []
+    pi_forward_list = []
+    for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
+                       file=sys.stdout) if verbose else enumerate(Gn):
+        dis_sum = 0
+        pi_forward_list.append([])
+        for G_p in Gn_median:
+            dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p)
+            pi_forward_list[idx].append(pi_tmp_forward)
+            dis_sum += dis_tmp
+        dis_list.append(dis_sum)
+    return dis_list, pi_forward_list
+
+
 # --------------------------- These are tests --------------------------------#
     
 def test_iam_with_more_graphs_as_init(Gn, G_candidate, c_ei=3, c_er=3, c_es=1, 
                                       node_label='atom', edge_label='bond_type'):
     """See my name, then you know what I do.
     """
-    from tqdm import tqdm
 #    Gn = Gn[0:10]
     Gn = [nx.convert_node_labels_to_integers(g) for g in Gn]
     
@@ -321,7 +336,7 @@ def test_iam_with_more_graphs_as_init(Gn, G_candidate, c_ei=3, c_er=3, c_es=1,
 
 def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
         Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, node_label='atom', 
-        edge_label='bond_type', connected=True):
+        edge_label='bond_type', connected=False):
     """See my name, then you know what I do.
     """
     from tqdm import tqdm
@@ -330,8 +345,11 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
     node_ir = np.inf # corresponding to the node remove and insertion.
     label_r = 'thanksdanny' # the label for node remove. # @todo: make this label unrepeatable.
     ds_attrs = get_dataset_attributes(Gn_median + Gn_candidate, 
-                                      attr_names=['edge_labeled', 'node_attr_dim'], 
+                                      attr_names=['edge_labeled', 'node_attr_dim', 'edge_attr_dim'], 
                                       edge_label=edge_label)
+    
+    ite_max = 50
+    epsilon = 0.001
 
     
     def generate_graph(G, pi_p_forward, label_set):
@@ -460,13 +478,15 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
                                 g_tmp.remove_edge(nd1, nd2)
                         # do not change anything when equal.                        
         
-        # find the best graph generated in this iteration and update pi_p.
+#        # find the best graph generated in this iteration and update pi_p.
         # @todo: should we update all graphs generated or just the best ones?
         dis_list, pi_forward_list = median_distance(G_new_list, Gn_median)
         # @todo: should we remove the identical and connectivity check? 
         # Don't know which is faster.
-        G_new_list, idx_list = remove_duplicates(G_new_list)
-        pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
+        if ds_attrs['node_attr_dim'] == 0 and ds_attrs['edge_attr_dim'] == 0:
+            G_new_list, idx_list = remove_duplicates(G_new_list)
+            pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
+            dis_list = [dis_list[idx] for idx in idx_list]
 #        if connected == True:
 #            G_new_list, idx_list = remove_disconnected(G_new_list)
 #            pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
@@ -482,25 +502,10 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
 #            print(g.nodes(data=True))
 #            print(g.edges(data=True))
         
-        return G_new_list, pi_forward_list
+        return G_new_list, pi_forward_list, dis_list
     
     
-    def median_distance(Gn, Gn_median, measure='ged', verbose=False):
-        dis_list = []
-        pi_forward_list = []
-        for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
-                           file=sys.stdout) if verbose else enumerate(Gn):
-            dis_sum = 0
-            pi_forward_list.append([])
-            for G_p in Gn_median:
-                dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p)
-                pi_forward_list[idx].append(pi_tmp_forward)
-                dis_sum += dis_tmp
-            dis_list.append(dis_sum)
-        return dis_list, pi_forward_list
-    
-    
-    def best_median_graphs(Gn_candidate, dis_all, pi_all_forward):
+    def best_median_graphs(Gn_candidate, pi_all_forward, dis_all):
         idx_min_list = np.argwhere(dis_all == np.min(dis_all)).flatten().tolist()
         dis_min = dis_all[idx_min_list[0]]
         pi_forward_min_list = [pi_all_forward[idx] for idx in idx_min_list]
@@ -508,25 +513,45 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
         return G_min_list, pi_forward_min_list, dis_min
     
     
-    def iteration_proc(G, pi_p_forward):
+    def iteration_proc(G, pi_p_forward, cur_sod):
         G_list = [G]
         pi_forward_list = [pi_p_forward]
+        old_sod = cur_sod * 2
+        sod_list = [cur_sod]
         # iterations.
-        for itr in range(0, 5): # @todo: the convergence condition?
-#            print('itr is', itr)
+        itr = 0
+        while itr < ite_max and np.abs(old_sod - cur_sod) > epsilon:
+#        for itr in range(0, 5): # the convergence condition?
+            print('itr is', itr)
             G_new_list = []
             pi_forward_new_list = []
+            dis_new_list = []
             for idx, G in enumerate(G_list):
                 label_set = get_node_labels(Gn_median + [G], node_label)                        
-                G_tmp_list, pi_forward_tmp_list = generate_graph(
+                G_tmp_list, pi_forward_tmp_list, dis_tmp_list = generate_graph(
                     G, pi_forward_list[idx], label_set)
                 G_new_list += G_tmp_list
                 pi_forward_new_list += pi_forward_tmp_list
+                dis_new_list += dis_tmp_list
             G_list = G_new_list[:]
             pi_forward_list = pi_forward_new_list[:]
+            dis_list = dis_new_list[:]
+            
+            old_sod = cur_sod
+            cur_sod = np.min(dis_list)
+            sod_list.append(cur_sod)
+            
+            itr += 1
         
-        G_list, idx_list = remove_duplicates(G_list)
-        pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
+        # @todo: do we return all graphs or the best ones?
+        # get the best ones of the generated graphs.
+        G_list, pi_forward_list, dis_min = best_median_graphs(
+            G_list, pi_forward_list, dis_list)
+        
+        if ds_attrs['node_attr_dim'] == 0 and ds_attrs['edge_attr_dim'] == 0:
+            G_list, idx_list = remove_duplicates(G_list)
+            pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
+#            dis_list = [dis_list[idx] for idx in idx_list]
             
 #        import matplotlib.pyplot as plt
 #        for g in G_list:             
@@ -535,7 +560,9 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
 #            print(g.nodes(data=True))
 #            print(g.edges(data=True))
             
-        return G_list, pi_forward_list # do we return all graphs or the best ones?
+        print('\nsods:', sod_list, '\n')
+            
+        return G_list, pi_forward_list, dis_min
     
     
     def remove_duplicates(Gn):
@@ -570,28 +597,37 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
     # phase 1: initilize.
     # compute set-median.
     dis_min = np.inf
-    dis_all, pi_all_forward = median_distance(Gn_candidate, Gn_median)
+    dis_list, pi_forward_all = median_distance(Gn_candidate, Gn_median)
     # find all smallest distances.
-    idx_min_list = np.argwhere(dis_all == np.min(dis_all)).flatten().tolist()
-    dis_min = dis_all[idx_min_list[0]]
+    idx_min_list = np.argwhere(dis_list == np.min(dis_list)).flatten().tolist()
+    dis_min = dis_list[idx_min_list[0]]
     
     # phase 2: iteration.
     G_list = []
-    for idx_min in idx_min_list[::-1]:
+    dis_list = []
+    pi_forward_list = []
+    for idx_min in idx_min_list:
 #        print('idx_min is', idx_min)
         G = Gn_candidate[idx_min].copy()
         # list of edit operations.        
-        pi_p_forward = pi_all_forward[idx_min]
+        pi_p_forward = pi_forward_all[idx_min]
 #        pi_p_backward = pi_all_backward[idx_min]        
-        Gi_list, pi_i_forward_list = iteration_proc(G, pi_p_forward)            
+        Gi_list, pi_i_forward_list, dis_i_min = iteration_proc(G, pi_p_forward, dis_min)            
         G_list += Gi_list
+        dis_list.append(dis_i_min)
+        pi_forward_list += pi_i_forward_list
         
-    G_list, _ = remove_duplicates(G_list)
+    if ds_attrs['node_attr_dim'] == 0 and ds_attrs['edge_attr_dim'] == 0:
+        G_list, idx_list = remove_duplicates(G_list)
+        dis_list = [dis_list[idx] for idx in idx_list]
+        pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
     if connected == True:
-        G_list_con, _ = remove_disconnected(G_list)
-    # if there is no connected graphs at all, then remain the disconnected ones.
-    if len(G_list_con) > 0: # @todo: ??????????????????????????
-        G_list = G_list_con
+        G_list_con, idx_list = remove_disconnected(G_list)
+        # if there is no connected graphs at all, then remain the disconnected ones.
+        if len(G_list_con) > 0: # @todo: ??????????????????????????
+            G_list = G_list_con
+            dis_list = [dis_list[idx] for idx in idx_list]
+            pi_forward_list = [pi_forward_list[idx] for idx in idx_list]
 
 #    import matplotlib.pyplot as plt 
 #    for g in G_list:
@@ -601,15 +637,15 @@ def test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
 #        print(g.edges(data=True))
     
     # get the best median graphs
-    dis_all, pi_all_forward = median_distance(G_list, Gn_median)
+#    dis_list, pi_forward_list = median_distance(G_list, Gn_median)
     G_min_list, pi_forward_min_list, dis_min = best_median_graphs(
-            G_list, dis_all, pi_all_forward)
+            G_list, pi_forward_list, dis_list)
 #    for g in G_min_list:
 #        nx.draw_networkx(g)
 #        plt.show()
 #        print(g.nodes(data=True))
 #        print(g.edges(data=True))
-    return G_min_list
+    return G_min_list, dis_min
 
 
 if __name__ == '__main__':

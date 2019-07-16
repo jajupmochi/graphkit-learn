@@ -33,12 +33,12 @@ def spkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+        Two graphs between which the kernel is calculated.
     node_label : string
-        node attribute used as label. The default node label is atom.
+        Node attribute used as label. The default node label is atom.
     edge_weight : string
         Edge attribute name corresponding to the edge weight.
-    node_kernels: dict
+    node_kernels : dict
         A dictionary of kernel functions for nodes, including 3 items: 'symb' 
         for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
         for both labels. The first 2 functions take two node labels as 
@@ -46,6 +46,8 @@ def spkernel(*args,
         non-symbolic label for each the two nodes. Each label is in form of 2-D
         dimension array (n_samples, n_features). Each function returns an 
         number as the kernel value. Ignored when nodes are unlabeled.
+    n_jobs : int
+        Number of jobs for parallelization.
 
     Return
     ------

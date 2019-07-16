@@ -23,7 +23,7 @@ from pygraph.utils.parallel import parallel_gm
 def commonwalkkernel(*args,
                      node_label='atom',
                      edge_label='bond_type',
-                     n=None,
+#                     n=None,
                      weight=1,
                      compute_method=None,
                      n_jobs=None,
@@ -35,26 +35,28 @@ def commonwalkkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+        Two graphs between which the kernel is calculated.
     node_label : string
-        node attribute used as label. The default node label is atom.
+        Node attribute used as symbolic label. The default node label is 'atom'.
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
-    n : integer
-        Longest length of walks. Only useful when applying the 'brute' method.
+        Edge attribute used as symbolic label. The default edge label is 'bond_type'.
+#    n : integer
+#        Longest length of walks. Only useful when applying the 'brute' method.
     weight: integer
         Weight coefficient of different lengths of walks, which represents beta
         in 'exp' method and gamma in 'geo'.
     compute_method : string
         Method used to compute walk kernel. The Following choices are 
         available:
-        'exp' : exponential serial method applied on the direct product graph, 
-        as shown in reference [1]. The time complexity is O(n^6) for graphs 
-        with n vertices.
-        'geo' : geometric serial method applied on the direct product graph, as
-        shown in reference [1]. The time complexity is O(n^6) for graphs with n
-        vertices.
-        'brute' : brute force, simply search for all walks and compare them.
+        'exp': method based on exponential serials applied on the direct 
+        product graph, as shown in reference [1]. The time complexity is O(n^6) 
+        for graphs with n vertices.
+        'geo': method based on geometric serials applied on the direct product 
+        graph, as shown in reference [1]. The time complexity is O(n^6) for 
+        graphs with n vertices.
+#        'brute': brute force, simply search for all walks and compare them.
+    n_jobs : int
+        Number of jobs for parallelization. 
 
     Return
     ------

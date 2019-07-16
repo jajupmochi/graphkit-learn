@@ -41,15 +41,62 @@ def randomwalkkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
-    node_label : string
-        node attribute used as label. The default node label is atom.
+        Two graphs between which the kernel is calculated.
+    compute_method : string
+        Method used to compute kernel. The Following choices are 
+        available:
+        'sylvester' - Sylvester equation method.
+        'conjugate' - conjugate gradient method.
+        'fp' - fixed-point iterations.
+        'spectral' - spectral decomposition.
+    weight : float
+        A constant weight set for random walks of length h.
+    p : None
+        Initial probability distribution on the unlabeled direct product graph 
+        of two graphs. It is set to be uniform over all vertices in the direct 
+        product graph.
+    q : None
+        Stopping probability distribution on the unlabeled direct product graph 
+        of two graphs. It is set to be uniform over all vertices in the direct 
+        product graph.
+    edge_weight: float
+        Edge attribute name corresponding to the edge weight.
+        
+    node_kernels: dict
+        A dictionary of kernel functions for nodes, including 3 items: 'symb' 
+        for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
+        for both labels. The first 2 functions take two node labels as 
+        parameters, and the 'mix' function takes 4 parameters, a symbolic and a
+        non-symbolic label for each the two nodes. Each label is in form of 2-D
+        dimension array (n_samples, n_features). Each function returns a number
+        as the kernel value. Ignored when nodes are unlabeled. This argument
+        is designated to conjugate gradient method and fixed-point iterations.
+    edge_kernels: dict
+        A dictionary of kernel functions for edges, including 3 items: 'symb' 
+        for symbolic edge labels, 'nsymb' for non-symbolic edge labels, 'mix' 
+        for both labels. The first 2 functions take two edge labels as 
+        parameters, and the 'mix' function takes 4 parameters, a symbolic and a
+        non-symbolic label for each the two edges. Each label is in form of 2-D
+        dimension array (n_samples, n_features). Each function returns a number
+        as the kernel value. Ignored when edges are unlabeled. This argument
+        is designated to conjugate gradient method and fixed-point iterations.
+    node_label: string
+        Node attribute used as label. The default node label is atom. This 
+        argument is designated to conjugate gradient method and fixed-point 
+        iterations.
     edge_label : string
-        edge attribute used as label. The default edge label is bond_type.
-    h : integer
-        Longest length of walks.
-    method : string
-        Method used to compute the random walk kernel. Available methods are 'sylvester', 'conjugate', 'fp', 'spectral' and 'kron'.
+        Edge attribute used as label. The default edge label is bond_type. This 
+        argument is designated to conjugate gradient method and fixed-point 
+        iterations.
+        
+    sub_kernel: string
+        Method used to compute walk kernel. The Following choices are 
+        available:
+        'exp' : method based on exponential serials.
+        'geo' : method based on geometric serials.
+        
+    n_jobs: int
+        Number of jobs for parallelization. 
 
     Return
     ------
@@ -168,7 +215,7 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, verbose=True):
 
     if q == None:
         # don't normalize adjacency matrices if q is a uniform vector. Note
-        # A_wave_list accually contains the transposes of the adjacency matrices.
+        # A_wave_list actually contains the transposes of the adjacency matrices.
         A_wave_list = [
             nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
             (tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout) if
@@ -259,7 +306,7 @@ def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #        # this is faster from unlabeled graphs. @todo: why?
 #        if q == None:
 #            # don't normalize adjacency matrices if q is a uniform vector. Note
-#            # A_wave_list accually contains the transposes of the adjacency matrices.
+#            # A_wave_list actually contains the transposes of the adjacency matrices.
 #            A_wave_list = [
 #                nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
 #                    tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout)
@@ -376,7 +423,7 @@ def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #        # this is faster from unlabeled graphs. @todo: why?
 #        if q == None:
 #            # don't normalize adjacency matrices if q is a uniform vector. Note
-#            # A_wave_list accually contains the transposes of the adjacency matrices.
+#            # A_wave_list actually contains the transposes of the adjacency matrices.
 #            A_wave_list = [
 #                nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
 #                    tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout)
@@ -481,7 +528,7 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, verbo
         for G in (tqdm(Gn, desc='spectral decompose', file=sys.stdout) if 
                   verbose else Gn):
             # don't normalize adjacency matrices if q is a uniform vector. Note
-            # A accually is the transpose of the adjacency matrix.
+            # A actually is the transpose of the adjacency matrix.
             A = nx.adjacency_matrix(G, eweight).todense().transpose()
             ew, ev = np.linalg.eig(A)
             D_list.append(ew)

@@ -26,7 +26,7 @@ def untilhpathkernel(*args,
                      node_label='atom',
                      edge_label='bond_type',
                      depth=10,
-                     k_func='tanimoto',
+                     k_func='MinMax',
                      compute_method='trie',
                      n_jobs=None,
                      verbose=True):
@@ -38,7 +38,7 @@ def untilhpathkernel(*args,
         List of graphs between which the kernels are calculated.
     /
     G1, G2 : NetworkX graphs
-        2 graphs between which the kernel is calculated.
+        Two graphs between which the kernel is calculated.
     node_label : string
         Node attribute used as label. The default node label is atom.
     edge_label : string
@@ -47,9 +47,17 @@ def untilhpathkernel(*args,
         Depth of search. Longest length of paths.
     k_func : function
         A kernel function applied using different notions of fingerprint 
-        similarity.
-    compute_method: string
-        Computation method, 'trie' or 'naive'.
+        similarity, defining the type of feature map and normalization method 
+        applied for the graph kernel. The Following choices are available:
+        'MinMax': use the MiniMax kernel and counting feature map.
+        'tanimoto': use the Tanimoto kernel and binary feature map.
+    compute_method : string
+        Computation method to store paths and compute the graph kernel. The 
+        Following choices are available:
+        'trie': store paths as tries.
+        'naive': store paths to lists.
+    n_jobs : int
+        Number of jobs for parallelization.
 
     Return
     ------

@@ -277,7 +277,8 @@ def gk_iam_nearest(Gn, alpha, idx_gi, Kmatrix, k, r_max):
 #    return dhat, ghat_list
 
 
-def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, gkernel):
+def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, 
+                         gkernel, c_ei=1, c_er=1, c_es=1, epsilon=0.001):
     """This function constructs graph pre-image by the iterative pre-image 
     framework in reference [1], algorithm 1, where the step of generating new 
     graphs randomly is replaced by the IAM algorithm in reference [2].
@@ -312,37 +313,44 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, g
         return 0, g0hat_list
     dhat = dis_gs[0] # the nearest distance
     ghat_list = [g.copy() for g in g0hat_list]
-    for g in ghat_list:
-        draw_Letter_graph(g)
+#    for g in ghat_list:
+#        draw_Letter_graph(g)
 #        nx.draw_networkx(g)
 #        plt.show()
-        print(g.nodes(data=True))
-        print(g.edges(data=True))
+#        print(g.nodes(data=True))
+#        print(g.edges(data=True))
     Gk = [Gn_init[ig].copy() for ig in sort_idx[0:k]] # the k nearest neighbors
-    for gi in Gk:
-#        nx.draw_networkx(gi)
-#        plt.show()
-        draw_Letter_graph(g)
-        print(gi.nodes(data=True))
-        print(gi.edges(data=True))
+#    for gi in Gk:
+##        nx.draw_networkx(gi)
+##        plt.show()
+#        draw_Letter_graph(g)
+#        print(gi.nodes(data=True))
+#        print(gi.edges(data=True))
     Gs_nearest = Gk.copy()
 #    gihat_list = []
     
 #    i = 1
-    r = 1
-    while r < r_max:
-        print('r =', r)
-#        found = False
+    r = 0
+    itr = 0
+#    cur_sod = dhat
+#    old_sod = cur_sod * 2
+    sod_list = [dhat]
+    found = False
+    nb_updated = 0
+    while r < r_max:# and not found: # @todo: if not found?# and np.abs(old_sod - cur_sod) > epsilon:
+        print('\nr =', r)
+        print('itr for gk =', itr, '\n')
+        found = False
 #        Gs_nearest = Gk + gihat_list
 #        g_tmp = iam(Gs_nearest)
-        g_tmp_list = test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
-                Gn_median, Gs_nearest, c_ei=1, c_er=1, c_es=1)
-        for g in g_tmp_list:
+        g_tmp_list, _ = test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
+                Gn_median, Gs_nearest, c_ei=c_ei, c_er=c_er, c_es=c_es)
+#        for g in g_tmp_list:
 #            nx.draw_networkx(g)
 #            plt.show()
-            draw_Letter_graph(g)
-            print(g.nodes(data=True))
-            print(g.edges(data=True))
+#            draw_Letter_graph(g)
+#            print(g.nodes(data=True))
+#            print(g.edges(data=True))
         
         # compute distance between phi and the new generated graphs.
         knew = compute_kernel(g_tmp_list + Gn_median, gkernel, False)
@@ -358,6 +366,7 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, g
 #              k_g1_list[1] + alpha[1] * alpha[1] * k_list[1])
             
         # find the new k nearest graphs.
+        dnew_best = min(dnew_list)
         dis_gs = dnew_list + dis_gs # add the new nearest distances.
         Gs_nearest = [g.copy() for g in g_tmp_list] + Gs_nearest # add the corresponding graphs.
         sort_idx = np.argsort(dis_gs)
@@ -367,21 +376,34 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, g
             print(dis_gs[-1])
             Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
             nb_best = len(np.argwhere(dis_gs == dis_gs[0]).flatten().tolist())
-            if len([i for i in sort_idx[0:nb_best] if i < len(dnew_list)]) > 0:
-                print('I have smaller or equal distance!')
+            if dnew_best < dhat and np.abs(dnew_best - dhat) > epsilon:
+                print('I have smaller distance!')
                 print(str(dhat) + '->' + str(dis_gs[0]))
                 dhat = dis_gs[0]
                 idx_best_list = np.argwhere(dnew_list == dhat).flatten().tolist()
                 ghat_list = [g_tmp_list[idx].copy() for idx in idx_best_list]
-                for g in ghat_list:
-#                    nx.draw_networkx(g)
-#                    plt.show()
-                    draw_Letter_graph(g)
-                    print(g.nodes(data=True))
-                    print(g.edges(data=True))
-            r = 0
-        else:
+#                for g in ghat_list:
+##                    nx.draw_networkx(g)
+##                    plt.show()
+#                    draw_Letter_graph(g)
+#                    print(g.nodes(data=True))
+#                    print(g.edges(data=True))
+                r = 0
+                found = True
+                nb_updated += 1
+            elif np.abs(dnew_best - dhat) < epsilon:
+                print('I have almost equal distance!')
+                print(str(dhat) + '->' + str(dnew_best))
+        if not found:
             r += 1
+            
+#        old_sod = cur_sod
+#        cur_sod = dnew_best
+        sod_list.append(dhat)
+        itr += 1
+        
+    print('\nthe graph is updated', nb_updated, 'times.')
+    print('sods in kernel space:', sod_list, '\n')
     
     return dhat, ghat_list
 
