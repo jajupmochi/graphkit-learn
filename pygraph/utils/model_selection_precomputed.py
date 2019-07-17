@@ -55,7 +55,7 @@ def model_selection_for_precomputed_kernel(datafile,
         searching over any sequence of parameter settings. Params with length 1
         will be omitted.
     model_type : string
-        Typr of the problem, can be 'regression' or 'classification'.
+        Type of the problem, can be 'regression' or 'classification'.
     NUM_TRIALS : integer
         Number of random trials of outer cv loop. The default is 30.
     datafile_y : string
