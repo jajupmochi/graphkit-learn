@@ -34,7 +34,9 @@ def model_selection_for_precomputed_kernel(datafile,
                                            n_jobs=1,
                                            read_gm_from_file=False,
                                            verbose=True):
-    """Perform model selection, fitting and testing for precomputed kernels using nested cv. Print out neccessary data during the process then finally the results.
+    """Perform model selection, fitting and testing for precomputed kernels 
+    using nested CV. Print out neccessary data during the process then finally 
+    the results.
 
     Parameters
     ----------
@@ -43,17 +45,31 @@ def model_selection_for_precomputed_kernel(datafile,
     estimator : function
         kernel function used to estimate. This function needs to return a gram matrix.
     param_grid_precomputed : dictionary
-        Dictionary with names (string) of parameters used to calculate gram matrices as keys and lists of parameter settings to try as values. This enables searching over any sequence of parameter settings. Params with length 1 will be omitted.
+        Dictionary with names (string) of parameters used to calculate gram 
+        matrices as keys and lists of parameter settings to try as values. This 
+        enables searching over any sequence of parameter settings. Params with 
+        length 1 will be omitted.
     param_grid : dictionary
-        Dictionary with names (string) of parameters used as penelties as keys and lists of parameter settings to try as values. This enables searching over any sequence of parameter settings. Params with length 1 will be omitted.
+        Dictionary with names (string) of parameters used as penelties as keys 
+        and lists of parameter settings to try as values. This enables 
+        searching over any sequence of parameter settings. Params with length 1
+        will be omitted.
     model_type : string
-        Typr of the problem, can be regression or classification.
+        Typr of the problem, can be 'regression' or 'classification'.
     NUM_TRIALS : integer
         Number of random trials of outer cv loop. The default is 30.
     datafile_y : string
-        Path of file storing y data. This parameter is optional depending on the given dataset file.
+        Path of file storing y data. This parameter is optional depending on 
+        the given dataset file.
+    extra_params : dict
+        Extra parameters for loading dataset. See function pygraph.utils.
+        graphfiles.loadDataset for detail.
+    ds_name : string
+        Name of the dataset.
+    n_jobs : int
+        Number of jobs for parallelization.
     read_gm_from_file : boolean
-        Whether gram matrices are loaded from file.
+        Whether gram matrices are loaded from a file.
 
     Examples
     --------
@@ -61,14 +77,18 @@ def model_selection_for_precomputed_kernel(datafile,
     >>> import sys
     >>> sys.path.insert(0, "../")
     >>> from pygraph.utils.model_selection_precomputed import model_selection_for_precomputed_kernel
-    >>> from pygraph.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
+    >>> from pygraph.kernels.untilHPathKernel import untilhpathkernel
     >>>
-    >>> datafile = '../../../../datasets/acyclic/Acyclic/dataset_bps.ds'
-    >>> estimator = weisfeilerlehmankernel
-    >>> param_grid_precomputed = {'height': [0,1,2,3,4,5,6,7,8,9,10], 'base_kernel': ['subtree']}
-    >>> param_grid = {"alpha": np.logspace(-2, 2, num = 10, base = 10)}
+    >>> datafile = '../datasets/MUTAG/MUTAG_A.txt'
+    >>> estimator = untilhpathkernel
+    >>> param_grid_precomputed = {’depth’:  np.linspace(1, 10, 10), ’k_func’:
+            [’MinMax’, ’tanimoto’], ’compute_method’:  [’trie’]}
+    >>> # ’C’ for classification problems and ’alpha’ for regression problems.
+    >>> param_grid = [{’C’: np.logspace(-10, 10, num=41, base=10)}, {’alpha’:
+            np.logspace(-10, 10, num=41, base=10)}]
     >>>
-    >>> model_selection_for_precomputed_kernel(datafile, estimator, param_grid_precomputed, param_grid, 'regression')
+    >>> model_selection_for_precomputed_kernel(datafile, estimator, 
+            param_grid_precomputed, param_grid[0], 'classification', ds_name=’MUTAG’)
     """
     tqdm.monitor_interval = 0
 

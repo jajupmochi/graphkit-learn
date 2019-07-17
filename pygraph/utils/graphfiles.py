@@ -372,7 +372,39 @@ def loadTXT(dirname_dataset):
 
 
 def loadDataset(filename, filename_y=None, extra_params=None):
-    """load file list of the dataset.
+    """Read graph data from filename and load them as NetworkX graphs.
+
+    Parameters
+    ----------
+    filename : string
+        The name of the file from where the dataset is read.
+    filename_y : string
+        The name of file of the targets corresponding to graphs.
+    extra_params : dict
+        Extra parameters only designated to '.mat' format.
+
+    Return
+    ------
+    data : List of NetworkX graph.
+    y : List
+        Targets corresponding to graphs.
+        
+    Notes
+    -----
+    This function supports following graph dataset formats:
+    'ds': load data from .ct file. See comments of function loadCT for a example.
+    'cxl': load data from Graph eXchange Language file (.cxl file). See 
+        http://www.gupro.de/GXL/Introduction/background.html, 2019 for detail.
+    'sdf': load data from structured data file (.sdf file). See 
+        http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, 
+        2018 for details.
+    'mat': Load graph data from a MATLAB (up to version 7.1) .mat file. See
+        README in downloadable file in http://mlcb.is.tuebingen.mpg.de/Mitarbeiter/Nino/WL/, 
+        2018 for details.
+    'txt': Load graph data from a special .txt file. See
+        https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets,
+        2019 for details. Note here filename is the name of either .txt file in
+        the dataset directory.
     """
     from os.path import dirname, splitext
 

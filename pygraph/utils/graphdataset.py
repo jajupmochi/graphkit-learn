@@ -7,6 +7,57 @@ def get_dataset_attributes(Gn,
                            attr_names=[],
                            node_label=None,
                            edge_label=None):
+    """Returns the structure and property information of the graph dataset Gn.
+
+    Parameters
+    ----------
+    Gn : List of NetworkX graph
+        List of graphs whose information will be returned.
+    target : list
+        The list of classification targets corresponding to Gn. Only works for 
+        classification problems.
+    attr_names : list
+        List of strings which indicate which informations will be returned. The
+        possible choices includes:
+        'substructures': sub-structures Gn contains, including 'linear', 'non 
+            linear' and 'cyclic'.
+        'node_labeled': whether vertices have symbolic labels.
+        'edge_labeled': whether egdes have symbolic labels.
+        'is_directed': whether graphs in Gn are directed.
+        'dataset_size': number of graphs in Gn.
+        'ave_node_num': average number of vertices of graphs in Gn.
+        'min_node_num': minimum number of vertices of graphs in Gn.
+        'max_node_num': maximum number of vertices of graphs in Gn.
+        'ave_edge_num': average number of edges of graphs in Gn.
+        'min_edge_num': minimum number of edges of graphs in Gn.
+        'max_edge_num': maximum number of edges of graphs in Gn.
+        'ave_node_degree': average vertex degree of graphs in Gn.
+        'min_node_degree': minimum vertex degree of graphs in Gn.
+        'max_node_degree': maximum vertex degree of graphs in Gn.
+        'ave_fill_factor': average fill factor (number_of_edges / 
+            (number_of_nodes ** 2)) of graphs in Gn.
+        'min_fill_factor': minimum fill factor of graphs in Gn.
+        'max_fill_factor': maximum fill factor of graphs in Gn.
+        'node_label_num': number of symbolic vertex labels.
+        'edge_label_num': number of symbolic edge labels.
+        'node_attr_dim': number of dimensions of non-symbolic vertex labels. 
+            Extracted from the 'attributes' attribute of graph nodes.
+        'edge_attr_dim': number of dimensions of non-symbolic edge labels.
+            Extracted from the 'attributes' attribute of graph edges.
+        'class_number': number of classes. Only available for classification 
+            problems.
+    node_label : string
+        Node attribute used as label. The default node label is atom. Mandatory
+        when 'node_labeled' or 'node_label_num' is required.
+    edge_label : string
+        Edge attribute used as label. The default edge label is bond_type. 
+        Mandatory when 'edge_labeled' or 'edge_label_num' is required.
+
+    Return
+    ------
+    attrs : dict
+        Value for each property.
+    """
     import networkx as nx
     import numpy as np
 
