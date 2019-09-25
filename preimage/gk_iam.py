@@ -17,8 +17,11 @@ import multiprocessing
 from tqdm import tqdm
 import networkx as nx
 import matplotlib.pyplot as plt
+import random
 
-from iam import iam, test_iam_with_more_graphs_as_init, test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations
+import matplotlib.pyplot as plt
+
+from iam import iam, test_iam_with_more_graphs_as_init, iam_moreGraphsAsInit_tryAllPossibleBestGraphs
 sys.path.insert(0, "../")
 from pygraph.kernels.marginalizedKernel import marginalizedkernel
 from pygraph.kernels.untilHPathKernel import untilhpathkernel
@@ -67,7 +70,7 @@ def gk_iam(Gn, alpha):
 #        Gs_nearest = Gk + gihat_list
 #        g_tmp = iam(Gs_nearest)
 #        
-#        # compute distance between phi and the new generated graph.
+#        # compute distance between \psi and the new generated graph.
 #        knew = marginalizedkernel([g_tmp, g1, g2], node_label='atom', edge_label=None,
 #                       p_quit=lmbda, n_iteration=20, remove_totters=False,
 #                       n_jobs=multiprocessing.cpu_count(), verbose=False)
@@ -142,7 +145,7 @@ def gk_iam_nearest(Gn, alpha, idx_gi, Kmatrix, k, r_max):
         print(g_tmp.nodes(data=True))
         print(g_tmp.edges(data=True))
         
-        # compute distance between phi and the new generated graph.
+        # compute distance between \psi and the new generated graph.
         gi_list = [Gn[i] for i in idx_gi]
         knew = compute_kernel([g_tmp] + gi_list, 'untilhpathkernel', False)
         dnew = dis_gstar(0, range(1, len(gi_list) + 1), alpha, knew)
@@ -236,7 +239,7 @@ def gk_iam_nearest(Gn, alpha, idx_gi, Kmatrix, k, r_max):
 #            print(g.nodes(data=True))
 #            print(g.edges(data=True))
 #        
-#        # compute distance between phi and the new generated graphs.
+#        # compute distance between \psi and the new generated graphs.
 #        gi_list = [Gn[i] for i in idx_gi]
 #        knew = compute_kernel(g_tmp_list + gi_list, 'marginalizedkernel', False)
 #        dnew_list = []
@@ -278,7 +281,12 @@ def gk_iam_nearest(Gn, alpha, idx_gi, Kmatrix, k, r_max):
 
 
 def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, 
-                         gkernel, c_ei=1, c_er=1, c_es=1, epsilon=0.001):
+                         gkernel, epsilon=0.001,
+                         params_iam={'c_ei': 1, 'c_er': 1, 'c_es': 1, 
+                                     'ite_max': 50, 'epsilon': 0.001, 
+                                     'removeNodes': True, 'connected': False},
+                         params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 
+                                     'saveGXL': 'benoit'}):
     """This function constructs graph pre-image by the iterative pre-image 
     framework in reference [1], algorithm 1, where the step of generating new 
     graphs randomly is replaced by the IAM algorithm in reference [2].
@@ -310,7 +318,7 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
     g0hat_list = [Gn_init[idx] for idx in sort_idx[0:nb_best]] # the nearest neighbors of phi in DN
     if dis_gs[0] == 0: # the exact pre-image.
         print('The exact pre-image is found from the input dataset.')
-        return 0, g0hat_list
+        return 0, g0hat_list, 0, 0
     dhat = dis_gs[0] # the nearest distance
     ghat_list = [g.copy() for g in g0hat_list]
 #    for g in ghat_list:
@@ -320,31 +328,33 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
 #        print(g.nodes(data=True))
 #        print(g.edges(data=True))
     Gk = [Gn_init[ig].copy() for ig in sort_idx[0:k]] # the k nearest neighbors
-#    for gi in Gk:
-##        nx.draw_networkx(gi)
-##        plt.show()
+    for gi in Gk:
+        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
+#        nx.draw_networkx(gi)
+        plt.show()
 #        draw_Letter_graph(g)
-#        print(gi.nodes(data=True))
-#        print(gi.edges(data=True))
-    Gs_nearest = Gk.copy()
+        print(gi.nodes(data=True))
+        print(gi.edges(data=True))
+    Gs_nearest = [g.copy() for g in Gk]
+    Gn_nearest_median = [g.copy() for g in Gs_nearest]
 #    gihat_list = []
     
 #    i = 1
     r = 0
-    itr = 0
-#    cur_sod = dhat
-#    old_sod = cur_sod * 2
-    sod_list = [dhat]
+    itr_total = 0
+#    cur_dis = dhat
+#    old_dis = cur_dis * 2
+    dis_list = [dhat]
     found = False
     nb_updated = 0
-    while r < r_max:# and not found: # @todo: if not found?# and np.abs(old_sod - cur_sod) > epsilon:
-        print('\nr =', r)
-        print('itr for gk =', itr, '\n')
+    while r < r_max:# and not found: # @todo: if not found?# and np.abs(old_dis - cur_dis) > epsilon:
+        print('\nCurrent preimage iteration =', r)
+        print('Total preimage iteration =', itr_total, '\n')
         found = False
 #        Gs_nearest = Gk + gihat_list
 #        g_tmp = iam(Gs_nearest)
-        g_tmp_list, _ = test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations(
-                Gn_median, Gs_nearest, c_ei=c_ei, c_er=c_er, c_es=c_es)
+        g_tmp_list, _ = iam_moreGraphsAsInit_tryAllPossibleBestGraphs(
+                Gn_nearest_median, Gs_nearest, params_ged=params_ged, **params_iam)
 #        for g in g_tmp_list:
 #            nx.draw_networkx(g)
 #            plt.show()
@@ -352,31 +362,73 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
 #            print(g.nodes(data=True))
 #            print(g.edges(data=True))
         
-        # compute distance between phi and the new generated graphs.
+        # compute distance between \psi and the new generated graphs.
         knew = compute_kernel(g_tmp_list + Gn_median, gkernel, False)
         dnew_list = []
         for idx, g_tmp in enumerate(g_tmp_list):
+            # @todo: the term3 below could use the one at the beginning of the function.
             dnew_list.append(dis_gstar(idx, range(len(g_tmp_list), 
-                            len(g_tmp_list) + len(Gn_median) + 1), alpha, knew,
-                            withterm3=False))
+                            len(g_tmp_list) + len(Gn_median) + 1), 
+                            alpha, knew, withterm3=False))
         
 #        dnew = knew[0, 0] - 2 * (alpha[0] * knew[0, 1] + alpha[1] * 
 #              knew[0, 2]) + (alpha[0] * alpha[0] * k_list[0] + alpha[0] * 
 #              alpha[1] * k_g2_list[0] + alpha[1] * alpha[0] * 
 #              k_g1_list[1] + alpha[1] * alpha[1] * k_list[1])
             
+#        # find the new k nearest graphs.
+#        dnew_best = min(dnew_list)
+#        dis_gs = dnew_list + dis_gs # add the new nearest distances.
+#        Gs_nearest = [g.copy() for g in g_tmp_list] + Gs_nearest # add the corresponding graphs.
+#        sort_idx = np.argsort(dis_gs)
+#        if len([i for i in sort_idx[0:k] if i < len(dnew_list)]) > 0:
+#            print('We got new k nearest neighbors! Hurray!')
+#            dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]] # the new k nearest distances.
+##            print(dis_gs[-1])
+#            Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+#            nb_best = len(np.argwhere(dis_gs == dis_gs[0]).flatten().tolist())
+#            if dnew_best < dhat and np.abs(dnew_best - dhat) > epsilon:
+#                print('I have smaller distance!')
+#                print(str(dhat) + '->' + str(dis_gs[0]))
+#                dhat = dis_gs[0]
+#                idx_best_list = np.argwhere(dnew_list == dhat).flatten().tolist()
+#                ghat_list = [g_tmp_list[idx].copy() for idx in idx_best_list]
+##                for g in ghat_list:
+###                    nx.draw_networkx(g)
+###                    plt.show()
+##                    draw_Letter_graph(g)
+##                    print(g.nodes(data=True))
+##                    print(g.edges(data=True))
+#                r = 0
+#                found = True
+#                nb_updated += 1
+#            elif np.abs(dnew_best - dhat) < epsilon:
+#                print('I have almost equal distance!')
+#                print(str(dhat) + '->' + str(dnew_best))
+#        else:
+#            dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]]
+#            Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+#        Gn_nearest_median = [g.copy() for g in Gs_nearest]
+#        if not found:
+#            r += 1
+            
         # find the new k nearest graphs.
         dnew_best = min(dnew_list)
-        dis_gs = dnew_list + dis_gs # add the new nearest distances.
-        Gs_nearest = [g.copy() for g in g_tmp_list] + Gs_nearest # add the corresponding graphs.
-        sort_idx = np.argsort(dis_gs)
+        if np.abs(dnew_best - dhat) >= epsilon:
+            dis_gs = dnew_list + dis_gs # add the new nearest distances.
+            Gs_nearest = [g.copy() for g in g_tmp_list] + Gs_nearest # add the corresponding graphs.
+            sort_idx = np.argsort(dis_gs)
+        else: # if the new distance is equal to the old one. 
+            # @todo: works if only one graph is generated.
+            Gs_nearest[0] = g_tmp_list[0].copy()
+            sort_idx = np.argsort(dis_gs)
         if len([i for i in sort_idx[0:k] if i < len(dnew_list)]) > 0:
-            print('We got better k nearest neighbors! Hurray!')
+            print('We got new k nearest neighbors! Hurray!')
             dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]] # the new k nearest distances.
-            print(dis_gs[-1])
+#            print(dis_gs[-1])
             Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
             nb_best = len(np.argwhere(dis_gs == dis_gs[0]).flatten().tolist())
-            if dnew_best < dhat and np.abs(dnew_best - dhat) > epsilon:
+            if dnew_best < dhat and np.abs(dnew_best - dhat) >= epsilon:
                 print('I have smaller distance!')
                 print(str(dhat) + '->' + str(dis_gs[0]))
                 dhat = dis_gs[0]
@@ -394,19 +446,269 @@ def gk_iam_nearest_multi(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
             elif np.abs(dnew_best - dhat) < epsilon:
                 print('I have almost equal distance!')
                 print(str(dhat) + '->' + str(dnew_best))
+        else:
+            dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]]
+            Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+        Gn_nearest_median = [g.copy() for g in Gs_nearest]
         if not found:
             r += 1
             
-#        old_sod = cur_sod
-#        cur_sod = dnew_best
-        sod_list.append(dhat)
-        itr += 1
+#        old_dis = cur_dis
+#        cur_dis = dnew_best
+        dis_list.append(dhat)
+        itr_total += 1
         
     print('\nthe graph is updated', nb_updated, 'times.')
-    print('sods in kernel space:', sod_list, '\n')
+    print('distances in kernel space:', dis_list, '\n')
     
-    return dhat, ghat_list
+    return dhat, ghat_list, dis_list[-1], nb_updated
 
+
+
+def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, 
+                            l_max, gkernel, epsilon=0.001,
+                            params_iam={'c_ei': 1, 'c_er': 1, 'c_es': 1, 
+                                        'ite_max': 50, 'epsilon': 0.001, 
+                                        'removeNodes': True, 'connected': False},
+                            params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 
+                                        'saveGXL': 'benoit'}):
+    """This function constructs graph pre-image by the iterative pre-image 
+    framework in reference [1], algorithm 1, where new graphs are generated 
+    randomly and by the IAM algorithm in reference [2].
+    
+    notes
+    -----
+    Every time a set of n better graphs is acquired, their distances in kernel space are
+    compared with the k nearest ones, and the k nearest distances from the k+n
+    distances will be used as the new ones.
+    """
+    Gn_init = [nx.convert_node_labels_to_integers(g) for g in Gn_init]
+    # compute k nearest neighbors of phi in DN.
+    dis_list = [] # distance between g_star and each graph.
+    term3 = 0
+    for i1, a1 in enumerate(alpha):
+        for i2, a2 in enumerate(alpha):
+            term3 += a1 * a2 * Kmatrix[idx_gi[i1], idx_gi[i2]]
+    for ig, g in tqdm(enumerate(Gn_init), desc='computing distances', file=sys.stdout):
+        dtemp = dis_gstar(ig, idx_gi, alpha, Kmatrix, term3=term3)
+        dis_list.append(dtemp)
+        
+    # sort
+    sort_idx = np.argsort(dis_list)
+    dis_gs = [dis_list[idis] for idis in sort_idx[0:k]] # the k shortest distances
+    nb_best = len(np.argwhere(dis_gs == dis_gs[0]).flatten().tolist())
+    g0hat_list = [Gn_init[idx] for idx in sort_idx[0:nb_best]] # the nearest neighbors of phi in DN
+    if dis_gs[0] == 0: # the exact pre-image.
+        print('The exact pre-image is found from the input dataset.')
+        return 0, g0hat_list, 0, 0
+    dhat = dis_gs[0] # the nearest distance
+    ghat_list = [g.copy() for g in g0hat_list]
+#    for g in ghat_list:
+#        draw_Letter_graph(g)
+#        nx.draw_networkx(g)
+#        plt.show()
+#        print(g.nodes(data=True))
+#        print(g.edges(data=True))
+    Gk = [Gn_init[ig].copy() for ig in sort_idx[0:k]] # the k nearest neighbors
+    for gi in Gk:
+        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
+#        nx.draw_networkx(gi)
+        plt.show()
+#        draw_Letter_graph(g)
+        print(gi.nodes(data=True))
+        print(gi.edges(data=True))
+    Gs_nearest = [g.copy() for g in Gk]
+    Gn_nearest_median = [g.copy() for g in Gs_nearest]
+#    gihat_list = []
+    
+#    i = 1
+    r = 0
+    itr_total = 0
+#    cur_dis = dhat
+#    old_dis = cur_dis * 2
+    dis_list = [dhat]
+    found = False
+    nb_updated_iam = 0
+    nb_updated_random = 0
+    while r < r_max: # and not found: # @todo: if not found?# and np.abs(old_dis - cur_dis) > epsilon:
+        print('\n-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-')
+        print('Current preimage iteration =', r)
+        print('Total preimage iteration =', itr_total, '\n')
+        found = False
+#        Gs_nearest = Gk + gihat_list
+#        g_tmp = iam(Gs_nearest)
+        g_tmp_list, _ = iam_moreGraphsAsInit_tryAllPossibleBestGraphs(
+                Gn_nearest_median, Gs_nearest, params_ged=params_ged, **params_iam)
+#        for g in g_tmp_list:
+#            nx.draw_networkx(g)
+#            plt.show()
+#            draw_Letter_graph(g)
+#            print(g.nodes(data=True))
+#            print(g.edges(data=True))
+        
+        # compute distance between \psi and the new generated graphs.
+        knew = compute_kernel(g_tmp_list + Gn_median, gkernel, False)
+        dnew_list = []
+        for idx, g_tmp in enumerate(g_tmp_list):
+            # @todo: the term3 below could use the one at the beginning of the function.
+            dnew_list.append(dis_gstar(idx, range(len(g_tmp_list), 
+                            len(g_tmp_list) + len(Gn_median) + 1), 
+                            alpha, knew, withterm3=False))
+            
+        # find the new k nearest graphs. 
+        # @todo: for now only consider the situation when only one graph is generated by IAM.
+        dnew_best = min(dnew_list)
+        gnew_best = g_tmp_list[0].copy()
+        # when new distance is equal to the old one, use random generation.
+        if np.abs(dnew_best - dhat) < epsilon or dhat < dnew_best:
+#            Gs_nearest[0] = g_tmp_list[0].copy()
+#            sort_idx = np.argsort(dis_gs)
+            print('Distance almost equal or worse, switching to random generation now.')
+            print(str(dhat) + '->' + str(dnew_best))           
+            
+            if dnew_best > dhat and np.abs(dnew_best - dhat) >= epsilon:
+                dnew_best = dhat
+                gnew_best = Gs_nearest[0].copy()
+            
+            # number of edges to be changed.
+            # @todo what if the log is negetive? how to choose alpha (scalar)? seems fdgs is always 1.
+#            fdgs = dnew_best
+            fdgs = nb_updated_random + 1
+            if fdgs < 1:
+                fdgs = 1
+            fdgs = int(np.ceil(np.log(fdgs)))
+            if fdgs < 1:
+                fdgs += 1
+#            fdgs = nb_updated_random + 1 # @todo:
+            # @todo: should we use just half of the adjacency matrix for undirected graphs?
+            nb_vpairs = nx.number_of_nodes(gnew_best) * (nx.number_of_nodes(gnew_best) - 1)
+                
+            l = 0
+            while l < l_max:
+                # add and delete edges.
+                gtemp = gnew_best.copy()
+                np.random.seed()
+                # which edges to change.                
+                # @todo: what if fdgs is bigger than nb_vpairs?
+                idx_change = random.sample(range(nb_vpairs), fdgs if 
+                                           fdgs < nb_vpairs else nb_vpairs)
+#                idx_change = np.random.randint(0, nx.number_of_nodes(gs) * 
+#                                               (nx.number_of_nodes(gs) - 1), fdgs)
+                for item in idx_change:
+                    node1 = int(item / (nx.number_of_nodes(gtemp) - 1))
+                    node2 = (item - node1 * (nx.number_of_nodes(gtemp) - 1))
+                    if node2 >= node1: # skip the self pair.
+                        node2 += 1
+                    # @todo: is the randomness correct?
+                    if not gtemp.has_edge(node1, node2):
+                        gtemp.add_edge(node1, node2)
+#                        nx.draw_networkx(gs)
+#                        plt.show()
+#                        nx.draw_networkx(gtemp)
+#                        plt.show()
+                    else:
+                        gtemp.remove_edge(node1, node2)
+#                        nx.draw_networkx(gs)
+#                        plt.show()
+#                        nx.draw_networkx(gtemp)
+#                        plt.show()
+#                nx.draw_networkx(gtemp)
+#                plt.show()
+                        
+                # compute distance between \psi and the new generated graph.
+                knew = compute_kernel([gtemp] + Gn_median, gkernel, verbose=False)
+                dnew = dis_gstar(0, [1, 2], alpha, knew, withterm3=False)
+                # @todo: the new distance is smaller or also equal?
+                if dnew < dnew_best or np.abs(dnew_best - dnew) < epsilon:
+                    if np.abs(dnew_best - dnew) < epsilon:
+                        print('I am equal!')
+                        dnew_best = dnew
+                        gnew_best = gtemp.copy()
+                    else:
+                        print('\nI am smaller!')
+                        print('l =', str(l))
+                        print(dnew_best, '->', dnew)                       
+                        dis_gs = [dnew] + dis_gs # add the new nearest distances.
+                        Gs_nearest = [gtemp.copy()] + Gs_nearest # add the corresponding graphs.
+                        sort_idx = np.argsort(dis_gs)
+                        dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]] # the new k nearest distances.
+                        Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+                        Gn_nearest_median = [g.copy() for g in Gs_nearest]
+                        dhat = dnew
+                        nb_updated_random += 1
+                        found = True # found better graph.
+                        r = 0
+                        print('the graph is updated by random generation', 
+                              nb_updated_random, 'times.')
+                                     
+                        nx.draw(gtemp, labels=nx.get_node_attributes(gtemp, 'atom'), 
+                                with_labels=True)
+##            plt.savefig("results/gk_iam/simple_two/xx" + str(i) + ".png", format="PNG")
+                        plt.show()
+                        break
+#                    nx.draw_networkx(gtemp)
+#                    plt.show()
+#                    print(gtemp.nodes(data=True))
+#                    print(gtemp.edges(data=True))
+                l += 1
+            if l == l_max:
+                r += 1                
+                    
+        else: # if the new distance is not equal to the old one. 
+            dis_gs = dnew_list + dis_gs # add the new nearest distances.
+            Gs_nearest = [nx.convert_node_labels_to_integers(g).copy() for g 
+                          in g_tmp_list] + Gs_nearest # add the corresponding graphs.
+            sort_idx = np.argsort(dis_gs)
+            if len([i for i in sort_idx[0:k] if i < len(dnew_list)]) > 0:
+                print('We got new k nearest neighbors! Hurray!')
+                dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]] # the new k nearest distances.
+    #            print(dis_gs[-1])
+                Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+                nb_best = len(np.argwhere(dis_gs == dis_gs[0]).flatten().tolist())
+                if dnew_best < dhat:
+                    print('I have smaller distance!')
+                    print(str(dhat) + '->' + str(dis_gs[0]))
+                    dhat = dis_gs[0]
+                    idx_best_list = np.argwhere(dnew_list == dhat).flatten().tolist()
+                    ghat_list = [g_tmp_list[idx].copy() for idx in idx_best_list]
+    #                for g in ghat_list:
+    ##                    nx.draw_networkx(g)
+    ##                    plt.show()
+    #                    draw_Letter_graph(g)
+    #                    print(g.nodes(data=True))
+    #                    print(g.edges(data=True))
+                    r = 0
+                    found = True
+                    nb_updated_iam += 1
+                    print('the graph is updated by IAM', nb_updated_iam, 'times.')
+                    
+                    nx.draw(ghat_list[0], labels=nx.get_node_attributes(ghat_list[0], 'atom'), 
+                            with_labels=True)
+##            plt.savefig("results/gk_iam/simple_two/xx" + str(i) + ".png", format="PNG")
+                    plt.show()
+            else:
+                dis_gs = [dis_gs[idx] for idx in sort_idx[0:k]]
+                Gs_nearest = [Gs_nearest[idx] for idx in sort_idx[0:k]]
+            Gn_nearest_median = [g.copy() for g in Gs_nearest]
+            if not found:
+                r += 1
+            
+#        old_dis = cur_dis
+#        cur_dis = dnew_best
+        dis_list.append(dhat)
+        itr_total += 1
+        print('\nthe k shortest distances are', dis_gs)
+        print('the shortest distances for previous iterations are', dis_list)
+        
+    print('\nthe graph is updated by IAM', nb_updated_iam, 'times, and by random generation',
+          nb_updated_random, 'times.')
+    print('distances in kernel space:', dis_list, '\n')
+    
+    return dhat, ghat_list, dis_list[-1], nb_updated_iam, nb_updated_random
+
+
+###############################################################################
+# useful functions.
 
 def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
     term1 = Kmatrix[idx_g, idx_g]
@@ -424,10 +726,10 @@ def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
 def compute_kernel(Gn, graph_kernel, verbose):
     if graph_kernel == 'marginalizedkernel':
         Kmatrix, _ = marginalizedkernel(Gn, node_label='atom', edge_label=None,
-                                  p_quit=0.03, n_iteration=20, remove_totters=False,
+                                  p_quit=0.03, n_iteration=10, remove_totters=False,
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'untilhpathkernel':
-        Kmatrix, _ = untilhpathkernel(Gn, node_label='atom', edge_label='bond_type',
+        Kmatrix, _ = untilhpathkernel(Gn, node_label='atom', edge_label=None,
                                   depth=10, k_func='MinMax', compute_method='trie',
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'spkernel':

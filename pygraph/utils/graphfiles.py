@@ -84,7 +84,7 @@ def loadGXL(filename):
     return g
 
 
-def saveGXL(graph, filename, method='gedlib-letter'):
+def saveGXL(graph, filename, method='benoit'):
     if method == 'benoit':
         import xml.etree.ElementTree as ET
         root_node = ET.Element('gxl')
@@ -131,13 +131,13 @@ def saveGXL(graph, filename, method='gedlib-letter'):
         gxl_file.write("<gxl>\n")
         gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"true\" edgemode=\"undirected\">\n")
         for v, attrs in graph.nodes(data=True):
-            gxl_file.write("<node id=\"_" + str(v) + "\">\n")
-            gxl_file.write("<attr name=\"" + "chem" + "\"><int>" + str(attrs['atom']) + "</int></attr>\n")
+            gxl_file.write("<node id=\"_" + str(v) + "\">")
+            gxl_file.write("<attr name=\"" + "chem" + "\"><int>" + str(attrs['atom']) + "</int></attr>")
             gxl_file.write("</node>\n")
         for v1, v2, attrs in graph.edges(data=True):
-            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\">\n")
-#            gxl_file.write("<attr name=\"valence\"><int>" + str(attrs['bond_type']) + "</int></attr>\n")
-            gxl_file.write("<attr name=\"valence\"><int>" + "1" + "</int></attr>\n")
+            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\">")
+#            gxl_file.write("<attr name=\"valence\"><int>" + str(attrs['bond_type']) + "</int></attr>")
+            gxl_file.write("<attr name=\"valence\"><int>" + "1" + "</int></attr>")
             gxl_file.write("</edge>\n")
         gxl_file.write("</graph>\n")
         gxl_file.write("</gxl>\n")
@@ -485,7 +485,7 @@ def loadDataset(filename, filename_y=None, extra_params=None):
     return data, y
 
 
-def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile'):
+def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None):
     """Save list of graphs.
     """
     import os
@@ -502,7 +502,7 @@ def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile'):
             fgroup.write("\n<GraphCollection>")
             for idx, g in enumerate(Gn):
                 fname_tmp = "graph" + str(idx) + ".gxl"
-                saveGXL(g, dirname_ds + fname_tmp)
+                saveGXL(g, dirname_ds + fname_tmp, method=xparams['method'])
                 fgroup.write("\n\t<graph file=\"" + fname_tmp + "\" class=\"" + str(y[idx]) + "\"/>")
             fgroup.write("\n</GraphCollection>")
             fgroup.close()

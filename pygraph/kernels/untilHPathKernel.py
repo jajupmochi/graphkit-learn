@@ -51,6 +51,7 @@ def untilhpathkernel(*args,
         applied for the graph kernel. The Following choices are available:
         'MinMax': use the MiniMax kernel and counting feature map.
         'tanimoto': use the Tanimoto kernel and binary feature map.
+        None: no sub-kernel is used, the kernel is computed directly.
     compute_method : string
         Computation method to store paths and compute the graph kernel. The 
         Following choices are available:
@@ -72,14 +73,16 @@ def untilhpathkernel(*args,
     Kmatrix = np.zeros((len(Gn), len(Gn)))
     ds_attrs = get_dataset_attributes(
         Gn,
-        attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
+        attr_names=['node_labeled', 'node_attr_dim', 'edge_labeled', 
+                    'edge_attr_dim', 'is_directed'],
         node_label=node_label, edge_label=edge_label)
-    if not ds_attrs['node_labeled']:
-        for G in Gn:
-            nx.set_node_attributes(G, '0', 'atom')
-    if not ds_attrs['edge_labeled']:
-        for G in Gn:
-            nx.set_edge_attributes(G, '0', 'bond_type')
+    if k_func != None:
+        if not ds_attrs['node_labeled']:
+            for G in Gn:
+                nx.set_node_attributes(G, '0', 'atom')
+        if not ds_attrs['edge_labeled']:
+            for G in Gn:
+                nx.set_edge_attributes(G, '0', 'bond_type')
 
     start_time = time.time()        
 
@@ -93,12 +96,15 @@ def untilhpathkernel(*args,
     else:
         chunksize = 100
     all_paths = [[] for _ in range(len(Gn))]
-    if compute_method == 'trie':
+    if compute_method == 'trie' and k_func != None:
         getps_partial = partial(wrapper_find_all_path_as_trie, depth, 
                                 ds_attrs, node_label, edge_label)
-    else:  
+    elif compute_method != 'trie' and k_func != None:  
         getps_partial = partial(wrapper_find_all_paths_until_length, depth, 
-                                ds_attrs, node_label, edge_label)    
+                                ds_attrs, node_label, edge_label, True)  
+    else: 
+        getps_partial = partial(wrapper_find_all_paths_until_length, depth, 
+                                ds_attrs, node_label, edge_label, False)
     if verbose:
         iterator = tqdm(pool.imap_unordered(getps_partial, itr, chunksize),
                         desc='getting paths', file=sys.stdout)
@@ -110,10 +116,12 @@ def untilhpathkernel(*args,
     pool.join()
     
 #    for g in Gn:
-#        if compute_method == 'trie':
+#        if compute_method == 'trie' and k_func != None:
 #            find_all_path_as_trie(g, depth, ds_attrs, node_label, edge_label)
-#        else:
+#        elif compute_method != 'trie' and k_func != None:  
 #            find_all_paths_until_length(g, depth, ds_attrs, node_label, edge_label)
+#        else: 
+#            find_all_paths_until_length(g, depth, ds_attrs, node_label, edge_label, False)
         
 ##    size = sys.getsizeof(all_paths)
 ##    for item in all_paths:
@@ -130,18 +138,25 @@ def untilhpathkernel(*args,
 ##        all_paths[i] = ps
 ##    print(time.time() - ttt)
      
-    if compute_method == 'trie':
+    if compute_method == 'trie' and k_func != None:
         def init_worker(trie_toshare):
             global G_trie
             G_trie = trie_toshare
         do_partial = partial(wrapper_uhpath_do_trie, k_func)
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
                     glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
-    else:
+    elif compute_method != 'trie' and k_func != None:
         def init_worker(plist_toshare):
             global G_plist
             G_plist = plist_toshare
         do_partial = partial(wrapper_uhpath_do_naive, k_func)   
+        parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+                    glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
+    else:
+        def init_worker(plist_toshare):
+            global G_plist
+            G_plist = plist_toshare
+        do_partial = partial(wrapper_uhpath_do_kernelless, ds_attrs, edge_kernels)   
         parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
                     glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
     
@@ -353,12 +368,62 @@ def wrapper_uhpath_do_naive(k_func, itr):
     return i, j, _untilhpathkernel_do_naive(G_plist[i], G_plist[j], k_func)
 
 
+def _untilhpathkernel_do_kernelless(paths1, paths2, k_func):
+    """Calculate path graph kernels up to depth d between 2 graphs naively.
+
+    Parameters
+    ----------
+    paths_list : list of list
+        List of list of paths in all graphs, where for unlabeled graphs, each 
+        path is represented by a list of nodes; while for labeled graphs, each 
+        path is represented by a string consists of labels of nodes and/or 
+        edges on that path.
+    k_func : function
+        A kernel function applied using different notions of fingerprint 
+        similarity.
+
+    Return
+    ------
+    kernel : float
+        Path kernel up to h between 2 graphs.
+    """
+    all_paths = list(set(paths1 + paths2))
+
+    if k_func == 'tanimoto':
+        length_union = len(set(paths1 + paths2))
+        kernel = (len(set(paths1)) + len(set(paths2)) -
+                  length_union) / length_union
+#        vector1 = [(1 if path in paths1 else 0) for path in all_paths]
+#        vector2 = [(1 if path in paths2 else 0) for path in all_paths]
+#        kernel_uv = np.dot(vector1, vector2)
+#        kernel = kernel_uv / (len(set(paths1)) + len(set(paths2)) - kernel_uv)
+
+    else:  # MinMax kernel
+        path_count1 = Counter(paths1)
+        path_count2 = Counter(paths2)
+        vector1 = [(path_count1[key] if (key in path_count1.keys()) else 0)
+                   for key in all_paths]
+        vector2 = [(path_count2[key] if (key in path_count2.keys()) else 0)
+                   for key in all_paths]
+        kernel = np.sum(np.minimum(vector1, vector2)) / \
+            np.sum(np.maximum(vector1, vector2))
+
+    return kernel
+
+
+def wrapper_uhpath_do_kernelless(k_func, itr):
+    i = itr[0]
+    j = itr[1]
+    return i, j, _untilhpathkernel_do_kernelless(G_plist[i], G_plist[j], k_func)
+
+
 # @todo: (can be removed maybe)  this method find paths repetively, it could be faster.
 def find_all_paths_until_length(G,
                                 length,
                                 ds_attrs,
                                 node_label='atom',
-                                edge_label='bond_type'):
+                                edge_label='bond_type',
+                                tolabelseqs=True):
     """Find all paths no longer than a certain maximum length in a graph. A 
     recursive depth first search is applied.
 
@@ -398,7 +463,7 @@ def find_all_paths_until_length(G,
     #     path_l = path_l_new[:]
 
     path_l = [[n] for n in G.nodes]  # paths of length l
-    all_paths = path_l[:]
+    all_paths = [p.copy() for p in path_l]
     for l in range(1, length + 1):
         path_lplus1 = []
         for path in path_l:
@@ -409,7 +474,7 @@ def find_all_paths_until_length(G,
                     path_lplus1.append(tmp)
 
         all_paths += path_lplus1
-        path_l = path_lplus1[:]
+        path_l = [p.copy() for p in path_lplus1]
 
     # for i in range(0, length + 1):
     #     new_paths = find_all_paths(G, i)
@@ -419,15 +484,18 @@ def find_all_paths_until_length(G,
 
     # consider labels
 #    print(paths2labelseqs(all_paths, G, ds_attrs, node_label, edge_label))
-    return paths2labelseqs(all_paths, G, ds_attrs, node_label, edge_label)
+    print()
+    return (paths2labelseqs(all_paths, G, ds_attrs, node_label, edge_label) 
+            if tolabelseqs else all_paths)
         
         
 def wrapper_find_all_paths_until_length(length, ds_attrs, node_label, 
-                                     edge_label, itr_item):
+                                     edge_label, tolabelseqs, itr_item):
     g = itr_item[0]
     i = itr_item[1]
     return i, find_all_paths_until_length(g, length, ds_attrs,
-                node_label=node_label, edge_label=edge_label)
+                node_label=node_label, edge_label=edge_label, 
+                tolabelseqs=tolabelseqs)
 
 
 def find_all_path_as_trie(G,

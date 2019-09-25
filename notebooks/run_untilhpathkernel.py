@@ -54,9 +54,11 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = untilhpathkernel
-param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
-                          'k_func': ['MinMax'], # ['MinMax', 'tanimoto'],
-                          'compute_method': ['trie']} # ['MinMax']}
+param_grid_precomputed = {'depth': np.linspace(3, 10, 8),   # [2], 
+                          'k_func': [None]} # ['MinMax', 'tanimoto'],
+#param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
+#                          'k_func': ['MinMax'], # ['MinMax', 'tanimoto'],
+#                          'compute_method': ['trie']} # ['MinMax']}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

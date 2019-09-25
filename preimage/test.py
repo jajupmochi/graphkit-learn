@@ -18,17 +18,17 @@ def test() :
     
     script.PyRestartEnv()
     
-#    print("Here is the Python function !")
-#    
-#    print("List of Edit Cost Options : ")
-#    for i in script.listOfEditCostOptions :
-#        print (i)
-#    print("")
-#
-#    print("List of Method Options : ")
-#    for j in script.listOfMethodOptions :
-#        print (j)
-#    print("")
+    print("Here is the Python function !")
+    
+    print("List of Edit Cost Options : ")
+    for i in script.listOfEditCostOptions :
+        print (i)
+    print("")
+
+    print("List of Method Options : ")
+    for j in script.listOfMethodOptions :
+        print (j)
+    print("")
     
     script.PyLoadGXLGraph('include/gedlib-master/data/datasets/Mutagenicity/data/', 'collections/MUTA_10.xml')
     listID = script.PyGetGraphIds()

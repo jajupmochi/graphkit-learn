@@ -5,10 +5,10 @@ import numpy as np
 import networkx as nx
 import time
 
-#import librariesImport
-#import script
-#sys.path.insert(0, "/home/bgauzere/dev/optim-graphes/")
-#import pygraph
+import librariesImport
+import script
+sys.path.insert(0, "/home/bgauzere/dev/optim-graphes/")
+import pygraph
 from pygraph.utils.graphfiles import loadDataset
 
 def replace_graph_in_env(script, graph, old_id, label='median'):
@@ -191,28 +191,28 @@ def compute_median_set(script,listID):
     
     return median_set_index, sod
 
-#if __name__ == "__main__":
-#    #Chargement du dataset
-#    script.PyLoadGXLGraph('/home/bgauzere/dev/gedlib/data/datasets/Letter/HIGH/', '/home/bgauzere/dev/gedlib/data/collections/Letter_Z.xml')
-#    script.PySetEditCost("LETTER")
-#    script.PyInitEnv()
-#    script.PySetMethod("IPFP", "")
-#    script.PyInitMethod()
-#
-#    dataset,my_y = pygraph.utils.graphfiles.loadDataset("/home/bgauzere/dev/gedlib/data/datasets/Letter/HIGH/Letter_Z.cxl")
-#
-#    listID = script.PyGetAllGraphIds()
-#    median, sod = compute_median(script,listID,dataset,verbose=True)
-#    
-#    print(sod)
-#    draw_Letter_graph(median)
+if __name__ == "__main__":
+    #Chargement du dataset
+    script.PyLoadGXLGraph('/home/bgauzere/dev/gedlib/data/datasets/Letter/HIGH/', '/home/bgauzere/dev/gedlib/data/collections/Letter_Z.xml')
+    script.PySetEditCost("LETTER")
+    script.PyInitEnv()
+    script.PySetMethod("IPFP", "")
+    script.PyInitMethod()
+
+    dataset,my_y = pygraph.utils.graphfiles.loadDataset("/home/bgauzere/dev/gedlib/data/datasets/Letter/HIGH/Letter_Z.cxl")
+
+    listID = script.PyGetAllGraphIds()
+    median, sod = compute_median(script,listID,dataset,verbose=True)
+    
+    print(sod)
+    draw_Letter_graph(median)
 
 
-if __name__ == '__main__':
-    # test draw_Letter_graph
-    ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
-          'extra_params': {}} # node nsymb
-    Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
-    print(y_all)
-    for g in Gn:
-        draw_Letter_graph(g)
+#if __name__ == '__main__':
+#    # test draw_Letter_graph
+#    ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
+#          'extra_params': {}} # node nsymb
+#    Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
+#    print(y_all)
+#    for g in Gn:
+#        draw_Letter_graph(g)
