@@ -34,7 +34,7 @@ def test_preimage_mix_2combination_all_pairs():
     lmbda = 0.03 # termination probalility
     r_max = 10 # iteration limit for pre-image.
     l_max = 500 # update limit for random generation
-    alpha_range = np.linspace(0.7, 1, 4)
+    alpha_range = np.linspace(0.5, 0.5, 1)
     k = 5 # k nearest neighbors
     epsilon = 1e-6
     # parameters for GED function
@@ -115,13 +115,16 @@ def test_preimage_mix_2combination_all_pairs():
             sod_gs_min_list = []
             nb_updated_list_iam = []
             nb_updated_list_random = []
+            nb_updated_k_list_iam = []
+            nb_updated_k_list_random = []
             g_best = []
             # for each alpha
             for alpha in alpha_range:
                 print('\n-------------------------------------------------------\n')
                 print('alpha =', alpha)
                 time0 = time.time()
-                dhat, ghat_list, sod_ks, nb_updated_iam, nb_updated_random = \
+                dhat, ghat_list, dis_of_each_itr, nb_updated_iam, nb_updated_random, \
+                    nb_updated_k_iam, nb_updated_k_random = \
                     preimage_iam_random_mix(Gn, [g1, g2],
                     [alpha, 1 - alpha], range(len(Gn), len(Gn) + 2), km, k, r_max, 
                     l_max, gkernel, epsilon=epsilon, 
@@ -136,7 +139,9 @@ def test_preimage_mix_2combination_all_pairs():
                 dis_ks_min_list.append(dhat)
                 g_best.append(ghat_list)
                 nb_updated_list_iam.append(nb_updated_iam)       
-                nb_updated_list_random.append(nb_updated_random) 
+                nb_updated_list_random.append(nb_updated_random)
+                nb_updated_k_list_iam.append(nb_updated_k_iam)       
+                nb_updated_k_list_random.append(nb_updated_k_random) 
                 
             # show best graphs and save them to file.
             for idx, item in enumerate(alpha_range):
@@ -168,9 +173,13 @@ def test_preimage_mix_2combination_all_pairs():
             print('\nsods in graph space: ', sod_gs_list)
             print('\nsmallest sod in graph space for each alpha: ', sod_gs_min_list)  
             print('\nsmallest distance in kernel space for each alpha: ', dis_ks_min_list) 
-            print('\nnumber of updates for each alpha by IAM: ', nb_updated_list_iam)
-            print('\nnumber of updates for each alpha by random generation: ', 
+            print('\nnumber of updates of the best graph for each alpha by IAM: ', nb_updated_list_iam)
+            print('\nnumber of updates of the best graph for each alpha by random generation: ', 
                   nb_updated_list_random)
+            print('\nnumber of updates of k nearest graphs for each alpha by IAM: ', 
+                  nb_updated_k_list_iam)
+            print('\nnumber of updates of k nearest graphs for each alpha by random generation: ', 
+                  nb_updated_k_list_random)
             print('\ntimes:', time_list)
             nb_update_mat_iam[idx1, idx2] = nb_updated_list_iam[0]
             nb_update_mat_random[idx1, idx2] = nb_updated_list_random[0]
@@ -196,8 +205,8 @@ def test_gkiam_2combination_all_pairs():
     
     lmbda = 0.03 # termination probalility
     r_max = 10 # iteration limit for pre-image.
-    alpha_range = np.linspace(1, 1, 1)
-    k = 5 # k nearest neighbors
+    alpha_range = np.linspace(0.5, 0.5, 1)
+    k = 10 # k nearest neighbors
     epsilon = 1e-6
     # parameters for GED function
     ged_cost='CHEM_1'
@@ -274,14 +283,16 @@ def test_gkiam_2combination_all_pairs():
             dis_ks_min_list = []
             sod_gs_list = []
             sod_gs_min_list = []
-            nb_updated_list = []       
+            nb_updated_list = []
+            nb_updated_k_list = [] 
             g_best = []
             # for each alpha
             for alpha in alpha_range:
                 print('\n-------------------------------------------------------\n')
                 print('alpha =', alpha)
                 time0 = time.time()
-                dhat, ghat_list, sod_ks, nb_updated = gk_iam_nearest_multi(Gn, [g1, g2],
+                dhat, ghat_list, sod_ks, nb_updated, nb_updated_k = \
+                    gk_iam_nearest_multi(Gn, [g1, g2],
                     [alpha, 1 - alpha], range(len(Gn), len(Gn) + 2), km, k, r_max, 
                     gkernel, epsilon=epsilon, 
                     params_iam={'c_ei': c_ei, 'c_er': c_er, 'c_es': c_es, 
@@ -294,7 +305,8 @@ def test_gkiam_2combination_all_pairs():
                 time_list.append(time_total)
                 dis_ks_min_list.append(dhat)
                 g_best.append(ghat_list)
-                nb_updated_list.append(nb_updated)       
+                nb_updated_list.append(nb_updated)
+                nb_updated_k_list.append(nb_updated_k)
                 
             # show best graphs and save them to file.
             for idx, item in enumerate(alpha_range):
@@ -326,7 +338,10 @@ def test_gkiam_2combination_all_pairs():
             print('\nsods in graph space: ', sod_gs_list)
             print('\nsmallest sod in graph space for each alpha: ', sod_gs_min_list)  
             print('\nsmallest distance in kernel space for each alpha: ', dis_ks_min_list) 
-            print('\nnumber of updates for each alpha: ', nb_updated_list)             
+            print('\nnumber of updates of the best graph for each alpha: ', 
+                  nb_updated_list)
+            print('\nnumber of updates of the k nearest graphs for each alpha: ', 
+                  nb_updated_k_list)
             print('\ntimes:', time_list)
             nb_update_mat[idx1, idx2] = nb_updated_list[0]
             
@@ -595,5 +610,5 @@ if __name__ == '__main__':
 # random pre-image paper.)
 #    test_random_preimage_2combination()
 #    test_gkiam_2combination()
-#    test_gkiam_2combination_all_pairs()
-    test_preimage_mix_2combination_all_pairs()
+    test_gkiam_2combination_all_pairs()
+#    test_preimage_mix_2combination_all_pairs()

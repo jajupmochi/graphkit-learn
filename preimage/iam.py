@@ -23,7 +23,8 @@ from pygraph.utils.utils import graph_isIdentical, get_node_labels, get_edge_lab
 def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate, 
         c_ei=3, c_er=3, c_es=1, ite_max=50, epsilon=0.001, 
         node_label='atom', edge_label='bond_type', 
-        connected=False, removeNodes=True, AllBestInit=True,
+        connected=False, removeNodes=True, allBestInit=False, allBestNodes=False,
+        allBestEdges=False,
         params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 'saveGXL': 'benoit'}):
     """See my name, then you know what I do.
     """
@@ -74,24 +75,37 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
                     label_list.append(label_r)
                 # get the best labels.
                 idx_max = np.argwhere(h_i0_list == np.max(h_i0_list)).flatten().tolist()
-                nlabel_best = [label_list[idx] for idx in idx_max]
-                # generate "best" graphs with regard to "best" node labels.
-                G_new_list_nd = []
-                for g in G_new_list: # @todo: seems it can be simplified. The G_new_list will only contain 1 graph for now.
-                    for nl in nlabel_best:
-                        g_tmp = g.copy()
-                        if nl == label_r:
-                            g_tmp.remove_node(nd)
-                        else:
-                            g_tmp.nodes[nd][node_label] = nl
-                        G_new_list_nd.append(g_tmp)
-#                            nx.draw_networkx(g_tmp)
-#                            import matplotlib.pyplot as plt
-#                            plt.show()
-#                            print(g_tmp.nodes(data=True))
-#                            print(g_tmp.edges(data=True))
-                G_new_list = [ggg.copy() for ggg in G_new_list_nd]
-
+                if allBestNodes: # choose all best graphs.                    
+                    nlabel_best = [label_list[idx] for idx in idx_max]
+                    # generate "best" graphs with regard to "best" node labels.
+                    G_new_list_nd = []
+                    for g in G_new_list: # @todo: seems it can be simplified. The G_new_list will only contain 1 graph for now.
+                        for nl in nlabel_best:
+                            g_tmp = g.copy()
+                            if nl == label_r:
+                                g_tmp.remove_node(nd)
+                            else:
+                                g_tmp.nodes[nd][node_label] = nl
+                            G_new_list_nd.append(g_tmp)
+    #                            nx.draw_networkx(g_tmp)
+    #                            import matplotlib.pyplot as plt
+    #                            plt.show()
+    #                            print(g_tmp.nodes(data=True))
+    #                            print(g_tmp.edges(data=True))
+                    G_new_list = [ggg.copy() for ggg in G_new_list_nd]
+                else: 
+                    # choose one of the best randomly.
+                    h_ij0_max = h_i0_list[idx_max[0]]
+                    idx_rdm = random.randint(0, len(idx_max) - 1)
+                    best_label = label_list[idx_max[idx_rdm]]
+                           
+                    # check whether a_ij is 0 or 1.
+                    g_new = G_new_list[0]
+                    if best_label == label_r:
+                        g_new.remove_node(nd) 
+                    else:
+                        g_new.nodes[nd][node_label] = best_label
+                    G_new_list = [g_new]
         else: # labels are non-symbolic
             for ndi, (nd, _) in enumerate(G.nodes(data=True)):
                 Si_norm = 0
@@ -148,56 +162,57 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
     #                    label_list.append(label_r)
                         
                         # get the best labels.
-                        # choose all best graphs.
                         idx_max = np.argwhere(h_ij0_list == np.max(h_ij0_list)).flatten().tolist()
-                        elabel_best = [label_list[idx] for idx in idx_max]
-                        h_ij0_max = [h_ij0_list[idx] for idx in idx_max]
-                        # generate "best" graphs with regard to "best" node labels.
-                        G_new_list_ed = []
-                        for g_tmp in g_tmp_list: # @todo: seems it can be simplified. The G_new_list will only contain 1 graph for now.
-                            for idxl, el in enumerate(elabel_best):
-                                g_tmp_copy = g_tmp.copy()
-                                # check whether a_ij is 0 or 1.
-                                sij_norm = 0
-                                for idx, g in enumerate(Gn_median):
-                                    pi_i = pi_p_forward[idx][nd1i]
-                                    pi_j = pi_p_forward[idx][nd2i]
-                                    if g.has_node(pi_i) and g.has_node(pi_j) and \
-                                        g.has_edge(pi_i, pi_j):
-                                       sij_norm += 1
-                                if h_ij0_max[idxl] > len(Gn_median) * c_er / c_es + \
-                                    sij_norm * (1 - (c_er + c_ei) / c_es):
-                                    if not g_tmp_copy.has_edge(nd1, nd2):
-                                        g_tmp_copy.add_edge(nd1, nd2)
-                                    g_tmp_copy.edges[nd1, nd2][edge_label] = elabel_best[idxl]
-                                else:
-                                    if g_tmp_copy.has_edge(nd1, nd2):
-                                        g_tmp_copy.remove_edge(nd1, nd2)
-                                G_new_list_ed.append(g_tmp_copy)
-                        g_tmp_list = [ggg.copy() for ggg in G_new_list_ed]  
+                        if allBestEdges: # choose all best graphs.
+                            elabel_best = [label_list[idx] for idx in idx_max]
+                            h_ij0_max = [h_ij0_list[idx] for idx in idx_max]
+                            # generate "best" graphs with regard to "best" node labels.
+                            G_new_list_ed = []
+                            for g_tmp in g_tmp_list: # @todo: seems it can be simplified. The G_new_list will only contain 1 graph for now.
+                                for idxl, el in enumerate(elabel_best):
+                                    g_tmp_copy = g_tmp.copy()
+                                    # check whether a_ij is 0 or 1.
+                                    sij_norm = 0
+                                    for idx, g in enumerate(Gn_median):
+                                        pi_i = pi_p_forward[idx][nd1i]
+                                        pi_j = pi_p_forward[idx][nd2i]
+                                        if g.has_node(pi_i) and g.has_node(pi_j) and \
+                                            g.has_edge(pi_i, pi_j):
+                                           sij_norm += 1
+                                    if h_ij0_max[idxl] > len(Gn_median) * c_er / c_es + \
+                                        sij_norm * (1 - (c_er + c_ei) / c_es):
+                                        if not g_tmp_copy.has_edge(nd1, nd2):
+                                            g_tmp_copy.add_edge(nd1, nd2)
+                                        g_tmp_copy.edges[nd1, nd2][edge_label] = elabel_best[idxl]
+                                    else:
+                                        if g_tmp_copy.has_edge(nd1, nd2):
+                                            g_tmp_copy.remove_edge(nd1, nd2)
+                                    G_new_list_ed.append(g_tmp_copy)
+                            g_tmp_list = [ggg.copy() for ggg in G_new_list_ed]
+                        else: # choose one of the best randomly.
+                            h_ij0_max = h_ij0_list[idx_max[0]]
+                            idx_rdm = random.randint(0, len(idx_max) - 1)
+                            best_label = label_list[idx_max[idx_rdm]]
+                                   
+                            # check whether a_ij is 0 or 1.
+                            sij_norm = 0
+                            for idx, g in enumerate(Gn_median):
+                                pi_i = pi_p_forward[idx][nd1i]
+                                pi_j = pi_p_forward[idx][nd2i]
+                                if g.has_node(pi_i) and g.has_node(pi_j) and g.has_edge(pi_i, pi_j):
+                                   sij_norm += 1
+                            if h_ij0_max > len(Gn_median) * c_er / c_es + sij_norm * (1 - (c_er + c_ei) / c_es):
+                                if not g_new.has_edge(nd1, nd2):
+                                    g_new.add_edge(nd1, nd2)
+                                g_new.edges[nd1, nd2][edge_label] = best_label
+                            else:
+                                if g_new.has_edge(nd1, nd2):
+                                    g_new.remove_edge(nd1, nd2) 
+                            g_tmp_list = [g_new]
                 G_new_list_edge += g_tmp_list
             G_new_list = [ggg.copy() for ggg in G_new_list_edge]    
                     
-#                        # choose one of the best randomly.
-#                        idx_max = np.argwhere(h_ij0_list == np.max(h_ij0_list)).flatten().tolist()
-#                        h_ij0_max = h_ij0_list[idx_max[0]]
-#                        idx_rdm = random.randint(0, len(idx_max) - 1)
-#                        best_label = label_list[idx_max[idx_rdm]]
-#                               
-#                        # check whether a_ij is 0 or 1.
-#                        sij_norm = 0
-#                        for idx, g in enumerate(Gn_median):
-#                            pi_i = pi_p_forward[idx][nd1i]
-#                            pi_j = pi_p_forward[idx][nd2i]
-#                            if g.has_node(pi_i) and g.has_node(pi_j) and g.has_edge(pi_i, pi_j):
-#                               sij_norm += 1
-#                        if h_ij0_max > len(Gn_median) * c_er / c_es + sij_norm * (1 - (c_er + c_ei) / c_es):
-#                            if not g_new.has_edge(nd1, nd2):
-#                                g_new.add_edge(nd1, nd2)
-#                            g_new.edges[nd1, nd2][edge_label] = best_label
-#                        else:
-#                            if g_new.has_edge(nd1, nd2):
-#                                g_new.remove_edge(nd1, nd2)                
+               
         else: # if edges are unlabeled
             # @todo: is this even right? G or g_tmp? check if the new one is right
             # @todo: works only for undirected graphs.
@@ -362,7 +377,7 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
     dis_list, pi_forward_all = median_distance(Gn_candidate, Gn_median,
         **params_ged)
     # find all smallest distances.
-    if AllBestInit: # try all best init graphs.
+    if allBestInit: # try all best init graphs.
         idx_min_list = range(len(dis_list))
         dis_min = dis_list
     else:
