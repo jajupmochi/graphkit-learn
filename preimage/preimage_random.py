@@ -57,7 +57,7 @@ def compute_kernel(Gn, graph_kernel, verbose):
     return Kmatrix
 
 
-def random_preimage(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gkernel):
+def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gkernel):
     Gn_init = [nx.convert_node_labels_to_integers(g) for g in Gn_init]
     
     # compute k nearest neighbors of phi in DN.

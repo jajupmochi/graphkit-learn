@@ -402,7 +402,7 @@ def test_iam_letter_h():
     
     
 def test_random_preimage_letter_h():
-    from preimage import random_preimage, compute_kernel
+    from preimage_random import preimage_random, compute_kernel
     ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
           'extra_params': {}} # node nsymb
 #    ds = {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt',
@@ -443,7 +443,7 @@ def test_random_preimage_letter_h():
         # for each alpha
         for alpha in alpha_range:
             print('alpha =', alpha)
-            dhat, ghat_list = random_preimage(Gn_let, Gn_let, [alpha] * len(Gn_let), 
+            dhat, ghat_list = preimage_random(Gn_let, Gn_let, [alpha] * len(Gn_let), 
                                                    range(len(Gn_let), len(Gn_mix)), km, 
                                                    k, r_max, gkernel, c_ei=1.7, 
                                                    c_er=1.7, c_es=1.7)

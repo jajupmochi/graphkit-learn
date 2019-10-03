@@ -12,23 +12,19 @@ import networkx as nx
 from tqdm import tqdm
 
 import sys
-#from Cython_GedLib_2 import librariesImport, script
-import librariesImport, script
+from gedlibpy import librariesImport, gedlibpy
 sys.path.insert(0, "../")
-from pygraph.utils.graphfiles import saveDataset
 from pygraph.utils.graphdataset import get_dataset_attributes
 from pygraph.utils.utils import graph_isIdentical, get_node_labels, get_edge_labels
-#from pygraph.utils.utils import graph_deepcopy
 
-def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate, 
-        c_ei=3, c_er=3, c_es=1, ite_max=50, epsilon=0.001, 
-        node_label='atom', edge_label='bond_type', 
+
+def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50, 
+        epsilon=0.001, node_label='atom', edge_label='bond_type', 
         connected=False, removeNodes=True, allBestInit=False, allBestNodes=False,
-        allBestEdges=False,
+        allBestEdges=False, allBestOutput=False,
         params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 'saveGXL': 'benoit'}):
     """See my name, then you know what I do.
     """
-    from tqdm import tqdm
 #    Gn_median = Gn_median[0:10]
 #    Gn_median = [nx.convert_node_labels_to_integers(g) for g in Gn_median]
     if removeNodes:
@@ -150,16 +146,6 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
                                 h_ij0 += h_ij0_p
                             h_ij0_list.append(h_ij0)
                             label_list.append(label)
-    #                    # case when the edge is to be removed.
-    #                    h_ij0_remove = 0
-    #                    for idx, g in enumerate(Gn_median):
-    #                        pi_i = pi_p_forward[idx][nd1i]
-    #                        pi_j = pi_p_forward[idx][nd2i]
-    #                        if g.has_node(pi_i) and g.has_node(pi_j) and not 
-    #                            g.has_edge(pi_i, pi_j):
-    #                            h_ij0_remove += 1
-    #                    h_ij0_list.append(h_ij0_remove)
-    #                    label_list.append(label_r)
                         
                         # get the best labels.
                         idx_max = np.argwhere(h_ij0_list == np.max(h_ij0_list)).flatten().tolist()
@@ -370,7 +356,9 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
                 idx_list.append(idx)
         return Gn_new, idx_list
 
-   
+    
+    ###########################################################################
+    
     # phase 1: initilize.
     # compute set-median.
     dis_min = np.inf
@@ -421,8 +409,6 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
 #        print(g.edges(data=True))
     
     # get the best median graphs
-#    dis_list, pi_forward_list = median_distance(G_list, Gn_median,
-#        **params_ged)
     G_min_list, pi_forward_min_list, dis_min = best_median_graphs(
             G_list, pi_forward_list, dis_list)
 #    for g in G_min_list:
@@ -430,9 +416,11 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
 #        plt.show()
 #        print(g.nodes(data=True))
 #        print(g.edges(data=True))
-    # randomly choose one graph.
-    idx_rdm = random.randint(0, len(G_min_list) - 1)
-    G_min_list = [G_min_list[idx_rdm]]   
+    
+    if not allBestOutput:
+        # randomly choose one graph.
+        idx_rdm = random.randint(0, len(G_min_list) - 1)
+        G_min_list = [G_min_list[idx_rdm]]
     
     return G_min_list, dis_min
 
@@ -445,13 +433,91 @@ def iam_moreGraphsAsInit_tryAllPossibleBestGraphs(Gn_median, Gn_candidate,
 
 
 
+###############################################################################
+# Useful functions.
+
+def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP', saveGXL='benoit', 
+        stabilizer='min'):
+    """
+    Compute GED.
+    """
+    if lib == 'gedlibpy':
+        def convertGraph(G):
+            """Convert a graph to the proper NetworkX format that can be
+            recognized by library gedlibpy.
+            """
+            G_new = nx.Graph()
+            for nd, attrs in G.nodes(data=True):
+                G_new.add_node(str(nd), chem=attrs['atom'])
+            for nd1, nd2, attrs in G.edges(data=True):
+#                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+                G_new.add_edge(str(nd1), str(nd2))
+                
+            return G_new
+        
+        gedlibpy.restart_env()
+        gedlibpy.add_nx_graph(convertGraph(g1), "")
+        gedlibpy.add_nx_graph(convertGraph(g2), "")
+
+        listID = gedlibpy.get_all_graph_ids()
+        gedlibpy.set_edit_cost(cost)
+        gedlibpy.init()
+        gedlibpy.set_method(method, "")
+        gedlibpy.init_method()
+
+        g = listID[0]
+        h = listID[1]
+        if stabilizer == None:
+            gedlibpy.run_method(g, h)
+            pi_forward = gedlibpy.get_forward_map(g, h)
+            pi_backward = gedlibpy.get_backward_map(g, h)
+            upper = gedlibpy.get_upper_bound(g, h)
+            lower = gedlibpy.get_lower_bound(g, h)        
+        elif stabilizer == 'min':
+            upper = np.inf
+            for itr in range(50):                
+                gedlibpy.run_method(g, h)                
+                upper_tmp = gedlibpy.get_upper_bound(g, h)                
+                if upper_tmp < upper:
+                    upper = upper_tmp
+                    pi_forward = gedlibpy.get_forward_map(g, h)
+                    pi_backward = gedlibpy.get_backward_map(g, h)
+                    lower = gedlibpy.get_lower_bound(g, h)
+                if upper == 0:
+                    break
+                    
+        dis = upper
+        
+        # make the map label correct (label remove map as np.inf)
+        nodes1 = [n for n in g1.nodes()]
+        nodes2 = [n for n in g2.nodes()]
+        nb1 = nx.number_of_nodes(g1)
+        nb2 = nx.number_of_nodes(g2)
+        pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
+        pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]      
+        
+    return dis, pi_forward, pi_backward
 
 
-
-
+def median_distance(Gn, Gn_median, measure='ged', verbose=False, 
+                    ged_cost='CHEM_1', ged_method='IPFP', saveGXL='benoit'):
+    dis_list = []
+    pi_forward_list = []
+    for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
+                       file=sys.stdout) if verbose else enumerate(Gn):
+        dis_sum = 0
+        pi_forward_list.append([])
+        for G_p in Gn_median:
+            dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p, 
+                cost=ged_cost, method=ged_method, saveGXL=saveGXL)
+            pi_forward_list[idx].append(pi_tmp_forward)
+            dis_sum += dis_tmp
+        dis_list.append(dis_sum)
+    return dis_list, pi_forward_list
 
 
 ###############################################################################
+# Old implementations.
     
 def iam(Gn, c_ei=3, c_er=3, c_es=1, node_label='atom', edge_label='bond_type', 
         connected=True):
@@ -578,73 +644,6 @@ def iam(Gn, c_ei=3, c_er=3, c_es=1, node_label='atom', edge_label='bond_type',
             pi_p.append(pi_tmp)
     
     return G
-
-
-def GED(g1, g2, lib='gedlib', cost='CHEM_1', method='IPFP', saveGXL='benoit', 
-        stabilizer='min'):
-    """
-    Compute GED.
-    """
-    if lib == 'gedlib':
-        # transform dataset to the 'xml' file as the GedLib required.
-        saveDataset([g1, g2], [None, None], group='xml', filename='ged_tmp/tmp',
-                    xparams={'method': saveGXL})
-    #        script.appel()
-        script.PyRestartEnv()
-        script.PyLoadGXLGraph('ged_tmp/', 'ged_tmp/tmp.xml')
-        listID = script.PyGetGraphIds()
-        script.PySetEditCost(cost) #("CHEM_1")
-        script.PyInitEnv()
-        script.PySetMethod(method, "")
-        script.PyInitMethod()
-        g = listID[0]
-        h = listID[1]
-        if stabilizer == None:
-            script.PyRunMethod(g, h)
-            pi_forward, pi_backward = script.PyGetAllMap(g, h)
-            upper = script.PyGetUpperBound(g, h)
-            lower = script.PyGetLowerBound(g, h)        
-        elif stabilizer == 'min':
-            upper = np.inf
-            for itr in range(50):                
-                script.PyRunMethod(g, h)                
-                upper_tmp = script.PyGetUpperBound(g, h)                
-                if upper_tmp < upper:
-                    upper = upper_tmp
-                    pi_forward, pi_backward = script.PyGetAllMap(g, h)
-                    lower = script.PyGetLowerBound(g, h)
-                if upper == 0:
-                    break
-                    
-        dis = upper
-        
-        # make the map label correct (label remove map as np.inf)
-        nodes1 = [n for n in g1.nodes()]
-        nodes2 = [n for n in g2.nodes()]
-        nb1 = nx.number_of_nodes(g1)
-        nb2 = nx.number_of_nodes(g2)
-        pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
-        pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]      
-        
-    return dis, pi_forward, pi_backward
-
-
-def median_distance(Gn, Gn_median, measure='ged', verbose=False, 
-                    ged_cost='CHEM_1', ged_method='IPFP', saveGXL='benoit'):
-    dis_list = []
-    pi_forward_list = []
-    for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
-                       file=sys.stdout) if verbose else enumerate(Gn):
-        dis_sum = 0
-        pi_forward_list.append([])
-        for G_p in Gn_median:
-            dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p, 
-                cost=ged_cost, method=ged_method, saveGXL=saveGXL)
-            pi_forward_list[idx].append(pi_tmp_forward)
-            dis_sum += dis_tmp
-        dis_list.append(dis_sum)
-    return dis_list, pi_forward_list
-
 
 # --------------------------- These are tests --------------------------------#
     
@@ -784,9 +783,6 @@ def test_iam_with_more_graphs_as_init(Gn, G_candidate, c_ei=3, c_er=3, c_es=1,
 
 
 ###############################################################################
-
-
-
 
 if __name__ == '__main__':
     from pygraph.utils.graphfiles import loadDataset

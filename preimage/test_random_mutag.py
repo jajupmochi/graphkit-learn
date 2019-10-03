@@ -22,7 +22,7 @@ from pygraph.utils.graphfiles import loadDataset
 # random pre-image paper.)
 
 def test_preimage_mix_2combination_all_pairs():
-    from gk_iam import preimage_iam_random_mix, compute_kernel
+    from preimage_iam import preimage_iam_random_mix, compute_kernel
     from iam import median_distance
     ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
           'extra_params': {}}  # node/edge symb
@@ -37,6 +37,8 @@ def test_preimage_mix_2combination_all_pairs():
     alpha_range = np.linspace(0.5, 0.5, 1)
     k = 5 # k nearest neighbors
     epsilon = 1e-6
+    InitIAMWithAllDk = True
+    InitRandomWithAllDk = True
     # parameters for GED function
     ged_cost='CHEM_1'
     ged_method='IPFP'
@@ -127,7 +129,8 @@ def test_preimage_mix_2combination_all_pairs():
                     nb_updated_k_iam, nb_updated_k_random = \
                     preimage_iam_random_mix(Gn, [g1, g2],
                     [alpha, 1 - alpha], range(len(Gn), len(Gn) + 2), km, k, r_max, 
-                    l_max, gkernel, epsilon=epsilon, 
+                    l_max, gkernel, epsilon=epsilon, InitIAMWithAllDk=InitIAMWithAllDk, 
+                    InitRandomWithAllDk=InitRandomWithAllDk,
                     params_iam={'c_ei': c_ei, 'c_er': c_er, 'c_es': c_es, 
                                 'ite_max': ite_max_iam, 'epsilon': epsilon_iam,
                                 'removeNodes': removeNodes, 'connected': connected_iam},
@@ -194,7 +197,7 @@ def test_preimage_mix_2combination_all_pairs():
                 
 
 def test_gkiam_2combination_all_pairs():
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
+    from preimage_iam import preimage_iam, compute_kernel
     from iam import median_distance
     ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
           'extra_params': {}}  # node/edge symb
@@ -206,8 +209,9 @@ def test_gkiam_2combination_all_pairs():
     lmbda = 0.03 # termination probalility
     r_max = 10 # iteration limit for pre-image.
     alpha_range = np.linspace(0.5, 0.5, 1)
-    k = 10 # k nearest neighbors
+    k = 5 # k nearest neighbors
     epsilon = 1e-6
+    InitIAMWithAllDk = False
     # parameters for GED function
     ged_cost='CHEM_1'
     ged_method='IPFP'
@@ -292,9 +296,9 @@ def test_gkiam_2combination_all_pairs():
                 print('alpha =', alpha)
                 time0 = time.time()
                 dhat, ghat_list, sod_ks, nb_updated, nb_updated_k = \
-                    gk_iam_nearest_multi(Gn, [g1, g2],
+                    preimage_iam(Gn, [g1, g2],
                     [alpha, 1 - alpha], range(len(Gn), len(Gn) + 2), km, k, r_max, 
-                    gkernel, epsilon=epsilon, 
+                    gkernel, epsilon=epsilon, InitIAMWithAllDk=InitIAMWithAllDk,
                     params_iam={'c_ei': c_ei, 'c_er': c_er, 'c_es': c_es, 
                                 'ite_max': ite_max_iam, 'epsilon': epsilon_iam,
                                 'removeNodes': removeNodes, 'connected': connected_iam},
@@ -463,7 +467,7 @@ def test_gkiam_2combination():
     
 def test_random_preimage_2combination():
 #    from gk_iam import compute_kernel
-    from preimage import random_preimage
+    from preimage_random import preimage_random
     ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
           'extra_params': {}}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
@@ -535,7 +539,7 @@ def test_random_preimage_2combination():
         print('\n-------------------------------------------------------\n')
         print('alpha =', alpha)
         time0 = time.time()
-        dhat, ghat, nb_updated = random_preimage(Gn, [g1, g2], [alpha, 1 - alpha], 
+        dhat, ghat, nb_updated = preimage_random(Gn, [g1, g2], [alpha, 1 - alpha], 
                                           range(len(Gn), len(Gn) + 2), km,
                                           k, r_max, l, gkernel)
         time_total = time.time() - time0 + time_km
@@ -610,5 +614,5 @@ if __name__ == '__main__':
 # random pre-image paper.)
 #    test_random_preimage_2combination()
 #    test_gkiam_2combination()
-    test_gkiam_2combination_all_pairs()
-#    test_preimage_mix_2combination_all_pairs()
+#    test_gkiam_2combination_all_pairs()
+    test_preimage_mix_2combination_all_pairs()
