@@ -13,20 +13,13 @@ and the iterative alternate minimizations (IAM) in reference [2].
 """
 import sys
 import numpy as np
-import multiprocessing
 from tqdm import tqdm
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
 
 from iam import iam_upgraded
-sys.path.insert(0, "../")
-from pygraph.kernels.marginalizedKernel import marginalizedkernel
-from pygraph.kernels.untilHPathKernel import untilhpathkernel
-from pygraph.kernels.spKernel import spkernel
-import functools
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-from pygraph.kernels.structuralspKernel import structuralspkernel
+from utils import dis_gstar, compute_kernel
 
 
 def preimage_iam(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, 
@@ -72,13 +65,13 @@ def preimage_iam(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
 #        print(g.nodes(data=True))
 #        print(g.edges(data=True))
     Gk = [Gn_init[ig].copy() for ig in sort_idx[0:k]] # the k nearest neighbors
-    for gi in Gk:
-        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
-#        nx.draw_networkx(gi)
-        plt.show()
-#        draw_Letter_graph(g)
-        print(gi.nodes(data=True))
-        print(gi.edges(data=True))
+#    for gi in Gk:
+#        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
+##        nx.draw_networkx(gi)
+#        plt.show()
+##        draw_Letter_graph(g)
+#        print(gi.nodes(data=True))
+#        print(gi.edges(data=True))
     
 #    i = 1
     r = 0
@@ -173,7 +166,7 @@ def preimage_iam(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
         print('\nthe k shortest distances are', dis_k)
         print('the shortest distances for previous iterations are', dis_of_each_itr)
         
-    print('\nthe graph is updated', nb_updated, 'times.')
+    print('\n\nthe graph is updated', nb_updated, 'times.')
     print('\nthe k nearest neighbors are updated', nb_updated_k, 'times.')
     print('distances in kernel space:', dis_of_each_itr, '\n')
     
@@ -227,13 +220,13 @@ def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max
 #        print(g.nodes(data=True))
 #        print(g.edges(data=True))
     Gk = [Gn_init[ig].copy() for ig in sort_idx[0:k]] # the k nearest neighbors
-    for gi in Gk:
-        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
-#        nx.draw_networkx(gi)
-        plt.show()
-#        draw_Letter_graph(g)
-        print(gi.nodes(data=True))
-        print(gi.edges(data=True))
+#    for gi in Gk:
+#        nx.draw(gi, labels=nx.get_node_attributes(gi, 'atom'), with_labels=True)
+##        nx.draw_networkx(gi)
+#        plt.show()
+##        draw_Letter_graph(g)
+#        print(gi.nodes(data=True))
+#        print(gi.edges(data=True))
     
     r = 0
     itr_total = 0
@@ -394,7 +387,8 @@ def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max
                             
                     # compute distance between \psi and the new generated graph.
                     knew = compute_kernel([ghat_new] + Gn_median, gkernel, verbose=False)
-                    dhat_new = dis_gstar(0, [1, 2], alpha, knew, withterm3=False)
+                    dhat_new = dis_gstar(0, range(1, len(Gn_median) + 1), 
+                                         alpha, knew, withterm3=False)
                     # @todo: the new distance is smaller or also equal?
                     if dhat_new < dis_k[-1] and np.abs(dhat_new - dis_k[-1]) >= epsilon:
                         # check if the new distance is the same as one in D_k.
@@ -448,7 +442,7 @@ def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max
         print('\nthe k shortest distances are', dis_k)
         print('the shortest distances for previous iterations are', dis_of_each_itr)
         
-    print('\nthe graph is updated by IAM', nb_updated_iam, 'times, and by random generation',
+    print('\n\nthe graph is updated by IAM', nb_updated_iam, 'times, and by random generation',
           nb_updated_random, 'times.')
     print('\nthe k nearest neighbors are updated by IAM', nb_updated_k_iam, 
           'times, and by random generation', nb_updated_k_random, 'times.')
@@ -456,60 +450,6 @@ def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max
     
     return dhat, ghat_list, dis_of_each_itr[-1], \
             nb_updated_iam, nb_updated_random, nb_updated_k_iam, nb_updated_k_random
-
-
-###############################################################################
-# useful functions.
-
-def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
-    term1 = Kmatrix[idx_g, idx_g]
-    term2 = 0
-    for i, a in enumerate(alpha):
-        term2 += a * Kmatrix[idx_g, idx_gi[i]]
-    term2 *= 2
-    if withterm3 == False:
-        for i1, a1 in enumerate(alpha):
-            for i2, a2 in enumerate(alpha):
-                term3 += a1 * a2 * Kmatrix[idx_gi[i1], idx_gi[i2]]
-    return np.sqrt(term1 - term2 + term3)
-
-
-def compute_kernel(Gn, graph_kernel, verbose):
-    if graph_kernel == 'marginalizedkernel':
-        Kmatrix, _ = marginalizedkernel(Gn, node_label='atom', edge_label=None,
-                                  p_quit=0.03, n_iteration=10, remove_totters=False,
-                                  n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'untilhpathkernel':
-        Kmatrix, _ = untilhpathkernel(Gn, node_label='atom', edge_label=None,
-                                  depth=10, k_func='MinMax', compute_method='trie',
-                                  n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'spkernel':
-        mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _, _ = spkernel(Gn, node_label='atom', node_kernels=
-                              {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
-                              n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'structuralspkernel':
-        mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _ = structuralspkernel(Gn, node_label='atom', node_kernels=
-                              {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
-                              n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-        
-    # normalization
-    Kmatrix_diag = Kmatrix.diagonal().copy()
-    for i in range(len(Kmatrix)):
-        for j in range(i, len(Kmatrix)):
-            Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
-            Kmatrix[j][i] = Kmatrix[i][j]
-    return Kmatrix
-            
-
-def gram2distances(Kmatrix):
-    dmatrix = np.zeros((len(Kmatrix), len(Kmatrix)))
-    for i1 in range(len(Kmatrix)):
-        for i2 in range(len(Kmatrix)):
-            dmatrix[i1, i2] = Kmatrix[i1, i1] + Kmatrix[i2, i2] - 2 * Kmatrix[i1, i2]
-    dmatrix = np.sqrt(dmatrix)
-    return dmatrix
 
 
 ###############################################################################

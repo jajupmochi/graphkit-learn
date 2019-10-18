@@ -15,6 +15,9 @@ import sys
 sys.path.insert(0, "../")
 from pygraph.utils.graphfiles import loadDataset
 from median import draw_Letter_graph
+from ged import GED, ged_median
+from utils import get_same_item_indices, compute_kernel, gram2distances, \
+    dis_gstar, remove_edges
 
 
 # --------------------------- These are tests --------------------------------#
@@ -47,7 +50,6 @@ def test_who_is_the_closest_in_kernel_space(Gn):
 
 
 def test_who_is_the_closest_in_GED_space(Gn):
-    from iam import GED
     idx_gi = [0, 6]
     g1 = Gn[idx_gi[0]]
     g2 = Gn[idx_gi[1]]
@@ -142,7 +144,7 @@ def test_new_IAM_allGraph_deleteNodes(Gn):
     
     
 def test_the_simple_two(Gn, gkernel):
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
+    from gk_iam import gk_iam_nearest_multi
     lmbda = 0.03 # termination probalility
     r_max = 10 # recursions
     l = 500
@@ -199,7 +201,7 @@ def test_the_simple_two(Gn, gkernel):
             
     
 def test_remove_bests(Gn, gkernel):
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
+    from gk_iam import gk_iam_nearest_multi
     lmbda = 0.03 # termination probalility
     r_max = 10 # recursions
     l = 500
@@ -249,8 +251,7 @@ def test_remove_bests(Gn, gkernel):
 # Tests on dataset Letter-H.
             
 def test_gkiam_letter_h():
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
-    from iam import median_distance
+    from gk_iam import gk_iam_nearest_multi
     ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
           'extra_params': {}} # node nsymb
 #    ds = {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt',
@@ -305,7 +306,7 @@ def test_gkiam_letter_h():
                 print(g.edges(data=True))
                 
         # compute the corresponding sod in graph space. (alpha range not considered.)
-        sod_tmp, _ = median_distance(g_best[0], Gn_let, ged_cost='LETTER', 
+        sod_tmp, _ = ged_median(g_best[0], Gn_let, ged_cost='LETTER', 
                                      ged_method='IPFP', saveGXL='gedlib-letter')
         sod_gs_list.append(sod_tmp)
         sod_gs_min_list.append(np.min(sod_tmp))
@@ -318,19 +319,6 @@ def test_gkiam_letter_h():
     print('\nsmallest sod in kernel space for each letter: ', sod_ks_min_list) 
     print('\nnumber of updates for each letter: ', nb_updated_list)             
     print('\ntimes:', time_list)
-                
-                
-def get_same_item_indices(ls):
-    """Get the indices of the same items in a list. Return a dict keyed by items.
-    """
-    idx_dict = {}
-    for idx, item in enumerate(ls):
-        if item in idx_dict:
-            idx_dict[item].append(idx)
-        else:
-            idx_dict[item] = [idx]
-    return idx_dict
-
 
 #def compute_letter_median_by_average(Gn):
 #    return g_median
@@ -338,7 +326,6 @@ def get_same_item_indices(ls):
 
 def test_iam_letter_h():
     from iam import test_iam_moreGraphsAsInit_tryAllPossibleBestGraphs_deleteNodesInIterations
-    from gk_iam import dis_gstar, compute_kernel
     ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
           'extra_params': {}} # node nsymb
 #    ds = {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt',
@@ -402,7 +389,7 @@ def test_iam_letter_h():
     
     
 def test_random_preimage_letter_h():
-    from preimage_random import preimage_random, compute_kernel
+    from preimage_random import preimage_random
     ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
           'extra_params': {}} # node nsymb
 #    ds = {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt',
@@ -463,7 +450,7 @@ def test_random_preimage_letter_h():
                 print(g.edges(data=True))
                 
         # compute the corresponding sod in graph space. (alpha range not considered.)
-        sod_tmp, _ = median_distance(g_best[0], Gn_let)
+        sod_tmp, _ = ged_median(g_best[0], Gn_let)
         sod_list.append(sod_tmp)
         sod_min_list.append(np.min(sod_tmp))
         
@@ -479,8 +466,7 @@ def test_random_preimage_letter_h():
     
     
 def test_gkiam_mutag():
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
-    from iam import median_distance
+    from gk_iam import gk_iam_nearest_multi
     ds = {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt',
           'extra_params': {}} # node nsymb
 #    ds = {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt',
@@ -535,7 +521,7 @@ def test_gkiam_mutag():
                 print(g.edges(data=True))
                 
         # compute the corresponding sod in graph space. (alpha range not considered.)
-        sod_tmp, _ = median_distance(g_best[0], Gn_let)
+        sod_tmp, _ = ged_median(g_best[0], Gn_let)
         sod_gs_list.append(sod_tmp)
         sod_gs_min_list.append(np.min(sod_tmp))
         sod_ks_min_list.append(sod_ks)
@@ -553,9 +539,7 @@ def test_gkiam_mutag():
 # Re-test.
     
 def retest_the_simple_two():
-    from gk_iam import gk_iam_nearest_multi, compute_kernel
-    from iam import median_distance
-    from test_random_mutag import remove_edges
+    from gk_iam import gk_iam_nearest_multi
     
     # The two simple graphs.
 #    g1 = nx.Graph(name='haha')
@@ -653,7 +637,7 @@ def retest_the_simple_two():
             
     # compute the corresponding sod in graph space.
     for idx, item in enumerate(alpha_range):
-        sod_tmp, _ = median_distance(g_best[0], [g1, g2], ged_cost=ged_cost, 
+        sod_tmp, _ = ged_median(g_best[0], [g1, g2], ged_cost=ged_cost, 
                                      ged_method=ged_method, saveGXL=saveGXL)
         sod_gs_list.append(sod_tmp)
         sod_gs_min_list.append(np.min(sod_tmp))

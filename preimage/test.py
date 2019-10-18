@@ -80,5 +80,6 @@ def testNxGrapĥ():
     print("Forward map : " , gedlibpy.get_forward_map(g, h), ", Backward map : ", gedlibpy.get_backward_map(g, h))
     print ("Upper Bound = " + str(gedlibpy.get_upper_bound(g, h)) + ", Lower Bound = " + str(gedlibpy.get_lower_bound(g, h)) + ", Runtime = " + str(gedlibpy.get_runtime(g, h)))
 
+#test()
 init() 
 #testNxGrapĥ()

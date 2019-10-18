@@ -12,10 +12,10 @@ import networkx as nx
 from tqdm import tqdm
 
 import sys
-from gedlibpy import librariesImport, gedlibpy
 sys.path.insert(0, "../")
 from pygraph.utils.graphdataset import get_dataset_attributes
 from pygraph.utils.utils import graph_isIdentical, get_node_labels, get_edge_labels
+from ged import GED, ged_median
 
 
 def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50, 
@@ -237,7 +237,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
         
 #        # find the best graph generated in this iteration and update pi_p.
         # @todo: should we update all graphs generated or just the best ones?
-        dis_list, pi_forward_list = median_distance(G_new_list, Gn_median, 
+        dis_list, pi_forward_list = ged_median(G_new_list, Gn_median, 
             **params_ged)
         # @todo: should we remove the identical and connectivity check? 
         # Don't know which is faster.
@@ -362,7 +362,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     # phase 1: initilize.
     # compute set-median.
     dis_min = np.inf
-    dis_list, pi_forward_all = median_distance(Gn_candidate, Gn_median,
+    dis_list, pi_forward_all = ged_median(Gn_candidate, Gn_median,
         **params_ged)
     # find all smallest distances.
     if allBestInit: # try all best init graphs.
@@ -424,96 +424,6 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     
     return G_min_list, dis_min
 
-
-
-
-
-
-
-
-
-
-###############################################################################
-# Useful functions.
-
-def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP', saveGXL='benoit', 
-        stabilizer='min'):
-    """
-    Compute GED.
-    """
-    if lib == 'gedlibpy':
-        def convertGraph(G):
-            """Convert a graph to the proper NetworkX format that can be
-            recognized by library gedlibpy.
-            """
-            G_new = nx.Graph()
-            for nd, attrs in G.nodes(data=True):
-                G_new.add_node(str(nd), chem=attrs['atom'])
-            for nd1, nd2, attrs in G.edges(data=True):
-#                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
-                G_new.add_edge(str(nd1), str(nd2))
-                
-            return G_new
-        
-        gedlibpy.restart_env()
-        gedlibpy.add_nx_graph(convertGraph(g1), "")
-        gedlibpy.add_nx_graph(convertGraph(g2), "")
-
-        listID = gedlibpy.get_all_graph_ids()
-        gedlibpy.set_edit_cost(cost)
-        gedlibpy.init()
-        gedlibpy.set_method(method, "")
-        gedlibpy.init_method()
-
-        g = listID[0]
-        h = listID[1]
-        if stabilizer == None:
-            gedlibpy.run_method(g, h)
-            pi_forward = gedlibpy.get_forward_map(g, h)
-            pi_backward = gedlibpy.get_backward_map(g, h)
-            upper = gedlibpy.get_upper_bound(g, h)
-            lower = gedlibpy.get_lower_bound(g, h)        
-        elif stabilizer == 'min':
-            upper = np.inf
-            for itr in range(50):                
-                gedlibpy.run_method(g, h)                
-                upper_tmp = gedlibpy.get_upper_bound(g, h)                
-                if upper_tmp < upper:
-                    upper = upper_tmp
-                    pi_forward = gedlibpy.get_forward_map(g, h)
-                    pi_backward = gedlibpy.get_backward_map(g, h)
-                    lower = gedlibpy.get_lower_bound(g, h)
-                if upper == 0:
-                    break
-                    
-        dis = upper
-        
-        # make the map label correct (label remove map as np.inf)
-        nodes1 = [n for n in g1.nodes()]
-        nodes2 = [n for n in g2.nodes()]
-        nb1 = nx.number_of_nodes(g1)
-        nb2 = nx.number_of_nodes(g2)
-        pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
-        pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]      
-        
-    return dis, pi_forward, pi_backward
-
-
-def median_distance(Gn, Gn_median, measure='ged', verbose=False, 
-                    ged_cost='CHEM_1', ged_method='IPFP', saveGXL='benoit'):
-    dis_list = []
-    pi_forward_list = []
-    for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
-                       file=sys.stdout) if verbose else enumerate(Gn):
-        dis_sum = 0
-        pi_forward_list.append([])
-        for G_p in Gn_median:
-            dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p, 
-                cost=ged_cost, method=ged_method, saveGXL=saveGXL)
-            pi_forward_list[idx].append(pi_tmp_forward)
-            dis_sum += dis_tmp
-        dis_list.append(dis_sum)
-    return dis_list, pi_forward_list
 
 
 ###############################################################################

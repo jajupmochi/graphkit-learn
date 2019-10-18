@@ -10,51 +10,14 @@ pre-image
 import sys
 import numpy as np
 import random
-import multiprocessing
 from tqdm import tqdm
 import networkx as nx
 import matplotlib.pyplot as plt
 
 
 sys.path.insert(0, "../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.kernels.marginalizedKernel import marginalizedkernel
-from pygraph.kernels.untilHPathKernel import untilhpathkernel
-from pygraph.kernels.spKernel import spkernel
-import functools
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-from pygraph.kernels.structuralspKernel import structuralspkernel
 
-from gk_iam import dis_gstar
-
-
-def compute_kernel(Gn, graph_kernel, verbose):
-    if graph_kernel == 'marginalizedkernel':
-        Kmatrix, _ = marginalizedkernel(Gn, node_label='atom', edge_label=None,
-                                  p_quit=0.03, n_iteration=10, remove_totters=False,
-                                  n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'untilhpathkernel':
-        Kmatrix, _ = untilhpathkernel(Gn, node_label='atom', edge_label=None,
-                                  depth=10, k_func='MinMax', compute_method='trie',
-                                  n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'spkernel':
-        mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _, _ = spkernel(Gn, node_label='atom', node_kernels=
-                              {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
-                              n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-    elif graph_kernel == 'structuralspkernel':
-        mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _ = structuralspkernel(Gn, node_label='atom', node_kernels=
-                              {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
-                              n_jobs=multiprocessing.cpu_count(), verbose=verbose)
-        
-    # normalization
-    Kmatrix_diag = Kmatrix.diagonal().copy()
-    for i in range(len(Kmatrix)):
-        for j in range(i, len(Kmatrix)):
-            Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
-            Kmatrix[j][i] = Kmatrix[i][j]
-    return Kmatrix
+from utils import compute_kernel, dis_gstar
 
 
 def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gkernel):
@@ -105,6 +68,7 @@ def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gke
     r = 0
 #    sod_list = [dhat]
 #    found = False
+    dis_of_each_itr = [dhat]
     nb_updated = 0
     g_best = []
     while r < r_max:
@@ -162,7 +126,8 @@ def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gke
 #                               p_quit=lmbda, n_iteration=20, remove_totters=False,
 #                               n_jobs=multiprocessing.cpu_count(), verbose=False)
                 knew = compute_kernel([gtemp] + Gn_median, gkernel, verbose=False)
-                dnew = dis_gstar(0, [1, 2], alpha, knew, withterm3=False)
+                dnew = dis_gstar(0, range(1, len(Gn_median) + 1), alpha, knew, 
+                                 withterm3=False)
                 if dnew <= dhat: # @todo: the new distance is smaller or also equal?
                     if dnew < dhat:
                         print('\nI am smaller!')
@@ -184,13 +149,19 @@ def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gke
             dihat_list = [dhat]
         else:
             r += 1
+            
+        dis_of_each_itr.append(dhat)
+        print('the shortest distances for previous iterations are', dis_of_each_itr)
 #    dis_best.append(dhat)
-    g_best = (g0hat_list[0] if len(gihat_list) == 0 else gihat_list[0])  
+    g_best = (g0hat_list[0] if len(gihat_list) == 0 else gihat_list[0])
+    print('distances in kernel space:', dis_of_each_itr, '\n')
+    
     return dhat, g_best, nb_updated
 #    return 0, 0, 0
 
 
 if __name__ == '__main__':
+    from pygraph.utils.graphfiles import loadDataset
     
 #    ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
 #          'extra_params': {}}  # node/edge symb
