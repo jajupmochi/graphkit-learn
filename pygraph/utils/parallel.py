@@ -20,11 +20,10 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
 #            def init_worker(v_share):
 #                global G_var
 #                G_var = v_share
-            
+            if n_jobs == None:
+                n_jobs = multiprocessing.cpu_count()
             with Pool(processes=n_jobs, initializer=init_worker, 
-                      initargs=glbv) as pool:
-                if n_jobs == None:
-                    n_jobs = multiprocessing.cpu_count()
+                      initargs=glbv) as pool:                
                 if chunksize == None:
                     if len_itr < 100 * n_jobs:
                         chunksize = int(len_itr / n_jobs) + 1
@@ -35,9 +34,9 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                     pool.imap_unordered(func, itr, chunksize)):
                     func_assign(result, var_to_assign)
         else:
+            if n_jobs == None:
+                n_jobs = multiprocessing.cpu_count()
             with Pool(processes=n_jobs) as pool:
-                if n_jobs == None:
-                    n_jobs = multiprocessing.cpu_count()
                 if chunksize == None:
                     if len_itr < 100 * n_jobs:
                         chunksize = int(len_itr / n_jobs) + 1
