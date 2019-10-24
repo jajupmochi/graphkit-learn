@@ -19,7 +19,6 @@ import cvxpy as cp
 
 import sys
 sys.path.insert(0, "../")
-from pygraph.utils.graphfiles import loadDataset
 from ged import GED, get_nb_edit_operations
 from utils import kernel_distance_matrix
 
@@ -43,9 +42,11 @@ def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
     
     residual_list = []
     edit_cost_list = []
+    time_list = []
     
     for itr in range(itr_max):
         print('\niteration', itr)
+        time0 = time.time()
         # compute GEDs and numbers of edit operations.
         edit_cost_constant = [i for i in edit_costs]
         edit_cost_list.append(edit_cost_constant)
@@ -71,11 +72,20 @@ def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
         
         for idx, item in enumerate(idx_nonzeros):
             edit_costs[item] = edit_costs_new[idx]
+        
+        time_list.append(time.time() - time0)
             
         print('edit_costs:', edit_costs)
         print('residual_list:', residual_list)
+        
+        
+    edit_cost_list.append(edit_costs)
+    ged_all, ged_mat, n_edit_operations = compute_geds(Gn, edit_costs, 
+            idx_nonzeros, parallel=True)
+    residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
+    residual_list.append(residual)
     
-    return edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat
+    return edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat, time_list
 
 
 def compute_geds(Gn, edit_cost_constant, idx_nonzeros, parallel=False):
@@ -166,33 +176,33 @@ def compute_better_costs(nb_cost_mat, dis_k_vec):
 #    edit_costs_new, residual = optimize.nnls(nb_cost_mat, dis_k_vec)
     
     # method 3: solve as a quadratic program with constraints: x_i >= 0, sum(x) = 1.
-    P = np.dot(nb_cost_mat.T, nb_cost_mat)
-    q_T = -2 * np.dot(dis_k_vec.T, nb_cost_mat)
-    G = -1 * np.identity(nb_cost_mat.shape[1])
-    h = np.array([0 for i in range(nb_cost_mat.shape[1])])
-    A = np.array([1 for i in range(nb_cost_mat.shape[1])])
-    b = 1
+#    P = np.dot(nb_cost_mat.T, nb_cost_mat)
+#    q_T = -2 * np.dot(dis_k_vec.T, nb_cost_mat)
+#    G = -1 * np.identity(nb_cost_mat.shape[1])
+#    h = np.array([0 for i in range(nb_cost_mat.shape[1])])
+#    A = np.array([1 for i in range(nb_cost_mat.shape[1])])
+#    b = 1
+#    x = cp.Variable(nb_cost_mat.shape[1])
+#    prob = cp.Problem(cp.Minimize(cp.quad_form(x, P) + q_T@x),
+#                      [G@x <= h])
+#    prob.solve()
+#    edit_costs_new = x.value
+#    residual = prob.value - np.dot(dis_k_vec.T, dis_k_vec)
+    
+#    G = -1 * np.identity(nb_cost_mat.shape[1])
+#    h = np.array([0 for i in range(nb_cost_mat.shape[1])])
     x = cp.Variable(nb_cost_mat.shape[1])
-    prob = cp.Problem(cp.Minimize(cp.quad_form(x, P) + q_T@x),
-                      [G@x <= h])
+    cost = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
+    constraints = [x >= [0 for i in range(nb_cost_mat.shape[1])]]
+    prob = cp.Problem(cp.Minimize(cost), constraints)
     prob.solve()
     edit_costs_new = x.value
-    residual = prob.value - np.dot(dis_k_vec.T, dis_k_vec)
+    residual = np.sqrt(prob.value)
+    
+    # method 4: 
     
     return edit_costs_new, residual
 
 
 if __name__ == '__main__':
-    from utils import remove_edges
-    ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
-          'extra_params': {}}  # node/edge symb
-    Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
-#    Gn = Gn[0:10]
-    remove_edges(Gn)
-    gkernel = 'marginalizedkernel'
-    itr_max = 10
-    time0 = time.time()
-    edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat = \
-        fit_GED_to_kernel_distance(Gn, gkernel, itr_max)
-    total_time = time.time() - time0
-    print('total time:', total_time)
+    print('check test_fitDistance.py')

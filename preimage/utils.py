@@ -107,3 +107,9 @@ def get_same_item_indices(ls):
         else:
             idx_dict[item] = [idx]
     return idx_dict
+
+
+def normalize_distance_matrix(D):
+    max_value = np.amax(D)
+    min_value = np.amin(D)
+    return (D - min_value) / (max_value - min_value)
