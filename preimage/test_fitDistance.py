@@ -295,8 +295,8 @@ def draw_count_bar(norm_diff):
     
 if __name__ == '__main__':
 #    test_anycosts()
-#    test_cs_leq_ci_plus_cr()
-    test_unfitted()
+    test_cs_leq_ci_plus_cr()
+#    test_unfitted()
     
 #    x = np.array([[1,2,3],[4,5,6],[7,8,9]])
 #    xx = pairwise_substitution(x)
