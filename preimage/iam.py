@@ -22,20 +22,22 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
         epsilon=0.001, node_label='atom', edge_label='bond_type', 
         connected=False, removeNodes=True, allBestInit=False, allBestNodes=False,
         allBestEdges=False, allBestOutput=False,
-        params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 'saveGXL': 'benoit'}):
+        params_ged={'lib': 'gedlibpy', 'cost': 'CHEM_1', 'method': 'IPFP', 
+                    'edit_cost_constant': [], 'stabilizer': 'min', 'repeat': 50}):
     """See my name, then you know what I do.
     """
 #    Gn_median = Gn_median[0:10]
 #    Gn_median = [nx.convert_node_labels_to_integers(g) for g in Gn_median]
-    if removeNodes:
-        node_ir = np.inf # corresponding to the node remove and insertion.
-        label_r = 'thanksdanny' # the label for node remove. # @todo: make this label unrepeatable.
+    node_ir = np.inf # corresponding to the node remove and insertion.
+    label_r = 'thanksdanny' # the label for node remove. # @todo: make this label unrepeatable.
     ds_attrs = get_dataset_attributes(Gn_median + Gn_candidate, 
                                       attr_names=['edge_labeled', 'node_attr_dim', 'edge_attr_dim'], 
                                       edge_label=edge_label)
+    node_label_set = get_node_labels(Gn_median, node_label)
+    edge_label_set = get_edge_labels(Gn_median, edge_label)
 
     
-    def generate_graph(G, pi_p_forward, label_set):
+    def generate_graph(G, pi_p_forward):
         G_new_list = [G.copy()] # all "best" graphs generated in this iteration.
 #        nx.draw_networkx(G)
 #        import matplotlib.pyplot as plt
@@ -52,7 +54,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
             for ndi, (nd, _) in enumerate(G.nodes(data=True)):
                 h_i0_list = []
                 label_list = []
-                for label in label_set:
+                for label in node_label_set:
                     h_i0 = 0
                     for idx, g in enumerate(Gn_median):
                         pi_i = pi_p_forward[idx][ndi]
@@ -62,7 +64,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
                     label_list.append(label)
                 # case when the node is to be removed.
                 if removeNodes:
-                    h_i0_remove = 0 # @todo: maybe this can be added to the label_set above.
+                    h_i0_remove = 0 # @todo: maybe this can be added to the node_label_set above.
                     for idx, g in enumerate(Gn_median):
                         pi_i = pi_p_forward[idx][ndi]
                         if pi_i == node_ir:
@@ -91,11 +93,10 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
                     G_new_list = [ggg.copy() for ggg in G_new_list_nd]
                 else: 
                     # choose one of the best randomly.
-                    h_ij0_max = h_i0_list[idx_max[0]]
                     idx_rdm = random.randint(0, len(idx_max) - 1)
                     best_label = label_list[idx_max[idx_rdm]]
-                           
-                    # check whether a_ij is 0 or 1.
+                    h_i0_max = h_i0_list[idx_max[idx_rdm]]
+
                     g_new = G_new_list[0]
                     if best_label == label_r:
                         g_new.remove_node(nd) 
@@ -134,8 +135,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
 #                for nd1, nd2, _ in g_new.edges(data=True): 
                         h_ij0_list = []
                         label_list = []
-                        # @todo: compute edge label set before.
-                        for label in get_edge_labels(Gn_median, edge_label):
+                        for label in edge_label_set:
                             h_ij0 = 0
                             for idx, g in enumerate(Gn_median):
                                 pi_i = pi_p_forward[idx][nd1i]
@@ -176,9 +176,9 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
                                     G_new_list_ed.append(g_tmp_copy)
                             g_tmp_list = [ggg.copy() for ggg in G_new_list_ed]
                         else: # choose one of the best randomly.
-                            h_ij0_max = h_ij0_list[idx_max[0]]
                             idx_rdm = random.randint(0, len(idx_max) - 1)
                             best_label = label_list[idx_max[idx_rdm]]
+                            h_ij0_max = h_ij0_list[idx_max[idx_rdm]]
                                    
                             # check whether a_ij is 0 or 1.
                             sij_norm = 0
@@ -192,6 +192,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
                                     g_new.add_edge(nd1, nd2)
                                 g_new.edges[nd1, nd2][edge_label] = best_label
                             else:
+#                            elif h_ij0_max < len(Gn_median) * c_er / c_es + sij_norm * (1 - (c_er + c_ei) / c_es):
                                 if g_new.has_edge(nd1, nd2):
                                     g_new.remove_edge(nd1, nd2) 
                             g_tmp_list = [g_new]
@@ -221,8 +222,8 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
                             if g_tmp.has_node(nd1) and g_tmp.has_node(nd2) \
                                 and not g_tmp.has_edge(nd1, nd2):
                                 g_tmp.add_edge(nd1, nd2)
-#                        else: # @todo: which to use?
-                        elif sij_norm < len(Gn_median) * c_er / (c_er + c_ei):
+                        else: # @todo: which to use?
+#                        elif sij_norm < len(Gn_median) * c_er / (c_er + c_ei):
                             if g_tmp.has_edge(nd1, nd2):
                                 g_tmp.remove_edge(nd1, nd2)
                         # do not change anything when equal.     
@@ -238,7 +239,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
 #        # find the best graph generated in this iteration and update pi_p.
         # @todo: should we update all graphs generated or just the best ones?
         dis_list, pi_forward_list = ged_median(G_new_list, Gn_median, 
-            **params_ged)
+            params_ged=params_ged)
         # @todo: should we remove the identical and connectivity check? 
         # Don't know which is faster.
         if ds_attrs['node_attr_dim'] == 0 and ds_attrs['edge_attr_dim'] == 0:
@@ -283,15 +284,16 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
 #        while itr < ite_max and (np.abs(old_sod - cur_sod) > epsilon or
 #                                 np.abs(old_sod - cur_sod) == 0):
         while itr < ite_max and np.abs(old_sod - cur_sod) > epsilon:
+#        while itr < ite_max:
 #        for itr in range(0, 5): # the convergence condition?
             print('itr_iam is', itr)
             G_new_list = []
             pi_forward_new_list = []
             dis_new_list = []
             for idx, g in enumerate(G_list):
-                label_set = get_node_labels(Gn_median + [g], node_label)                        
+#                label_set = get_node_labels(Gn_median + [g], node_label)                        
                 G_tmp_list, pi_forward_tmp_list, dis_tmp_list = generate_graph(
-                    g, pi_forward_list[idx], label_set)
+                    g, pi_forward_list[idx])
                 G_new_list += G_tmp_list
                 pi_forward_new_list += pi_forward_tmp_list
                 dis_new_list += dis_tmp_list
@@ -325,7 +327,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
             
         print('\nsods:', sod_list, '\n')
             
-        return G_list, pi_forward_list, dis_min
+        return G_list, pi_forward_list, dis_min, sod_list
     
     
     def remove_duplicates(Gn):
@@ -363,7 +365,8 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     # compute set-median.
     dis_min = np.inf
     dis_list, pi_forward_all = ged_median(Gn_candidate, Gn_median,
-        **params_ged)
+        params_ged=params_ged, parallel=True)
+    print('finish computing GEDs.')
     # find all smallest distances.
     if allBestInit: # try all best init graphs.
         idx_min_list = range(len(dis_list))
@@ -371,19 +374,26 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     else:
         idx_min_list = np.argwhere(dis_list == np.min(dis_list)).flatten().tolist()
         dis_min = [dis_list[idx_min_list[0]]] * len(idx_min_list)
+        idx_min_rdm = random.randint(0, len(idx_min_list) - 1)
+        idx_min_list = [idx_min_list[idx_min_rdm]]
+    sod_set_median = np.min(dis_min)
         
     
     # phase 2: iteration.
     G_list = []
     dis_list = []
     pi_forward_list = []
+    G_set_median_list = []
+#    sod_list = []
     for idx_tmp, idx_min in enumerate(idx_min_list):
 #        print('idx_min is', idx_min)
         G = Gn_candidate[idx_min].copy()
+        G_set_median_list.append(G.copy())
         # list of edit operations.        
         pi_p_forward = pi_forward_all[idx_min]
 #        pi_p_backward = pi_all_backward[idx_min]        
-        Gi_list, pi_i_forward_list, dis_i_min = iteration_proc(G, pi_p_forward, dis_min[idx_tmp])            
+        Gi_list, pi_i_forward_list, dis_i_min, sod_list = iteration_proc(G, 
+                                                pi_p_forward, dis_min[idx_tmp])            
         G_list += Gi_list
         dis_list += [dis_i_min] * len(Gi_list)
         pi_forward_list += pi_i_forward_list
@@ -409,9 +419,9 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
 #        print(g.edges(data=True))
     
     # get the best median graphs
-    G_min_list, pi_forward_min_list, dis_min = best_median_graphs(
+    G_gen_median_list, pi_forward_min_list, sod_gen_median = best_median_graphs(
             G_list, pi_forward_list, dis_list)
-#    for g in G_min_list:
+#    for g in G_gen_median_list:
 #        nx.draw_networkx(g)
 #        plt.show()
 #        print(g.nodes(data=True))
@@ -419,10 +429,10 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     
     if not allBestOutput:
         # randomly choose one graph.
-        idx_rdm = random.randint(0, len(G_min_list) - 1)
-        G_min_list = [G_min_list[idx_rdm]]
+        idx_rdm = random.randint(0, len(G_gen_median_list) - 1)
+        G_gen_median_list = [G_gen_median_list[idx_rdm]]
     
-    return G_min_list, dis_min
+    return G_gen_median_list, sod_gen_median, sod_list, G_set_median_list, sod_set_median
 
 
 

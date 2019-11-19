@@ -39,13 +39,13 @@ def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
     return np.sqrt(term1 - term2 + term3)
 
 
-def compute_kernel(Gn, graph_kernel, verbose):
+def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
     if graph_kernel == 'marginalizedkernel':
-        Kmatrix, _ = marginalizedkernel(Gn, node_label='atom', edge_label=None,
+        Kmatrix, _ = marginalizedkernel(Gn, node_label=node_label, edge_label=edge_label,
                                   p_quit=0.03, n_iteration=10, remove_totters=False,
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'untilhpathkernel':
-        Kmatrix, _ = untilhpathkernel(Gn, node_label='atom', edge_label=None,
+        Kmatrix, _ = untilhpathkernel(Gn, node_label=node_label, edge_label=edge_label,
                                   depth=10, k_func='MinMax', compute_method='trie',
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'spkernel':
@@ -77,10 +77,10 @@ def gram2distances(Kmatrix):
     return dmatrix
 
 
-def kernel_distance_matrix(Gn, Kmatrix=None, gkernel=None):
+def kernel_distance_matrix(Gn, node_label, edge_label, Kmatrix=None, gkernel=None):
     dis_mat = np.empty((len(Gn), len(Gn)))
     if Kmatrix == None:
-        Kmatrix = compute_kernel(Gn, gkernel, True)
+        Kmatrix = compute_kernel(Gn, gkernel, node_label, edge_label, True)
     for i in range(len(Gn)):
         for j in range(i, len(Gn)):
             dis = Kmatrix[i, i] + Kmatrix[j, j] - 2 * Kmatrix[i, j]

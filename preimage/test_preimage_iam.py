@@ -192,26 +192,42 @@ def test_preimage_iam_median_nb():
     gkernel = 'marginalizedkernel'
     
     lmbda = 0.03 # termination probalility
-    r_max = 10 # iteration limit for pre-image.
+    r_max = 3 # iteration limit for pre-image.
 #    alpha_range = np.linspace(0.5, 0.5, 1)
     k = 5 # k nearest neighbors
     epsilon = 1e-6
     InitIAMWithAllDk = True
-    # parameters for GED function
-    ged_cost='CHEM_1'
-    ged_method='IPFP'
-    saveGXL='gedlib'
     # parameters for IAM function
-    c_ei=1
-    c_er=1
-    c_es=1
+#    c_vi = 0.037
+#    c_vr = 0.038
+#    c_vs = 0.075
+#    c_ei = 0.001
+#    c_er = 0.001
+#    c_es = 0.0
+    c_vi = 4
+    c_vr = 4
+    c_vs = 2
+    c_ei = 1
+    c_er = 1
+    c_es = 1
     ite_max_iam = 50
     epsilon_iam = 0.001
     removeNodes = True
     connected_iam = False
+    # parameters for GED function
+#    ged_cost='CHEM_1'
+    ged_cost = 'CONSTANT'
+    ged_method = 'IPFP'
+    edit_cost_constant = [c_vi, c_vr, c_vs, c_ei, c_er, c_es]
+    ged_stabilizer = 'min'
+    ged_repeat = 50
+    params_ged = {'lib': 'gedlibpy', 'cost': ged_cost, 'method': ged_method, 
+                  'edit_cost_constant': edit_cost_constant, 
+                  'stabilizer': ged_stabilizer, 'repeat': ged_repeat}
     
     # number of graphs; we what to compute the median of these graphs. 
-    nb_median_range = [2, 3, 4, 5, 10, 20, 30, 40, 50, 100]
+#    nb_median_range = [2, 3, 4, 5, 10, 20, 30, 40, 50, 100]
+    nb_median_range = [2]
     
     # find out all the graphs classified to positive group 1.
     idx_dict = get_same_item_indices(y_all)
@@ -274,8 +290,7 @@ def test_preimage_iam_median_nb():
             params_iam={'c_ei': c_ei, 'c_er': c_er, 'c_es': c_es, 
                         'ite_max': ite_max_iam, 'epsilon': epsilon_iam,
                         'removeNodes': removeNodes, 'connected': connected_iam},
-            params_ged={'ged_cost': ged_cost, 'ged_method': ged_method, 
-                        'saveGXL': saveGXL})
+            params_ged=params_ged)
             
         time_total = time.time() - time0 + time_km
         print('\ntime: ', time_total)
@@ -293,16 +308,15 @@ def test_preimage_iam_median_nb():
         print('one of the possible corresponding pre-images is')
         nx.draw(ghat_list[0], labels=nx.get_node_attributes(ghat_list[0], 'atom'), 
                 with_labels=True)
-#        plt.show()
-        plt.savefig('results/preimage_iam/mutag_median_nb' + str(nb_median) + 
-                    '.png', format="PNG")
+        plt.show()
+#        plt.savefig('results/preimage_iam/mutag_median_cs.001_nb' + str(nb_median) + 
+#                    '.png', format="PNG")
         plt.clf()
 #        print(ghat_list[0].nodes(data=True))
 #        print(ghat_list[0].edges(data=True))
     
         # compute the corresponding sod in graph space.
-        sod_tmp, _ = ged_median([ghat_list[0]], Gn_median, ged_cost=ged_cost, 
-                                     ged_method=ged_method, saveGXL=saveGXL)
+        sod_tmp, _ = ged_median([ghat_list[0]], Gn_median, params_ged=params_ged)
         sod_gs_list.append(sod_tmp)
         sod_gs_min_list.append(np.min(sod_tmp))
         print('\nsmallest sod in graph space: ', np.min(sod_tmp))

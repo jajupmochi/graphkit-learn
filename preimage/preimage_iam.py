@@ -27,8 +27,9 @@ def preimage_iam(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
                  params_iam={'c_ei': 1, 'c_er': 1, 'c_es': 1, 
                              'ite_max': 50, 'epsilon': 0.001, 
                              'removeNodes': True, 'connected': False},
-                 params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 
-                             'saveGXL': 'benoit'}):
+                 params_ged={'lib': 'gedlibpy', 'cost': 'CHEM_1', 'method': 'IPFP', 
+                             'edit_cost_constant': [], 'stabilizer': 'min', 
+                             'repeat': 50}):
     """This function constructs graph pre-image by the iterative pre-image 
     framework in reference [1], algorithm 1, where the step of generating new 
     graphs randomly is replaced by the IAM algorithm in reference [2].
@@ -91,12 +92,12 @@ def preimage_iam(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max,
             ghat_new_list = []
             for g_tmp in Gk:
                 Gn_nearest_init = [g_tmp.copy()]
-                ghat_new_list_tmp, _ = iam_upgraded(Gn_nearest_median, 
+                ghat_new_list_tmp, _, _ = iam_upgraded(Gn_nearest_median, 
                         Gn_nearest_init, params_ged=params_ged, **params_iam)
                 ghat_new_list += ghat_new_list_tmp
         else: # only the best graph in D_k is used to initialize IAM.
             Gn_nearest_init = [g.copy() for g in Gk]
-            ghat_new_list, _ = iam_upgraded(Gn_nearest_median, Gn_nearest_init, 
+            ghat_new_list, _, _ = iam_upgraded(Gn_nearest_median, Gn_nearest_init, 
                     params_ged=params_ged, **params_iam)
 
 #        for g in g_tmp_list:
@@ -181,8 +182,9 @@ def preimage_iam_random_mix(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max
                             params_iam={'c_ei': 1, 'c_er': 1, 'c_es': 1, 
                                         'ite_max': 50, 'epsilon': 0.001, 
                                         'removeNodes': True, 'connected': False},
-                            params_ged={'ged_cost': 'CHEM_1', 'ged_method': 'IPFP', 
-                                        'saveGXL': 'benoit'}):
+                            params_ged={'lib': 'gedlibpy', 'cost': 'CHEM_1', 
+                                        'method': 'IPFP', 'edit_cost_constant': [], 
+                                        'stabilizer': 'min', 'repeat': 50}):
     """This function constructs graph pre-image by the iterative pre-image 
     framework in reference [1], algorithm 1, where new graphs are generated 
     randomly and by the IAM algorithm in reference [2].

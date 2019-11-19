@@ -1,9 +1,9 @@
 """ Utilities function to manage graph files
 """
-
+from os.path import dirname, splitext
 
 def loadCT(filename):
-    """load data from .ct file.
+    """load data from a Chemical Table (.ct) file.
 
     Notes
     ------
@@ -13,8 +13,11 @@ def loadCT(filename):
         0.0000    0.0000    0.0000 C <- each line describes a node (x,y,z + label)
         0.0000    0.0000    0.0000 C
         0.0000    0.0000    0.0000 O
-      1  3  1  1 <- each line describes an edge : to, from,?, label
+      1  3  1  1 <- each line describes an edge : to, from, bond type, bond stereo
       2  3  1  1
+      
+    Check https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=10&ved=2ahUKEwivhaSdjsTlAhVhx4UKHczHA8gQFjAJegQIARAC&url=https%3A%2F%2Fwww.daylight.com%2Fmeetings%2Fmug05%2FKappler%2Fctfile.pdf&usg=AOvVaw1cDNrrmMClkFPqodlF2inS
+    for detailed format discription.
     """
     import networkx as nx
     from os.path import basename
@@ -35,22 +38,15 @@ def loadCT(filename):
         for i in range(0, nb_nodes):
             tmp = content[i + 2].split(" ")
             tmp = [x for x in tmp if x != '']
-            g.add_node(i, atom=tmp[3], label=tmp[3])
+            g.add_node(i, atom=tmp[3].strip(), 
+                       label=[item.strip() for item in tmp[3:]], 
+                       attributes=[item.strip() for item in tmp[0:3]])
         for i in range(0, nb_edges):
             tmp = content[i + g.number_of_nodes() + 2].split(" ")
             tmp = [x for x in tmp if x != '']
-            g.add_edge(
-                int(tmp[0]) - 1,
-                int(tmp[1]) - 1,
-                bond_type=tmp[3].strip(),
-                label=tmp[3].strip())
-
-
-#         for i in range(0, nb_edges):
-#             tmp = content[i + g.number_of_nodes() + 2]
-#             tmp = [tmp[i:i+3] for i in range(0, len(tmp), 3)]
-#             g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
-#                        bond_type=tmp[3].strip(), label=tmp[3].strip())
+            g.add_edge(int(tmp[0]) - 1, int(tmp[1]) - 1,
+                       bond_type=tmp[2].strip(),
+                       label=[item.strip() for item in tmp[2:]])
     return g
 
 
@@ -71,6 +67,7 @@ def loadGXL(filename):
             labels[attr.attrib['name']] = attr[0].text
         if 'chem' in labels:
             labels['label'] = labels['chem']
+            labels['atom'] = labels['chem']
         g.add_node(index, **labels)
         index += 1
 
@@ -80,6 +77,7 @@ def loadGXL(filename):
             labels[attr.attrib['name']] = attr[0].text
         if 'valence' in labels:
             labels['label'] = labels['valence']
+            labels['bond_type'] = labels['valence']
         g.add_edge(dic[edge.attrib['from']], dic[edge.attrib['to']], **labels)
     return g
 
@@ -392,7 +390,7 @@ def loadDataset(filename, filename_y=None, extra_params=None):
     Notes
     -----
     This function supports following graph dataset formats:
-    'ds': load data from .ct file. See comments of function loadCT for a example.
+    'ds': load data from .ds file. See comments of function loadFromDS for a example.
     'cxl': load data from Graph eXchange Language file (.cxl file). See 
         http://www.gupro.de/GXL/Introduction/background.html, 2019 for detail.
     'sdf': load data from structured data file (.sdf file). See 
@@ -406,45 +404,24 @@ def loadDataset(filename, filename_y=None, extra_params=None):
         2019 for details. Note here filename is the name of either .txt file in
         the dataset directory.
     """
-    from os.path import dirname, splitext
-
-    dirname_dataset = dirname(filename)
     extension = splitext(filename)[1][1:]
-    data = []
-    y = []
     if extension == "ds":
-        content = open(filename).read().splitlines()
-        if filename_y is None or filename_y == '':
-            for i in range(0, len(content)):
-                tmp = content[i].split(' ')
-                # remove the '#'s in file names
-                data.append(
-                    loadCT(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
-                y.append(float(tmp[1]))
-        else:  # y in a seperate file
-            for i in range(0, len(content)):
-                tmp = content[i]
-                # remove the '#'s in file names
-                data.append(
-                    loadCT(dirname_dataset + '/' + tmp.replace('#', '', 1)))
-            content_y = open(filename_y).read().splitlines()
-            # assume entries in filename and filename_y have the same order.
-            for item in content_y:
-                tmp = item.split(' ')
-                # assume the 3rd entry in a line is y (for Alkane dataset)
-                y.append(float(tmp[2]))
+        data, y = loadFromDS(filename, filename_y)
     elif extension == "cxl":
         import xml.etree.ElementTree as ET
-
+        
+        dirname_dataset = dirname(filename)
         tree = ET.parse(filename)
         root = tree.getroot()
         data = []
         y = []
-        for graph in root.iter('print'):
+        for graph in root.iter('graph'):
             mol_filename = graph.attrib['file']
             mol_class = graph.attrib['class']
             data.append(loadGXL(dirname_dataset + '/' + mol_filename))
             y.append(mol_class)
+    elif extension == 'xml':
+        data, y = loadFromXML(filename, extra_params)
     elif extension == "sdf":
         import numpy as np
         from tqdm import tqdm
@@ -471,6 +448,7 @@ def loadDataset(filename, filename_y=None, extra_params=None):
     elif extension == "mat":
         data, y = loadMAT(filename, extra_params)
     elif extension == 'txt':
+        dirname_dataset = dirname(filename)
         data, y = loadTXT(dirname_dataset)
         # print(len(y))
         # print(y)
@@ -484,6 +462,75 @@ def loadDataset(filename, filename_y=None, extra_params=None):
 
     return data, y
 
+
+def loadFromXML(filename, extra_params):
+    import xml.etree.ElementTree as ET
+    
+    dirname_dataset = dirname(filename)
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    data = []
+    y = []
+    for graph in root.iter('print'):
+        mol_filename = graph.attrib['file']
+        mol_class = graph.attrib['class']
+        data.append(loadGXL(dirname_dataset + '/' + mol_filename))
+        y.append(mol_class)
+        
+    return data, y
+            
+
+def loadFromDS(filename, filename_y):
+    """Load data from .ds file.
+    Possible graph formats include:
+        '.ct': see function loadCT for detail.
+        '.gxl': see dunction loadGXL for detail.
+    Note these graph formats are checked automatically by the extensions of 
+    graph files.
+    """
+    dirname_dataset = dirname(filename)
+    data = []
+    y = []
+    content = open(filename).read().splitlines()
+    extension = splitext(content[0].split(' ')[0])[1][1:]
+    if filename_y is None or filename_y == '':
+        if extension == 'ct': 
+            for i in range(0, len(content)):
+                tmp = content[i].split(' ')
+                # remove the '#'s in file names
+                data.append(
+                    loadCT(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
+                y.append(float(tmp[1]))
+        elif extension == 'gxl':
+            for i in range(0, len(content)):
+                tmp = content[i].split(' ')
+                # remove the '#'s in file names
+                data.append(
+                    loadGXL(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
+                y.append(float(tmp[1]))
+    else:  # y in a seperate file
+        if extension == 'ct':
+            for i in range(0, len(content)):
+                tmp = content[i]
+                # remove the '#'s in file names
+                data.append(
+                    loadCT(dirname_dataset + '/' + tmp.replace('#', '', 1)))
+        elif extension == 'gxl':
+            for i in range(0, len(content)):
+                tmp = content[i]
+                # remove the '#'s in file names
+                data.append(
+                    loadGXL(dirname_dataset + '/' + tmp.replace('#', '', 1)))                                                       
+                                                               
+        content_y = open(filename_y).read().splitlines()
+        # assume entries in filename and filename_y have the same order.
+        for item in content_y:
+            tmp = item.split(' ')
+            # assume the 3rd entry in a line is y (for Alkane dataset)
+            y.append(float(tmp[2]))
+            
+    return data, y
+                
 
 def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None):
     """Save list of graphs.
@@ -509,7 +556,30 @@ def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None
             
             
 if __name__ == '__main__':    
-    ds = {'name': 'MUTAG', 'dataset': '../../datasets/MUTAG/MUTAG.mat',
-          'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb
-    Gn, y = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
-    saveDataset(Gn, y, group='xml', filename='temp/temp')
+#    ### Load dataset from .ds file.
+#    # .ct files.
+    ds = {'name': 'Alkane', 'dataset': '../../datasets/Alkane/dataset.ds',
+        'dataset_y': '../../datasets/Alkane/dataset_boiling_point_names.txt'}
+    Gn, y = loadDataset(ds['dataset'], filename_y=ds['dataset_y'])
+#    ds = {'name': 'Acyclic', 'dataset': '../../datasets/acyclic/dataset_bps.ds'}  # node symb
+#    Gn, y = loadDataset(ds['dataset'])
+#    ds = {'name': 'MAO', 'dataset': '../../datasets/MAO/dataset.ds'} # node/edge symb
+#    Gn, y = loadDataset(ds['dataset'])
+#    ds = {'name': 'PAH', 'dataset': '../../datasets/PAH/dataset.ds'} # unlabeled
+#    Gn, y = loadDataset(ds['dataset'])
+    print(Gn[1].nodes(data=True))
+    print(Gn[1].edges(data=True))
+    print(y[1])
+    
+#    # .gxl file.
+#    ds = {'name': 'monoterpenoides', 
+#          'dataset': '../../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
+#    Gn, y = loadDataset(ds['dataset'])
+#    print(Gn[1].nodes(data=True))
+#    print(Gn[1].edges(data=True))
+#    print(y[1])
+    
+#    ds = {'name': 'MUTAG', 'dataset': '../../datasets/MUTAG/MUTAG.mat',
+#          'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb
+#    Gn, y = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
+#    saveDataset(Gn, y, group='xml', filename='temp/temp')

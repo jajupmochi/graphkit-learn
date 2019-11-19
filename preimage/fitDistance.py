@@ -18,31 +18,44 @@ from scipy import optimize
 import cvxpy as cp
 
 import sys
-sys.path.insert(0, "../")
+#sys.path.insert(0, "../")
 from ged import GED, get_nb_edit_operations
 from utils import kernel_distance_matrix
 
-def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
+def fit_GED_to_kernel_distance(Gn, node_label, edge_label, gkernel, itr_max, 
+                               fitkernel=None, gamma=1.0):
     # c_vi, c_vr, c_vs, c_ei, c_er, c_es or parts of them.
-    random.seed(1)
-    cost_rdm = random.sample(range(1, 10), 5)
-    edit_costs = cost_rdm + [0]
+#    random.seed(1)
+    cost_rdm = random.sample(range(1, 10), 6)
+#    edit_costs = cost_rdm + [0]
+    edit_costs = cost_rdm
+#    edit_costs = [i * 0.01 for i in cost_rdm] + [0]
 #    edit_costs = [0.2, 0.2, 0.2, 0.2, 0.2, 0]
 #    edit_costs = [0, 0, 0.9544, 0.026, 0.0196, 0]
 #    edit_costs = [0.008429912251810438, 0.025461055985319694, 0.2047320869225948, 0.004148727085832133, 0.0, 0]
-    idx_nonzeros = [i for i, item in enumerate(edit_costs) if item != 0]
+    idx_cost_nonzeros = [i for i, item in enumerate(edit_costs) if item != 0]
     
     # compute distances in feature space.
-    dis_k_mat, _, _, _ = kernel_distance_matrix(Gn, gkernel=gkernel)
+    coef_dk = 1
+    dis_k_mat, _, _, _ = kernel_distance_matrix(Gn, node_label, edge_label, gkernel=gkernel)
     dis_k_vec = []
     for i in range(len(dis_k_mat)):
         for j in range(i, len(dis_k_mat)):
             dis_k_vec.append(dis_k_mat[i, j])
     dis_k_vec = np.array(dis_k_vec)
+    if fitkernel == None:
+        dis_k_vec_ajusted = dis_k_vec
+    elif fitkernel == 'gaussian':
+        coef_dk = 1 / np.max(dis_k_vec)
+        idx_dk_nonzeros = np.where(dis_k_vec != 0)[0]
+        # remove 0's and constraint d_k between 0 and 1.
+        dis_k_vec = dis_k_vec[idx_dk_nonzeros] * coef_dk
+        dis_k_vec_ajusted = np.sqrt(-np.log(dis_k_vec) / gamma)
     
     residual_list = []
     edit_cost_list = []
     time_list = []
+    nb_cost_mat_list = []
     
     for itr in range(itr_max):
         print('\niteration', itr)
@@ -52,15 +65,23 @@ def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
         edit_cost_list.append(edit_cost_constant)
         
         ged_all, ged_mat, n_edit_operations = compute_geds(Gn, edit_cost_constant, 
-            idx_nonzeros, parallel=True)
+            idx_cost_nonzeros, parallel=True)
                 
-        residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
+        if fitkernel == None:
+            residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
+        elif fitkernel == 'gaussian':
+            ged_all = np.array(ged_all)[idx_dk_nonzeros]
+            residual = np.sqrt(np.sum(np.square(
+                    np.exp(-gamma * ged_all ** 2) / coef_dk - dis_k_vec)))
         residual_list.append(residual)
         
         # "fit" geds to distances in feature space by tuning edit costs using the
         # Least Squares Method.
         nb_cost_mat = np.array(n_edit_operations).T
-        edit_costs_new, residual = compute_better_costs(nb_cost_mat, dis_k_vec)
+        if fitkernel == 'gaussian':
+            nb_cost_mat = nb_cost_mat[idx_dk_nonzeros]
+        nb_cost_mat_list.append(nb_cost_mat)
+        edit_costs_new, residual = compute_better_costs(nb_cost_mat, dis_k_vec_ajusted)
 
         print('pseudo residual:', residual)
         for i in range(len(edit_costs_new)):
@@ -70,7 +91,7 @@ def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
                 else:
                     raise ValueError('The edit cost is negative.')
         
-        for idx, item in enumerate(idx_nonzeros):
+        for idx, item in enumerate(idx_cost_nonzeros):
             edit_costs[item] = edit_costs_new[idx]
         
         time_list.append(time.time() - time0)
@@ -78,14 +99,21 @@ def fit_GED_to_kernel_distance(Gn, gkernel, itr_max):
         print('edit_costs:', edit_costs)
         print('residual_list:', residual_list)
         
-        
+    print()
     edit_cost_list.append(edit_costs)
     ged_all, ged_mat, n_edit_operations = compute_geds(Gn, edit_costs, 
-            idx_nonzeros, parallel=True)
-    residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
+            idx_cost_nonzeros, parallel=True)
+    if fitkernel == 0:
+        residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
+    elif fitkernel == 'gaussian':
+        ged_all = np.array(ged_all)[idx_dk_nonzeros]
+        residual = np.sqrt(np.sum(np.square(
+                np.exp(-gamma * ged_all ** 2) / coef_dk - dis_k_vec)))
     residual_list.append(residual)
+    nb_cost_mat_list.append(np.array(n_edit_operations).T)
     
-    return edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat, time_list
+    return edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat, \
+        time_list, nb_cost_mat_list, coef_dk
 
 
 def compute_geds(Gn, edit_cost_constant, idx_nonzeros, parallel=False):
@@ -193,7 +221,10 @@ def compute_better_costs(nb_cost_mat, dis_k_vec):
 #    h = np.array([0 for i in range(nb_cost_mat.shape[1])])
     x = cp.Variable(nb_cost_mat.shape[1])
     cost = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
-    constraints = [x >= [0 for i in range(nb_cost_mat.shape[1])]]
+    constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
+#                   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
+                   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
+                   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
     prob = cp.Problem(cp.Minimize(cost), constraints)
     prob.solve()
     edit_costs_new = x.value

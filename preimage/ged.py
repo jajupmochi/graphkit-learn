@@ -9,11 +9,14 @@ import numpy as np
 import networkx as nx
 from tqdm import tqdm
 import sys
+import multiprocessing
+from multiprocessing import Pool
+from functools import partial
 
 from gedlibpy import librariesImport, gedlibpy
 
 def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP', 
-        edit_cost_constant=[], saveGXL='benoit', stabilizer='min', repeat=50):
+        edit_cost_constant=[], stabilizer='min', repeat=50):
     """
     Compute GED for 2 graphs.
     """
@@ -25,9 +28,11 @@ def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP',
             G_new = nx.Graph()
             for nd, attrs in G.nodes(data=True):
                 G_new.add_node(str(nd), chem=attrs['atom'])
+#                G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
+#                               y=str(attrs['attributes'][1]))
             for nd1, nd2, attrs in G.edges(data=True):
-#                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
-                G_new.add_edge(str(nd1), str(nd2))
+                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+#                G_new.add_edge(str(nd1), str(nd2))
                 
             return G_new
         
@@ -49,6 +54,32 @@ def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP',
             pi_backward = gedlibpy.get_backward_map(g, h)
             upper = gedlibpy.get_upper_bound(g, h)
             lower = gedlibpy.get_lower_bound(g, h)        
+        elif stabilizer == 'mean':
+            # @todo: to be finished...
+            upper_list = [np.inf] * repeat
+            for itr in range(repeat):                
+                gedlibpy.run_method(g, h)                
+                upper_list[itr] = gedlibpy.get_upper_bound(g, h)
+                pi_forward = gedlibpy.get_forward_map(g, h)
+                pi_backward = gedlibpy.get_backward_map(g, h)
+                lower = gedlibpy.get_lower_bound(g, h)
+            upper = np.mean(upper_list)
+        elif stabilizer == 'median':
+            if repeat % 2 == 0:
+                repeat += 1
+            upper_list = [np.inf] * repeat
+            pi_forward_list = [0] * repeat
+            pi_backward_list = [0] * repeat
+            for itr in range(repeat):                
+                gedlibpy.run_method(g, h)                
+                upper_list[itr] = gedlibpy.get_upper_bound(g, h)
+                pi_forward_list[itr] = gedlibpy.get_forward_map(g, h)
+                pi_backward_list[itr] = gedlibpy.get_backward_map(g, h)
+                lower = gedlibpy.get_lower_bound(g, h)
+            upper = np.median(upper_list)
+            idx_median = upper_list.index(upper)
+            pi_forward = pi_forward_list[idx_median]
+            pi_backward = pi_backward_list[idx_median]
         elif stabilizer == 'min':
             upper = np.inf
             for itr in range(repeat):                
@@ -61,6 +92,18 @@ def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP',
                     lower = gedlibpy.get_lower_bound(g, h)
                 if upper == 0:
                     break
+        elif stabilizer == 'max':
+            upper = 0
+            for itr in range(repeat):                
+                gedlibpy.run_method(g, h)                
+                upper_tmp = gedlibpy.get_upper_bound(g, h)                
+                if upper_tmp > upper:
+                    upper = upper_tmp
+                    pi_forward = gedlibpy.get_forward_map(g, h)
+                    pi_backward = gedlibpy.get_backward_map(g, h)
+                    lower = gedlibpy.get_lower_bound(g, h)
+        elif stabilizer == 'gaussian':
+            pass
                     
         dis = upper
         
@@ -138,21 +181,67 @@ def GED_n(Gn, lib='gedlibpy', cost='CHEM_1', method='IPFP',
     return dis, pi_forward, pi_backward
 
 
-def ged_median(Gn, Gn_median, measure='ged', verbose=False, 
-                    ged_cost='CHEM_1', ged_method='IPFP', saveGXL='benoit'):
-    dis_list = []
-    pi_forward_list = []
-    for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
-                       file=sys.stdout) if verbose else enumerate(Gn):
-        dis_sum = 0
-        pi_forward_list.append([])
-        for G_p in Gn_median:
-            dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p, 
-                cost=ged_cost, method=ged_method, saveGXL=saveGXL)
-            pi_forward_list[idx].append(pi_tmp_forward)
-            dis_sum += dis_tmp
-        dis_list.append(dis_sum)
+def ged_median(Gn, Gn_median, verbose=False, params_ged={'lib': 'gedlibpy', 
+               'cost': 'CHEM_1', 'method': 'IPFP', 'edit_cost_constant': [], 
+               'stabilizer': 'min', 'repeat': 50}, parallel=False):
+    if parallel:
+        len_itr = int(len(Gn))
+        pi_forward_list = [[] for i in range(len_itr)]
+        dis_list = [0 for i in range(len_itr)]
+               
+        itr = range(0, len_itr)
+        n_jobs = multiprocessing.cpu_count()
+        if len_itr < 100 * n_jobs:
+            chunksize = int(len_itr / n_jobs) + 1
+        else:
+            chunksize = 100
+        def init_worker(gn_toshare, gn_median_toshare):
+            global G_gn, G_gn_median
+            G_gn = gn_toshare
+            G_gn_median = gn_median_toshare
+        do_partial = partial(_compute_ged_median, params_ged)
+        pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(Gn, Gn_median))
+        if verbose:
+            iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
+                            desc='computing GEDs', file=sys.stdout)
+        else:
+            iterator = pool.imap_unordered(do_partial, itr, chunksize)
+        for i, dis_sum, pi_forward in iterator:
+            pi_forward_list[i] = pi_forward
+            dis_list[i] = dis_sum
+#            print('\n-------------------------------------------')
+#            print(i, j, idx_itr, dis)
+        pool.close()
+        pool.join()
+        
+    else:
+        dis_list = []
+        pi_forward_list = []
+        for idx, G in tqdm(enumerate(Gn), desc='computing median distances', 
+                           file=sys.stdout) if verbose else enumerate(Gn):
+            dis_sum = 0
+            pi_forward_list.append([])
+            for G_p in Gn_median:
+                dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G, G_p, 
+                    **params_ged)
+                pi_forward_list[idx].append(pi_tmp_forward)
+                dis_sum += dis_tmp
+            dis_list.append(dis_sum)
+            
     return dis_list, pi_forward_list
+
+
+def _compute_ged_median(params_ged, itr):
+#    print(itr)
+    dis_sum = 0
+    pi_forward = []
+    for G_p in G_gn_median:
+        dis_tmp, pi_tmp_forward, pi_tmp_backward = GED(G_gn[itr], G_p, 
+                    **params_ged)
+        pi_forward.append(pi_tmp_forward)
+        dis_sum += dis_tmp
+        
+    return itr, dis_sum, pi_forward
 
 
 def get_nb_edit_operations(g1, g2, forward_map, backward_map):

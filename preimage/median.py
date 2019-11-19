@@ -5,8 +5,8 @@ import numpy as np
 import networkx as nx
 import time
 
-import librariesImport
-import script
+from gedlibpy import librariesImport, gedlibpy
+#import script
 sys.path.insert(0, "/home/bgauzere/dev/optim-graphes/")
 import pygraph
 from pygraph.utils.graphfiles import loadDataset
