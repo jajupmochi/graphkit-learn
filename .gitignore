@@ -13,6 +13,7 @@ datasets/*
 !datasets/NCI1/
 !datasets/NCI109/
 !datasets/AIDS/
+!datasets/monoterpenoides/
 notebooks/results/*
 notebooks/check_gm/*
 notebooks/test_parallel/*
