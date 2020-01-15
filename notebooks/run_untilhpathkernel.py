@@ -27,7 +27,8 @@ dslist = [
     {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
     {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
-    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb    
+    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb  
+#    {'name': 'monoterpenoides', 'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}, # node/edge symb
 #
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb
@@ -54,11 +55,11 @@ dslist = [
     #     {'name': 'PTC_MR', 'dataset': '../datasets/PTC/Train/MR.ds',},
 ]
 estimator = untilhpathkernel
-param_grid_precomputed = {'depth': np.linspace(3, 10, 8),   # [2], 
-                          'k_func': [None]} # ['MinMax', 'tanimoto'],
-#param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
-#                          'k_func': ['MinMax'], # ['MinMax', 'tanimoto'],
-#                          'compute_method': ['trie']} # ['MinMax']}
+#param_grid_precomputed = {'depth': np.linspace(3, 10, 8),   # [2], 
+#                          'k_func': [None]} # ['MinMax', 'tanimoto'],
+param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
+                          'k_func': ['MinMax', 'tanimoto'], # ['MinMax'], # 
+                          'compute_method': ['trie']} # ['MinMax']}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]
 

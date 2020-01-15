@@ -17,8 +17,10 @@ from pygraph.kernels.marginalizedKernel import marginalizedkernel
 from pygraph.kernels.untilHPathKernel import untilhpathkernel
 from pygraph.kernels.spKernel import spkernel
 import functools
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct, polynomialkernel
 from pygraph.kernels.structuralspKernel import structuralspkernel
+from pygraph.kernels.treeletKernel import treeletkernel
+from pygraph.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
 
 
 def remove_edges(Gn):
@@ -46,18 +48,29 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'untilhpathkernel':
         Kmatrix, _ = untilhpathkernel(Gn, node_label=node_label, edge_label=edge_label,
-                                  depth=10, k_func='MinMax', compute_method='trie',
+                                  depth=7, k_func='MinMax', compute_method='trie',
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'spkernel':
         mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _, _ = spkernel(Gn, node_label='atom', node_kernels=
+        Kmatrix, _, _ = spkernel(Gn, node_label=node_label, node_kernels=
                               {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
                               n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'structuralspkernel':
         mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-        Kmatrix, _ = structuralspkernel(Gn, node_label='atom', node_kernels=
+        Kmatrix, _ = structuralspkernel(Gn, node_label=node_label, node_kernels=
                               {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
                               n_jobs=multiprocessing.cpu_count(), verbose=verbose)
+    elif graph_kernel == 'treeletkernel':
+#        pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
+        pkernel = functools.partial(gaussiankernel, gamma=1e-6)
+        mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+        Kmatrix, _ = treeletkernel(Gn, node_label=node_label, edge_label=edge_label,
+                                   sub_kernel=pkernel,
+                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
+    elif graph_kernel == 'weisfeilerlehmankernel':
+        Kmatrix, _ = weisfeilerlehmankernel(Gn, node_label=node_label, edge_label=edge_label,
+                                   height=4, base_kernel='subtree',
+                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
         
     # normalization
     Kmatrix_diag = Kmatrix.diagonal().copy()
@@ -79,7 +92,7 @@ def gram2distances(Kmatrix):
 
 def kernel_distance_matrix(Gn, node_label, edge_label, Kmatrix=None, gkernel=None):
     dis_mat = np.empty((len(Gn), len(Gn)))
-    if Kmatrix == None:
+    if Kmatrix is None:
         Kmatrix = compute_kernel(Gn, gkernel, node_label, edge_label, True)
     for i in range(len(Gn)):
         for j in range(i, len(Gn)):
@@ -107,6 +120,21 @@ def get_same_item_indices(ls):
         else:
             idx_dict[item] = [idx]
     return idx_dict
+
+
+def k_nearest_neighbors_to_median_in_kernel_space(Gn, Kmatrix=None, gkernel=None,
+                                                  node_label=None, edge_label=None):
+    dis_k_all = [] # distance between g_star and each graph.
+    alpha = [1 / len(Gn)] * len(Gn)
+    if Kmatrix is None:
+        Kmatrix = compute_kernel(Gn, gkernel, node_label, edge_label, True)
+    term3 = 0
+    for i1, a1 in enumerate(alpha):
+        for i2, a2 in enumerate(alpha):
+            term3 += a1 * a2 * Kmatrix[idx_gi[i1], idx_gi[i2]]
+    for ig, g in tqdm(enumerate(Gn_init), desc='computing distances', file=sys.stdout):
+        dtemp = dis_gstar(ig, idx_gi, alpha, Kmatrix, term3=term3)
+        dis_all.append(dtemp)
 
 
 def normalize_distance_matrix(D):

@@ -13,29 +13,30 @@ import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 
-from gedlibpy import librariesImport, gedlibpy
+from gedlibpy_linlin import librariesImport, gedlibpy
 
 def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP', 
-        edit_cost_constant=[], stabilizer='min', repeat=50):
+        edit_cost_constant=[], algo_options='', stabilizer='min', repeat=50):
     """
     Compute GED for 2 graphs.
     """
-    if lib == 'gedlibpy':
-        def convertGraph(G):
-            """Convert a graph to the proper NetworkX format that can be
-            recognized by library gedlibpy.
-            """
-            G_new = nx.Graph()
-            for nd, attrs in G.nodes(data=True):
-                G_new.add_node(str(nd), chem=attrs['atom'])
+    def convertGraph(G):
+        """Convert a graph to the proper NetworkX format that can be
+        recognized by library gedlibpy.
+        """
+        G_new = nx.Graph()
+        for nd, attrs in G.nodes(data=True):
+            G_new.add_node(str(nd), chem=attrs['atom'])
 #                G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
 #                               y=str(attrs['attributes'][1]))
-            for nd1, nd2, attrs in G.edges(data=True):
-                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
-#                G_new.add_edge(str(nd1), str(nd2))
-                
-            return G_new
+        for nd1, nd2, attrs in G.edges(data=True):
+#            G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+            G_new.add_edge(str(nd1), str(nd2))
+            
+        return G_new
         
+    
+    if lib == 'gedlibpy':
         gedlibpy.restart_env()
         gedlibpy.add_nx_graph(convertGraph(g1), "")
         gedlibpy.add_nx_graph(convertGraph(g2), "")
@@ -43,12 +44,12 @@ def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP',
         listID = gedlibpy.get_all_graph_ids()
         gedlibpy.set_edit_cost(cost, edit_cost_constant=edit_cost_constant)
         gedlibpy.init()
-        gedlibpy.set_method(method, "")
+        gedlibpy.set_method(method, algo_options)
         gedlibpy.init_method()
 
         g = listID[0]
         h = listID[1]
-        if stabilizer == None:
+        if stabilizer is None:
             gedlibpy.run_method(g, h)
             pi_forward = gedlibpy.get_forward_map(g, h)
             pi_backward = gedlibpy.get_backward_map(g, h)
@@ -107,13 +108,57 @@ def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP',
                     
         dis = upper
         
-        # make the map label correct (label remove map as np.inf)
-        nodes1 = [n for n in g1.nodes()]
-        nodes2 = [n for n in g2.nodes()]
-        nb1 = nx.number_of_nodes(g1)
-        nb2 = nx.number_of_nodes(g2)
-        pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
-        pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]      
+    elif lib == 'gedlib-bash':
+        import time
+        import random
+        import sys
+        import os
+        sys.path.insert(0, "../")
+        from pygraph.utils.graphfiles import saveDataset
+        
+        tmp_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/'
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+        fn_collection = tmp_dir + 'collection.' + str(time.time()) + str(random.randint(0, 1e9))
+        xparams = {'method': 'gedlib', 'graph_dir': fn_collection}
+        saveDataset([g1, g2], ['dummy', 'dummy'], gformat='gxl', group='xml', 
+                    filename=fn_collection, xparams=xparams)
+        
+        command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/others/gedlib/gedlib2\'\n'
+        command += 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GEDLIB_HOME/lib\n'
+        command += 'export LD_LIBRARY_PATH\n'
+        command += 'cd \'/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/bin\'\n'
+        command += './ged_for_python_bash monoterpenoides ' + fn_collection \
+                + ' \'' + algo_options + '\' '
+        for ec in edit_cost_constant:
+            command += str(ec) + ' '
+#        output = os.system(command)
+        stream = os.popen(command)
+        output = stream.readlines()
+#        print(output)
+        
+        dis = float(output[0].strip())
+        runtime = float(output[1].strip())
+        size_forward = int(output[2].strip())
+        pi_forward = [int(item.strip()) for item in output[3:3+size_forward]]
+        pi_backward = [int(item.strip()) for item in output[3+size_forward:]]
+
+#        print(dis)
+#        print(runtime)
+#        print(size_forward)
+#        print(pi_forward)
+#        print(pi_backward)
+                
+        
+    # make the map label correct (label remove map as np.inf)
+    nodes1 = [n for n in g1.nodes()]
+    nodes2 = [n for n in g2.nodes()]
+    nb1 = nx.number_of_nodes(g1)
+    nb2 = nx.number_of_nodes(g2)
+    pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
+    pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
+#        print(pi_forward)
+              
         
     return dis, pi_forward, pi_backward
 
@@ -149,7 +194,7 @@ def GED_n(Gn, lib='gedlibpy', cost='CHEM_1', method='IPFP',
 
         g = listID[0]
         h = listID[1]
-        if stabilizer == None:
+        if stabilizer is None:
             gedlibpy.run_method(g, h)
             pi_forward = gedlibpy.get_forward_map(g, h)
             pi_backward = gedlibpy.get_backward_map(g, h)
@@ -183,7 +228,8 @@ def GED_n(Gn, lib='gedlibpy', cost='CHEM_1', method='IPFP',
 
 def ged_median(Gn, Gn_median, verbose=False, params_ged={'lib': 'gedlibpy', 
                'cost': 'CHEM_1', 'method': 'IPFP', 'edit_cost_constant': [], 
-               'stabilizer': 'min', 'repeat': 50}, parallel=False):
+               'algo_options': '--threads 8 --initial-solutions 40 --ratio-runs-from-initial-solutions 1',
+               'stabilizer': None}, parallel=False):
     if parallel:
         len_itr = int(len(Gn))
         pi_forward_list = [[] for i in range(len_itr)]

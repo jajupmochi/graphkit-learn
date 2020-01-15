@@ -124,21 +124,21 @@ def saveGXL(graph, filename, method='benoit'):
         # reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22
 #        pass
         gxl_file = open(filename, 'w')
-        gxl_file.write("<?xml version=\"1.0\"?>\n")
+        gxl_file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
-        gxl_file.write("<gxl>\n")
+        gxl_file.write("<gxl xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n")
         gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"true\" edgemode=\"undirected\">\n")
         for v, attrs in graph.nodes(data=True):
             gxl_file.write("<node id=\"_" + str(v) + "\">")
-            gxl_file.write("<attr name=\"" + "chem" + "\"><int>" + str(attrs['atom']) + "</int></attr>")
+            gxl_file.write("<attr name=\"" + "chem" + "\"><int>" + str(attrs['chem']) + "</int></attr>")
             gxl_file.write("</node>\n")
         for v1, v2, attrs in graph.edges(data=True):
             gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\">")
-#            gxl_file.write("<attr name=\"valence\"><int>" + str(attrs['bond_type']) + "</int></attr>")
-            gxl_file.write("<attr name=\"valence\"><int>" + "1" + "</int></attr>")
+            gxl_file.write("<attr name=\"valence\"><int>" + str(attrs['valence']) + "</int></attr>")
+#            gxl_file.write("<attr name=\"valence\"><int>" + "1" + "</int></attr>")
             gxl_file.write("</edge>\n")
         gxl_file.write("</graph>\n")
-        gxl_file.write("</gxl>\n")
+        gxl_file.write("</gxl>")
         gxl_file.close()
     elif method == 'gedlib-letter':
         # reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22
@@ -147,15 +147,15 @@ def saveGXL(graph, filename, method='benoit'):
         gxl_file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         gxl_file.write("<!DOCTYPE gxl SYSTEM \"http://www.gupro.de/GXL/gxl-1.0.dtd\">\n")
         gxl_file.write("<gxl xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n")
-        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"false\" edgemode=\"undirected\">")
+        gxl_file.write("<graph id=\"" + str(graph.graph['name']) + "\" edgeids=\"false\" edgemode=\"undirected\">\n")
         for v, attrs in graph.nodes(data=True):
             gxl_file.write("<node id=\"_" + str(v) + "\">")
             gxl_file.write("<attr name=\"x\"><float>" + str(attrs['attributes'][0]) + "</float></attr>")
             gxl_file.write("<attr name=\"y\"><float>" + str(attrs['attributes'][1]) + "</float></attr>")
-            gxl_file.write("</node>")
+            gxl_file.write("</node>\n")
         for v1, v2, attrs in graph.edges(data=True):
-            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\"/>")
-        gxl_file.write("</graph>")
+            gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\"/>\n")
+        gxl_file.write("</graph>\n")
         gxl_file.write("</gxl>")
         gxl_file.close()
 
@@ -466,12 +466,15 @@ def loadDataset(filename, filename_y=None, extra_params=None):
 def loadFromXML(filename, extra_params):
     import xml.etree.ElementTree as ET
     
-    dirname_dataset = dirname(filename)
+    if extra_params:
+        dirname_dataset = extra_params
+    else:
+        dirname_dataset = dirname(filename)
     tree = ET.parse(filename)
     root = tree.getroot()
     data = []
     y = []
-    for graph in root.iter('print'):
+    for graph in root.iter('graph'):
         mol_filename = graph.attrib['file']
         mol_class = graph.attrib['class']
         data.append(loadGXL(dirname_dataset + '/' + mol_filename))
@@ -541,15 +544,22 @@ def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None
         dirname_ds += '/'
         if not os.path.exists(dirname_ds) :
             os.makedirs(dirname_ds)
+                
+    if 'graph_dir' in xparams:
+        graph_dir = xparams['graph_dir'] + '/'
+        if not os.path.exists(graph_dir):
+            os.makedirs(graph_dir)
+    else:
+        graph_dir = dirname_ds 
             
     if group == 'xml' and gformat == 'gxl':
         with open(filename + '.xml', 'w') as fgroup:
             fgroup.write("<?xml version=\"1.0\"?>")
-            fgroup.write("\n<!DOCTYPE GraphCollection SYSTEM \"https://dbblumenthal.github.io/gedlib/GraphCollection_8dtd_source.html\">")
+            fgroup.write("\n<!DOCTYPE GraphCollection SYSTEM \"http://www.inf.unibz.it/~blumenthal/dtd/GraphCollection.dtd\">")
             fgroup.write("\n<GraphCollection>")
             for idx, g in enumerate(Gn):
                 fname_tmp = "graph" + str(idx) + ".gxl"
-                saveGXL(g, dirname_ds + fname_tmp, method=xparams['method'])
+                saveGXL(g, graph_dir + fname_tmp, method=xparams['method'])
                 fgroup.write("\n\t<graph file=\"" + fname_tmp + "\" class=\"" + str(y[idx]) + "\"/>")
             fgroup.write("\n</GraphCollection>")
             fgroup.close()
@@ -558,18 +568,18 @@ def saveDataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None
 if __name__ == '__main__':    
 #    ### Load dataset from .ds file.
 #    # .ct files.
-    ds = {'name': 'Alkane', 'dataset': '../../datasets/Alkane/dataset.ds',
-        'dataset_y': '../../datasets/Alkane/dataset_boiling_point_names.txt'}
-    Gn, y = loadDataset(ds['dataset'], filename_y=ds['dataset_y'])
-#    ds = {'name': 'Acyclic', 'dataset': '../../datasets/acyclic/dataset_bps.ds'}  # node symb
-#    Gn, y = loadDataset(ds['dataset'])
-#    ds = {'name': 'MAO', 'dataset': '../../datasets/MAO/dataset.ds'} # node/edge symb
-#    Gn, y = loadDataset(ds['dataset'])
-#    ds = {'name': 'PAH', 'dataset': '../../datasets/PAH/dataset.ds'} # unlabeled
-#    Gn, y = loadDataset(ds['dataset'])
-    print(Gn[1].nodes(data=True))
-    print(Gn[1].edges(data=True))
-    print(y[1])
+#    ds = {'name': 'Alkane', 'dataset': '../../datasets/Alkane/dataset.ds',
+#        'dataset_y': '../../datasets/Alkane/dataset_boiling_point_names.txt'}
+#    Gn, y = loadDataset(ds['dataset'], filename_y=ds['dataset_y'])
+##    ds = {'name': 'Acyclic', 'dataset': '../../datasets/acyclic/dataset_bps.ds'}  # node symb
+##    Gn, y = loadDataset(ds['dataset'])
+##    ds = {'name': 'MAO', 'dataset': '../../datasets/MAO/dataset.ds'} # node/edge symb
+##    Gn, y = loadDataset(ds['dataset'])
+##    ds = {'name': 'PAH', 'dataset': '../../datasets/PAH/dataset.ds'} # unlabeled
+##    Gn, y = loadDataset(ds['dataset'])
+#    print(Gn[1].nodes(data=True))
+#    print(Gn[1].edges(data=True))
+#    print(y[1])
     
 #    # .gxl file.
 #    ds = {'name': 'monoterpenoides', 
@@ -578,6 +588,33 @@ if __name__ == '__main__':
 #    print(Gn[1].nodes(data=True))
 #    print(Gn[1].edges(data=True))
 #    print(y[1])
+    
+    ### Convert graph from one format to another.
+    # .gxl file.
+    import networkx as nx
+    ds = {'name': 'monoterpenoides', 
+          'dataset': '../../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
+    Gn, y = loadDataset(ds['dataset'])
+    y = [int(i) for i in y]
+    print(Gn[1].nodes(data=True))
+    print(Gn[1].edges(data=True))
+    print(y[1])
+    # Convert a graph to the proper NetworkX format that can be recognized by library gedlib.
+    Gn_new = []
+    for G in Gn:
+        G_new = nx.Graph()
+        for nd, attrs in G.nodes(data=True):
+            G_new.add_node(str(nd), chem=attrs['atom'])
+        for nd1, nd2, attrs in G.edges(data=True):
+            G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+#            G_new.add_edge(str(nd1), str(nd2))
+        Gn_new.append(G_new)
+    print(Gn_new[1].nodes(data=True))
+    print(Gn_new[1].edges(data=True))
+    print(Gn_new[1])
+    filename = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl/monoterpenoides'
+    xparams = {'method': 'gedlib'}
+    saveDataset(Gn, y, gformat='gxl', group='xml', filename=filename, xparams=xparams)
     
 #    ds = {'name': 'MUTAG', 'dataset': '../../datasets/MUTAG/MUTAG.mat',
 #          'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb

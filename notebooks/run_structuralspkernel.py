@@ -30,6 +30,8 @@ dslist = [
 #    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
 #    # node symb/nsymb
 #    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
+#    {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt'},
+#    # node nsymb symb
 #
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb

@@ -28,6 +28,7 @@ dslist = [
 #    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
 #    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
 #    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
+#    {'name': 'monoterpenoides', 'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}, # node/edge symb
 #
 #    {'name': 'Mutagenicity', 'dataset': '../datasets/Mutagenicity/Mutagenicity_A.txt'},
 #    # node/edge symb
@@ -57,7 +58,7 @@ estimator = marginalizedkernel
 #param_grid_precomputed = {'p_quit': np.linspace(0.1, 0.3, 3),
 #                          'n_iteration': np.linspace(1, 1, 1),
 param_grid_precomputed = {'p_quit': np.linspace(0.1, 0.9, 9),
-                          'n_iteration': np.linspace(5, 20, 4), 
+                          'n_iteration': np.linspace(1, 19, 7), 
                           'remove_totters': [False]}
 param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]

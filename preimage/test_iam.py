@@ -22,6 +22,130 @@ from iam import iam_upgraded
 from utils import remove_edges, compute_kernel, get_same_item_indices, dis_gstar
 #from ged import ged_median
 
+
+def test_iam_monoterpenoides_with_init40():
+    gkernel = 'untilhpathkernel'
+    node_label = 'atom'
+    edge_label = 'bond_type'
+    # unfitted edit costs.
+    c_vi = 3
+    c_vr = 3
+    c_vs = 1
+    c_ei = 3
+    c_er = 3
+    c_es = 1
+    ite_max_iam = 50
+    epsilon_iam = 0.0001
+    removeNodes = False
+    connected_iam = False
+    # parameters for IAM function
+#    ged_cost = 'CONSTANT'
+    ged_cost = 'CONSTANT'
+    ged_method = 'IPFP'
+    edit_cost_constant = [c_vi, c_vr, c_vs, c_ei, c_er, c_es]
+    ged_stabilizer = None
+#    ged_repeat = 50
+    algo_options = '--threads 8 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'
+    params_ged = {'lib': 'gedlibpy', 'cost': ged_cost, 'method': ged_method, 
+                  'edit_cost_constant': edit_cost_constant, 
+                  'algo_options': algo_options,
+                  'stabilizer': ged_stabilizer}
+
+    
+    collection_path = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/'
+    graph_dir = collection_path + 'gxl/'
+    y_all = ['3', '1', '4', '6', '7', '8', '9', '2']
+    repeats = 50
+    
+    # classify graphs according to classes.
+    time_list = []
+    dis_ks_min_list = []
+    dis_ks_set_median_list = []
+    sod_gs_list = []
+    g_best = []
+    sod_set_median_list = []
+    sod_list_list = []
+    for y in y_all:
+        print('\n-------------------------------------------------------')
+        print('class of y:', y)
+        
+        time_list.append([])
+        dis_ks_min_list.append([])
+        dis_ks_set_median_list.append([])
+        sod_gs_list.append([])
+        g_best.append([])
+        sod_set_median_list.append([])
+        
+        for repeat in range(repeats):
+            # load median set.
+            collection_file = collection_path + 'monoterpenoides_' + y + '_' + str(repeat) + '.xml'
+            Gn_median, _ = loadDataset(collection_file, extra_params=graph_dir)
+            Gn_candidate = [g.copy() for g in Gn_median]
+            
+            time0 = time.time()
+            G_gen_median_list, sod_gen_median, sod_list, G_set_median_list, sod_set_median \
+            = iam_upgraded(Gn_median, 
+                Gn_candidate, c_ei=c_ei, c_er=c_er, c_es=c_es, ite_max=ite_max_iam,
+                epsilon=epsilon_iam, node_label=node_label, edge_label=edge_label, 
+                connected=connected_iam, removeNodes=removeNodes, 
+                params_ged=params_ged)
+            time_total = time.time() - time0
+            print('\ntime: ', time_total)
+            time_list[-1].append(time_total)
+            g_best[-1].append(G_gen_median_list[0])
+            sod_set_median_list[-1].append(sod_set_median)
+            print('\nsmallest sod of the set median:', sod_set_median)
+            sod_gs_list[-1].append(sod_gen_median)
+            print('\nsmallest sod in graph space:', sod_gen_median)
+            sod_list_list.append(sod_list)
+            
+#            # show the best graph and save it to file.
+#            print('one of the possible corresponding pre-images is')
+#            nx.draw(G_gen_median_list[0], labels=nx.get_node_attributes(G_gen_median_list[0], 'atom'), 
+#                    with_labels=True)
+##            plt.show()
+#    #        plt.savefig('results/iam/mutag_median.fit_costs2.001.nb' + str(nb_median) + 
+##            plt.savefig('results/iam/paper_compare/monoter_y' + str(y_class) + 
+##                        '_repeat' + str(repeat) + '_' + str(time.time()) +
+##                        '.png', format="PNG")
+#            plt.clf()
+#    #        print(G_gen_median_list[0].nodes(data=True))
+#    #        print(G_gen_median_list[0].edges(data=True))
+            
+        print('\nsods of the set median for this class:', sod_set_median_list[-1])
+        print('\nsods in graph space for this class:', sod_gs_list[-1])
+#        print('\ndistance in kernel space of set median for this class:', 
+#              dis_ks_set_median_list[-1])
+#        print('\nsmallest distances in kernel space for this class:', 
+#              dis_ks_min_list[-1])   
+        print('\ntimes for this class:', time_list[-1])
+        
+        sod_set_median_list[-1] = np.mean(sod_set_median_list[-1])
+        sod_gs_list[-1] = np.mean(sod_gs_list[-1])
+#        dis_ks_set_median_list[-1] = np.mean(dis_ks_set_median_list[-1])
+#        dis_ks_min_list[-1] = np.mean(dis_ks_min_list[-1])
+        time_list[-1] = np.mean(time_list[-1])
+        
+    print()
+    print('\nmean sods of the set median for each class:', sod_set_median_list)
+    print('\nmean sods in graph space for each class:', sod_gs_list)
+#    print('\ndistances in kernel space of set median for each class:', 
+#            dis_ks_set_median_list)
+#    print('\nmean smallest distances in kernel space for each class:', 
+#            dis_ks_min_list)
+    print('\nmean times for each class:', time_list)
+    
+    print('\nmean sods of the set median of all:', np.mean(sod_set_median_list))
+    print('\nmean sods in graph space of all:', np.mean(sod_gs_list))
+#    print('\nmean distances in kernel space of set median of all:', 
+#            np.mean(dis_ks_set_median_list))
+#    print('\nmean smallest distances in kernel space of all:', 
+#            np.mean(dis_ks_min_list))
+    print('\nmean times of all:', np.mean(time_list))
+
+
+
+
 def test_iam_monoterpenoides():
     ds = {'name': 'monoterpenoides', 
           'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
@@ -834,9 +958,10 @@ if __name__ == '__main__':
 # tests on different numbers of median-sets.
 #    test_iam_median_nb()
 #    test_iam_letter_h()
-    test_iam_monoterpenoides()
+#    test_iam_monoterpenoides()
 #    test_iam_mutag()
     
 #    test_iam_fitdistance()
 #    print("test log")
     
+    test_iam_monoterpenoides_with_init40()

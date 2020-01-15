@@ -23,7 +23,8 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
         connected=False, removeNodes=True, allBestInit=False, allBestNodes=False,
         allBestEdges=False, allBestOutput=False,
         params_ged={'lib': 'gedlibpy', 'cost': 'CHEM_1', 'method': 'IPFP', 
-                    'edit_cost_constant': [], 'stabilizer': 'min', 'repeat': 50}):
+                    'edit_cost_constant': [], 'stabilizer': None, 
+                    'algo_options': '--threads 8 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'}):
     """See my name, then you know what I do.
     """
 #    Gn_median = Gn_median[0:10]
@@ -433,6 +434,62 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
         G_gen_median_list = [G_gen_median_list[idx_rdm]]
     
     return G_gen_median_list, sod_gen_median, sod_list, G_set_median_list, sod_set_median
+
+
+def iam_bash(Gn_names, edit_cost_constant, dataset='monoterpenoides',
+             graph_dir='/media/ljia/DATA/research-repo/codes/Linlin/py-graph/datasets/monoterpenoides/'):
+    """Compute the iam by c++ implementation (gedlib) through bash.
+    """
+    import os
+    import time
+
+    def createCollectionFile(Gn_names, y, filename):
+        """Create collection file.
+        """
+        dirname_ds = os.path.dirname(filename)
+        if dirname_ds != '':
+            dirname_ds += '/'
+            if not os.path.exists(dirname_ds) :
+                os.makedirs(dirname_ds)
+                
+        with open(filename + '.xml', 'w') as fgroup:
+            fgroup.write("<?xml version=\"1.0\"?>")
+            fgroup.write("\n<!DOCTYPE GraphCollection SYSTEM \"http://www.inf.unibz.it/~blumenthal/dtd/GraphCollection.dtd\">")
+            fgroup.write("\n<GraphCollection>")
+            for idx, fname in enumerate(Gn_names):
+                fgroup.write("\n\t<graph file=\"" + fname + "\" class=\"" + str(y[idx]) + "\"/>")
+            fgroup.write("\n</GraphCollection>")
+            fgroup.close()
+
+    tmp_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/'
+    fn_collection = tmp_dir + 'collection.' + str(time.time()) + str(random.randint(0, 1e9))
+    createCollectionFile(Gn_names, ['dummy'] * len(Gn_names), fn_collection)
+#    graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl'
+    
+    
+    command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/others/gedlib/gedlib2\'\n'
+    command += 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GEDLIB_HOME/lib\n'
+    command += 'export LD_LIBRARY_PATH\n'
+    command += 'cd \'/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/bin\'\n'
+    command += './iam_for_python_bash ' + dataset + ' ' + fn_collection \
+            + ' \'' + graph_dir + '\' '
+    if edit_cost_constant is None:
+        command += 'None'
+    else:
+        for ec in edit_cost_constant:
+            command += str(ec) + ' '
+#        output = os.system(command)
+    stream = os.popen(command)
+
+    output = stream.readlines()    
+#    print(output)
+    sod_sm = float(output[0].strip())
+    sod_gm= float(output[1].strip())
+    
+    fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
+    fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+    
+    return sod_sm, sod_gm, fname_sm, fname_gm
 
 
 

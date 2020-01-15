@@ -7,7 +7,7 @@ Created on Wed Oct 16 14:20:06 2019
 """
 import numpy as np
 from tqdm import tqdm
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, combinations
 import multiprocessing
 from multiprocessing import Pool
 from functools import partial
@@ -22,110 +22,88 @@ import sys
 from ged import GED, get_nb_edit_operations
 from utils import kernel_distance_matrix
 
-def fit_GED_to_kernel_distance(Gn, node_label, edge_label, gkernel, itr_max, 
-                               fitkernel=None, gamma=1.0):
+def fit_GED_to_kernel_distance(Gn, node_label, edge_label, gkernel, itr_max, k=4,
+                               params_ged={'lib': 'gedlibpy', 'cost': 'CONSTANT', 
+                                           'method': 'IPFP', 'stabilizer': None},
+                               init_costs=[3, 3, 1, 3, 3, 1],
+                               parallel=True):
     # c_vi, c_vr, c_vs, c_ei, c_er, c_es or parts of them.
 #    random.seed(1)
-    cost_rdm = random.sample(range(1, 10), 6)
-#    edit_costs = cost_rdm + [0]
-    edit_costs = cost_rdm
-#    edit_costs = [i * 0.01 for i in cost_rdm] + [0]
-#    edit_costs = [0.2, 0.2, 0.2, 0.2, 0.2, 0]
-#    edit_costs = [0, 0, 0.9544, 0.026, 0.0196, 0]
-#    edit_costs = [0.008429912251810438, 0.025461055985319694, 0.2047320869225948, 0.004148727085832133, 0.0, 0]
-    idx_cost_nonzeros = [i for i, item in enumerate(edit_costs) if item != 0]
+#    cost_rdm = random.sample(range(1, 10), 6)
+#    init_costs = cost_rdm + [0]
+#    init_costs = cost_rdm
+    init_costs = [3, 3, 1, 3, 3, 1]
+#    init_costs = [i * 0.01 for i in cost_rdm] + [0]
+#    init_costs = [0.2, 0.2, 0.2, 0.2, 0.2, 0]
+#    init_costs = [0, 0, 0.9544, 0.026, 0.0196, 0]
+#    init_costs = [0.008429912251810438, 0.025461055985319694, 0.2047320869225948, 0.004148727085832133, 0.0, 0]
+#    idx_cost_nonzeros = [i for i, item in enumerate(edit_costs) if item != 0]
     
     # compute distances in feature space.
-    coef_dk = 1
     dis_k_mat, _, _, _ = kernel_distance_matrix(Gn, node_label, edge_label, gkernel=gkernel)
     dis_k_vec = []
     for i in range(len(dis_k_mat)):
-        for j in range(i, len(dis_k_mat)):
+#        for j in range(i, len(dis_k_mat)):
+        for j in range(i + 1, len(dis_k_mat)):
             dis_k_vec.append(dis_k_mat[i, j])
     dis_k_vec = np.array(dis_k_vec)
-    if fitkernel == None:
-        dis_k_vec_ajusted = dis_k_vec
-    elif fitkernel == 'gaussian':
-        coef_dk = 1 / np.max(dis_k_vec)
-        idx_dk_nonzeros = np.where(dis_k_vec != 0)[0]
-        # remove 0's and constraint d_k between 0 and 1.
-        dis_k_vec = dis_k_vec[idx_dk_nonzeros] * coef_dk
-        dis_k_vec_ajusted = np.sqrt(-np.log(dis_k_vec) / gamma)
     
-    residual_list = []
-    edit_cost_list = []
-    time_list = []
-    nb_cost_mat_list = []
+    # init ged.
+    print('\ninitial:')
+    time0 = time.time()
+    params_ged['edit_cost_constant'] = init_costs
+    ged_vec_init, ged_mat, n_edit_operations = compute_geds(Gn, params_ged, 
+                                                            parallel=parallel)
+    residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]    
+    time_list = [time.time() - time0]
+    edit_cost_list = [init_costs]  
+    nb_cost_mat = np.array(n_edit_operations)
+    nb_cost_mat_list = [nb_cost_mat]
+    print('edit_costs:', init_costs)
+    print('residual_list:', residual_list)
     
     for itr in range(itr_max):
         print('\niteration', itr)
         time0 = time.time()
-        # compute GEDs and numbers of edit operations.
-        edit_cost_constant = [i for i in edit_costs]
-        edit_cost_list.append(edit_cost_constant)
-        
-        ged_all, ged_mat, n_edit_operations = compute_geds(Gn, edit_cost_constant, 
-            idx_cost_nonzeros, parallel=True)
-                
-        if fitkernel == None:
-            residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
-        elif fitkernel == 'gaussian':
-            ged_all = np.array(ged_all)[idx_dk_nonzeros]
-            residual = np.sqrt(np.sum(np.square(
-                    np.exp(-gamma * ged_all ** 2) / coef_dk - dis_k_vec)))
-        residual_list.append(residual)
-        
         # "fit" geds to distances in feature space by tuning edit costs using the
         # Least Squares Method.
-        nb_cost_mat = np.array(n_edit_operations).T
-        if fitkernel == 'gaussian':
-            nb_cost_mat = nb_cost_mat[idx_dk_nonzeros]
-        nb_cost_mat_list.append(nb_cost_mat)
-        edit_costs_new, residual = compute_better_costs(nb_cost_mat, dis_k_vec_ajusted)
-
-        print('pseudo residual:', residual)
+        edit_costs_new, residual = update_costs(nb_cost_mat, dis_k_vec)
         for i in range(len(edit_costs_new)):
             if edit_costs_new[i] < 0:
                 if edit_costs_new[i] > -1e-9:
                     edit_costs_new[i] = 0
                 else:
                     raise ValueError('The edit cost is negative.')
-        
-        for idx, item in enumerate(idx_cost_nonzeros):
-            edit_costs[item] = edit_costs_new[idx]
-        
+#        for i in range(len(edit_costs_new)):
+#            if edit_costs_new[i] < 0:
+#                edit_costs_new[i] = 0
+
+        # compute new GEDs and numbers of edit operations.
+        params_ged['edit_cost_constant'] = edit_costs_new
+        ged_vec, ged_mat, n_edit_operations = compute_geds(Gn, params_ged, 
+                                                           parallel=parallel)
+        residual_list.append(np.sqrt(np.sum(np.square(np.array(ged_vec) - dis_k_vec))))
         time_list.append(time.time() - time0)
-            
-        print('edit_costs:', edit_costs)
+        edit_cost_list.append(edit_costs_new)
+        nb_cost_mat = np.array(n_edit_operations)
+        nb_cost_mat_list.append(nb_cost_mat)                        
+        print('edit_costs:', edit_costs_new)
         print('residual_list:', residual_list)
-        
-    print()
-    edit_cost_list.append(edit_costs)
-    ged_all, ged_mat, n_edit_operations = compute_geds(Gn, edit_costs, 
-            idx_cost_nonzeros, parallel=True)
-    if fitkernel == 0:
-        residual = np.sqrt(np.sum(np.square(np.array(ged_all) - dis_k_vec)))
-    elif fitkernel == 'gaussian':
-        ged_all = np.array(ged_all)[idx_dk_nonzeros]
-        residual = np.sqrt(np.sum(np.square(
-                np.exp(-gamma * ged_all ** 2) / coef_dk - dis_k_vec)))
-    residual_list.append(residual)
-    nb_cost_mat_list.append(np.array(n_edit_operations).T)
     
-    return edit_costs, residual_list, edit_cost_list, dis_k_mat, ged_mat, \
-        time_list, nb_cost_mat_list, coef_dk
+    return edit_costs_new, residual_list, edit_cost_list, dis_k_mat, ged_mat, \
+        time_list, nb_cost_mat_list
 
 
-def compute_geds(Gn, edit_cost_constant, idx_nonzeros, parallel=False):
+def compute_geds(Gn, params_ged, parallel=False):
     ged_mat = np.zeros((len(Gn), len(Gn)))
     if parallel:
 #        print('parallel')
-        len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
-        ged_all = [0 for i in range(len_itr)]
-        n_edit_operations = [[0 for i in range(len_itr)] for j in 
-                              range(len(idx_nonzeros))]
-               
-        itr = combinations_with_replacement(range(0, len(Gn)), 2)
+#        len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+        len_itr = int(len(Gn) * (len(Gn) - 1) / 2)
+        ged_vec = [0 for i in range(len_itr)]
+        n_edit_operations = [0 for i in range(len_itr)]
+#        itr = combinations_with_replacement(range(0, len(Gn)), 2)
+        itr = combinations(range(0, len(Gn)), 2)
         n_jobs = multiprocessing.cpu_count()
         if len_itr < 100 * n_jobs:
             chunksize = int(len_itr / n_jobs) + 1
@@ -134,68 +112,52 @@ def compute_geds(Gn, edit_cost_constant, idx_nonzeros, parallel=False):
         def init_worker(gn_toshare):
             global G_gn
             G_gn = gn_toshare
-        do_partial = partial(_wrapper_compute_ged_parallel, edit_cost_constant, 
-                             idx_nonzeros)
+        do_partial = partial(_wrapper_compute_ged_parallel, params_ged)
         pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(Gn,))
         iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
                         desc='computing GEDs', file=sys.stdout)
 #        iterator = pool.imap_unordered(do_partial, itr, chunksize)
         for i, j, dis, n_eo_tmp in iterator:
-            idx_itr = int(len(Gn) * i + j - i * (i + 1) / 2)
-            ged_all[idx_itr] = dis
+            idx_itr = int(len(Gn) * i + j - (i + 1) * (i + 2) / 2)
+            ged_vec[idx_itr] = dis
             ged_mat[i][j] = dis
             ged_mat[j][i] = dis
-            for idx, item in enumerate(idx_nonzeros):
-                n_edit_operations[idx][idx_itr] = n_eo_tmp[item]
+            n_edit_operations[idx_itr] = n_eo_tmp
 #            print('\n-------------------------------------------')
 #            print(i, j, idx_itr, dis)
         pool.close()
         pool.join()
         
     else:
-        ged_all = []
-        n_edit_operations = [[] for i in range(len(idx_nonzeros))]
+        ged_vec = []
+        n_edit_operations = []
         for i in tqdm(range(len(Gn)), desc='computing GEDs', file=sys.stdout):
 #        for i in range(len(Gn)):
-            for j in range(i, len(Gn)):
-#                time0 = time.time()
-                dis, pi_forward, pi_backward = GED(Gn[i], Gn[j], lib='gedlibpy', 
-                    cost='CONSTANT', method='IPFP', 
-                    edit_cost_constant=edit_cost_constant, stabilizer='min', 
-                    repeat=50)
-#                time1 = time.time() - time0
-#                time0 = time.time()
-                ged_all.append(dis)
+            for j in range(i + 1, len(Gn)):
+                dis, pi_forward, pi_backward = GED(Gn[i], Gn[j], **params_ged)
+                ged_vec.append(dis)
                 ged_mat[i][j] = dis
                 ged_mat[j][i] = dis
                 n_eo_tmp = get_nb_edit_operations(Gn[i], Gn[j], pi_forward, pi_backward)
-                for idx, item in enumerate(idx_nonzeros):
-                    n_edit_operations[idx].append(n_eo_tmp[item])
-#                time2 = time.time() - time0
-#                print(time1, time2, time1 / time2)
+                n_edit_operations.append(n_eo_tmp)
                     
-    return ged_all, ged_mat, n_edit_operations
+    return ged_vec, ged_mat, n_edit_operations
                     
 
-def _wrapper_compute_ged_parallel(edit_cost_constant, idx_nonzeros, itr):
+def _wrapper_compute_ged_parallel(params_ged, itr):
     i = itr[0]
     j = itr[1]
-    dis, n_eo_tmp = _compute_ged_parallel(G_gn[i], G_gn[j], edit_cost_constant, 
-                                          idx_nonzeros)
+    dis, n_eo_tmp = _compute_ged_parallel(G_gn[i], G_gn[j], params_ged)
     return i, j, dis, n_eo_tmp
 
 
-def _compute_ged_parallel(g1, g2, edit_cost_constant, idx_nonzeros):
-    dis, pi_forward, pi_backward = GED(g1, g2, lib='gedlibpy', 
-        cost='CONSTANT', method='IPFP', 
-        edit_cost_constant=edit_cost_constant, stabilizer='min', 
-        repeat=50)
-    n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward)
-        
+def _compute_ged_parallel(g1, g2, params_ged):
+    dis, pi_forward, pi_backward = GED(g1, g2, **params_ged)
+    n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward)       
     return dis, n_eo_tmp
 
 
-def compute_better_costs(nb_cost_mat, dis_k_vec):
+def update_costs(nb_cost_mat, dis_k_vec):
 #    # method 1: simple least square method.
 #    edit_costs_new, residual, _, _ = np.linalg.lstsq(nb_cost_mat, dis_k_vec,
 #                                                     rcond=None)
@@ -203,7 +165,7 @@ def compute_better_costs(nb_cost_mat, dis_k_vec):
 #    # method 2: least square method with x_i >= 0.
 #    edit_costs_new, residual = optimize.nnls(nb_cost_mat, dis_k_vec)
     
-    # method 3: solve as a quadratic program with constraints: x_i >= 0, sum(x) = 1.
+    # method 3: solve as a quadratic program with constraints.
 #    P = np.dot(nb_cost_mat.T, nb_cost_mat)
 #    q_T = -2 * np.dot(dis_k_vec.T, nb_cost_mat)
 #    G = -1 * np.identity(nb_cost_mat.shape[1])
@@ -221,7 +183,7 @@ def compute_better_costs(nb_cost_mat, dis_k_vec):
 #    h = np.array([0 for i in range(nb_cost_mat.shape[1])])
     x = cp.Variable(nb_cost_mat.shape[1])
     cost = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
-    constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
+    constraints = [x >= [0.0001 for i in range(nb_cost_mat.shape[1])],
 #                   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
                    np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
                    np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]

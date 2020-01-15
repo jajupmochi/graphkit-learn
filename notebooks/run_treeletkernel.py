@@ -26,6 +26,7 @@ dslist = [
     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
     {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb 
     {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
+#    {'name': 'monoterpenoides', 'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}, # node/edge symb
     # node symb/nsymb
 #    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb
 #    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
