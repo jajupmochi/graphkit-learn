@@ -1,4 +1,6 @@
 # py-graph
+[![Build Status](https://travis-ci.org/jajupmochi/py-graph.svg?branch=ljia)](https://travis-ci.org/jajupmochi/py-graph)
+
 A python package for graph kernels.
 
 ## Requirements
