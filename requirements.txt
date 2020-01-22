@@ -1,0 +1,7 @@
+numpy==1.15.2
+scipy==1.1.0
+matplotlib==3.0.0
+networkx==2.2
+scikit-learn==0.20.0
+tabulate==0.8.2
+tqdm==4.26.0
