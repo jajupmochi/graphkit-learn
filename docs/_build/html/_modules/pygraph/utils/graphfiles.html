@@ -1,0 +1,811 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pygraph.utils.graphfiles &mdash; py-graph  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> py-graph
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py-graph</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pygraph.utils.graphfiles</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pygraph.utils.graphfiles</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Utilities function to manage graph files</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">splitext</span>
+
+<div class="viewcode-block" id="loadCT"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadCT">[docs]</a><span class="k">def</span> <span class="nf">loadCT</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;load data from a Chemical Table (.ct) file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ------</span>
+<span class="sd">    a typical example of data in .ct is like this:</span>
+
+<span class="sd">     3 2  &lt;- number of nodes and edges</span>
+<span class="sd">        0.0000    0.0000    0.0000 C &lt;- each line describes a node (x,y,z + label)</span>
+<span class="sd">        0.0000    0.0000    0.0000 C</span>
+<span class="sd">        0.0000    0.0000    0.0000 O</span>
+<span class="sd">      1  3  1  1 &lt;- each line describes an edge : to, from, bond type, bond stereo</span>
+<span class="sd">      2  3  1  1</span>
+<span class="sd">      </span>
+<span class="sd">    Check https://www.google.com/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=10&amp;ved=2ahUKEwivhaSdjsTlAhVhx4UKHczHA8gQFjAJegQIARAC&amp;url=https%3A%2F%2Fwww.daylight.com%2Fmeetings%2Fmug05%2FKappler%2Fctfile.pdf&amp;usg=AOvVaw1cDNrrmMClkFPqodlF2inS</span>
+<span class="sd">    for detailed format discription.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">basename</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>  <span class="c1"># set name of the graph</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">nb_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># number of the nodes</span>
+            <span class="n">nb_edges</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># number of the edges</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nb_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">nb_edges</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c1"># patch for compatibility : label will be removed later</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nb_nodes</span><span class="p">):</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="n">tmp</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> 
+                       <span class="n">label</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">3</span><span class="p">:]],</span> 
+                       <span class="n">attributes</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nb_edges</span><span class="p">):</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                       <span class="n">bond_type</span><span class="o">=</span><span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                       <span class="n">label</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">:]])</span>
+    <span class="k">return</span> <span class="n">g</span></div>
+
+
+<div class="viewcode-block" id="loadGXL"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadGXL">[docs]</a><span class="k">def</span> <span class="nf">loadGXL</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">basename</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">root</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># used to retrieve incident nodes of edges</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
+        <span class="n">dic</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;attr&#39;</span><span class="p">):</span>
+            <span class="n">labels</span><span class="p">[</span><span class="n">attr</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">if</span> <span class="s1">&#39;chem&#39;</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+            <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;chem&#39;</span><span class="p">]</span>
+            <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;atom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;chem&#39;</span><span class="p">]</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;edge&#39;</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">edge</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;attr&#39;</span><span class="p">):</span>
+            <span class="n">labels</span><span class="p">[</span><span class="n">attr</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">if</span> <span class="s1">&#39;valence&#39;</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+            <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;valence&#39;</span><span class="p">]</span>
+            <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;bond_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;valence&#39;</span><span class="p">]</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">dic</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;from&#39;</span><span class="p">]],</span> <span class="n">dic</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;to&#39;</span><span class="p">]],</span> <span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">g</span></div>
+
+
+<div class="viewcode-block" id="saveGXL"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.saveGXL">[docs]</a><span class="k">def</span> <span class="nf">saveGXL</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;benoit&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;benoit&#39;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+        <span class="n">root_node</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s1">&#39;gxl&#39;</span><span class="p">)</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">attr</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+        <span class="n">attr</span><span class="p">[</span><span class="s1">&#39;edgeids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+        <span class="n">attr</span><span class="p">[</span><span class="s1">&#39;edgemode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;undirected&#39;</span>
+        <span class="n">graph_node</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">root_node</span><span class="p">,</span> <span class="s1">&#39;graph&#39;</span><span class="p">,</span> <span class="n">attrib</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+    
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+            <span class="n">current_node</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">graph_node</span><span class="p">,</span> <span class="s1">&#39;node&#39;</span><span class="p">,</span> <span class="n">attrib</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)})</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">cur_attr</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span>
+                    <span class="n">current_node</span><span class="p">,</span> <span class="s1">&#39;attr&#39;</span><span class="p">,</span> <span class="n">attrib</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">attr</span><span class="p">})</span>
+                <span class="n">cur_value</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">cur_attr</span><span class="p">,</span>
+                                          <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                <span class="n">cur_value</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span>
+    
+        <span class="k">for</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">v1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">v1</span> <span class="o">&lt;</span> <span class="n">v2</span><span class="p">):</span>  <span class="c1"># Non oriented graphs</span>
+                    <span class="n">cur_edge</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span>
+                        <span class="n">graph_node</span><span class="p">,</span>
+                        <span class="s1">&#39;edge&#39;</span><span class="p">,</span>
+                        <span class="n">attrib</span><span class="o">=</span><span class="p">{</span>
+                            <span class="s1">&#39;from&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v1</span><span class="p">),</span>
+                            <span class="s1">&#39;to&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
+                        <span class="p">})</span>
+                    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">v1</span><span class="p">][</span><span class="n">v2</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">cur_attr</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span>
+                            <span class="n">cur_edge</span><span class="p">,</span> <span class="s1">&#39;attr&#39;</span><span class="p">,</span> <span class="n">attrib</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">attr</span><span class="p">})</span>
+                        <span class="n">cur_value</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span>
+                            <span class="n">cur_attr</span><span class="p">,</span> <span class="n">graph</span><span class="p">[</span><span class="n">v1</span><span class="p">][</span><span class="n">v2</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                        <span class="n">cur_value</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">graph</span><span class="p">[</span><span class="n">v1</span><span class="p">][</span><span class="n">v2</span><span class="p">][</span><span class="n">attr</span><span class="p">])</span>
+    
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">ElementTree</span><span class="p">(</span><span class="n">root_node</span><span class="p">)</span>
+        <span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;gedlib&#39;</span><span class="p">:</span>
+        <span class="c1"># reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22</span>
+<span class="c1">#        pass</span>
+        <span class="n">gxl_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;?xml version=</span><span class="se">\&quot;</span><span class="s2">1.0</span><span class="se">\&quot;</span><span class="s2"> encoding=</span><span class="se">\&quot;</span><span class="s2">UTF-8</span><span class="se">\&quot;</span><span class="s2">?&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;!DOCTYPE gxl SYSTEM </span><span class="se">\&quot;</span><span class="s2">http://www.gupro.de/GXL/gxl-1.0.dtd</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;gxl xmlns:xlink=</span><span class="se">\&quot;</span><span class="s2">http://www.w3.org/1999/xlink</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;graph id=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> edgeids=</span><span class="se">\&quot;</span><span class="s2">true</span><span class="se">\&quot;</span><span class="s2"> edgemode=</span><span class="se">\&quot;</span><span class="s2">undirected</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;node id=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;attr name=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;chem&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&gt;&lt;int&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;chem&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&lt;/int&gt;&lt;/attr&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/node&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;edge from=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> to=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;attr name=</span><span class="se">\&quot;</span><span class="s2">valence</span><span class="se">\&quot;</span><span class="s2">&gt;&lt;int&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;valence&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&lt;/int&gt;&lt;/attr&gt;&quot;</span><span class="p">)</span>
+<span class="c1">#            gxl_file.write(&quot;&lt;attr name=\&quot;valence\&quot;&gt;&lt;int&gt;&quot; + &quot;1&quot; + &quot;&lt;/int&gt;&lt;/attr&gt;&quot;)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/edge&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/graph&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/gxl&gt;&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;gedlib-letter&#39;</span><span class="p">:</span>
+        <span class="c1"># reference: https://github.com/dbblumenthal/gedlib/blob/master/data/generate_molecules.py#L22</span>
+        <span class="c1"># and https://github.com/dbblumenthal/gedlib/blob/master/data/datasets/Letter/HIGH/AP1_0000.gxl</span>
+        <span class="n">gxl_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;?xml version=</span><span class="se">\&quot;</span><span class="s2">1.0</span><span class="se">\&quot;</span><span class="s2"> encoding=</span><span class="se">\&quot;</span><span class="s2">UTF-8</span><span class="se">\&quot;</span><span class="s2">?&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;!DOCTYPE gxl SYSTEM </span><span class="se">\&quot;</span><span class="s2">http://www.gupro.de/GXL/gxl-1.0.dtd</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;gxl xmlns:xlink=</span><span class="se">\&quot;</span><span class="s2">http://www.w3.org/1999/xlink</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;graph id=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> edgeids=</span><span class="se">\&quot;</span><span class="s2">false</span><span class="se">\&quot;</span><span class="s2"> edgemode=</span><span class="se">\&quot;</span><span class="s2">undirected</span><span class="se">\&quot;</span><span class="s2">&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;node id=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;attr name=</span><span class="se">\&quot;</span><span class="s2">x</span><span class="se">\&quot;</span><span class="s2">&gt;&lt;float&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&lt;/float&gt;&lt;/attr&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;attr name=</span><span class="se">\&quot;</span><span class="s2">y</span><span class="se">\&quot;</span><span class="s2">&gt;&lt;float&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&lt;/float&gt;&lt;/attr&gt;&quot;</span><span class="p">)</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/node&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;edge from=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> to=</span><span class="se">\&quot;</span><span class="s2">_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">/&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/graph&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/gxl&gt;&quot;</span><span class="p">)</span>
+        <span class="n">gxl_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="loadSDF"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadSDF">[docs]</a><span class="k">def</span> <span class="nf">loadSDF</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;load data from structured data file (.sdf file).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ------</span>
+<span class="sd">    A SDF file contains a group of molecules, represented in the similar way as in MOL format.</span>
+<span class="sd">    Check http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, 2018 for detailed structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">basename</span>
+    <span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;load SDF&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+            <span class="n">index_old</span> <span class="o">=</span> <span class="n">index</span>
+
+            <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">content</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>  <span class="c1"># set name of the graph</span>
+
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">nb_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>  <span class="c1"># number of the nodes</span>
+            <span class="n">nb_edges</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>  <span class="c1"># number of the edges</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nb_nodes</span><span class="p">):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="n">tmp</span><span class="p">[</span><span class="mi">31</span><span class="p">:</span><span class="mi">34</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nb_edges</span><span class="p">):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmp</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tmp</span><span class="p">),</span> <span class="mi">3</span><span class="p">)]</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bond_type</span><span class="o">=</span><span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()</span> <span class="o">+</span> <span class="n">g</span><span class="o">.</span><span class="n">number_of_edges</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">content</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;$$$$&#39;</span><span class="p">:</span>  <span class="c1"># seperator</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">index</span> <span class="o">-</span> <span class="n">index_old</span><span class="p">)</span>
+        <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="loadMAT"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadMAT">[docs]</a><span class="k">def</span> <span class="nf">loadMAT</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">extra_params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load graph data from a MATLAB (up to version 7.1) .mat file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ------</span>
+<span class="sd">    A MAT file contains a struct array containing graphs, and a column vector lx containing a class label for each graph.</span>
+<span class="sd">    Check README in downloadable file in http://mlcb.is.tuebingen.mpg.de/Mitarbeiter/Nino/WL/, 2018 for detailed structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="k">import</span> <span class="n">loadmat</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">extra_params</span><span class="p">[</span><span class="s1">&#39;am_sp_al_nl_el&#39;</span><span class="p">]</span>
+    <span class="c1"># print(content)</span>
+    <span class="c1"># print(&#39;----&#39;)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span>  <span class="c1"># class label</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">value</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="c1"># print(y)</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+            <span class="c1"># print(value[0][0][0])</span>
+            <span class="c1"># print()</span>
+            <span class="c1"># print(value[0][0][1])</span>
+            <span class="c1"># print()</span>
+            <span class="c1"># print(value[0][0][2])</span>
+            <span class="c1"># print()</span>
+            <span class="c1"># if len(value[0][0]) &gt; 3:</span>
+            <span class="c1">#     print(value[0][0][3])</span>
+            <span class="c1"># print(&#39;----&#39;)</span>
+            <span class="c1"># if adjacency matrix is not compressed / edge label exists</span>
+            <span class="k">if</span> <span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="c1"># print(item)</span>
+                    <span class="c1"># print(&#39;------&#39;)</span>
+                    <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># set name of the graph</span>
+                    <span class="n">nl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">3</span><span class="p">]][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># node label</span>
+                    <span class="c1"># print(item[order[3]])</span>
+                    <span class="c1"># print()</span>
+                    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nl</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="n">g</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
+                    <span class="n">el</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">4</span><span class="p">]][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># edge label</span>
+                    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">el</span><span class="p">:</span>
+                        <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span>
+                            <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bond_type</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">csc_matrix</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="c1"># print(item)</span>
+                    <span class="c1"># print(&#39;------&#39;)</span>
+                    <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># set name of the graph</span>
+                    <span class="n">nl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">3</span><span class="p">]][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># node label</span>
+                    <span class="c1"># print(nl)</span>
+                    <span class="c1"># print()</span>
+                    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nl</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="n">g</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
+                    <span class="n">sam</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># sparse adjacency matrix</span>
+                    <span class="n">index_no0</span> <span class="o">=</span> <span class="n">sam</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">index_no0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">index_no0</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                        <span class="c1"># print(col)</span>
+                        <span class="c1"># print(row)</span>
+                        <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                    <span class="c1"># print(g.edges(data=True))</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="loadTXT"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadTXT">[docs]</a><span class="k">def</span> <span class="nf">loadTXT</span><span class="p">(</span><span class="n">dirname_dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load graph data from a .txt file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ------</span>
+<span class="sd">    The graph data is loaded from separate files.</span>
+<span class="sd">    Check README in downloadable file http://tiny.cc/PK_MLJ_data, 2018 for detailed structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">listdir</span>
+    <span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">dirname</span>
+
+    <span class="c1"># load data file names</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">dirname_dataset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;_A&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fam</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_graph_indicator&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fgi</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_graph_labels&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fgl</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_node_labels&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fnl</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_edge_labels&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fel</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_edge_attributes&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fea</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_node_attributes&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fna</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="s1">&#39;_graph_attributes&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fga</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="c1"># this is supposed to be the node attrs, make sure to put this as the last &#39;elif&#39;</span>
+        <span class="k">elif</span> <span class="s1">&#39;_attributes&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">fna</span> <span class="o">=</span> <span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+
+    <span class="n">content_gi</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fgi</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>  <span class="c1"># graph indicator</span>
+    <span class="n">content_am</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fam</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>  <span class="c1"># adjacency matrix</span>
+    <span class="n">content_gl</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fgl</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>  <span class="c1"># lass labels</span>
+
+    <span class="c1"># create graphs and add nodes</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content_gl</span><span class="p">))]</span>
+    <span class="k">if</span> <span class="s1">&#39;fnl&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+        <span class="n">content_nl</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fnl</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>  <span class="c1"># node labels</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_gi</span><span class="p">):</span>
+            <span class="c1"># transfer to int first in case of unexpected blanks</span>
+            <span class="n">data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">content_nl</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_gi</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            
+    <span class="c1"># add edges</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content_am</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">n1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">n2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># ignore edge weight here.</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">content_gi</span><span class="p">[</span><span class="n">n1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span>
+
+    <span class="c1"># add edge labels</span>
+    <span class="k">if</span> <span class="s1">&#39;fel&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+        <span class="n">content_el</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fel</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_el</span><span class="p">):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content_am</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">content_gi</span><span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;bond_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+
+    <span class="c1"># add node attributes</span>
+    <span class="k">if</span> <span class="s1">&#39;fna&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+        <span class="n">content_na</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fna</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_na</span><span class="p">):</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">content_gi</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span>
+
+    <span class="c1"># add edge attributes</span>
+    <span class="k">if</span> <span class="s1">&#39;fea&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+        <span class="n">content_ea</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fea</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_ea</span><span class="p">):</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content_am</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">content_gi</span><span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span>
+
+    <span class="c1"># load y</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content_gl</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="loadDataset"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadDataset">[docs]</a><span class="k">def</span> <span class="nf">loadDataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">filename_y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read graph data from filename and load them as NetworkX graphs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : string</span>
+<span class="sd">        The name of the file from where the dataset is read.</span>
+<span class="sd">    filename_y : string</span>
+<span class="sd">        The name of file of the targets corresponding to graphs.</span>
+<span class="sd">    extra_params : dict</span>
+<span class="sd">        Extra parameters only designated to &#39;.mat&#39; format.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    data : List of NetworkX graph.</span>
+<span class="sd">    y : List</span>
+<span class="sd">        Targets corresponding to graphs.</span>
+<span class="sd">        </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function supports following graph dataset formats:</span>
+<span class="sd">    &#39;ds&#39;: load data from .ds file. See comments of function loadFromDS for a example.</span>
+<span class="sd">    &#39;cxl&#39;: load data from Graph eXchange Language file (.cxl file). See </span>
+<span class="sd">        http://www.gupro.de/GXL/Introduction/background.html, 2019 for detail.</span>
+<span class="sd">    &#39;sdf&#39;: load data from structured data file (.sdf file). See </span>
+<span class="sd">        http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx, </span>
+<span class="sd">        2018 for details.</span>
+<span class="sd">    &#39;mat&#39;: Load graph data from a MATLAB (up to version 7.1) .mat file. See</span>
+<span class="sd">        README in downloadable file in http://mlcb.is.tuebingen.mpg.de/Mitarbeiter/Nino/WL/, </span>
+<span class="sd">        2018 for details.</span>
+<span class="sd">    &#39;txt&#39;: Load graph data from a special .txt file. See</span>
+<span class="sd">        https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets,</span>
+<span class="sd">        2019 for details. Note here filename is the name of either .txt file in</span>
+<span class="sd">        the dataset directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">extension</span> <span class="o">=</span> <span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;ds&quot;</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">loadFromDS</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">filename_y</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;cxl&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+        
+        <span class="n">dirname_dataset</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;graph&#39;</span><span class="p">):</span>
+            <span class="n">mol_filename</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;file&#39;</span><span class="p">]</span>
+            <span class="n">mol_class</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loadGXL</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">mol_filename</span><span class="p">))</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mol_class</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;xml&#39;</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">loadFromXML</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">extra_params</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;sdf&quot;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+        <span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">loadSDF</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="n">y_raw</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_y</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="n">y_raw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">tmp0</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tmp1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_raw</span><span class="p">)):</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">y_raw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="n">tmp0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">tmp1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;ajust data&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp1</span><span class="p">[</span><span class="n">tmp0</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>  <span class="c1"># if data[i].name not in tmp0</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span> <span class="o">!=</span> <span class="p">[],</span> <span class="n">data</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;mat&quot;</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">loadMAT</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">extra_params</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;txt&#39;</span><span class="p">:</span>
+        <span class="n">dirname_dataset</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">loadTXT</span><span class="p">(</span><span class="n">dirname_dataset</span><span class="p">)</span>
+        <span class="c1"># print(len(y))</span>
+        <span class="c1"># print(y)</span>
+        <span class="c1"># print(data[0].nodes(data=True))</span>
+        <span class="c1"># print(&#39;----&#39;)</span>
+        <span class="c1"># print(data[0].edges(data=True))</span>
+        <span class="c1"># for g in data:</span>
+        <span class="c1">#     print(g.nodes(data=True))</span>
+        <span class="c1">#     print(&#39;----&#39;)</span>
+        <span class="c1">#     print(g.edges(data=True))</span>
+
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="loadFromXML"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadFromXML">[docs]</a><span class="k">def</span> <span class="nf">loadFromXML</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">extra_params</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+    
+    <span class="k">if</span> <span class="n">extra_params</span><span class="p">:</span>
+        <span class="n">dirname_dataset</span> <span class="o">=</span> <span class="n">extra_params</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dirname_dataset</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;graph&#39;</span><span class="p">):</span>
+        <span class="n">mol_filename</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;file&#39;</span><span class="p">]</span>
+        <span class="n">mol_class</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loadGXL</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">mol_filename</span><span class="p">))</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mol_class</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">y</span></div>
+            
+
+<div class="viewcode-block" id="loadFromDS"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.loadFromDS">[docs]</a><span class="k">def</span> <span class="nf">loadFromDS</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">filename_y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load data from .ds file.</span>
+<span class="sd">    Possible graph formats include:</span>
+<span class="sd">        &#39;.ct&#39;: see function loadCT for detail.</span>
+<span class="sd">        &#39;.gxl&#39;: see dunction loadGXL for detail.</span>
+<span class="sd">    Note these graph formats are checked automatically by the extensions of </span>
+<span class="sd">    graph files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dirname_dataset</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">extension</span> <span class="o">=</span> <span class="n">splitext</span><span class="p">(</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">filename_y</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">filename_y</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;ct&#39;</span><span class="p">:</span> 
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+                <span class="c1"># remove the &#39;#&#39;s in file names</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">loadCT</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+                <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;gxl&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+                <span class="c1"># remove the &#39;#&#39;s in file names</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">loadGXL</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+                <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># y in a seperate file</span>
+        <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;ct&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="c1"># remove the &#39;#&#39;s in file names</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">loadCT</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s1">&#39;gxl&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="c1"># remove the &#39;#&#39;s in file names</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">loadGXL</span><span class="p">(</span><span class="n">dirname_dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>                                                       
+                                                               
+        <span class="n">content_y</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_y</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="c1"># assume entries in filename and filename_y have the same order.</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">content_y</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="c1"># assume the 3rd entry in a line is y (for Alkane dataset)</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+            
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">y</span></div>
+                
+
+<div class="viewcode-block" id="saveDataset"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.graphfiles.saveDataset">[docs]</a><span class="k">def</span> <span class="nf">saveDataset</span><span class="p">(</span><span class="n">Gn</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gformat</span><span class="o">=</span><span class="s1">&#39;gxl&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;gfile&#39;</span><span class="p">,</span> <span class="n">xparams</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save list of graphs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="n">dirname_ds</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dirname_ds</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">dirname_ds</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dirname_ds</span><span class="p">)</span> <span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dirname_ds</span><span class="p">)</span>
+                
+    <span class="k">if</span> <span class="s1">&#39;graph_dir&#39;</span> <span class="ow">in</span> <span class="n">xparams</span><span class="p">:</span>
+        <span class="n">graph_dir</span> <span class="o">=</span> <span class="n">xparams</span><span class="p">[</span><span class="s1">&#39;graph_dir&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">graph_dir</span> <span class="o">=</span> <span class="n">dirname_ds</span> 
+            
+    <span class="k">if</span> <span class="n">group</span> <span class="o">==</span> <span class="s1">&#39;xml&#39;</span> <span class="ow">and</span> <span class="n">gformat</span> <span class="o">==</span> <span class="s1">&#39;gxl&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fgroup</span><span class="p">:</span>
+            <span class="n">fgroup</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;?xml version=</span><span class="se">\&quot;</span><span class="s2">1.0</span><span class="se">\&quot;</span><span class="s2">?&gt;&quot;</span><span class="p">)</span>
+            <span class="n">fgroup</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&lt;!DOCTYPE GraphCollection SYSTEM </span><span class="se">\&quot;</span><span class="s2">http://www.inf.unibz.it/~blumenthal/dtd/GraphCollection.dtd</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="p">)</span>
+            <span class="n">fgroup</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&lt;GraphCollection&gt;&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Gn</span><span class="p">):</span>
+                <span class="n">fname_tmp</span> <span class="o">=</span> <span class="s2">&quot;graph&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.gxl&quot;</span>
+                <span class="n">saveGXL</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">graph_dir</span> <span class="o">+</span> <span class="n">fname_tmp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">xparams</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">])</span>
+                <span class="n">fgroup</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">&lt;graph file=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">fname_tmp</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> class=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">/&gt;&quot;</span><span class="p">)</span>
+            <span class="n">fgroup</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&lt;/GraphCollection&gt;&quot;</span><span class="p">)</span>
+            <span class="n">fgroup</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+            
+            
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>    
+<span class="c1">#    ### Load dataset from .ds file.</span>
+<span class="c1">#    # .ct files.</span>
+<span class="c1">#    ds = {&#39;name&#39;: &#39;Alkane&#39;, &#39;dataset&#39;: &#39;../../datasets/Alkane/dataset.ds&#39;,</span>
+<span class="c1">#        &#39;dataset_y&#39;: &#39;../../datasets/Alkane/dataset_boiling_point_names.txt&#39;}</span>
+<span class="c1">#    Gn, y = loadDataset(ds[&#39;dataset&#39;], filename_y=ds[&#39;dataset_y&#39;])</span>
+<span class="c1">##    ds = {&#39;name&#39;: &#39;Acyclic&#39;, &#39;dataset&#39;: &#39;../../datasets/acyclic/dataset_bps.ds&#39;}  # node symb</span>
+<span class="c1">##    Gn, y = loadDataset(ds[&#39;dataset&#39;])</span>
+<span class="c1">##    ds = {&#39;name&#39;: &#39;MAO&#39;, &#39;dataset&#39;: &#39;../../datasets/MAO/dataset.ds&#39;} # node/edge symb</span>
+<span class="c1">##    Gn, y = loadDataset(ds[&#39;dataset&#39;])</span>
+<span class="c1">##    ds = {&#39;name&#39;: &#39;PAH&#39;, &#39;dataset&#39;: &#39;../../datasets/PAH/dataset.ds&#39;} # unlabeled</span>
+<span class="c1">##    Gn, y = loadDataset(ds[&#39;dataset&#39;])</span>
+<span class="c1">#    print(Gn[1].nodes(data=True))</span>
+<span class="c1">#    print(Gn[1].edges(data=True))</span>
+<span class="c1">#    print(y[1])</span>
+    
+<span class="c1">#    # .gxl file.</span>
+<span class="c1">#    ds = {&#39;name&#39;: &#39;monoterpenoides&#39;, </span>
+<span class="c1">#          &#39;dataset&#39;: &#39;../../datasets/monoterpenoides/dataset_10+.ds&#39;}  # node/edge symb</span>
+<span class="c1">#    Gn, y = loadDataset(ds[&#39;dataset&#39;])</span>
+<span class="c1">#    print(Gn[1].nodes(data=True))</span>
+<span class="c1">#    print(Gn[1].edges(data=True))</span>
+<span class="c1">#    print(y[1])</span>
+    
+    <span class="c1">### Convert graph from one format to another.</span>
+    <span class="c1"># .gxl file.</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;monoterpenoides&#39;</span><span class="p">,</span> 
+          <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="s1">&#39;../../datasets/monoterpenoides/dataset_10+.ds&#39;</span><span class="p">}</span>  <span class="c1"># node/edge symb</span>
+    <span class="n">Gn</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">loadDataset</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;dataset&#39;</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Gn</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Gn</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Convert a graph to the proper NetworkX format that can be recognized by library gedlib.</span>
+    <span class="n">Gn_new</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">G</span> <span class="ow">in</span> <span class="n">Gn</span><span class="p">:</span>
+        <span class="n">G_new</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nd</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">G_new</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">nd</span><span class="p">),</span> <span class="n">chem</span><span class="o">=</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;atom&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">nd1</span><span class="p">,</span> <span class="n">nd2</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">G_new</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">nd1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">nd2</span><span class="p">),</span> <span class="n">valence</span><span class="o">=</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;bond_type&#39;</span><span class="p">])</span>
+<span class="c1">#            G_new.add_edge(str(nd1), str(nd2))</span>
+        <span class="n">Gn_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">G_new</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Gn_new</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Gn_new</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">Gn_new</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl/monoterpenoides&#39;</span>
+    <span class="n">xparams</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;gedlib&#39;</span><span class="p">}</span>
+    <span class="n">saveDataset</span><span class="p">(</span><span class="n">Gn</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gformat</span><span class="o">=</span><span class="s1">&#39;gxl&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;xml&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">xparams</span><span class="o">=</span><span class="n">xparams</span><span class="p">)</span>
+    
+<span class="c1">#    ds = {&#39;name&#39;: &#39;MUTAG&#39;, &#39;dataset&#39;: &#39;../../datasets/MUTAG/MUTAG.mat&#39;,</span>
+<span class="c1">#          &#39;extra_params&#39;: {&#39;am_sp_al_nl_el&#39;: [0, 0, 3, 1, 2]}}  # node/edge symb</span>
+<span class="c1">#    Gn, y = loadDataset(ds[&#39;dataset&#39;], extra_params=ds[&#39;extra_params&#39;])</span>
+<span class="c1">#    saveDataset(Gn, y, group=&#39;xml&#39;, filename=&#39;temp/temp&#39;)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Linlin Jia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,451 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pygraph.utils.utils &mdash; py-graph  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> py-graph
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py-graph</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pygraph.utils.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pygraph.utils.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="c1">#from itertools import product</span>
+
+<span class="c1"># from tqdm import tqdm</span>
+
+
+<div class="viewcode-block" id="getSPLengths"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.getSPLengths">[docs]</a><span class="k">def</span> <span class="nf">getSPLengths</span><span class="p">(</span><span class="n">G1</span><span class="p">):</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">shortest_path</span><span class="p">(</span><span class="n">G1</span><span class="p">)</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">G1</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">(),</span> <span class="n">G1</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sp</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">sp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">distances</span></div>
+
+
+<div class="viewcode-block" id="getSPGraph"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.getSPGraph">[docs]</a><span class="k">def</span> <span class="nf">getSPGraph</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">edge_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Transform graph G to its corresponding shortest-paths graph.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G : NetworkX graph</span>
+<span class="sd">        The graph to be tramsformed.</span>
+<span class="sd">    edge_weight : string</span>
+<span class="sd">        edge attribute corresponding to the edge weight.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    S : NetworkX graph</span>
+<span class="sd">        The shortest-paths graph corresponding to G.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ------</span>
+<span class="sd">    For an input graph G, its corresponding shortest-paths graph S contains the same set of nodes as G, while there exists an edge between all nodes in S which are connected by a walk in G. Every edge in S between two nodes is labeled by the shortest distance between these two nodes.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">floydTransformation</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">edge_weight</span><span class="o">=</span><span class="n">edge_weight</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="floydTransformation"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.floydTransformation">[docs]</a><span class="k">def</span> <span class="nf">floydTransformation</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">edge_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Transform graph G to its corresponding shortest-paths graph using Floyd-transformation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G : NetworkX graph</span>
+<span class="sd">        The graph to be tramsformed.</span>
+<span class="sd">    edge_weight : string</span>
+<span class="sd">        edge attribute corresponding to the edge weight. The default edge weight is bond_type.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    S : NetworkX graph</span>
+<span class="sd">        The shortest-paths graph corresponding to G.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spMatrix</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">floyd_warshall_numpy</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">edge_weight</span><span class="p">)</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">S</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">ns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">G</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">G</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">spMatrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+                <span class="n">S</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">ns</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ns</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">cost</span><span class="o">=</span><span class="n">spMatrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">S</span></div>
+
+
+<div class="viewcode-block" id="untotterTransformation"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.untotterTransformation">[docs]</a><span class="k">def</span> <span class="nf">untotterTransformation</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">node_label</span><span class="p">,</span> <span class="n">edge_label</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Transform graph G according to Mahé et al.&#39;s work to filter out tottering patterns of marginalized kernel and tree pattern kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G : NetworkX graph</span>
+<span class="sd">        The graph to be tramsformed.</span>
+<span class="sd">    node_label : string</span>
+<span class="sd">        node attribute used as label. The default node label is &#39;atom&#39;.</span>
+<span class="sd">    edge_label : string</span>
+<span class="sd">        edge attribute used as label. The default edge label is &#39;bond_type&#39;.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    gt : NetworkX graph</span>
+<span class="sd">        The transformed graph corresponding to G.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    [1] Pierre Mahé, Nobuhisa Ueda, Tatsuya Akutsu, Jean-Luc Perret, and Jean-Philippe Vert. Extensions of marginalized graph kernels. In Proceedings of the twenty-first international conference on Machine learning, page 70. ACM, 2004.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># arrange all graphs in a list</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">to_directed</span><span class="p">()</span>
+    <span class="n">gt</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">gt</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">graph</span>
+    <span class="n">gt</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">edges</span><span class="p">():</span>
+        <span class="n">gt</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+        <span class="n">gt</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">edge</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">node_label</span><span class="p">:</span> <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">node_label</span><span class="p">]})</span>
+        <span class="n">gt</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">)</span>
+        <span class="n">gt</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="n">edge_label</span><span class="p">:</span>
+            <span class="n">G</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">edge_label</span><span class="p">]</span>
+        <span class="p">})</span>
+        <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">G</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]]:</span>
+            <span class="k">if</span> <span class="n">neighbor</span> <span class="o">!=</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">gt</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">neighbor</span><span class="p">))</span>
+                <span class="n">gt</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">edge</span><span class="p">,</span> <span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">neighbor</span><span class="p">)]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                    <span class="n">edge_label</span><span class="p">:</span>
+                    <span class="n">G</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">neighbor</span><span class="p">][</span><span class="n">edge_label</span><span class="p">]</span>
+                <span class="p">})</span>
+    <span class="c1"># nx.draw_networkx(gt)</span>
+    <span class="c1"># plt.show()</span>
+
+    <span class="c1"># relabel nodes using consecutive integers for convenience of kernel calculation.</span>
+    <span class="n">gt</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">convert_node_labels_to_integers</span><span class="p">(</span>
+        <span class="n">gt</span><span class="p">,</span> <span class="n">first_label</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">label_attribute</span><span class="o">=</span><span class="s1">&#39;label_orignal&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gt</span></div>
+
+
+<div class="viewcode-block" id="direct_product"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.direct_product">[docs]</a><span class="k">def</span> <span class="nf">direct_product</span><span class="p">(</span><span class="n">G1</span><span class="p">,</span> <span class="n">G2</span><span class="p">,</span> <span class="n">node_label</span><span class="p">,</span> <span class="n">edge_label</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the direct/tensor product of directed graphs G1 and G2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G1, G2 : NetworkX graph</span>
+<span class="sd">        The original graphs.</span>
+<span class="sd">    node_label : string</span>
+<span class="sd">        node attribute used as label. The default node label is &#39;atom&#39;.</span>
+<span class="sd">    edge_label : string</span>
+<span class="sd">        edge attribute used as label. The default edge label is &#39;bond_type&#39;.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    gt : NetworkX graph</span>
+<span class="sd">        The direct product graph of G1 and G2.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This method differs from networkx.tensor_product in that this method only adds nodes and edges in G1 and G2 that have the same labels to the direct product graph.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># arrange all graphs in a list</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
+    <span class="c1"># G = G.to_directed()</span>
+    <span class="n">gt</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+    <span class="c1"># add nodes</span>
+    <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">G1</span><span class="p">,</span> <span class="n">G2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">G1</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">node_label</span><span class="p">]</span> <span class="o">==</span> <span class="n">G2</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">node_label</span><span class="p">]:</span>
+            <span class="n">gt</span><span class="o">.</span><span class="n">add_node</span><span class="p">((</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="n">gt</span><span class="o">.</span><span class="n">nodes</span><span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">node_label</span><span class="p">:</span> <span class="n">G1</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">node_label</span><span class="p">]})</span>
+    <span class="c1"># add edges, faster for sparse graphs (no so many edges), which is the most case for now.</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">u1</span><span class="p">,</span> <span class="n">v1</span><span class="p">),</span> <span class="p">(</span><span class="n">u2</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">G1</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span> <span class="n">G2</span><span class="o">.</span><span class="n">edges</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">u1</span><span class="p">,</span> <span class="n">u2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">gt</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="n">gt</span> <span class="ow">and</span> <span class="n">G1</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">u1</span><span class="p">,</span> <span class="n">v1</span><span class="p">][</span><span class="n">edge_label</span><span class="p">]</span> <span class="o">==</span> <span class="n">G2</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">u2</span><span class="p">,</span>
+                                                             <span class="n">v2</span><span class="p">][</span><span class="n">edge_label</span><span class="p">]:</span>
+            <span class="n">gt</span><span class="o">.</span><span class="n">add_edge</span><span class="p">((</span><span class="n">u1</span><span class="p">,</span> <span class="n">u2</span><span class="p">),</span> <span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">))</span>
+            <span class="n">gt</span><span class="o">.</span><span class="n">edges</span><span class="p">[(</span><span class="n">u1</span><span class="p">,</span> <span class="n">u2</span><span class="p">),</span> <span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="n">edge_label</span><span class="p">:</span>
+                <span class="n">G1</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">u1</span><span class="p">,</span> <span class="n">v1</span><span class="p">][</span><span class="n">edge_label</span><span class="p">]</span>
+            <span class="p">})</span>
+
+    <span class="c1"># # add edges, faster for dense graphs (a lot of edges, complete graph would be super).</span>
+    <span class="c1"># for u, v in product(gt, gt):</span>
+    <span class="c1">#     if (u[0], v[0]) in G1.edges and (</span>
+    <span class="c1">#             u[1], v[1]</span>
+    <span class="c1">#     ) in G2.edges and G1.edges[u[0],</span>
+    <span class="c1">#                                v[0]][edge_label] == G2.edges[u[1],</span>
+    <span class="c1">#                                                              v[1]][edge_label]:</span>
+    <span class="c1">#         gt.add_edge((u[0], u[1]), (v[0], v[1]))</span>
+    <span class="c1">#         gt.edges[(u[0], u[1]), (v[0], v[1])].update({</span>
+    <span class="c1">#             edge_label:</span>
+    <span class="c1">#             G1.edges[u[0], v[0]][edge_label]</span>
+    <span class="c1">#         })</span>
+
+    <span class="c1"># relabel nodes using consecutive integers for convenience of kernel calculation.</span>
+    <span class="c1"># gt = nx.convert_node_labels_to_integers(</span>
+    <span class="c1">#     gt, first_label=0, label_attribute=&#39;label_orignal&#39;)</span>
+    <span class="k">return</span> <span class="n">gt</span></div>
+
+
+<div class="viewcode-block" id="graph_deepcopy"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.graph_deepcopy">[docs]</a><span class="k">def</span> <span class="nf">graph_deepcopy</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deep copy a graph, including deep copy of all nodes, edges and </span>
+<span class="sd">    attributes of the graph, nodes and edges.</span>
+<span class="sd">    </span>
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    It is the same as the NetworkX function graph.copy(), as far as I know.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># add graph attributes.</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">labels</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">G</span><span class="o">.</span><span class="n">is_directed</span><span class="p">():</span>
+        <span class="n">G_copy</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">(</span><span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">G_copy</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+        
+    <span class="c1"># add nodes    </span>
+    <span class="k">for</span> <span class="n">nd</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">labels</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">G_copy</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+        
+    <span class="c1"># add edges.</span>
+    <span class="k">for</span> <span class="n">nd1</span><span class="p">,</span> <span class="n">nd2</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">labels</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">G_copy</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">nd1</span><span class="p">,</span> <span class="n">nd2</span><span class="p">,</span> <span class="o">**</span><span class="n">labels</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">G_copy</span></div>
+
+
+<div class="viewcode-block" id="graph_isIdentical"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.graph_isIdentical">[docs]</a><span class="k">def</span> <span class="nf">graph_isIdentical</span><span class="p">(</span><span class="n">G1</span><span class="p">,</span> <span class="n">G2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if two graphs are identical, including: same nodes, edges, node</span>
+<span class="sd">    labels/attributes, edge labels/attributes.</span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    ----</span>
+<span class="sd">    1. The type of graphs has to be the same.</span>
+<span class="sd">    2. Global/Graph attributes are neglected as they may contain names for graphs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check nodes.</span>
+    <span class="n">nlist1</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">G1</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">nlist2</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">G2</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nlist1</span> <span class="o">==</span> <span class="n">nlist2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># check edges.</span>
+    <span class="n">elist1</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">G1</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">elist2</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">G2</span><span class="o">.</span><span class="n">edges</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">elist1</span> <span class="o">==</span> <span class="n">elist2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># check graph attributes.</span>
+    
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="get_node_labels"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.get_node_labels">[docs]</a><span class="k">def</span> <span class="nf">get_node_labels</span><span class="p">(</span><span class="n">Gn</span><span class="p">,</span> <span class="n">node_label</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get node labels of dataset Gn.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nl</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">G</span> <span class="ow">in</span> <span class="n">Gn</span><span class="p">:</span>
+        <span class="n">nl</span> <span class="o">=</span> <span class="n">nl</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">get_node_attributes</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">node_label</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">nl</span></div>
+
+
+<div class="viewcode-block" id="get_edge_labels"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.utils.get_edge_labels">[docs]</a><span class="k">def</span> <span class="nf">get_edge_labels</span><span class="p">(</span><span class="n">Gn</span><span class="p">,</span> <span class="n">edge_label</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get edge labels of dataset Gn.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">el</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">G</span> <span class="ow">in</span> <span class="n">Gn</span><span class="p">:</span>
+        <span class="n">el</span> <span class="o">=</span> <span class="n">el</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">get_edge_attributes</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">edge_label</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">el</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Linlin Jia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

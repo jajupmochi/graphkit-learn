@@ -1,0 +1,1148 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pygraph.utils.model_selection_precomputed &mdash; py-graph  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> py-graph
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py-graph</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pygraph.utils.model_selection_precomputed</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pygraph.utils.model_selection_precomputed</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">sklearn.kernel_ridge</span> <span class="k">import</span> <span class="n">KernelRidge</span>
+<span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="k">import</span> <span class="n">SVC</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">mean_squared_error</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">KFold</span><span class="p">,</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">ParameterGrid</span>
+
+<span class="c1">#from joblib import Parallel, delayed</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Array</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;../&quot;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="c1">#from os.path import basename, splitext</span>
+<span class="kn">from</span> <span class="nn">pygraph.utils.graphfiles</span> <span class="k">import</span> <span class="n">loadDataset</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+
+<span class="c1">#from memory_profiler import profile</span>
+
+<span class="c1">#@profile</span>
+<div class="viewcode-block" id="model_selection_for_precomputed_kernel"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.model_selection_for_precomputed_kernel">[docs]</a><span class="k">def</span> <span class="nf">model_selection_for_precomputed_kernel</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span>
+                                           <span class="n">estimator</span><span class="p">,</span>
+                                           <span class="n">param_grid_precomputed</span><span class="p">,</span>
+                                           <span class="n">param_grid</span><span class="p">,</span>
+                                           <span class="n">model_type</span><span class="p">,</span>
+                                           <span class="n">NUM_TRIALS</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                                           <span class="n">datafile_y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                           <span class="n">extra_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                           <span class="n">ds_name</span><span class="o">=</span><span class="s1">&#39;ds-unknown&#39;</span><span class="p">,</span>
+                                           <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                           <span class="n">read_gm_from_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                           <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform model selection, fitting and testing for precomputed kernels </span>
+<span class="sd">    using nested CV. Print out neccessary data during the process then finally </span>
+<span class="sd">    the results.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    datafile : string</span>
+<span class="sd">        Path of dataset file.</span>
+<span class="sd">    estimator : function</span>
+<span class="sd">        kernel function used to estimate. This function needs to return a gram matrix.</span>
+<span class="sd">    param_grid_precomputed : dictionary</span>
+<span class="sd">        Dictionary with names (string) of parameters used to calculate gram </span>
+<span class="sd">        matrices as keys and lists of parameter settings to try as values. This </span>
+<span class="sd">        enables searching over any sequence of parameter settings. Params with </span>
+<span class="sd">        length 1 will be omitted.</span>
+<span class="sd">    param_grid : dictionary</span>
+<span class="sd">        Dictionary with names (string) of parameters used as penelties as keys </span>
+<span class="sd">        and lists of parameter settings to try as values. This enables </span>
+<span class="sd">        searching over any sequence of parameter settings. Params with length 1</span>
+<span class="sd">        will be omitted.</span>
+<span class="sd">    model_type : string</span>
+<span class="sd">        Type of the problem, can be &#39;regression&#39; or &#39;classification&#39;.</span>
+<span class="sd">    NUM_TRIALS : integer</span>
+<span class="sd">        Number of random trials of outer cv loop. The default is 30.</span>
+<span class="sd">    datafile_y : string</span>
+<span class="sd">        Path of file storing y data. This parameter is optional depending on </span>
+<span class="sd">        the given dataset file.</span>
+<span class="sd">    extra_params : dict</span>
+<span class="sd">        Extra parameters for loading dataset. See function pygraph.utils.</span>
+<span class="sd">        graphfiles.loadDataset for detail.</span>
+<span class="sd">    ds_name : string</span>
+<span class="sd">        Name of the dataset.</span>
+<span class="sd">    n_jobs : int</span>
+<span class="sd">        Number of jobs for parallelization.</span>
+<span class="sd">    read_gm_from_file : boolean</span>
+<span class="sd">        Whether gram matrices are loaded from a file.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; import sys</span>
+<span class="sd">    &gt;&gt;&gt; sys.path.insert(0, &quot;../&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; from pygraph.utils.model_selection_precomputed import model_selection_for_precomputed_kernel</span>
+<span class="sd">    &gt;&gt;&gt; from pygraph.kernels.untilHPathKernel import untilhpathkernel</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; datafile = &#39;../datasets/MUTAG/MUTAG_A.txt&#39;</span>
+<span class="sd">    &gt;&gt;&gt; estimator = untilhpathkernel</span>
+<span class="sd">    &gt;&gt;&gt; param_grid_precomputed = {’depth’:  np.linspace(1, 10, 10), ’k_func’:</span>
+<span class="sd">            [’MinMax’, ’tanimoto’], ’compute_method’:  [’trie’]}</span>
+<span class="sd">    &gt;&gt;&gt; # ’C’ for classification problems and ’alpha’ for regression problems.</span>
+<span class="sd">    &gt;&gt;&gt; param_grid = [{’C’: np.logspace(-10, 10, num=41, base=10)}, {’alpha’:</span>
+<span class="sd">            np.logspace(-10, 10, num=41, base=10)}]</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; model_selection_for_precomputed_kernel(datafile, estimator, </span>
+<span class="sd">            param_grid_precomputed, param_grid[0], &#39;classification&#39;, ds_name=’MUTAG’)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tqdm</span><span class="o">.</span><span class="n">monitor_interval</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">results_dir</span> <span class="o">=</span> <span class="s1">&#39;../notebooks/results/&#39;</span> <span class="o">+</span> <span class="n">estimator</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">results_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">results_dir</span><span class="p">)</span>
+    <span class="c1"># a string to save all the results.</span>
+    <span class="n">str_fw</span> <span class="o">=</span> <span class="s1">&#39;###################### log time: &#39;</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;. ######################</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;# This file contains results of &#39;</span> <span class="o">+</span> <span class="n">estimator</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39; on dataset &#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;,</span><span class="se">\n</span><span class="s1"># including gram matrices, serial numbers for gram matrix figures and performance.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+
+    <span class="c1"># setup the model type</span>
+    <span class="n">model_type</span> <span class="o">=</span> <span class="n">model_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">model_type</span> <span class="o">!=</span> <span class="s1">&#39;regression&#39;</span> <span class="ow">and</span> <span class="n">model_type</span> <span class="o">!=</span> <span class="s1">&#39;classification&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s1">&#39;The model type is incorrect! Please choose from regression or classification.&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--- This is a </span><span class="si">%s</span><span class="s1"> problem ---&#39;</span> <span class="o">%</span> <span class="n">model_type</span><span class="p">)</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;This is a </span><span class="si">%s</span><span class="s1"> problem.</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_type</span>
+    
+    <span class="c1"># calculate gram matrices rather than read them from file.</span>
+    <span class="k">if</span> <span class="n">read_gm_from_file</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="c1"># Load the dataset</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">1. Loading dataset from file...&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datafile</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">dataset</span><span class="p">,</span> <span class="n">y_all</span> <span class="o">=</span> <span class="n">loadDataset</span><span class="p">(</span>
+                    <span class="n">datafile</span><span class="p">,</span> <span class="n">filename_y</span><span class="o">=</span><span class="n">datafile_y</span><span class="p">,</span> <span class="n">extra_params</span><span class="o">=</span><span class="n">extra_params</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># load data directly from variable.</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">datafile</span>
+            <span class="n">y_all</span> <span class="o">=</span> <span class="n">datafile_y</span>                
+
+        <span class="c1">#     import matplotlib.pyplot as plt</span>
+        <span class="c1">#     import networkx as nx</span>
+        <span class="c1">#     nx.draw_networkx(dataset[30])</span>
+        <span class="c1">#     plt.show()</span>
+    
+        <span class="c1"># Grid of parameters with a discrete number of values for each.</span>
+        <span class="n">param_list_precomputed</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ParameterGrid</span><span class="p">(</span><span class="n">param_grid_precomputed</span><span class="p">))</span>
+        <span class="n">param_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ParameterGrid</span><span class="p">(</span><span class="n">param_grid</span><span class="p">))</span>
+    
+        <span class="n">gram_matrices</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># a list to store gram matrices for all param_grid_precomputed</span>
+        <span class="n">gram_matrix_time</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># a list to store time to calculate gram matrices</span>
+        <span class="n">param_list_pre_revised</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># list to store param grids precomputed ignoring the useless ones</span>
+    
+        <span class="c1"># calculate all gram matrices</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;2. Calculating gram matrices. This could take a while...&#39;</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">II. Gram matrices.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="n">tts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>  <span class="c1"># start training time</span>
+        <span class="n">nb_gm_ignore</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">):</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y_all</span><span class="p">[:]</span>
+            <span class="n">params_out</span><span class="p">[</span><span class="s1">&#39;n_jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_jobs</span>
+            <span class="n">params_out</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbose</span>
+<span class="c1">#            print(dataset)</span>
+<span class="c1">#            import networkx as nx</span>
+<span class="c1">#            nx.draw_networkx(dataset[1])</span>
+<span class="c1">#            plt.show()</span>
+            <span class="n">rtn_data</span> <span class="o">=</span> <span class="n">estimator</span><span class="p">(</span><span class="n">dataset</span><span class="p">[:],</span> <span class="o">**</span><span class="n">params_out</span><span class="p">)</span>
+            <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">current_run_time</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># for some kernels, some graphs in datasets may not meet the </span>
+            <span class="c1"># kernels&#39; requirements for graph structure. These graphs are trimmed. </span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rtn_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">idx_trim</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># the index of trimmed graph list</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="n">idxt</span><span class="p">]</span> <span class="k">for</span> <span class="n">idxt</span> <span class="ow">in</span> <span class="n">idx_trim</span><span class="p">]</span> <span class="c1"># trim y accordingly</span>
+<span class="c1">#            Kmatrix = np.random.rand(2250, 2250)</span>
+<span class="c1">#            current_run_time = 0.1</span>
+            
+            <span class="c1"># remove graphs whose kernels with themselves are zeros </span>
+            <span class="c1"># @todo: y not changed accordingly?</span>
+            <span class="n">Kmatrix_diag</span> <span class="o">=</span> <span class="n">Kmatrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">nb_g_ignore</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">idxk</span><span class="p">,</span> <span class="n">diag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Kmatrix_diag</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">diag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">,</span> <span class="p">(</span><span class="n">idxk</span> <span class="o">-</span> <span class="n">nb_g_ignore</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">,</span> <span class="p">(</span><span class="n">idxk</span> <span class="o">-</span> <span class="n">nb_g_ignore</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">nb_g_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># normalization</span>
+            <span class="c1"># @todo: works only for undirected graph?</span>
+            <span class="n">Kmatrix_diag</span> <span class="o">=</span> <span class="n">Kmatrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)):</span>
+                    <span class="n">Kmatrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Kmatrix_diag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Kmatrix_diag</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                    <span class="n">Kmatrix</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Kmatrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">params_out</span> <span class="o">==</span> <span class="p">{}:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the gram matrix is: &#39;</span><span class="p">)</span>
+                <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;the gram matrix is:</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the gram matrix with parameters&#39;</span><span class="p">,</span> <span class="n">params_out</span><span class="p">,</span> <span class="s1">&#39;is: </span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;the gram matrix with parameters </span><span class="si">%s</span><span class="s1"> is:</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">params_out</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">nb_gm_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignored, as at most only one of all its diagonal value is non-zero.&#39;</span><span class="p">)</span>
+                <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;ignored, as at most only one of all its diagonal value is non-zero.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>                
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+                <span class="p">):</span>  <span class="c1"># if the matrix contains elements that are not numbers</span>
+                    <span class="n">nb_gm_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignored, as it contains elements that are not numbers.&#39;</span><span class="p">)</span>
+                    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;ignored, as it contains elements that are not numbers.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+<span class="c1">#                    print(Kmatrix)</span>
+                    <span class="n">str_fw</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array2string</span><span class="p">(</span>
+                            <span class="n">Kmatrix</span><span class="p">,</span>
+                            <span class="n">separator</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+<span class="c1">#                            separator=&#39;,&#39;,</span>
+<span class="c1">#                            threshold=np.inf,</span>
+<span class="c1">#                            floatmode=&#39;unique&#39;) + &#39;\n\n&#39;</span>
+
+                    <span class="n">fig_file_name</span> <span class="o">=</span> <span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/GM[ds]&#39;</span> <span class="o">+</span> <span class="n">ds_name</span>
+                    <span class="k">if</span> <span class="n">params_out</span> <span class="o">!=</span> <span class="p">{}:</span>
+                        <span class="n">fig_file_name</span> <span class="o">+=</span> <span class="s1">&#39;[params]&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fig_file_name</span> <span class="o">+</span> <span class="s1">&#39;.eps&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="c1">#                    plt.show()</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">clf</span><span class="p">()</span>
+                    <span class="n">gram_matrices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span>
+                    <span class="n">gram_matrix_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_run_time</span><span class="p">)</span>
+                    <span class="n">param_list_pre_revised</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params_out</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">nb_g_ignore</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;, where </span><span class="si">%d</span><span class="s1"> graphs are ignored as their graph kernels with themselves are zeros.&#39;</span> <span class="o">%</span> <span class="n">nb_g_ignore</span><span class="p">)</span>
+                        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;, where </span><span class="si">%d</span><span class="s1"> graphs are ignored as their graph kernels with themselves are zeros.&#39;</span> <span class="o">%</span> <span class="n">nb_g_ignore</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> gram matrices are calculated, </span><span class="si">{}</span><span class="s1"> of which are ignored.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">),</span> <span class="n">nb_gm_ignore</span><span class="p">))</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> gram matrices are calculated, </span><span class="si">{}</span><span class="s1"> of which are ignored.</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">),</span> <span class="n">nb_gm_ignore</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;serial numbers of gram matrix figures and their corresponding parameters settings:</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+            <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">)</span>
+        <span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gram_matrices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;all gram matrices are ignored, no results obtained.&#39;</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">all gram matrices are ignored, no results obtained.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># save gram matrices to file.</span>
+<span class="c1">#            np.savez(results_dir + &#39;/&#39; + ds_name + &#39;.gm&#39;, </span>
+<span class="c1">#                     gms=gram_matrices, params=param_list_pre_revised, y=y, </span>
+<span class="c1">#                     gmtime=gram_matrix_time)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;3. Fitting and predicting using nested cross validation. This could really take a while...&#39;</span>
+                <span class="p">)</span>
+            
+            <span class="c1"># ---- use pool.imap_unordered to parallel and track progress. ----</span>
+<span class="c1">#            train_pref = []</span>
+<span class="c1">#            val_pref = []</span>
+<span class="c1">#            test_pref = []</span>
+<span class="c1">#            def func_assign(result, var_to_assign):</span>
+<span class="c1">#                for idx, itm in enumerate(var_to_assign):</span>
+<span class="c1">#                    itm.append(result[idx])                </span>
+<span class="c1">#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, y, model_type)</span>
+<span class="c1">#                      </span>
+<span class="c1">#            parallel_me(trial_do_partial, range(NUM_TRIALS), func_assign, </span>
+<span class="c1">#                        [train_pref, val_pref, test_pref], glbv=gram_matrices,</span>
+<span class="c1">#                        method=&#39;imap_unordered&#39;, n_jobs=n_jobs, chunksize=1,</span>
+<span class="c1">#                        itr_desc=&#39;cross validation&#39;)</span>
+            
+            <span class="k">def</span> <span class="nf">init_worker</span><span class="p">(</span><span class="n">gms_toshare</span><span class="p">):</span>
+                <span class="k">global</span> <span class="n">G_gms</span>
+                <span class="n">G_gms</span> <span class="o">=</span> <span class="n">gms_toshare</span>
+            
+<span class="c1">#            gram_matrices = np.array(gram_matrices)</span>
+<span class="c1">#            gms_shape = gram_matrices.shape</span>
+<span class="c1">#            gms_array = Array(&#39;d&#39;, np.reshape(gram_matrices.copy(), -1, order=&#39;C&#39;))</span>
+<span class="c1">#            pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(gms_array, gms_shape))</span>
+            <span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">init_worker</span><span class="p">,</span> <span class="n">initargs</span><span class="o">=</span><span class="p">(</span><span class="n">gram_matrices</span><span class="p">,))</span>
+            <span class="n">trial_do_partial</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">parallel_trial_do</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">param_list</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)</span>
+            <span class="n">train_pref</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">val_pref</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">test_pref</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1">#            if NUM_TRIALS &lt; 1000 * n_jobs:</span>
+<span class="c1">#                chunksize = int(NUM_TRIALS / n_jobs) + 1</span>
+<span class="c1">#            else:</span>
+<span class="c1">#                chunksize = 1000</span>
+            <span class="n">chunksize</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">iterator</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">trial_do_partial</span><span class="p">,</span> 
+                        <span class="nb">range</span><span class="p">(</span><span class="n">NUM_TRIALS</span><span class="p">),</span> <span class="n">chunksize</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;cross validation&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">iterator</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">trial_do_partial</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_TRIALS</span><span class="p">),</span> <span class="n">chunksize</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">,</span> <span class="n">o3</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+                <span class="n">train_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o1</span><span class="p">)</span>
+                <span class="n">val_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o2</span><span class="p">)</span>
+                <span class="n">test_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o3</span><span class="p">)</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    
+<span class="c1">#            # ---- use pool.map to parallel. ----</span>
+<span class="c1">#            pool =  Pool(n_jobs)</span>
+<span class="c1">#            trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y[0:250], model_type)</span>
+<span class="c1">#            result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))</span>
+<span class="c1">#            train_pref = [item[0] for item in result_perf]</span>
+<span class="c1">#            val_pref = [item[1] for item in result_perf]</span>
+<span class="c1">#            test_pref = [item[2] for item in result_perf]</span>
+    
+<span class="c1">#            # ---- direct running, normally use a single CPU core. ----</span>
+<span class="c1">#            train_pref = []</span>
+<span class="c1">#            val_pref = []</span>
+<span class="c1">#            test_pref = []</span>
+<span class="c1">#            for i in tqdm(range(NUM_TRIALS), desc=&#39;cross validation&#39;, file=sys.stdout):</span>
+<span class="c1">#                o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)</span>
+<span class="c1">#                train_pref.append(o1)</span>
+<span class="c1">#                val_pref.append(o2)</span>
+<span class="c1">#                test_pref.append(o3)</span>
+<span class="c1">#            print()</span>
+    
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;4. Getting final performance...&#39;</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">III. Performance.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+            <span class="c1"># averages and confidences of performances on outer trials for each combination of parameters</span>
+            <span class="n">average_train_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1">#            print(&#39;val_pref: &#39;, val_pref[0][0])</span>
+            <span class="n">average_val_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">val_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1">#            print(&#39;test_pref: &#39;, test_pref[0][0])</span>
+            <span class="n">average_perf_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># sample std is used here</span>
+            <span class="n">std_train_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">train_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">std_val_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">val_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">std_perf_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">test_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+            <span class="k">if</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s1">&#39;regression&#39;</span><span class="p">:</span>
+                <span class="n">best_val_perf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">average_val_scores</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">best_val_perf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">average_val_scores</span><span class="p">)</span>
+<span class="c1">#            print(&#39;average_val_scores: &#39;, average_val_scores)</span>
+<span class="c1">#            print(&#39;best_val_perf: &#39;, best_val_perf)</span>
+<span class="c1">#            print()</span>
+            <span class="n">best_params_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">average_val_scores</span> <span class="o">==</span> <span class="n">best_val_perf</span><span class="p">)</span>
+            <span class="c1"># find smallest val std with best val perf.</span>
+            <span class="n">best_val_stds</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">std_val_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="n">min_val_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">best_val_stds</span><span class="p">)</span>
+            <span class="n">best_params_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std_val_scores</span> <span class="o">==</span> <span class="n">min_val_std</span><span class="p">)</span>
+            <span class="n">best_params_out</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">param_list_pre_revised</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">best_params_in</span> <span class="o">=</span> <span class="p">[</span><span class="n">param_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_params_out: &#39;</span><span class="p">,</span> <span class="n">best_params_out</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_params_in: &#39;</span><span class="p">,</span> <span class="n">best_params_in</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_val_perf: &#39;</span><span class="p">,</span> <span class="n">best_val_perf</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_val_std: &#39;</span><span class="p">,</span> <span class="n">min_val_std</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best settings of hyper-params to build gram matrix: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_params_out</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best settings of other hyper-params: </span><span class="si">%s</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_params_in</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best_val_perf: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_val_perf</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best_val_std: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">min_val_std</span>
+    
+<span class="c1">#            print(best_params_index)</span>
+<span class="c1">#            print(best_params_index[0])</span>
+<span class="c1">#            print(average_perf_scores)</span>
+            <span class="n">final_performance</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">average_perf_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="n">final_confidence</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">std_perf_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;final_performance: &#39;</span><span class="p">,</span> <span class="n">final_performance</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;final_confidence: &#39;</span><span class="p">,</span> <span class="n">final_confidence</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;final_performance: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">final_performance</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;final_confidence: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">final_confidence</span>
+            <span class="n">train_performance</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">average_train_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="n">train_std</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">std_train_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;train_performance: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_performance</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;train_std: &#39;</span><span class="p">,</span> <span class="n">train_std</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;train_performance: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_performance</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;train_std: </span><span class="si">%s</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_std</span>
+
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">()</span>
+            <span class="n">tt_total</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">tts</span>  <span class="c1"># training time for all hyper-parameters</span>
+            <span class="n">average_gram_matrix_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">)</span>
+            <span class="n">std_gram_matrix_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">best_gram_matrix_time</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">gram_matrix_time</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">ave_bgmt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">)</span>
+            <span class="n">std_bgmt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;time to calculate gram matrix with different hyper-params: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s&#39;</span>
+                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_gram_matrix_time</span><span class="p">,</span> <span class="n">std_gram_matrix_time</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;time to calculate best gram matrix: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">ave_bgmt</span><span class="p">,</span> <span class="n">std_bgmt</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;total training time with all hyper-param choices: </span><span class="si">{:.2f}</span><span class="s1">s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">tt_total</span><span class="p">))</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;time to calculate gram matrix with different hyper-params: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_gram_matrix_time</span><span class="p">,</span> <span class="n">std_gram_matrix_time</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;time to calculate best gram matrix: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ave_bgmt</span><span class="p">,</span> <span class="n">std_bgmt</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;total training time with all hyper-param choices: </span><span class="si">{:.2f}</span><span class="s1">s</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tt_total</span><span class="p">)</span>
+    
+            <span class="c1"># # save results to file</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;average_train_scores.dt&#39;,</span>
+            <span class="c1">#            average_train_scores)</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;average_val_scores&#39;, average_val_scores)</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;average_perf_scores.dt&#39;,</span>
+            <span class="c1">#            average_perf_scores)</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;std_train_scores.dt&#39;, std_train_scores)</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;std_val_scores.dt&#39;, std_val_scores)</span>
+            <span class="c1"># np.savetxt(results_name_pre + &#39;std_perf_scores.dt&#39;, std_perf_scores)</span>
+    
+            <span class="c1"># np.save(results_name_pre + &#39;best_params_index&#39;, best_params_index)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;best_params_pre.dt&#39;, best_params_out)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;best_params_in.dt&#39;, best_params_in)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;best_val_perf.dt&#39;, best_val_perf)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;best_val_std.dt&#39;, best_val_std)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;final_performance.dt&#39;, final_performance)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;final_confidence.dt&#39;, final_confidence)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;train_performance.dt&#39;, train_performance)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;train_std.dt&#39;, train_std)</span>
+    
+            <span class="c1"># np.save(results_name_pre + &#39;gram_matrix_time.dt&#39;, gram_matrix_time)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;average_gram_matrix_time.dt&#39;,</span>
+            <span class="c1">#         average_gram_matrix_time)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;std_gram_matrix_time.dt&#39;,</span>
+            <span class="c1">#         std_gram_matrix_time)</span>
+            <span class="c1"># np.save(results_name_pre + &#39;best_gram_matrix_time.dt&#39;,</span>
+            <span class="c1">#         best_gram_matrix_time)</span>
+    
+    <span class="c1"># read gram matrices from file.</span>
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="c1"># Grid of parameters with a discrete number of values for each.</span>
+<span class="c1">#        param_list_precomputed = list(ParameterGrid(param_grid_precomputed))</span>
+        <span class="n">param_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ParameterGrid</span><span class="p">(</span><span class="n">param_grid</span><span class="p">))</span>
+    
+        <span class="c1"># read gram matrices from file.</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;2. Reading gram matrices from file...&#39;</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">II. Gram matrices.</span><span class="se">\n\n</span><span class="s1">Gram matrices are read from file, see last log for detail.</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">gmfile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;.gm.npz&#39;</span><span class="p">)</span>
+        <span class="n">gram_matrices</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;gms&#39;</span><span class="p">]</span> <span class="c1"># a list to store gram matrices for all param_grid_precomputed</span>
+        <span class="n">gram_matrix_time</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;gmtime&#39;</span><span class="p">]</span> <span class="c1"># time used to compute the gram matrices</span>
+        <span class="n">param_list_pre_revised</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span> <span class="c1"># list to store param grids precomputed ignoring the useless ones</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        
+        <span class="n">tts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>  <span class="c1"># start training time</span>
+<span class="c1">#        nb_gm_ignore = 0  # the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)            </span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                    <span class="s1">&#39;3. Fitting and predicting using nested cross validation. This could really take a while...&#39;</span>
+                    <span class="p">)</span>
+ 
+        <span class="c1"># ---- use pool.imap_unordered to parallel and track progress. ----</span>
+        <span class="k">def</span> <span class="nf">init_worker</span><span class="p">(</span><span class="n">gms_toshare</span><span class="p">):</span>
+            <span class="k">global</span> <span class="n">G_gms</span>
+            <span class="n">G_gms</span> <span class="o">=</span> <span class="n">gms_toshare</span>
+
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">init_worker</span><span class="p">,</span> <span class="n">initargs</span><span class="o">=</span><span class="p">(</span><span class="n">gram_matrices</span><span class="p">,))</span>
+        <span class="n">trial_do_partial</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">parallel_trial_do</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">param_list</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)</span>
+        <span class="n">train_pref</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">val_pref</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">test_pref</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">chunksize</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">iterator</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">trial_do_partial</span><span class="p">,</span> 
+                    <span class="nb">range</span><span class="p">(</span><span class="n">NUM_TRIALS</span><span class="p">),</span> <span class="n">chunksize</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;cross validation&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">iterator</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">trial_do_partial</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_TRIALS</span><span class="p">),</span> <span class="n">chunksize</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">,</span> <span class="n">o3</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+            <span class="n">train_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o1</span><span class="p">)</span>
+            <span class="n">val_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o2</span><span class="p">)</span>
+            <span class="n">test_pref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o3</span><span class="p">)</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        
+        <span class="c1"># # ---- use pool.map to parallel. ----</span>
+        <span class="c1"># result_perf = pool.map(trial_do_partial, range(NUM_TRIALS))</span>
+        <span class="c1"># train_pref = [item[0] for item in result_perf]</span>
+        <span class="c1"># val_pref = [item[1] for item in result_perf]</span>
+        <span class="c1"># test_pref = [item[2] for item in result_perf]</span>
+
+        <span class="c1"># # ---- use joblib.Parallel to parallel and track progress. ----</span>
+        <span class="c1"># trial_do_partial = partial(trial_do, param_list_pre_revised, param_list, gram_matrices, y, model_type)</span>
+        <span class="c1"># result_perf = Parallel(n_jobs=n_jobs, verbose=10)(delayed(trial_do_partial)(trial) for trial in range(NUM_TRIALS))</span>
+        <span class="c1"># train_pref = [item[0] for item in result_perf]</span>
+        <span class="c1"># val_pref = [item[1] for item in result_perf]</span>
+        <span class="c1"># test_pref = [item[2] for item in result_perf]</span>
+
+<span class="c1">#        # ---- direct running, normally use a single CPU core. ----</span>
+<span class="c1">#        train_pref = []</span>
+<span class="c1">#        val_pref = []</span>
+<span class="c1">#        test_pref = []</span>
+<span class="c1">#        for i in tqdm(range(NUM_TRIALS), desc=&#39;cross validation&#39;, file=sys.stdout):</span>
+<span class="c1">#            o1, o2, o3 = trial_do(param_list_pre_revised, param_list, gram_matrices, y, model_type, i)</span>
+<span class="c1">#            train_pref.append(o1)</span>
+<span class="c1">#            val_pref.append(o2)</span>
+<span class="c1">#            test_pref.append(o3)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;4. Getting final performance...&#39;</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">III. Performance.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="c1"># averages and confidences of performances on outer trials for each combination of parameters</span>
+        <span class="n">average_train_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">average_val_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">val_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">average_perf_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># sample std is used here</span>
+        <span class="n">std_train_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">train_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">std_val_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">val_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">std_perf_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">test_pref</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s1">&#39;regression&#39;</span><span class="p">:</span>
+            <span class="n">best_val_perf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">average_val_scores</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">best_val_perf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">average_val_scores</span><span class="p">)</span>
+        <span class="n">best_params_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">average_val_scores</span> <span class="o">==</span> <span class="n">best_val_perf</span><span class="p">)</span>
+        <span class="c1"># find smallest val std with best val perf.</span>
+        <span class="n">best_val_stds</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">std_val_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="n">min_val_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">best_val_stds</span><span class="p">)</span>
+        <span class="n">best_params_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std_val_scores</span> <span class="o">==</span> <span class="n">min_val_std</span><span class="p">)</span>
+        <span class="n">best_params_out</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">param_list_pre_revised</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">best_params_in</span> <span class="o">=</span> <span class="p">[</span><span class="n">param_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_params_out: &#39;</span><span class="p">,</span> <span class="n">best_params_out</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_params_in: &#39;</span><span class="p">,</span> <span class="n">best_params_in</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_val_perf: &#39;</span><span class="p">,</span> <span class="n">best_val_perf</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;best_val_std: &#39;</span><span class="p">,</span> <span class="n">min_val_std</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best settings of hyper-params to build gram matrix: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_params_out</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best settings of other hyper-params: </span><span class="si">%s</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_params_in</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best_val_perf: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">best_val_perf</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;best_val_std: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">min_val_std</span>
+
+        <span class="n">final_performance</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">average_perf_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="n">final_confidence</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">std_perf_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;final_performance: &#39;</span><span class="p">,</span> <span class="n">final_performance</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;final_confidence: &#39;</span><span class="p">,</span> <span class="n">final_confidence</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;final_performance: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">final_performance</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;final_confidence: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">final_confidence</span>
+        <span class="n">train_performance</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">average_train_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="n">train_std</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">std_train_scores</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;train_performance: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_performance</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;train_std: &#39;</span><span class="p">,</span> <span class="n">train_std</span><span class="p">)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;train_performance: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_performance</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;train_std: </span><span class="si">%s</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_std</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+        <span class="n">average_gram_matrix_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">)</span>
+        <span class="n">std_gram_matrix_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">best_gram_matrix_time</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">gram_matrix_time</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">best_params_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">ave_bgmt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">)</span>
+        <span class="n">std_bgmt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_gram_matrix_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>        
+            <span class="nb">print</span><span class="p">(</span>
+                    <span class="s1">&#39;time to calculate gram matrix with different hyper-params: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_gram_matrix_time</span><span class="p">,</span> <span class="n">std_gram_matrix_time</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;time to calculate best gram matrix: </span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">ave_bgmt</span><span class="p">,</span> <span class="n">std_bgmt</span><span class="p">))</span>
+        <span class="n">tt_poster</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">tts</span>  <span class="c1"># training time with hyper-param choices who did not participate in calculation of gram matrices</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                    <span class="s1">&#39;training time with hyper-param choices who did not participate in calculation of gram matrices: </span><span class="si">{:.2f}</span><span class="s1">s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">tt_poster</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;total training time with all hyper-param choices: </span><span class="si">{:.2f}</span><span class="s1">s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">tt_poster</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">)))</span>
+<span class="c1">#        str_fw += &#39;time to calculate gram matrix with different hyper-params: {:.2f}±{:.2f}s\n&#39;.format(average_gram_matrix_time, std_gram_matrix_time)</span>
+<span class="c1">#        str_fw += &#39;time to calculate best gram matrix: {:.2f}±{:.2f}s\n&#39;.format(ave_bgmt, std_bgmt)</span>
+        <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;training time with hyper-param choices who did not participate in calculation of gram matrices: </span><span class="si">{:.2f}</span><span class="s1">s</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tt_poster</span><span class="p">)</span>
+
+        <span class="c1"># open file to save all results for this dataset.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">results_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">results_dir</span><span class="p">)</span>
+            
+    <span class="c1"># print out results as table.</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="n">printResultsInTable</span><span class="p">(</span><span class="n">param_list</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">average_val_scores</span><span class="p">,</span>
+              <span class="n">std_val_scores</span><span class="p">,</span> <span class="n">average_perf_scores</span><span class="p">,</span> <span class="n">std_perf_scores</span><span class="p">,</span>
+              <span class="n">average_train_scores</span><span class="p">,</span> <span class="n">std_train_scores</span><span class="p">,</span> <span class="n">gram_matrix_time</span><span class="p">,</span>
+              <span class="n">model_type</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            
+    <span class="c1"># open file to save all results for this dataset.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;.output.txt&#39;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;.output.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">str_fw</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;.output.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">str_fw</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">content</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="trial_do"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.trial_do">[docs]</a><span class="k">def</span> <span class="nf">trial_do</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">param_list</span><span class="p">,</span> <span class="n">gram_matrices</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">model_type</span><span class="p">,</span> <span class="n">trial</span><span class="p">):</span> <span class="c1"># Test set level</span>
+
+<span class="c1">#    # get gram matrices from global variables.</span>
+<span class="c1">#    gram_matrices = np.reshape(G_gms.copy(), G_gms_shape, order=&#39;C&#39;)</span>
+    
+    <span class="c1"># Arrays to store scores</span>
+    <span class="n">train_pref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_list</span><span class="p">)))</span>
+    <span class="n">val_pref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_list</span><span class="p">)))</span>
+    <span class="n">test_pref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_list</span><span class="p">)))</span>
+
+    <span class="c1"># randomness added to seeds of split function below. &quot;high&quot; is &quot;size&quot; times</span>
+    <span class="c1"># 10 so that at least 10 different random output will be yielded. Remove</span>
+    <span class="c1"># these lines if identical outputs is required.</span>
+    <span class="n">rdm_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">rdm_seed_out_l</span> <span class="o">=</span> <span class="n">rdm_out</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">high</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> 
+                                   <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">))</span>
+<span class="c1">#    print(trial, rdm_seed_out_l)</span>
+<span class="c1">#    print()</span>
+    <span class="c1"># loop for each outer param tuple</span>
+    <span class="k">for</span> <span class="n">index_out</span><span class="p">,</span> <span class="n">params_out</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">):</span>
+        <span class="c1"># get gram matrices from global variables.</span>
+<span class="c1">#        gm_now = G_gms[index_out * G_gms_shape[1] * G_gms_shape[2]:(index_out + 1) * G_gms_shape[1] * G_gms_shape[2]]</span>
+<span class="c1">#        gm_now = np.reshape(gm_now.copy(), (G_gms_shape[1], G_gms_shape[2]), order=&#39;C&#39;)</span>
+        <span class="n">gm_now</span> <span class="o">=</span> <span class="n">gram_matrices</span><span class="p">[</span><span class="n">index_out</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    
+        <span class="c1"># split gram matrix and y to app and test sets.</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="c1"># The argument &quot;random_state&quot; in function &quot;train_test_split&quot; can not be</span>
+        <span class="c1"># set to None, because it will use RandomState instance used by </span>
+        <span class="c1"># np.random, which is possible for multiple subprocesses to inherit the</span>
+        <span class="c1"># same seed if they forked at the same time, leading to identical </span>
+        <span class="c1"># random variates for different subprocesses. Instead, we use &quot;trial&quot; </span>
+        <span class="c1"># and &quot;index_out&quot; parameters to generate different seeds for different </span>
+        <span class="c1"># trials/subprocesses and outer loops. &quot;rdm_seed_out_l&quot; is used to add </span>
+        <span class="c1"># randomness into seeds, so that it yields a different output every </span>
+        <span class="c1"># time the program is run. To yield identical outputs every time,</span>
+        <span class="c1"># remove the second line below. Same method is used to the &quot;KFold&quot;</span>
+        <span class="c1"># function in the inner loop.</span>
+        <span class="n">rdm_seed_out</span> <span class="o">=</span> <span class="p">(</span><span class="n">trial</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">index_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">rdm_seed_out</span> <span class="o">=</span> <span class="p">(</span><span class="n">rdm_seed_out</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rdm_seed_out_l</span><span class="p">[</span><span class="n">index_out</span><span class="p">]))</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">#        print(trial, rdm_seed_out)</span>
+        <span class="n">X_app</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_app</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">idx_app</span><span class="p">,</span> <span class="n">idx_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+            <span class="n">gm_now</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> 
+            <span class="n">random_state</span><span class="o">=</span><span class="n">rdm_seed_out</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#        print(trial, idx_app, idx_test)</span>
+<span class="c1">#        print()</span>
+        <span class="n">X_app</span> <span class="o">=</span> <span class="n">X_app</span><span class="p">[:,</span> <span class="n">idx_app</span><span class="p">]</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">X_test</span><span class="p">[:,</span> <span class="n">idx_app</span><span class="p">]</span>
+        <span class="n">y_app</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_app</span><span class="p">)</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+
+        <span class="n">rdm_seed_in_l</span> <span class="o">=</span> <span class="n">rdm_out</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">high</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> 
+                                   <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list</span><span class="p">))</span>
+        <span class="c1"># loop for each inner param tuple</span>
+        <span class="k">for</span> <span class="n">index_in</span><span class="p">,</span> <span class="n">params_in</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list</span><span class="p">):</span>
+<span class="c1">#            if trial == 0:</span>
+<span class="c1">#                print(index_out, index_in)</span>
+<span class="c1">#                print(&#39;params_in: &#39;, params_in)</span>
+<span class="c1">#            st = time.time()</span>
+            <span class="n">rdm_seed_in</span> <span class="o">=</span> <span class="p">(</span><span class="n">trial</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">index_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">index_in</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">#            print(&quot;rdm_seed_in1: &quot;, trial, index_in, rdm_seed_in)</span>
+            <span class="n">rdm_seed_in</span> <span class="o">=</span> <span class="p">(</span><span class="n">rdm_seed_in</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rdm_seed_in_l</span><span class="p">[</span><span class="n">index_in</span><span class="p">]))</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">#            print(&quot;rdm_seed_in2: &quot;, trial, index_in, rdm_seed_in)</span>
+            <span class="n">inner_cv</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rdm_seed_in</span><span class="p">)</span>
+            <span class="n">current_train_perf</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">current_valid_perf</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">current_test_perf</span> <span class="o">=</span> <span class="p">[]</span> 
+
+            <span class="c1"># For regression use the Kernel Ridge method</span>
+<span class="c1">#            try:</span>
+            <span class="k">if</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s1">&#39;regression&#39;</span><span class="p">:</span>
+                <span class="n">kr</span> <span class="o">=</span> <span class="n">KernelRidge</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params_in</span><span class="p">)</span>
+                <span class="c1"># loop for each split on validation set level</span>
+                <span class="c1"># validation set level</span>
+                <span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">valid_index</span> <span class="ow">in</span> <span class="n">inner_cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X_app</span><span class="p">):</span>
+<span class="c1">#                    print(&quot;train_index, valid_index: &quot;, trial, index_in, train_index, valid_index)</span>
+<span class="c1">#                    if trial == 0:</span>
+<span class="c1">#                        print(&#39;train_index: &#39;, train_index)</span>
+<span class="c1">#                        print(&#39;valid_index: &#39;, valid_index)</span>
+<span class="c1">#                        print(&#39;idx_test: &#39;, idx_test)</span>
+<span class="c1">#                        print(&#39;y_app[train_index]: &#39;, y_app[train_index])</span>
+<span class="c1">#                        print(&#39;X_app[train_index, :][:, train_index]: &#39;, X_app[train_index, :][:, train_index])</span>
+<span class="c1">#                        print(&#39;X_app[valid_index, :][:, train_index]: &#39;, X_app[valid_index, :][:, train_index])</span>
+                    <span class="n">kr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">],</span>
+                           <span class="n">y_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">])</span>
+
+                    <span class="c1"># predict on the train, validation and test set</span>
+                    <span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">])</span>
+                    <span class="n">y_pred_valid</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_app</span><span class="p">[</span><span class="n">valid_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">])</span>
+<span class="c1">#                    if trial == 0:     </span>
+<span class="c1">#                        print(&#39;y_pred_valid: &#39;, y_pred_valid)</span>
+<span class="c1">#                        print()</span>
+                    <span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_test</span><span class="p">[:,</span> <span class="n">train_index</span><span class="p">])</span>
+
+                    <span class="c1"># root mean squared errors</span>
+                    <span class="n">current_train_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                            <span class="n">mean_squared_error</span><span class="p">(</span>
+                                <span class="n">y_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">y_pred_train</span><span class="p">)))</span>
+                    <span class="n">current_valid_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                            <span class="n">mean_squared_error</span><span class="p">(</span>
+                                <span class="n">y_app</span><span class="p">[</span><span class="n">valid_index</span><span class="p">],</span> <span class="n">y_pred_valid</span><span class="p">)))</span>
+<span class="c1">#                    if trial == 0:</span>
+<span class="c1">#                        print(mean_squared_error(</span>
+<span class="c1">#                                y_app[valid_index], y_pred_valid))</span>
+                    <span class="n">current_test_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                            <span class="n">mean_squared_error</span><span class="p">(</span>
+                                <span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_test</span><span class="p">)))</span>
+            <span class="c1"># For clcassification use SVM</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">svc</span> <span class="o">=</span> <span class="n">SVC</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="n">cache_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> 
+                          <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params_in</span><span class="p">)</span>
+                <span class="c1"># loop for each split on validation set level</span>
+                <span class="c1"># validation set level</span>
+                <span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">valid_index</span> <span class="ow">in</span> <span class="n">inner_cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X_app</span><span class="p">):</span>
+<span class="c1">#                        np.savez(&quot;bug.npy&quot;,X_app[train_index, :][:, train_index],y_app[train_index])</span>
+<span class="c1">#                    if trial == 0:</span>
+<span class="c1">#                        print(&#39;train_index: &#39;, train_index)</span>
+<span class="c1">#                        print(&#39;valid_index: &#39;, valid_index)</span>
+<span class="c1">#                        print(&#39;idx_test: &#39;, idx_test)</span>
+<span class="c1">#                        print(&#39;y_app[train_index]: &#39;, y_app[train_index])</span>
+<span class="c1">#                        print(&#39;X_app[train_index, :][:, train_index]: &#39;, X_app[train_index, :][:, train_index])</span>
+<span class="c1">#                        print(&#39;X_app[valid_index, :][:, train_index]: &#39;, X_app[valid_index, :][:, train_index])</span>
+                    <span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">],</span>
+                           <span class="n">y_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">])</span>
+                    
+                    <span class="c1"># predict on the train, validation and test set</span>
+                    <span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">])</span>
+                    <span class="n">y_pred_valid</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_app</span><span class="p">[</span><span class="n">valid_index</span><span class="p">,</span> <span class="p">:][:,</span> <span class="n">train_index</span><span class="p">])</span>
+                    <span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+                        <span class="n">X_test</span><span class="p">[:,</span> <span class="n">train_index</span><span class="p">])</span>
+
+                    <span class="c1"># root mean squared errors</span>
+                    <span class="n">current_train_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_app</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span>
+                                       <span class="n">y_pred_train</span><span class="p">))</span>
+                    <span class="n">current_valid_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_app</span><span class="p">[</span><span class="n">valid_index</span><span class="p">],</span>
+                                       <span class="n">y_pred_valid</span><span class="p">))</span>
+                    <span class="n">current_test_perf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_test</span><span class="p">))</span>
+<span class="c1">#            except ValueError:</span>
+<span class="c1">#                print(sys.exc_info()[0])</span>
+<span class="c1">#                print(params_out, params_in)</span>
+
+            <span class="c1"># average performance on inner splits</span>
+            <span class="n">train_pref</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="n">current_train_perf</span><span class="p">)</span>
+            <span class="n">val_pref</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="n">current_valid_perf</span><span class="p">)</span>
+            <span class="n">test_pref</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="n">current_test_perf</span><span class="p">)</span>
+<span class="c1">#            print(time.time() - st)</span>
+<span class="c1">#    if trial == 0:</span>
+<span class="c1">#        print(&#39;val_pref: &#39;, val_pref)</span>
+<span class="c1">#        print(&#39;test_pref: &#39;, test_pref)</span>
+
+    <span class="k">return</span> <span class="n">train_pref</span><span class="p">,</span> <span class="n">val_pref</span><span class="p">,</span> <span class="n">test_pref</span></div>
+
+<div class="viewcode-block" id="parallel_trial_do"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.parallel_trial_do">[docs]</a><span class="k">def</span> <span class="nf">parallel_trial_do</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">param_list</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">model_type</span><span class="p">,</span> <span class="n">trial</span><span class="p">):</span>
+    <span class="n">train_pref</span><span class="p">,</span> <span class="n">val_pref</span><span class="p">,</span> <span class="n">test_pref</span> <span class="o">=</span> <span class="n">trial_do</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">,</span> 
+                                               <span class="n">param_list</span><span class="p">,</span> <span class="n">G_gms</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> 
+                                               <span class="n">model_type</span><span class="p">,</span> <span class="n">trial</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">train_pref</span><span class="p">,</span> <span class="n">val_pref</span><span class="p">,</span> <span class="n">test_pref</span></div>
+
+
+<div class="viewcode-block" id="compute_gram_matrices"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.compute_gram_matrices">[docs]</a><span class="k">def</span> <span class="nf">compute_gram_matrices</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">estimator</span><span class="p">,</span> <span class="n">param_list_precomputed</span><span class="p">,</span> 
+                          <span class="n">results_dir</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">,</span>
+                          <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">str_fw</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">gram_matrices</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># a list to store gram matrices for all param_grid_precomputed</span>
+    <span class="n">gram_matrix_time</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># a list to store time to calculate gram matrices</span>
+    <span class="n">param_list_pre_revised</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">]</span>  <span class="c1"># list to store param grids precomputed ignoring the useless ones</span>
+    
+    <span class="n">nb_gm_ignore</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># the number of gram matrices those should not be considered, as they may contain elements that are not numbers (NaN)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">):</span>
+        <span class="n">params_out</span><span class="p">[</span><span class="s1">&#39;n_jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_jobs</span>
+<span class="c1">#            print(dataset)</span>
+<span class="c1">#            import networkx as nx</span>
+<span class="c1">#            nx.draw_networkx(dataset[1])</span>
+<span class="c1">#            plt.show()</span>
+        <span class="n">rtn_data</span> <span class="o">=</span> <span class="n">estimator</span><span class="p">(</span><span class="n">dataset</span><span class="p">[:],</span> <span class="o">**</span><span class="n">params_out</span><span class="p">)</span>
+        <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">current_run_time</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># for some kernels, some graphs in datasets may not meet the </span>
+        <span class="c1"># kernels&#39; requirements for graph structure. These graphs are trimmed. </span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rtn_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">idx_trim</span> <span class="o">=</span> <span class="n">rtn_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># the index of trimmed graph list</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="n">idxt</span><span class="p">]</span> <span class="k">for</span> <span class="n">idxt</span> <span class="ow">in</span> <span class="n">idx_trim</span><span class="p">]</span> <span class="c1"># trim y accordingly</span>
+
+        <span class="n">Kmatrix_diag</span> <span class="o">=</span> <span class="n">Kmatrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c1"># remove graphs whose kernels with themselves are zeros</span>
+        <span class="n">nb_g_ignore</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idxk</span><span class="p">,</span> <span class="n">diag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Kmatrix_diag</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">diag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">,</span> <span class="p">(</span><span class="n">idxk</span> <span class="o">-</span> <span class="n">nb_g_ignore</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">Kmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">,</span> <span class="p">(</span><span class="n">idxk</span> <span class="o">-</span> <span class="n">nb_g_ignore</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">nb_g_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># normalization</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)):</span>
+                <span class="n">Kmatrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Kmatrix_diag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Kmatrix_diag</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                <span class="n">Kmatrix</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Kmatrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">params_out</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the gram matrix is: &#39;</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;the gram matrix is:</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the gram matrix with parameters&#39;</span><span class="p">,</span> <span class="n">params_out</span><span class="p">,</span> <span class="s1">&#39;is: &#39;</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;the gram matrix with parameters </span><span class="si">%s</span><span class="s1"> is:</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">params_out</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">nb_gm_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignored, as at most only one of all its diagonal value is non-zero.&#39;</span><span class="p">)</span>
+            <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;ignored, as at most only one of all its diagonal value is non-zero.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>                
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+            <span class="p">):</span>  <span class="c1"># if the matrix contains elements that are not numbers</span>
+                <span class="n">nb_gm_ignore</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignored, as it contains elements that are not numbers.&#39;</span><span class="p">)</span>
+                <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;ignored, as it contains elements that are not numbers.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+<span class="c1">#                    print(Kmatrix)</span>
+                <span class="n">str_fw</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array2string</span><span class="p">(</span>
+                        <span class="n">Kmatrix</span><span class="p">,</span>
+                        <span class="n">separator</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+<span class="c1">#                            separator=&#39;,&#39;,</span>
+<span class="c1">#                            threshold=np.inf,</span>
+<span class="c1">#                            floatmode=&#39;unique&#39;) + &#39;\n\n&#39;</span>
+
+                <span class="n">fig_file_name</span> <span class="o">=</span> <span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/GM[ds]&#39;</span> <span class="o">+</span> <span class="n">ds_name</span>
+                <span class="k">if</span> <span class="n">params_out</span> <span class="o">!=</span> <span class="p">{}:</span>
+                    <span class="n">fig_file_name</span> <span class="o">+=</span> <span class="s1">&#39;[params]&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fig_file_name</span> <span class="o">+</span> <span class="s1">&#39;.eps&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="c1">#                    plt.show()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">clf</span><span class="p">()</span>
+                <span class="n">gram_matrices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Kmatrix</span><span class="p">)</span>
+                <span class="n">gram_matrix_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_run_time</span><span class="p">)</span>
+                <span class="n">param_list_pre_revised</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params_out</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">nb_g_ignore</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;, where </span><span class="si">%d</span><span class="s1"> graphs are ignored as their graph kernels with themselves are zeros.&#39;</span> <span class="o">%</span> <span class="n">nb_g_ignore</span><span class="p">)</span>
+                    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;, where </span><span class="si">%d</span><span class="s1"> graphs are ignored as their graph kernels with themselves are zeros.&#39;</span> <span class="o">%</span> <span class="n">nb_g_ignore</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> gram matrices are calculated, </span><span class="si">{}</span><span class="s1"> of which are ignored.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">),</span> <span class="n">nb_gm_ignore</span><span class="p">))</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> gram matrices are calculated, </span><span class="si">{}</span><span class="s1"> of which are ignored.</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">),</span> <span class="n">nb_gm_ignore</span><span class="p">)</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;serial numbers of gram matrix figures and their corresponding parameters settings:</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+    <span class="n">str_fw</span> <span class="o">+=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">params_out</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_precomputed</span><span class="p">)</span>
+    <span class="p">])</span>
+            
+    <span class="k">return</span> <span class="n">gram_matrices</span><span class="p">,</span> <span class="n">gram_matrix_time</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">str_fw</span></div>
+
+
+<div class="viewcode-block" id="read_gram_matrices_from_file"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.read_gram_matrices_from_file">[docs]</a><span class="k">def</span> <span class="nf">read_gram_matrices_from_file</span><span class="p">(</span><span class="n">results_dir</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">):</span>
+    <span class="n">gmfile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">results_dir</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">ds_name</span> <span class="o">+</span> <span class="s1">&#39;.gm.npz&#39;</span><span class="p">)</span>
+    <span class="n">gram_matrices</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;gms&#39;</span><span class="p">]</span> <span class="c1"># a list to store gram matrices for all param_grid_precomputed</span>
+    <span class="n">param_list_pre_revised</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span> <span class="c1"># list to store param grids precomputed ignoring the useless ones</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">gmfile</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">gram_matrices</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="printResultsInTable"><a class="viewcode-back" href="../../../pygraph.utils.html#pygraph.utils.model_selection_precomputed.printResultsInTable">[docs]</a><span class="k">def</span> <span class="nf">printResultsInTable</span><span class="p">(</span><span class="n">param_list</span><span class="p">,</span> <span class="n">param_list_pre_revised</span><span class="p">,</span> <span class="n">average_val_scores</span><span class="p">,</span>
+                        <span class="n">std_val_scores</span><span class="p">,</span> <span class="n">average_perf_scores</span><span class="p">,</span> <span class="n">std_perf_scores</span><span class="p">,</span>
+                        <span class="n">average_train_scores</span><span class="p">,</span> <span class="n">std_train_scores</span><span class="p">,</span> <span class="n">gram_matrix_time</span><span class="p">,</span>
+                        <span class="n">model_type</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+    <span class="kn">from</span> <span class="nn">tabulate</span> <span class="k">import</span> <span class="n">tabulate</span>
+    <span class="n">table_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">model_type</span> <span class="o">==</span> <span class="s1">&#39;regression&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">param_in</span> <span class="ow">in</span> <span class="n">param_list</span><span class="p">:</span>
+            <span class="n">param_in</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.2e}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_in</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">param_in</span> <span class="ow">in</span> <span class="n">param_list</span><span class="p">:</span>
+            <span class="n">param_in</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.2e}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_in</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">])</span>
+    <span class="n">table_dict</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[{</span><span class="o">**</span><span class="n">param_out</span><span class="p">,</span> <span class="o">**</span><span class="n">param_in</span><span class="p">}</span>
+                            <span class="k">for</span> <span class="n">param_in</span> <span class="ow">in</span> <span class="n">param_list</span> <span class="k">for</span> <span class="n">param_out</span> <span class="ow">in</span> <span class="n">param_list_pre_revised</span><span class="p">]</span>
+    <span class="n">table_dict</span><span class="p">[</span><span class="s1">&#39;gram_matrix_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gram_matrix_time</span><span class="p">[</span><span class="n">index_out</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">param_in</span> <span class="ow">in</span> <span class="n">param_list</span>
+        <span class="k">for</span> <span class="n">index_out</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">table_dict</span><span class="p">[</span><span class="s1">&#39;valid_perf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_val_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">],</span>
+                               <span class="n">std_val_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">index_in</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index_out</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">table_dict</span><span class="p">[</span><span class="s1">&#39;test_perf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_perf_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">],</span>
+                               <span class="n">std_perf_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">index_in</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index_out</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">table_dict</span><span class="p">[</span><span class="s1">&#39;train_perf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">±</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">average_train_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">],</span>
+                               <span class="n">std_train_scores</span><span class="p">[</span><span class="n">index_out</span><span class="p">][</span><span class="n">index_in</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">index_in</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index_out</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_list_pre_revised</span><span class="p">)</span>
+    <span class="p">]</span>
+    
+    <span class="n">keyorder</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="s1">&#39;train_perf&#39;</span><span class="p">,</span> <span class="s1">&#39;valid_perf&#39;</span><span class="p">,</span> <span class="s1">&#39;test_perf&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gram_matrix_time&#39;</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">()</span>
+    <span class="n">tb_print</span> <span class="o">=</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">table_dict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> 
+                        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">keyorder</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]))),</span> <span class="n">headers</span><span class="o">=</span><span class="s1">&#39;keys&#39;</span><span class="p">)</span>
+<span class="c1">#            print(tb_print)</span>
+    <span class="k">return</span> <span class="s1">&#39;table of performance v.s. hyper-params:</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">tb_print</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Linlin Jia
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
