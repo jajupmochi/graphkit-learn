@@ -13,33 +13,46 @@ import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 
-from gedlibpy_linlin import librariesImport, gedlibpy
+#from gedlibpy_linlin import librariesImport, gedlibpy
+from libs import *
 
-def GED(g1, g2, lib='gedlibpy', cost='CHEM_1', method='IPFP', 
+def GED(g1, g2, dataset='monoterpenoides', lib='gedlibpy', cost='CHEM_1', method='IPFP', 
         edit_cost_constant=[], algo_options='', stabilizer='min', repeat=50):
     """
     Compute GED for 2 graphs.
     """
-    def convertGraph(G):
+    def convertGraph(G, dataset):
         """Convert a graph to the proper NetworkX format that can be
         recognized by library gedlibpy.
         """
         G_new = nx.Graph()
-        for nd, attrs in G.nodes(data=True):
-            G_new.add_node(str(nd), chem=attrs['atom'])
-#                G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
-#                               y=str(attrs['attributes'][1]))
-        for nd1, nd2, attrs in G.edges(data=True):
-#            G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
-            G_new.add_edge(str(nd1), str(nd2))
+        if dataset == 'monoterpenoides':
+            for nd, attrs in G.nodes(data=True):
+                G_new.add_node(str(nd), chem=attrs['atom'])
+            for nd1, nd2, attrs in G.edges(data=True):
+                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+        elif dataset == 'letter':   
+            for nd, attrs in G.nodes(data=True):
+                G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
+                               y=str(attrs['attributes'][1]))
+            for nd1, nd2, attrs in G.edges(data=True):
+                G_new.add_edge(str(nd1), str(nd2))
+        else:
+            for nd, attrs in G.nodes(data=True):
+                G_new.add_node(str(nd), chem=attrs['atom'])
+            for nd1, nd2, attrs in G.edges(data=True):
+                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+#                G_new.add_edge(str(nd1), str(nd2))
             
         return G_new
-        
+    
+    
+    dataset = dataset.lower()
     
     if lib == 'gedlibpy':
         gedlibpy.restart_env()
-        gedlibpy.add_nx_graph(convertGraph(g1), "")
-        gedlibpy.add_nx_graph(convertGraph(g2), "")
+        gedlibpy.add_nx_graph(convertGraph(g1, dataset), "")
+        gedlibpy.add_nx_graph(convertGraph(g2, dataset), "")
 
         listID = gedlibpy.get_all_graph_ids()
         gedlibpy.set_edit_cost(cost, edit_cost_constant=edit_cost_constant)
@@ -320,6 +333,60 @@ def get_nb_edit_operations(g1, g2, forward_map, backward_map):
         # one of the nodes is removed, thus the edge is removed.
         if forward_map[idx1] == np.inf or forward_map[idx2] == np.inf:
             n_er += 1
+        # corresponding edge is in g2.
+        elif (forward_map[idx1], forward_map[idx2]) in g2.edges():
+            nb_edges2_cnted += 1
+            # edge labels are different.
+            if g2.edges[((forward_map[idx1], forward_map[idx2]))]['bond_type'] \
+                != g1.edges[(n1, n2)]['bond_type']:
+                    n_es += 1
+        elif (forward_map[idx2], forward_map[idx1]) in g2.edges():
+            nb_edges2_cnted += 1
+            # edge labels are different.
+            if g2.edges[((forward_map[idx2], forward_map[idx1]))]['bond_type'] \
+                != g1.edges[(n1, n2)]['bond_type']:
+                    n_es += 1                
+        # corresponding nodes are in g2, however the edge is removed.
+        else:
+            n_er += 1
+    n_ei = nx.number_of_edges(g2) - nb_edges2_cnted
+    
+    return n_vi, n_vr, n_vs, n_ei, n_er, n_es
+
+
+def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
+    """Compute the number of each edit operations.
+    """
+    n_vi = 0
+    n_vr = 0
+    n_vs = 0
+    sod_vs = 0
+    n_ei = 0
+    n_er = 0
+    
+    nodes1 = [n for n in g1.nodes()]
+    for i, map_i in enumerate(forward_map):
+        if map_i == np.inf:
+            n_vr += 1
+        else:
+            n_vs += 1
+            diff_x = float(g1.nodes[i]['x']) - float(g2.nodes[map_i]['x'])
+            diff_y = float(g1.nodes[i]['y']) - float(g2.nodes[map_i]['y'])
+            sod_vs += np.sqrt(np.square(diff_x) + np.square(diff_y))
+    for map_i in backward_map:
+        if map_i == np.inf:
+            n_vi += 1
+    
+#    idx_nodes1 = range(0, len(node1))
+    
+    edges1 = [e for e in g1.edges()]
+    nb_edges2_cnted = 0
+    for n1, n2 in edges1:
+        idx1 = nodes1.index(n1)
+        idx2 = nodes1.index(n2)
+        # one of the nodes is removed, thus the edge is removed.
+        if forward_map[idx1] == np.inf or forward_map[idx2] == np.inf:
+            n_er += 1
         # corresponding edge is in g2. Edge label is not considered.
         elif (forward_map[idx1], forward_map[idx2]) in g2.edges() or \
             (forward_map[idx2], forward_map[idx1]) in g2.edges():
@@ -329,4 +396,8 @@ def get_nb_edit_operations(g1, g2, forward_map, backward_map):
             n_er += 1
     n_ei = nx.number_of_edges(g2) - nb_edges2_cnted
     
-    return n_vi, n_vr, n_vs, n_ei, n_er, n_es
+    return n_vi, n_vr, n_vs, sod_vs, n_ei, n_er
+
+
+if __name__ == '__main__':
+    print('check test_ged.py')

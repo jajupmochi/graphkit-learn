@@ -31,8 +31,9 @@ from fitDistance import fit_GED_to_kernel_distance
 def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_method,
                                graph_dir='/media/ljia/DATA/research-repo/codes/Linlin/py-graph/datasets/monoterpenoides/', 
                                edit_costs=None, group_min=None, dataset='monoterpenoides',
-                               parallel=True):
-
+                               cost='CONSTANT', parallel=True):
+    dataset = dataset.lower()
+    
 #    # compute distances in kernel space.
 #    dis_mat, _, _, _ = kernel_distance_matrix(Gn, node_label, edge_label, 
 #                                              Kmatrix=None, gkernel=gkernel)
@@ -50,32 +51,53 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
 #    group_min = (12, 13, 22, 29) # closest w.r.t path kernel
 #    group_min = (77, 85, 160, 171) # closest w.r.t ged
 #    group_min = (0,1,2,3,4,5,6,7,8,9,10,11) # closest w.r.t treelet kernel
-
     Gn_median = [Gn[g].copy() for g in group_min]
 
 
     # fit edit costs.    
     if fit_method == 'random': # random
-        edit_cost_constant = random.sample(range(1, 10), 6)
+        if cost == 'LETTER':
+            edit_cost_constant = random.sample(range(1, 10), 3)
+            edit_cost_constant = [item * 0.1 for item in edit_cost_constant]
+        elif cost == 'LETTER2':
+            random.seed(time.time())
+            edit_cost_constant = random.sample(range(1, 10), 5)
+#            edit_cost_constant = [item * 0.1 for item in edit_cost_constant]
+        else:
+            edit_cost_constant = random.sample(range(1, 10), 6)
         print('edit costs used:', edit_cost_constant)
     elif fit_method == 'expert': # expert
         edit_cost_constant = [3, 3, 1, 3, 3, 1]
     elif fit_method == 'k-graphs':
         itr_max = 6
-        algo_options = '--threads 8 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'
-        params_ged = {'lib': 'gedlibpy', 'cost': 'CONSTANT', 'method': 'IPFP', 
-                    'algo_options': algo_options, 'stabilizer': None}
+        if cost == 'LETTER':
+            init_costs = [0.9, 1.7, 0.75] 
+        elif cost == 'LETTER2':
+            init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
+        else:
+            init_costs = [3, 3, 1, 3, 3, 1] 
+        algo_options = '--threads 1 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'
+        params_ged = {'lib': 'gedlibpy', 'cost': cost, 'method': 'IPFP', 
+                      'algo_options': algo_options, 'stabilizer': None}
         # fit on k-graph subset
         edit_cost_constant, _, _, _, _, _, _ = fit_GED_to_kernel_distance(Gn_median, 
-                node_label, edge_label, gkernel, itr_max, params_ged=params_ged, parallel=True)
+                node_label, edge_label, gkernel, itr_max, params_ged=params_ged, 
+                init_costs=init_costs, dataset=dataset, parallel=True)
     elif fit_method == 'whole-dataset':
         itr_max = 6
-        algo_options = '--threads 8 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'
-        params_ged = {'lib': 'gedlibpy', 'cost': 'CONSTANT', 'method': 'IPFP', 
+        if cost == 'LETTER':
+            init_costs = [0.9, 1.7, 0.75] 
+        elif cost == 'LETTER2':
+            init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
+        else:
+            init_costs = [3, 3, 1, 3, 3, 1] 
+        algo_options = '--threads 1 --initial-solutions 40 --ratio-runs-from-initial-solutions 1'
+        params_ged = {'lib': 'gedlibpy', 'cost': cost, 'method': 'IPFP', 
                     'algo_options': algo_options, 'stabilizer': None}
         # fit on all subset
         edit_cost_constant, _, _, _, _, _, _ = fit_GED_to_kernel_distance(Gn, 
-                node_label, edge_label, gkernel, itr_max, params_ged=params_ged, parallel=True)
+                node_label, edge_label, gkernel, itr_max, params_ged=params_ged, 
+                init_costs=init_costs, dataset=dataset, parallel=True)
     elif fit_method == 'precomputed':
         edit_cost_constant = edit_costs
 
@@ -83,14 +105,17 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
     # compute set median and gen median using IAM (C++ through bash).
     group_fnames = [Gn[g].graph['filename'] for g in group_min]
     sod_sm, sod_gm, fname_sm, fname_gm = iam_bash(group_fnames, edit_cost_constant,
-                                                  graph_dir=graph_dir, dataset=dataset)
+                                                  cost=cost, graph_dir=graph_dir, 
+                                                  dataset=dataset)
     
     
     # compute distances in kernel space.
     Gn_median = [Gn[g].copy() for g in group_min]
     set_median = loadGXL(fname_sm)
     gen_median = loadGXL(fname_gm)
-    if dataset == 'Letter':
+#    print(gen_median.nodes(data=True))
+#    print(gen_median.edges(data=True))
+    if dataset == 'letter':
         for g in Gn_median:
             reform_attributes(g)
         reform_attributes(set_median)
@@ -98,16 +123,19 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
     
     # compute distance in kernel space for set median.    
     Kmatrix_sm = compute_kernel([set_median] + Gn_median, gkernel, 
-                                None if dataset == 'Letter' else 'chem', 
-                                None if dataset == 'Letter' else 'valence', 
+                                None if dataset == 'letter' else 'chem', 
+                                None if dataset == 'letter' else 'valence', 
                                 False)
     dis_k_sm = dis_gstar(0, range(1, 1+len(Gn_median)), 
                          [1 / len(Gn_median)] * len(Gn_median), Kmatrix_sm, withterm3=False)
-    
+#    print(gen_median.nodes(data=True))
+#    print(gen_median.edges(data=True))
+#    print(set_median.nodes(data=True))
+#    print(set_median.edges(data=True))
     # compute distance in kernel space for generalized median.
     Kmatrix_gm = compute_kernel([gen_median] + Gn_median, gkernel, 
-                                None if dataset == 'Letter' else 'chem', 
-                                None if dataset == 'Letter' else 'valence', 
+                                None if dataset == 'letter' else 'chem', 
+                                None if dataset == 'letter' else 'valence', 
                                 False)
     dis_k_gm = dis_gstar(0, range(1, 1+len(Gn_median)), 
                          [1 / len(Gn_median)] * len(Gn_median), Kmatrix_gm, withterm3=False)

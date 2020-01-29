@@ -61,8 +61,8 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
                               {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel},
                               n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'treeletkernel':
-#        pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
-        pkernel = functools.partial(gaussiankernel, gamma=1e-6)
+        pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
+#        pkernel = functools.partial(gaussiankernel, gamma=1e-6)
         mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
         Kmatrix, _ = treeletkernel(Gn, node_label=node_label, edge_label=edge_label,
                                    sub_kernel=pkernel,

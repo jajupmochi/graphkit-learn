@@ -436,7 +436,8 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
     return G_gen_median_list, sod_gen_median, sod_list, G_set_median_list, sod_set_median
 
 
-def iam_bash(Gn_names, edit_cost_constant, dataset='monoterpenoides',
+def iam_bash(Gn_names, edit_cost_constant, cost='CONSTANT', 
+             dataset='monoterpenoides',
              graph_dir='/media/ljia/DATA/research-repo/codes/Linlin/py-graph/datasets/monoterpenoides/'):
     """Compute the iam by c++ implementation (gedlib) through bash.
     """
@@ -467,12 +468,12 @@ def iam_bash(Gn_names, edit_cost_constant, dataset='monoterpenoides',
 #    graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl'
     
     
-    command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/others/gedlib/gedlib2\'\n'
+    command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/Linlin/gedlib\'\n'
     command += 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GEDLIB_HOME/lib\n'
     command += 'export LD_LIBRARY_PATH\n'
     command += 'cd \'/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/bin\'\n'
     command += './iam_for_python_bash ' + dataset + ' ' + fn_collection \
-            + ' \'' + graph_dir + '\' '
+            + ' \'' + graph_dir + '\' ' + ' ' + cost + ' '
     if edit_cost_constant is None:
         command += 'None'
     else:
@@ -484,7 +485,7 @@ def iam_bash(Gn_names, edit_cost_constant, dataset='monoterpenoides',
     output = stream.readlines()    
 #    print(output)
     sod_sm = float(output[0].strip())
-    sod_gm= float(output[1].strip())
+    sod_gm = float(output[1].strip())
     
     fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
     fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
