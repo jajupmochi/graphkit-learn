@@ -1,7 +1,7 @@
 Experiments
 ===========
 
-To exhibit the effectiveness and practicability of `graphkit-learn` library, we tested it on several benchmark datasets. See `(Kersting et al., 2016) <http://graphkernels.cs.tu-dortmund.de>__ for details on these datasets.
+To exhibit the effectiveness and practicability of `graphkit-learn` library, we tested it on several benchmark datasets. See `(Kersting et al., 2016) <http://graphkernels.cs.tu-dortmund.de>`__ for details on these datasets.
 
 A two-layer nested cross-validation (CV) is applied to select and evaluate models, where outer CV randomly splits the dataset into 10 folds with 9 as validation set, and inner CV then randomly splits validation set to 10 folds with 9 as training set. The whole procedure is performed 30 times, and the average performance is computed over these trails. Possible parameters of a graph kernel are also tuned during this procedure.
 
