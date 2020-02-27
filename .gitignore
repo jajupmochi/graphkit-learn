@@ -18,15 +18,19 @@ notebooks/results/*
 notebooks/check_gm/*
 notebooks/test_parallel/*
 requirements/*
-pygraph/model.py
-pygraph/kernels/*_sym.py
+gklearn/model.py
+gklearn/kernels/*_sym.py
 *.npy
 *.eps
 *.dat
 *.pyc
 
-preimage/*
-!preimage/*.py
+gklearn/preimage/*
+!gklearn/preimage/*.py
 
 __pycache__
 ##*#
+
+docs/build/*
+!docs/build/latex/*.pdf
+docs/log*

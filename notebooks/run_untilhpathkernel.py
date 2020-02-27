@@ -9,7 +9,7 @@ Created on Fri Oct  5 19:19:33 2018
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.untilHPathKernel import untilhpathkernel
+from gklearn.kernels.untilHPathKernel import untilhpathkernel
 
 dslist = [
     {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',

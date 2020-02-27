@@ -2,28 +2,28 @@ import functools
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.spKernel import spkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-#from pygraph.utils.model_selection_precomputed import trial_do
+from gklearn.kernels.spKernel import spkernel
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+#from gklearn.utils.model_selection_precomputed import trial_do
 
 # datasets
 dslist = [
-    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
-    # contains single node graph, node symb
-    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-        'task': 'regression'},  # node symb
-    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
-    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
-    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
-    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node nsymb
-    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node symb/nsymb
-    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
-#    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
-#    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
-#    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb   
+#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+#        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
+#    # contains single node graph, node symb
+#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+#        'task': 'regression'},  # node symb
+#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
+#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
+#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
+#    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
+#    # node nsymb
+#    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
+#    # node symb/nsymb
+#    {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
+    {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
+    {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb
+    {'name': 'D&D', 'dataset': '../datasets/DD/DD_A.txt'}, # node symb   
 #    {'name': 'monoterpenoides', 'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}, # node/edge
 #    {'name': 'Letter-high', 'dataset': '../datasets/Letter-high/Letter-high_A.txt'},
 #    # node nsymb symb

@@ -11,8 +11,8 @@ import numpy as np
 import networkx as nx
 
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.model_selection_precomputed import compute_gram_matrices
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.model_selection_precomputed import compute_gram_matrices
 from sklearn.model_selection import ParameterGrid
 
 from libs import *
@@ -35,7 +35,7 @@ dslist = [
 ]
 
 def run_ms(dataset, y, ds):
-    from pygraph.kernels.marginalizedKernel import marginalizedkernel
+    from gklearn.kernels.marginalizedKernel import marginalizedkernel
     estimator = marginalizedkernel
     #param_grid_precomputed = {'p_quit': np.linspace(0.1, 0.3, 3),
     #                          'n_iteration': np.linspace(1, 1, 1),

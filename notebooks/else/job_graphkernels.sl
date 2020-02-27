@@ -15,5 +15,5 @@
 #SBATCH --mem-per-cpu=4000
 
 srun hostname
-srun cd /home/2017018/ljia01/py-graph/notebooks
+srun cd /home/2017018/ljia01/graphkit-learn/notebooks
 srun python3 run_spkernel.py

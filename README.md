@@ -1,7 +1,7 @@
-# py-graph
-[![Build Status](https://travis-ci.org/jajupmochi/py-graph.svg?branch=ljia)](https://travis-ci.org/jajupmochi/py-graph)
-[![codecov](https://codecov.io/gh/jajupmochi/py-graph/branch/ljia/graph/badge.svg)](https://codecov.io/gh/jajupmochi/py-graph)
-[![Documentation Status](https://readthedocs.org/projects/py-graph/badge/?version=ljia)](https://py-graph.readthedocs.io/en/ljia/?badge=ljia)
+# graphkit-learn
+[![Build Status](https://travis-ci.org/jajupmochi/graphkit-learn.svg?branch=ljia)](https://travis-ci.org/jajupmochi/graphkit-learn)
+[![codecov](https://codecov.io/gh/jajupmochi/graphkit-learn/branch/ljia/graph/badge.svg)](https://codecov.io/gh/jajupmochi/graphkit-learn)
+[![Documentation Status](https://readthedocs.org/projects/graphkit-learn/badge/?version=ljia)](https://graphkit-learn.readthedocs.io/en/ljia/?badge=ljia)
 
 A python package for graph kernels.
 
@@ -20,11 +20,11 @@ A python package for graph kernels.
 
 ## How to use?
 
-Simply clone this repository and voilà! Then check [`notebooks`](https://github.com/jajupmochi/py-graph/tree/ljia/notebooks) directory for demos:
-* [`notebooks`](https://github.com/jajupmochi/py-graph/tree/ljia/notebooks) directory includes test codes of graph kernels based on linear patterns;
-* [`notebooks/tests`](https://github.com/jajupmochi/py-graph/tree/ljia/notebooks/tests) directory includes codes that test some libraries and functions;
-* [`notebooks/utils`](https://github.com/jajupmochi/py-graph/tree/ljia/notebooks/utils) directory includes some useful tools, such as a Gram matrix checker and a function to get properties of datasets;
-* [`notebooks/else`](https://github.com/jajupmochi/py-graph/tree/ljia/notebooks/else) directory includes other codes that we used for experiments.
+Simply clone this repository and voilà! Then check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/ljia/notebooks) directory for demos:
+* [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/ljia/notebooks) directory includes test codes of graph kernels based on linear patterns;
+* [`notebooks/tests`](https://github.com/jajupmochi/graphkit-learn/tree/ljia/notebooks/tests) directory includes codes that test some libraries and functions;
+* [`notebooks/utils`](https://github.com/jajupmochi/graphkit-learn/tree/ljia/notebooks/utils) directory includes some useful tools, such as a Gram matrix checker and a function to get properties of datasets;
+* [`notebooks/else`](https://github.com/jajupmochi/graphkit-learn/tree/ljia/notebooks/else) directory includes other codes that we used for experiments.
 
 ## List of graph kernels
 
@@ -76,6 +76,8 @@ to make this effective permanently.
 Check this paper for detailed description of graph kernels and experimental results:
 
 Linlin Jia, Benoit Gaüzère, and Paul Honeine. Graph Kernels Based on Linear Patterns: Theoretical and Experimental Comparisons. working paper or preprint, March 2019. URL https://hal-normandie-univ.archives-ouvertes.fr/hal-02053946.
+
+A comparison of performances of graph kernels on benchmark datasets can be found [here](https://graphkit-learn.readthedocs.io/en/ljia/index.html#experiments).
 
 ## References
 [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.

@@ -1,1 +1,1 @@
-print('Hello py-graph!')
+print('Hello graphkit-learn!')

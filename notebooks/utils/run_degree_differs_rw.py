@@ -11,14 +11,14 @@ import numpy as np
 import networkx as nx
 
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.model_selection_precomputed import compute_gram_matrices
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.model_selection_precomputed import compute_gram_matrices
 from sklearn.model_selection import ParameterGrid
 
 from libs import *
 import multiprocessing
 import functools
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 dslist = [
     {'name': 'ENZYMES', 'dataset': '../../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
@@ -26,7 +26,7 @@ dslist = [
 ]
 
 def run_ms(dataset, y, ds):
-    from pygraph.kernels.randomWalkKernel import randomwalkkernel
+    from gklearn.kernels.randomWalkKernel import randomwalkkernel
     estimator = randomwalkkernel
     param_grid = [{'C': np.logspace(-10, 10, num=41, base=10)},
               {'alpha': np.logspace(-10, 10, num=41, base=10)}]

@@ -11,8 +11,8 @@ import numpy as np
 import networkx as nx
 
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.model_selection_precomputed import compute_gram_matrices
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.model_selection_precomputed import compute_gram_matrices
 from sklearn.model_selection import ParameterGrid
 
 from libs import *
@@ -35,7 +35,7 @@ dslist = [
 ]
 
 def run_ms(dataset, y, ds):
-    from pygraph.kernels.untilHPathKernel import untilhpathkernel
+    from gklearn.kernels.untilHPathKernel import untilhpathkernel
     estimator = untilhpathkernel
     param_grid_precomputed = {'depth': np.linspace(1, 10, 10),   # [2], 
                               'k_func': ['MinMax', 'tanimoto'],

@@ -10,8 +10,8 @@ import functools
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.rwalk_sym import randomwalkkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.kernels.rwalk_sym import randomwalkkernel
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 import numpy as np
 

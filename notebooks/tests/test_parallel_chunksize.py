@@ -23,10 +23,10 @@ from sklearn.model_selection import ParameterGrid
 sys.path.insert(0, "../")
 sys.path.insert(0, "../../")
 from libs import *
-from pygraph.utils.utils import getSPGraph, direct_product
-from pygraph.utils.graphdataset import get_dataset_attributes
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.utils.utils import getSPGraph, direct_product
+from gklearn.utils.graphdataset import get_dataset_attributes
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 
 def spkernel(*args,

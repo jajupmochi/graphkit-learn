@@ -10,9 +10,9 @@ import functools
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.sp_sym import spkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-#from pygraph.utils.model_selection_precomputed import trial_do
+from gklearn.kernels.sp_sym import spkernel
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+#from gklearn.utils.model_selection_precomputed import trial_do
 
 dslist = [
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},

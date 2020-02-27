@@ -11,8 +11,8 @@ import numpy as np
 import networkx as nx
 
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.model_selection_precomputed import compute_gram_matrices
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.model_selection_precomputed import compute_gram_matrices
 from sklearn.model_selection import ParameterGrid
 
 from libs import *
@@ -24,7 +24,7 @@ dslist = [
 ]
 
 def run_ms(dataset, y, ds):
-    from pygraph.kernels.commonWalkKernel import commonwalkkernel
+    from gklearn.kernels.commonWalkKernel import commonwalkkernel
     estimator = commonwalkkernel
     param_grid_precomputed = [{'compute_method': ['geo'], 
                                'weight': np.linspace(0.01, 0.15, 15)},

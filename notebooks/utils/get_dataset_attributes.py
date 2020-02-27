@@ -8,8 +8,8 @@ Created on Wed Oct 17 16:07:38 2018
 
 import sys
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.graphdataset import get_dataset_attributes
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.graphdataset import get_dataset_attributes
 
 dslist = [
     {'name': 'Acyclic', 'dataset': '../../datasets/acyclic/dataset_bps.ds',},

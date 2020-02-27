@@ -11,14 +11,14 @@ import numpy as np
 import networkx as nx
 
 sys.path.insert(0, "../../")
-from pygraph.utils.graphfiles import loadDataset
-from pygraph.utils.model_selection_precomputed import compute_gram_matrices
+from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.model_selection_precomputed import compute_gram_matrices
 from sklearn.model_selection import ParameterGrid
 
 from libs import *
 import functools
 import multiprocessing
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 dslist = [
 #    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
@@ -37,7 +37,7 @@ dslist = [
 ]
 
 def run_ms(dataset, y, ds):
-    from pygraph.kernels.spKernel import spkernel
+    from gklearn.kernels.spKernel import spkernel
     estimator = spkernel
     mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
     param_grid_precomputed = {'node_kernels': [

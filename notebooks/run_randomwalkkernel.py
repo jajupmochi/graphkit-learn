@@ -10,25 +10,25 @@ import functools
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.randomWalkKernel import randomwalkkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.kernels.randomWalkKernel import randomwalkkernel
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 import numpy as np
 
 
 dslist = [
-    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
-        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
-    # contains single node graph, node symb
-    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
-        'task': 'regression'},  # node symb
-    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
-    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
-    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
-    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
-    # node nsymb
-    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
-    # node symb/nsymb
+#    {'name': 'Alkane', 'dataset': '../datasets/Alkane/dataset.ds', 'task': 'regression',
+#        'dataset_y': '../datasets/Alkane/dataset_boiling_point_names.txt'},  
+#    # contains single node graph, node symb
+#    {'name': 'Acyclic', 'dataset': '../datasets/acyclic/dataset_bps.ds',
+#        'task': 'regression'},  # node symb
+#    {'name': 'MAO', 'dataset': '../datasets/MAO/dataset.ds'}, # node/edge symb
+#    {'name': 'PAH', 'dataset': '../datasets/PAH/dataset.ds'}, # unlabeled
+#    {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt'}, # node/edge symb
+#    {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},
+#    # node nsymb
+#    {'name': 'ENZYMES', 'dataset': '../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'},
+#    # node symb/nsymb
     {'name': 'AIDS', 'dataset': '../datasets/AIDS/AIDS_A.txt'}, # node symb/nsymb, edge symb
     {'name': 'NCI1', 'dataset': '../datasets/NCI1/NCI1_A.txt'}, # node symb
     {'name': 'NCI109', 'dataset': '../datasets/NCI109/NCI109_A.txt'}, # node symb   
@@ -79,8 +79,8 @@ sub_kernels = [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]
 for ds in dslist:
     print()
     print(ds['name'])
-#    for compute_method in ['sylvester', 'conjugate', 'fp', 'spectral']:
-    for compute_method in ['conjugate', 'fp']:
+    for compute_method in ['sylvester', 'conjugate', 'fp', 'spectral']:
+#    for compute_method in ['conjugate', 'fp']:
         if compute_method == 'sylvester':
             param_grid_precomputed = {'compute_method': ['sylvester'],
 #                          'weight': np.linspace(0.01, 0.10, 10)}

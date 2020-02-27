@@ -10,8 +10,8 @@ import functools
 from libs import *
 import multiprocessing
 
-from pygraph.kernels.ssp_sym import structuralspkernel
-from pygraph.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.kernels.ssp_sym import structuralspkernel
+from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 
 dslist = [
     {'name': 'Letter-med', 'dataset': '../datasets/Letter-med/Letter-med_A.txt'},

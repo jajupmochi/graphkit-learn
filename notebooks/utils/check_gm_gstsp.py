@@ -19,7 +19,7 @@ import sys
 sys.path.insert(0, "../../")
 import numpy as np
 import networkx as nx
-from pygraph.utils.graphfiles import loadDataset
+from gklearn.utils.graphfiles import loadDataset
 import matplotlib.pyplot as plt
 from numpy.linalg import eig
 
