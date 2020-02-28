@@ -7,8 +7,10 @@ before_install:
 
 install:
 - pip install -r requirements.txt
+- pip install wheel
 
 script:
+- python setup.py bdist_wheel
 - coverage run tests/tests_tools.py
 
 after_success:
