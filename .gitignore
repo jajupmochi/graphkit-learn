@@ -34,3 +34,7 @@ __pycache__
 docs/build/*
 !docs/build/latex/*.pdf
 docs/log*
+
+*.egg-info
+dist/
+build/

@@ -78,7 +78,7 @@ Check this paper for detailed description of graph kernels and experimental resu
 
 Linlin Jia, Benoit Gaüzère, and Paul Honeine. Graph Kernels Based on Linear Patterns: Theoretical and Experimental Comparisons. working paper or preprint, March 2019. URL https://hal-normandie-univ.archives-ouvertes.fr/hal-02053946.
 
-A comparison of performances of graph kernels on benchmark datasets can be found [here](https://graphkit-learn.readthedocs.io/en/master/index.html#experiments).
+A comparison of performances of graph kernels on benchmark datasets can be found [here](https://graphkit-learn.readthedocs.io/en/master/experiments.html).
 
 ## References
 [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
