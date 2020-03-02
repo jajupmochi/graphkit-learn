@@ -19,7 +19,7 @@ install:
 - python setup.py bdist_wheel
 
 script:
-- pytest --cov-report term --cov=investpy gklearn/tests/
+- pytest --cov-report term --cov=gklearn gklearn/tests/
 
 after_success:
 - codecov
