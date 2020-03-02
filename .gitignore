@@ -38,3 +38,5 @@ docs/log*
 *.egg-info
 dist/
 build/
+
+.coverage
