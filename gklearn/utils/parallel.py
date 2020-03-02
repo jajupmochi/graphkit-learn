@@ -33,6 +33,8 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                     desc=itr_desc, file=sys.stdout) if verbose else 
                     pool.imap_unordered(func, itr, chunksize)):
                     func_assign(result, var_to_assign)
+            pool.close()
+            pool.join()
         else:
             if n_jobs == None:
                 n_jobs = multiprocessing.cpu_count()
@@ -46,7 +48,8 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                     desc=itr_desc, file=sys.stdout) if verbose else 
                     pool.imap_unordered(func, itr, chunksize)):
                     func_assign(result, var_to_assign)
-            
+            pool.close()
+            pool.join()
                     
 
 def parallel_gm(func, Kmatrix, Gn, init_worker=None, glbv=None, 
