@@ -31,7 +31,7 @@ def untilhpathkernel(*args,
                      depth=10,
                      k_func='MinMax',
                      compute_method='trie',
-                     parallel=True,
+                     parallel='imap_unordered',
                      n_jobs=None,
                      verbose=True):
     """Calculate path graph kernels up to depth/hight h between graphs.
@@ -177,7 +177,7 @@ def untilhpathkernel(*args,
                         glbv=(all_paths,), n_jobs=n_jobs, verbose=verbose) 
     
     elif parallel == None:
-        from pympler import asizeof
+#        from pympler import asizeof
         # ---- direct running, normally use single CPU core. ----
 #        print(asizeof.asized(all_paths, detail=1).format())
     
@@ -231,7 +231,7 @@ def untilhpathkernel(*args,
               % (depth, len(Gn), run_time))
 
 #    print(Kmatrix[0][0:10])
-    return Kmatrix, run_time, sizeof_allpaths
+    return Kmatrix, run_time
 
 
 def _untilhpathkernel_do_trie(trie1, trie2, k_func):

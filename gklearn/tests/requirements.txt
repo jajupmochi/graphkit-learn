@@ -5,3 +5,4 @@ networkx
 scikit-learn
 tabulate
 tqdm
+pytest
