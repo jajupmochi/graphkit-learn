@@ -1,17 +1,25 @@
 language: python
 python:
 - '3.6.5'
+- '3.5'
+- '3.6'
+- '3.7'
+- '3.8'
 before_install:
+- python --version
+- pip install -U pip
+- pip install -U pytest
 - pip install codecov
 - pip install coverage
+- pip install pytest-cov
 
 install:
 - pip install -r requirements.txt
 - pip install wheel
+- python setup.py bdist_wheel
 
 script:
-- python setup.py bdist_wheel
-- coverage run tests/tests_tools.py
+- pytest --cov-report term --cov=investpy gklearn/tests/
 
 after_success:
 - codecov
