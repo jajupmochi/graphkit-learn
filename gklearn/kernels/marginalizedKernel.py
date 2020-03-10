@@ -259,8 +259,8 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
                             for neighbor2 in neighbor_n2:
                                 t_dict[(node1, node2, neighbor1, neighbor2)] = \
                                     p_trans_n1 * p_trans_n2 * \
-                                    deltakernel(g1.node[neighbor1][node_label],
-                                                g2.node[neighbor2][node_label]) * \
+                                    deltakernel(g1.nodes[neighbor1][node_label],
+                                                g2.nodes[neighbor2][node_label]) * \
                                     deltakernel(
                                         neighbor_n1[neighbor1][edge_label],
                                         neighbor_n2[neighbor2][edge_label])
