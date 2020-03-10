@@ -15,7 +15,7 @@ before_install:
 
 install:
 - if [ $TRAVIS_PYTHON_VERSION == 3.8 ]; 
-  then pip install -r gklearn/tests/requirements.txt;
+  then pip install -r requirements.txt;
   else pip install -r requirements.txt;
   fi
 - pip install wheel
