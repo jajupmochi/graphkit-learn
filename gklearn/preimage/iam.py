@@ -11,11 +11,9 @@ import random
 import networkx as nx
 from tqdm import tqdm
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphdataset import get_dataset_attributes
 from gklearn.utils.utils import graph_isIdentical, get_node_labels, get_edge_labels
-from ged import GED, ged_median
+from gklearn.preimage.ged import GED, ged_median
 
 
 def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50, 
@@ -438,7 +436,7 @@ def iam_upgraded(Gn_median, Gn_candidate, c_ei=3, c_er=3, c_es=1, ite_max=50,
 
 def iam_bash(Gn_names, edit_cost_constant, cost='CONSTANT', initial_solutions=1,
              dataset='monoterpenoides',
-             graph_dir='/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'):
+             graph_dir=''):
     """Compute the iam by c++ implementation (gedlib) through bash.
     """
     import os
@@ -462,18 +460,18 @@ def iam_bash(Gn_names, edit_cost_constant, cost='CONSTANT', initial_solutions=1,
             fgroup.write("\n</GraphCollection>")
             fgroup.close()
 
-    tmp_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/'
+    tmp_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/'
     fn_collection = tmp_dir + 'collection.' + str(time.time()) + str(random.randint(0, 1e9))
     createCollectionFile(Gn_names, ['dummy'] * len(Gn_names), fn_collection)
 #    fn_collection = tmp_dir + 'collection_for_debug'
-#    graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl'
+#    graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/monoterpenoides/gxl'
     
 #    if dataset == 'Letter-high' or dataset == 'Fingerprint':
 #        dataset = 'letter'
     command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/Linlin/gedlib\'\n'
     command += 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GEDLIB_HOME/lib\n'
     command += 'export LD_LIBRARY_PATH\n'
-    command += 'cd \'/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/bin\'\n'
+    command += 'cd \'' + os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/bin\'\n'
     command += './iam_for_python_bash ' + dataset + ' ' + fn_collection \
             + ' \'' + graph_dir + '\' ' + ' ' + cost + ' ' + str(initial_solutions) + ' '
     if edit_cost_constant is None:
@@ -489,8 +487,8 @@ def iam_bash(Gn_names, edit_cost_constant, cost='CONSTANT', initial_solutions=1,
     sod_sm = float(output[0].strip())
     sod_gm = float(output[1].strip())
     
-    fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
-    fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+    fname_sm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/set_median.gxl'
+    fname_gm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/gen_median.gxl'
     
     return sod_sm, sod_gm, fname_sm, fname_gm
 

@@ -9,12 +9,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
-from utils import remove_edges
-from fitDistance import fit_GED_to_kernel_distance
-from utils import normalize_distance_matrix
+from gklearn.preimage.utils import remove_edges
+from gklearn.preimage.fitDistance import fit_GED_to_kernel_distance
+from gklearn.preimage.utils import normalize_distance_matrix
 
 
 def test_update_costs():
@@ -63,7 +61,7 @@ def median_paper_clcpc_python_best():
     
     y_all = ['3', '1', '4', '6', '7', '8', '9', '2']
     repeats = 50
-    collection_path = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/'
+    collection_path = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/monoterpenoides/'
     graph_dir = collection_path + 'gxl/'
     
     fn_edit_costs_output = 'results/median_paper/edit_costs_output.python_init40.k10.txt'
@@ -160,7 +158,7 @@ def median_paper_clcpc_python_bash_cpp():
     
     y_all = ['3', '1', '4', '6', '7', '8', '9', '2']
     repeats = 50
-    collection_path = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/'
+    collection_path = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/monoterpenoides/'
     graph_dir = collection_path + 'gxl/'
     
     fn_edit_costs_output = 'results/median_paper/edit_costs_output.txt'

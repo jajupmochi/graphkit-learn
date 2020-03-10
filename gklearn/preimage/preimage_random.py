@@ -14,10 +14,7 @@ from tqdm import tqdm
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
-sys.path.insert(0, "../")
-
-from utils import compute_kernel, dis_gstar
+from gklearn.preimage.utils import compute_kernel, dis_gstar
 
 
 def preimage_random(Gn_init, Gn_median, alpha, idx_gi, Kmatrix, k, r_max, l, gkernel):

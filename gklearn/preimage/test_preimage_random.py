@@ -13,14 +13,10 @@ import time
 import random
 #from tqdm import tqdm
 
-#import os
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
-
-from preimage_random import preimage_random
-from ged import ged_median
-from utils import compute_kernel, get_same_item_indices, remove_edges
+from gklearn.preimage.preimage_random import preimage_random
+from gklearn.preimage.ged import ged_median
+from gklearn.preimage.utils import compute_kernel, get_same_item_indices, remove_edges
 
 
 ###############################################################################

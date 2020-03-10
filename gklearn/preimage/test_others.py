@@ -11,12 +11,10 @@ import matplotlib.pyplot as plt
 import time
 from tqdm import tqdm
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
-from median import draw_Letter_graph
-from ged import GED, ged_median
-from utils import get_same_item_indices, compute_kernel, gram2distances, \
+from gklearn.preimage.median import draw_Letter_graph
+from gklearn.preimage.ged import GED, ged_median
+from gklearn.preimage.utils import get_same_item_indices, compute_kernel, gram2distances, \
     dis_gstar, remove_edges
 
 

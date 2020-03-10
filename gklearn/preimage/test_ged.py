@@ -14,13 +14,11 @@ import sys
 def test_NON_SYMBOLIC_cost():
     """Test edit cost LETTER2.
     """
-    import sys
-    sys.path.insert(0, "../")
-    from preimage.ged import GED, get_nb_edit_operations_nonsymbolic, get_nb_edit_operations_letter
-    from preimage.test_k_closest_graphs import reform_attributes
+    from gklearn.preimage.ged import GED, get_nb_edit_operations_nonsymbolic, get_nb_edit_operations_letter
+    from gklearn.preimage.test_k_closest_graphs import reform_attributes
     from gklearn.utils.graphfiles import loadDataset
 
-    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/Letter-high/Letter-high_A.txt'
+    dataset = '../../datasets/Letter-high/Letter-high_A.txt'
     Gn, y_all = loadDataset(dataset)
 
     g1 = Gn[200]
@@ -53,14 +51,12 @@ def test_NON_SYMBOLIC_cost():
 def test_LETTER2_cost():
     """Test edit cost LETTER2.
     """
-    import sys
-    sys.path.insert(0, "../")
-    from preimage.ged import GED, get_nb_edit_operations_letter
-    from preimage.test_k_closest_graphs import reform_attributes
+    from gklearn.preimage.ged import GED, get_nb_edit_operations_letter
+    from gklearn.preimage.test_k_closest_graphs import reform_attributes
     from gklearn.utils.graphfiles import loadDataset
 
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
 
     g1 = Gn[200]
@@ -96,14 +92,12 @@ def test_get_nb_edit_operations_letter():
     should be the same as the cost computed by number of operations and edit
     cost constants.
     """
-    import sys
-    sys.path.insert(0, "../")
-    from preimage.ged import GED, get_nb_edit_operations_letter
-    from preimage.test_k_closest_graphs import reform_attributes
+    from gklearn.preimage.ged import GED, get_nb_edit_operations_letter
+    from gklearn.preimage.test_k_closest_graphs import reform_attributes
     from gklearn.utils.graphfiles import loadDataset
 
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
 
     g1 = Gn[200]
@@ -136,13 +130,12 @@ def test_get_nb_edit_operations():
     numbers of edit operations. The distance/cost computed by GED should be the
     same as the cost computed by number of operations and edit cost constants.
     """
-    import sys
-    sys.path.insert(0, "../")
-    from preimage.ged import GED, get_nb_edit_operations
+    from gklearn.preimage.ged import GED, get_nb_edit_operations
     from gklearn.utils.graphfiles import loadDataset
+    import os
 
-    ds = {'dataset': '../datasets/monoterpenoides/dataset_10+.ds',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'}  # node/edge symb
+    ds = {'dataset': '../../datasets/monoterpenoides/dataset_10+.ds',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '../../datasets/monoterpenoides/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'])
 
     g1 = Gn[20]
@@ -173,11 +166,10 @@ def test_get_nb_edit_operations():
 def test_ged_python_bash_cpp():
     """Test ged computation with python invoking the c++ code by bash command (with updated library).
     """
-    sys.path.insert(0, "../")
     from gklearn.utils.graphfiles import loadDataset
-    from preimage.ged import GED
+    from gklearn.preimage.ged import GED
 
-    data_dir_prefix = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/'
+    data_dir_prefix = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/'
 #    collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/gxl/monoterpenoides.xml'
     collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/monoterpenoides_3_20.xml'
     graph_dir = data_dir_prefix +'generated_datsets/monoterpenoides/gxl/'
@@ -233,7 +225,7 @@ def test_ged_best_settings_updated():
     """Test ged computation with best settings the same as in the C++ code (with updated library).
     """
 
-    data_dir_prefix = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/'
+    data_dir_prefix = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/'
     collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/gxl/monoterpenoides.xml'
 #    collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/monoterpenoides_3_20.xml'
 
@@ -292,7 +284,7 @@ def test_ged_best_settings():
     """Test ged computation with best settings the same as in the C++ code.
     """
 
-    data_dir_prefix = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/'
+    data_dir_prefix = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/'
     collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/gxl/monoterpenoides.xml'
     graph_dir = data_dir_prefix +'generated_datsets/monoterpenoides/gxl/'
 
@@ -350,7 +342,7 @@ def test_ged_default():
     """Test ged computation with default settings.
     """
 
-    data_dir_prefix = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/'
+    data_dir_prefix = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/'
     collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/gxl/monoterpenoides.xml'
     graph_dir = data_dir_prefix +'generated_datsets/monoterpenoides/gxl/'
 
@@ -404,11 +396,10 @@ def test_ged_default():
 def test_ged_min():
     """Test ged computation with the "min" stabilizer.
     """
-    sys.path.insert(0, "../")
     from gklearn.utils.graphfiles import loadDataset
-    from preimage.ged import GED
+    from gklearn.preimage.ged import GED
 
-    data_dir_prefix = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/'
+    data_dir_prefix = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/'
     collection_file = data_dir_prefix + 'generated_datsets/monoterpenoides/gxl/monoterpenoides.xml'
     graph_dir = data_dir_prefix +'generated_datsets/monoterpenoides/gxl/'
 
@@ -487,8 +478,6 @@ def convertGraph(G):
 
 
 def testNxGrapĥ():
-    import sys
-    sys.path.insert(0, "../")
     from gklearn.utils.graphfiles import loadDataset
     ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
           'extra_params': {}}  # node/edge symb

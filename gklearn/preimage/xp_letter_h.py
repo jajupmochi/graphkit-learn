@@ -12,17 +12,15 @@ from shutil import copyfile
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset, loadGXL, saveGXL
-from preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
-from preimage.utils import get_same_item_indices, kernel_distance_matrix
-from preimage.find_best_k import getRelations
+from gklearn.preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
+from gklearn.preimage.utils import get_same_item_indices, kernel_distance_matrix
+from gklearn.preimage.find_best_k import getRelations
 
 
 def xp_letter_h_LETTER2_cost():
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
     
     dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, Kmatrix=None, gkernel='structuralspkernel')
@@ -177,11 +175,11 @@ def xp_letter_h_LETTER2_cost():
                     nb_dis_k_gi2gm[2] += 1
                     
                 # save median graphs.
-                fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
+                fname_sm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/set_median.gxl'
                 fn_pre_sm_new = dir_output + 'medians/set_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + y + '.repeat' + str(repeat)
                 copyfile(fname_sm, fn_pre_sm_new + '.gxl')
-                fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+                fname_gm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/gen_median.gxl'
                 fn_pre_gm_new = dir_output + 'medians/gen_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + y + '.repeat' + str(repeat)
                 copyfile(fname_gm, fn_pre_gm_new + '.gxl')
@@ -243,8 +241,8 @@ def xp_letter_h_LETTER2_cost():
 
 
 def xp_letter_h():
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
     for G in Gn:
         reform_attributes(G)
@@ -396,11 +394,11 @@ def xp_letter_h():
                     nb_dis_k_gi2gm[2] += 1
                     
                 # save median graphs.
-                fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
+                fname_sm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/set_median.gxl'
                 fn_pre_sm_new = dir_output + 'medians/set_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + y + '.repeat' + str(repeat)
                 copyfile(fname_sm, fn_pre_sm_new + '.gxl')
-                fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+                fname_gm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/gen_median.gxl'
                 fn_pre_gm_new = dir_output + 'medians/gen_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + y + '.repeat' + str(repeat)
                 copyfile(fname_gm, fn_pre_gm_new + '.gxl')

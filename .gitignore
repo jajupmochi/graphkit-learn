@@ -15,6 +15,7 @@ datasets/*
 !datasets/AIDS/
 !datasets/monoterpenoides/
 !datasets/Fingerprint/*.txt
+!datasets/Cuneiform/*.txt
 notebooks/results/*
 notebooks/check_gm/*
 notebooks/test_parallel/*
@@ -41,3 +42,4 @@ dist/
 build/
 
 .coverage
+htmlcov

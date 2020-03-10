@@ -11,8 +11,6 @@ Useful functions.
 import multiprocessing
 import numpy as np
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.kernels.marginalizedKernel import marginalizedkernel
 from gklearn.kernels.untilHPathKernel import untilhpathkernel
 from gklearn.kernels.spKernel import spkernel
@@ -41,7 +39,7 @@ def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
     return np.sqrt(term1 - term2 + term3)
 
 
-def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
+def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose, parallel='imap_unordered'):
     if graph_kernel == 'marginalizedkernel':
         Kmatrix, _ = marginalizedkernel(Gn, node_label=node_label, edge_label=edge_label,
                                   p_quit=0.03, n_iteration=10, remove_totters=False,
@@ -49,6 +47,7 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
     elif graph_kernel == 'untilhpathkernel':
         Kmatrix, _ = untilhpathkernel(Gn, node_label=node_label, edge_label=edge_label,
                                   depth=7, k_func='MinMax', compute_method='trie',
+                                  parallel=parallel,
                                   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'spkernel':
         mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
@@ -66,18 +65,18 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose):
         Kmatrix, _ = structuralspkernel(Gn, node_label=node_label, 
                               edge_label=edge_label, node_kernels=sub_kernels,
                               edge_kernels=sub_kernels,
-                              parallel=None, n_jobs=multiprocessing.cpu_count(), 
+                              parallel=parallel, n_jobs=multiprocessing.cpu_count(), 
                               verbose=verbose)
     elif graph_kernel == 'treeletkernel':
         pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
 #        pkernel = functools.partial(gaussiankernel, gamma=1e-6)
         mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
         Kmatrix, _ = treeletkernel(Gn, node_label=node_label, edge_label=edge_label,
-                                   sub_kernel=pkernel,
+                                   sub_kernel=pkernel, parallel=parallel,
                                    n_jobs=multiprocessing.cpu_count(), verbose=verbose)
     elif graph_kernel == 'weisfeilerlehmankernel':
         Kmatrix, _ = weisfeilerlehmankernel(Gn, node_label=node_label, edge_label=edge_label,
-                                   height=4, base_kernel='subtree',
+                                   height=4, base_kernel='subtree', parallel=None,
                                    n_jobs=multiprocessing.cpu_count(), verbose=verbose)
         
     # normalization

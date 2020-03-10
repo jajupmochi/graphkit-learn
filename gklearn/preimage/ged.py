@@ -128,12 +128,10 @@ def GED(g1, g2, dataset='monoterpenoides', lib='gedlibpy', cost='CHEM_1', method
     elif lib == 'gedlib-bash':
         import time
         import random
-        import sys
         import os
-        sys.path.insert(0, "../")
         from gklearn.utils.graphfiles import saveDataset
         
-        tmp_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/'
+        tmp_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/'
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
         fn_collection = tmp_dir + 'collection.' + str(time.time()) + str(random.randint(0, 1e9))
@@ -144,7 +142,7 @@ def GED(g1, g2, dataset='monoterpenoides', lib='gedlibpy', cost='CHEM_1', method
         command = 'GEDLIB_HOME=\'/media/ljia/DATA/research-repo/codes/others/gedlib/gedlib2\'\n'
         command += 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GEDLIB_HOME/lib\n'
         command += 'export LD_LIBRARY_PATH\n'
-        command += 'cd \'/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/bin\'\n'
+        command += 'cd \'' + os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/bin\'\n'
         command += './ged_for_python_bash monoterpenoides ' + fn_collection \
                 + ' \'' + algo_options + '\' '
         for ec in edit_cost_constant:

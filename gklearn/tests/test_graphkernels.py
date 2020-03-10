@@ -15,10 +15,16 @@ def chooseDataset(ds_name):
         ds_file = 'datasets/Alkane/dataset.ds'
         ds_y = 'datasets/Alkane/dataset_boiling_point_names.txt'
         Gn, y = loadDataset(ds_file, filename_y=ds_y)
+        for G in Gn:
+            for node in G.nodes:
+                del G.nodes[node]['attributes']
     # node symbolic labels.
     elif ds_name == 'Acyclic':
         ds_file = 'datasets/acyclic/dataset_bps.ds'
         Gn, y = loadDataset(ds_file)
+        for G in Gn:
+            for node in G.nodes:
+                del G.nodes[node]['attributes']
     # node non-symbolic labels.
     elif ds_name == 'Letter-med':
         ds_file = 'datasets/Letter-med/Letter-med_A.txt'
@@ -27,14 +33,39 @@ def chooseDataset(ds_name):
     elif ds_name == 'AIDS':
         ds_file = 'datasets/AIDS/AIDS_A.txt'
         Gn, y = loadDataset(ds_file)
-        
-    # edge non-symbolic labels (and node non-symbolic labels).
-    elif ds_name == 'Fingerprint':
+    
+    # edge non-symbolic labels (no node labels).
+    elif ds_name == 'Fingerprint_edge':
+        import networkx as nx
         ds_file = 'datasets/Fingerprint/Fingerprint_A.txt'
         Gn, y = loadDataset(ds_file)
+        Gn = [(idx, G) for idx, G in enumerate(Gn) if nx.number_of_edges(G) != 0]
+        idx = [G[0] for G in Gn]
+        Gn = [G[1] for G in Gn]
+        y = [y[i] for i in idx]
+        for G in Gn:
+            G.graph['node_attrs'] = []
+            for node in G.nodes:
+                del G.nodes[node]['attributes']
+                del G.nodes[node]['x']
+                del G.nodes[node]['y']
+    # edge non-symbolic labels (and node non-symbolic labels).
+    elif ds_name == 'Fingerprint':
+        import networkx as nx
+        ds_file = 'datasets/Fingerprint/Fingerprint_A.txt'
+        Gn, y = loadDataset(ds_file)
+        Gn = [(idx, G) for idx, G in enumerate(Gn) if nx.number_of_edges(G) != 0]
+        idx = [G[0] for G in Gn]
+        Gn = [G[1] for G in Gn]
+        y = [y[i] for i in idx]
+    # edge symbolic and non-symbolic labels (and node symbolic and non-symbolic labels).
+    elif ds_name == 'Cuneiform':
+        import networkx as nx
+        ds_file = 'datasets/Cuneiform/Cuneiform_A.txt'
+        Gn, y = loadDataset(ds_file)
     
-    Gn = Gn[0:10]
-    y = y[0:10]
+    Gn = Gn[0:3]
+    y = y[0:3]
     
     return Gn, y
 
@@ -152,7 +183,7 @@ def test_spkernel(ds_name, parallel):
 
 
 #@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
-@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS'])
+@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint', 'Fingerprint_edge', 'Cuneiform'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_structuralspkernel(ds_name, parallel):
     """Test structural shortest path kernel.
@@ -246,4 +277,5 @@ def test_weisfeilerlehmankernel(ds_name, parallel, base_kernel):
         
 
 if __name__ == "__main__":
-    test_spkernel()
+#    test_spkernel('Alkane', 'imap_unordered')
+    test_structuralspkernel('Fingerprint_edge', 'imap_unordered')

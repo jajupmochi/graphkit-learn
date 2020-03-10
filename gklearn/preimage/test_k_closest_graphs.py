@@ -17,15 +17,12 @@ import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 
-#import os
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset, loadGXL
 #from gklearn.utils.logger2file import *
-from iam import iam_upgraded, iam_bash
-from utils import compute_kernel, dis_gstar, kernel_distance_matrix
-from fitDistance import fit_GED_to_kernel_distance
-#from ged import ged_median
+from gklearn.preimage.iam import iam_upgraded, iam_bash
+from gklearn.preimage.utils import compute_kernel, dis_gstar, kernel_distance_matrix
+from gklearn.preimage.fitDistance import fit_GED_to_kernel_distance
+#from gklearn.preimage.ged import ged_median
 
 
 def fit_edit_cost_constants(fit_method, edit_cost_name, 
@@ -204,6 +201,8 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
     if Kmatrix is not None:
         Kmatrix_median = np.copy(Kmatrix[group_min,:])
         Kmatrix_median = Kmatrix_median[:,group_min]
+    else:
+        Kmatrix_median = None
         
 
     # 1. fit edit cost constants. 
@@ -379,7 +378,7 @@ def test_k_closest_graphs_with_cv():
     
     y_all = ['3', '1', '4', '6', '7', '8', '9', '2']
     repeats = 50
-    collection_path = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/'
+    collection_path = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/monoterpenoides/'
     graph_dir = collection_path + 'gxl/'
     
     sod_sm_list = []

@@ -16,7 +16,6 @@ from functools import partial
 import networkx as nx
 import numpy as np
 
-sys.path.insert(0, "../")
 from gklearn.utils.utils import direct_product
 from gklearn.utils.graphdataset import get_dataset_attributes
 from gklearn.utils.parallel import parallel_gm

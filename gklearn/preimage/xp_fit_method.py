@@ -11,35 +11,37 @@ import csv
 from shutil import copyfile
 import networkx as nx
 import matplotlib.pyplot as plt
+import os
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset, loadGXL, saveGXL
-from preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
-from preimage.utils import get_same_item_indices, kernel_distance_matrix, compute_kernel
-from preimage.find_best_k import getRelations
+from gklearn.preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
+from gklearn.preimage.utils import get_same_item_indices, kernel_distance_matrix, compute_kernel
+from gklearn.preimage.find_best_k import getRelations
 
 
 def get_dataset(ds_name):
     if ds_name == 'Letter-high': # node non-symb
-        dataset = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml'
-        graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/' 
+        dataset = 'cpp_ext/data/collections/Letter.xml'
+        graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/' 
         Gn, y_all = loadDataset(dataset, extra_params=graph_dir)
         for G in Gn:
             reform_attributes(G)
     elif ds_name == 'Fingerprint':
-        dataset = '/media/ljia/DATA/research-repo/codes/Linlin/gedlib/data/collections/Fingerprint.xml'
-        graph_dir = '/media/ljia/DATA/research-repo/codes/Linlin/gedlib/data/datasets/Fingerprint/data/'
-        Gn, y_all = loadDataset(dataset, extra_params=graph_dir)
-        for G in Gn:
-            reform_attributes(G)
+#        dataset = 'cpp_ext/data/collections/Fingerprint.xml'
+#        graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/Fingerprint/node_attrs/'
+#        Gn, y_all = loadDataset(dataset, extra_params=graph_dir)
+#        for G in Gn:
+#            reform_attributes(G)
+        dataset = '../../datasets/Fingerprint/Fingerprint_A.txt'
+        graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/Fingerprint/node_attrs/'
+        Gn, y_all = loadDataset(dataset)
     elif ds_name == 'SYNTHETIC':
         pass
     elif ds_name == 'SYNTHETICnew':
-        dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-        graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/SYNTHETICnew'
-#        dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/Letter-high/Letter-high_A.txt'
-#        graph_dir = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'
+        dataset = '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
+        graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/SYNTHETICnew'
+#        dataset = '../../datasets/Letter-high/Letter-high_A.txt'
+#        graph_dir = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'
         Gn, y_all = loadDataset(dataset)
     elif ds_name == 'Synthie':
         pass
@@ -184,6 +186,8 @@ def xp_fit_method_for_non_symbolic(parameters, save_results=True, initial_soluti
             if Kmatrix is not None:
                 Kmatrix_sub = Kmatrix[values,:]
                 Kmatrix_sub = Kmatrix_sub[:,values]
+            else:
+                Kmatrix_sub = None
             
             for repeat in range(repeats):
                 print('\nrepeat =', repeat)
@@ -273,11 +277,11 @@ def xp_fit_method_for_non_symbolic(parameters, save_results=True, initial_soluti
                     nb_dis_k_gi2gm[2] += 1
                     
                 # save median graphs.
-                fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
+                fname_sm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/set_median.gxl'
                 fn_pre_sm_new = dir_output + 'medians/set_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + str(y) + '.repeat' + str(repeat)
                 copyfile(fname_sm, fn_pre_sm_new + '.gxl')
-                fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+                fname_gm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/gen_median.gxl'
                 fn_pre_gm_new = dir_output + 'medians/gen_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + str(y) + '.repeat' + str(repeat)
                 copyfile(fname_gm, fn_pre_gm_new + '.gxl')
@@ -427,62 +431,38 @@ if __name__ == "__main__":
 #                                       initial_solutions=40,
 #                                       Gn_data = [Gn, y_all, graph_dir],
 #                                       k_dis_data = [dis_mat, dis_max, dis_min, dis_mean])
-    
-    
-#    #### xp 3: Fingerprint, sspkernel, using LETTER2.
-#    # load dataset.
-#    print('getting dataset and computing kernel distance matrix first...')
-#    ds_name = 'Fingerprint'
-#    gkernel = 'structuralspkernel'
-#    Gn, y_all, graph_dir = get_dataset(ds_name)
-#    # remove graphs without nodes and edges.
-#    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_edges(G) != 0
-#          and nx.number_of_edges(G) != 0)]
-#    idx = [G[0] for G in Gn]
-#    Gn = [G[1] for G in Gn]
-#    y_all = [y_all[i] for i in idx]
-##    Gn = Gn[0:50]
-##    y_all = y_all[0:50]
-#    # compute pair distances.
-##    dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, 
-##        Kmatrix=None, gkernel=gkernel, verbose=True)
-#    dis_mat, dis_max, dis_min, dis_mean = 0, 0, 0, 0
-#    # fitting and computing.
-#    fit_methods = ['k-graphs', 'expert', 'random', 'random', 'random']
-#    for fit_method in fit_methods:
-#        print('\n-------------------------------------')
-#        print('fit method:', fit_method)
-#        parameters = {'ds_name': ds_name,
-#                      'gkernel': gkernel,
-#                      'edit_cost_name': 'LETTER2',
-#                      'ged_method': 'mIPFP',
-#                      'attr_distance': 'euclidean',
-#                      'fit_method': fit_method}
-#        xp_fit_method_for_non_symbolic(parameters, save_results=True, 
-#                                       initial_solutions=40,
-#                                       Gn_data = [Gn, y_all, graph_dir],
-#                                       k_dis_data = [dis_mat, dis_max, dis_min, dis_mean])
         
         
-#    #### xp 4: SYNTHETICnew, sspkernel, using NON_SYMBOLIC.
+#    #### xp 3: SYNTHETICnew, sspkernel, using NON_SYMBOLIC.
+#    gmfile = np.load('results/xp_fit_method/Kmatrix.SYNTHETICnew.structuralspkernel.gm.npz')
+#    Kmatrix = gmfile['Kmatrix']
+#    run_time = gmfile['run_time']
+#    # normalization
+#    Kmatrix_diag = Kmatrix.diagonal().copy()
+#    for i in range(len(Kmatrix)):
+#        for j in range(i, len(Kmatrix)):
+#            Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
+#            Kmatrix[j][i] = Kmatrix[i][j]
+##    np.savez('results/xp_fit_method/Kmatrix.SYNTHETICnew.spkernel.gm',
+##             Kmatrix=Kmatrix, run_time=run_time)
 #    # load dataset.
 #    print('getting dataset and computing kernel distance matrix first...')
 #    ds_name = 'SYNTHETICnew'
 #    gkernel = 'structuralspkernel'
 #    Gn, y_all, graph_dir = get_dataset(ds_name)
 #    # remove graphs without nodes and edges.
-#    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_edges(G) != 0
+#    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_nodes(G) != 0
 #          and nx.number_of_edges(G) != 0)]
 #    idx = [G[0] for G in Gn]
 #    Gn = [G[1] for G in Gn]
 #    y_all = [y_all[i] for i in idx]
-#    Gn = Gn[0:10]
-#    y_all = y_all[0:10]
+##    Gn = Gn[0:10]
+##    y_all = y_all[0:10]
 #    for G in Gn:
 #        G.graph['filename'] = 'graph' + str(G.graph['name']) + '.gxl'
 #    # compute pair distances.
 #    dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, 
-#        Kmatrix=None, gkernel=gkernel, verbose=True)
+#        Kmatrix=Kmatrix, gkernel=gkernel, verbose=True)
 ##    dis_mat, dis_max, dis_min, dis_mean = 0, 0, 0, 0
 #    # fitting and computing.
 #    fit_methods = ['k-graphs', 'random', 'random', 'random']
@@ -496,68 +476,131 @@ if __name__ == "__main__":
 #                      'attr_distance': 'euclidean',
 #                      'fit_method': fit_method}
 #        xp_fit_method_for_non_symbolic(parameters, save_results=True, 
-#                                       initial_solutions=40,
+#                                       initial_solutions=1,
 #                                       Gn_data = [Gn, y_all, graph_dir],
-#                                       k_dis_data = [dis_mat, dis_max, dis_min, dis_mean])
+#                                       k_dis_data = [dis_mat, dis_max, dis_min, dis_mean],
+#                                       Kmatrix=Kmatrix)
         
         
-    ### xp 5: SYNTHETICnew, spkernel, using NON_SYMBOLIC.
-    gmfile = np.load('results/xp_fit_method/Kmatrix.SYNTHETICnew.spkernel.gm.npz')
-    Kmatrix = gmfile['Kmatrix']
-    # normalization
-    Kmatrix_diag = Kmatrix.diagonal().copy()
-    for i in range(len(Kmatrix)):
-        for j in range(i, len(Kmatrix)):
-            Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
-            Kmatrix[j][i] = Kmatrix[i][j]
-    run_time = 21821.35
-    np.savez('results/xp_fit_method/Kmatrix.SYNTHETICnew.spkernel.gm',
-             Kmatrix=Kmatrix, run_time=run_time)
+#    ### xp 4: SYNTHETICnew, spkernel, using NON_SYMBOLIC.
+#    gmfile = np.load('results/xp_fit_method/Kmatrix.SYNTHETICnew.spkernel.gm.npz')
+#    Kmatrix = gmfile['Kmatrix']
+#    # normalization
+#    Kmatrix_diag = Kmatrix.diagonal().copy()
+#    for i in range(len(Kmatrix)):
+#        for j in range(i, len(Kmatrix)):
+#            Kmatrix[i][j] /= np.sqrt(Kmatrix_diag[i] * Kmatrix_diag[j])
+#            Kmatrix[j][i] = Kmatrix[i][j]
+#    run_time = 21821.35
+#    np.savez('results/xp_fit_method/Kmatrix.SYNTHETICnew.spkernel.gm',
+#             Kmatrix=Kmatrix, run_time=run_time)
+#    
+#    # load dataset.
+#    print('getting dataset and computing kernel distance matrix first...')
+#    ds_name = 'SYNTHETICnew'
+#    gkernel = 'spkernel'
+#    Gn, y_all, graph_dir = get_dataset(ds_name)
+##    # remove graphs without nodes and edges.
+##    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_node(G) != 0
+##          and nx.number_of_edges(G) != 0)]
+##    idx = [G[0] for G in Gn]
+##    Gn = [G[1] for G in Gn]
+##    y_all = [y_all[i] for i in idx]
+##    Gn = Gn[0:5]
+##    y_all = y_all[0:5]
+#    for G in Gn:
+#        G.graph['filename'] = 'graph' + str(G.graph['name']) + '.gxl'
+#    
+#    # compute/read Gram matrix and pair distances.
+##    Kmatrix = compute_kernel(Gn, gkernel, None, None, True)
+##    np.savez('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm', 
+##         Kmatrix=Kmatrix)
+#    gmfile = np.load('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm.npz')
+#    Kmatrix = gmfile['Kmatrix']
+#    run_time = gmfile['run_time']
+##    Kmatrix = Kmatrix[[0,1,2,3,4],:]
+##    Kmatrix = Kmatrix[:,[0,1,2,3,4]]
+#    print('\nTime to compute Gram matrix for the whole dataset: ', run_time)
+#    dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, 
+#        Kmatrix=Kmatrix, gkernel=gkernel, verbose=True)
+##    Kmatrix = np.zeros((len(Gn), len(Gn)))
+##    dis_mat, dis_max, dis_min, dis_mean = 0, 0, 0, 0
+#    
+#    # fitting and computing.
+#    fit_methods = ['k-graphs', 'random', 'random', 'random']
+#    for fit_method in fit_methods:
+#        print('\n-------------------------------------')
+#        print('fit method:', fit_method)
+#        parameters = {'ds_name': ds_name,
+#                      'gkernel': gkernel,
+#                      'edit_cost_name': 'NON_SYMBOLIC',
+#                      'ged_method': 'mIPFP',
+#                      'attr_distance': 'euclidean',
+#                      'fit_method': fit_method}
+#        xp_fit_method_for_non_symbolic(parameters, save_results=True, 
+#                                       initial_solutions=1,
+#                                       Gn_data=[Gn, y_all, graph_dir],
+#                                       k_dis_data=[dis_mat, dis_max, dis_min, dis_mean],
+#                                       Kmatrix=Kmatrix)
     
+    
+    #### xp 5: Fingerprint, sspkernel, using LETTER2.
     # load dataset.
     print('getting dataset and computing kernel distance matrix first...')
-    ds_name = 'SYNTHETICnew'
-    gkernel = 'spkernel'
+    ds_name = 'Fingerprint'
+    gkernel = 'structuralspkernel'
     Gn, y_all, graph_dir = get_dataset(ds_name)
-#    # remove graphs without nodes and edges.
-#    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_edges(G) != 0
+    # remove graphs without nodes and edges.
+    Gn = [(idx, G) for idx, G in enumerate(Gn) if (nx.number_of_nodes(G) != 0)]
 #          and nx.number_of_edges(G) != 0)]
-#    idx = [G[0] for G in Gn]
-#    Gn = [G[1] for G in Gn]
-#    y_all = [y_all[i] for i in idx]
-#    Gn = Gn[0:5]
-#    y_all = y_all[0:5]
+    idx = [G[0] for G in Gn]
+    Gn = [G[1] for G in Gn]
+    y_all = [y_all[i] for i in idx]
+    y_idx = get_same_item_indices(y_all)
+    # remove unused labels.
+    for G in Gn:
+        G.graph['edge_attrs'] = []
+        for edge in G.edges:
+            del G.edges[edge]['attributes']
+            del G.edges[edge]['orient']
+            del G.edges[edge]['angle']
+    Gn = Gn[805:815]
+    y_all = y_all[805:815]
     for G in Gn:
         G.graph['filename'] = 'graph' + str(G.graph['name']) + '.gxl'
-    
+            
     # compute/read Gram matrix and pair distances.
-#    Kmatrix = compute_kernel(Gn, gkernel, None, None, True)
-#    np.savez('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm', 
-#         Kmatrix=Kmatrix)
-    gmfile = np.load('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm.npz')
-    Kmatrix = gmfile['Kmatrix']
-    run_time = gmfile['run_time']
+    Kmatrix = compute_kernel(Gn, gkernel, None, None, True, parallel='imap_unordered')
+    np.savez('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm', 
+         Kmatrix=Kmatrix)
+#    gmfile = np.load('results/xp_fit_method/Kmatrix.' + ds_name + '.' + gkernel + '.gm.npz')
+#    Kmatrix = gmfile['Kmatrix']
+#    run_time = gmfile['run_time']
 #    Kmatrix = Kmatrix[[0,1,2,3,4],:]
 #    Kmatrix = Kmatrix[:,[0,1,2,3,4]]
-    print('\nTime to compute Gram matrix for the whole dataset: ', run_time)
+#    print('\nTime to compute Gram matrix for the whole dataset: ', run_time)
     dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, 
         Kmatrix=Kmatrix, gkernel=gkernel, verbose=True)
 #    Kmatrix = np.zeros((len(Gn), len(Gn)))
 #    dis_mat, dis_max, dis_min, dis_mean = 0, 0, 0, 0
-    
+            
+    # compute pair distances.
+#    dis_mat, dis_max, dis_min, dis_mean = kernel_distance_matrix(Gn, None, None, 
+#        Kmatrix=None, gkernel=gkernel, verbose=True)
+#    dis_mat, dis_max, dis_min, dis_mean = 0, 0, 0, 0
     # fitting and computing.
-    fit_methods = ['k-graphs', 'random', 'random', 'random']
+    fit_methods = ['k-graphs', 'expert', 'random', 'random', 'random']
     for fit_method in fit_methods:
         print('\n-------------------------------------')
         print('fit method:', fit_method)
         parameters = {'ds_name': ds_name,
                       'gkernel': gkernel,
-                      'edit_cost_name': 'NON_SYMBOLIC',
+                      'edit_cost_name': 'LETTER2',
                       'ged_method': 'mIPFP',
                       'attr_distance': 'euclidean',
                       'fit_method': fit_method}
         xp_fit_method_for_non_symbolic(parameters, save_results=True, 
-                                       initial_solutions=1,
-                                       Gn_data=[Gn, y_all, graph_dir],
-                                       k_dis_data=[dis_mat, dis_max, dis_min, dis_mean],
+                                       initial_solutions=40,
+                                       Gn_data = [Gn, y_all, graph_dir],
+                                       k_dis_data = [dis_mat, dis_max, dis_min, dis_mean],
                                        Kmatrix=Kmatrix)

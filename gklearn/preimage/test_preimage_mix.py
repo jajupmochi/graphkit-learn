@@ -13,13 +13,10 @@ import time
 import random
 #from tqdm import tqdm
 
-#import os
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
-from ged import ged_median
-from utils import compute_kernel, get_same_item_indices, remove_edges
-from preimage_iam import preimage_iam_random_mix
+from gklearn.preimage.ged import ged_median
+from gklearn.preimage.utils import compute_kernel, get_same_item_indices, remove_edges
+from gklearn.preimage.preimage_iam import preimage_iam_random_mix
 
 ###############################################################################
 # tests on different values on grid of median-sets and k.

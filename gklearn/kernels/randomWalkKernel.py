@@ -6,8 +6,6 @@
     [1] S Vichy N Vishwanathan, Nicol N Schraudolph, Risi Kondor, and Karsten M Borgwardt. Graph kernels. Journal of Machine Learning Research, 11(Apr):1201–1242, 2010.
 """
 
-import sys
-sys.path.insert(0, "../")
 import time
 from functools import partial
 from tqdm import tqdm

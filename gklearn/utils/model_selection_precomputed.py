@@ -11,7 +11,6 @@ from sklearn.model_selection import KFold, train_test_split, ParameterGrid
 from multiprocessing import Pool, Array
 from functools import partial
 import sys
-sys.path.insert(0, "../")
 import os
 import time
 import datetime
@@ -74,8 +73,6 @@ def model_selection_for_precomputed_kernel(datafile,
     Examples
     --------
     >>> import numpy as np
-    >>> import sys
-    >>> sys.path.insert(0, "../")
     >>> from gklearn.utils.model_selection_precomputed import model_selection_for_precomputed_kernel
     >>> from gklearn.kernels.untilHPathKernel import untilhpathkernel
     >>>

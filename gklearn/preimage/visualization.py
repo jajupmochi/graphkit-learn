@@ -11,11 +11,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 from tqdm import tqdm
 
-
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset, loadGXL
-from utils import kernel_distance_matrix, compute_kernel, dis_gstar, get_same_item_indices
+from gklearn.preimage.utils import kernel_distance_matrix, compute_kernel, dis_gstar, get_same_item_indices
 
 
 def visualize_graph_dataset(dis_measure, visual_method, draw_figure, 
@@ -115,11 +112,11 @@ def visualize_distances_in_kernel():
 #    Gn = Gn[0:50]
     fname_medians = 'expert.treelet'
     # add set median.
-    fname_sm = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/preimage/results/test_k_closest_graphs/set_median.' + fname_medians + '.gxl'
+    fname_sm = 'results/test_k_closest_graphs/set_median.' + fname_medians + '.gxl'
     set_median = loadGXL(fname_sm)
     Gn.append(set_median)
     # add generalized median (estimated pre-image.)
-    fname_gm = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/preimage/results/test_k_closest_graphs/gen_median.' + fname_medians + '.gxl'
+    fname_gm = 'results/test_k_closest_graphs/gen_median.' + fname_medians + '.gxl'
     gen_median = loadGXL(fname_gm)
     Gn.append(gen_median)
     
@@ -166,19 +163,19 @@ def visualize_distances_in_kernel():
         
     
 def visualize_distances_in_ged():
-    from fitDistance import compute_geds
-    from ged import GED
+    from gklearn.preimage.fitDistance import compute_geds
+    from gklearn.preimage.ged import GED
     ds = {'name': 'monoterpenoides', 
           'dataset': '../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'])
 #    Gn = Gn[0:50]
     # add set median.
     fname_medians = 'expert.treelet'
-    fname_sm = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/preimage/results/test_k_closest_graphs/set_median.' + fname_medians + '.gxl'
+    fname_sm = 'preimage/results/test_k_closest_graphs/set_median.' + fname_medians + '.gxl'
     set_median = loadGXL(fname_sm)
     Gn.append(set_median)
     # add generalized median (estimated pre-image.)
-    fname_gm = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/preimage/results/test_k_closest_graphs/gen_median.' + fname_medians + '.gxl'
+    fname_gm = 'preimage/results/test_k_closest_graphs/gen_median.' + fname_medians + '.gxl'
     gen_median = loadGXL(fname_gm)
     Gn.append(gen_median)
     
@@ -227,9 +224,10 @@ def visualize_distances_in_ged():
     
     
 def visualize_distances_in_kernel_monoterpenoides():
-    
+    import os
+
     ds = {'dataset': '../datasets/monoterpenoides/dataset_10+.ds',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'}  # node/edge symb
+          'graph_dir': os.path.dirname(os.path.realpath(__file__))  + '../../datasets/monoterpenoides/'}  # node/edge symb
     Gn_original, y_all = loadDataset(ds['dataset'])
 #    Gn = Gn[0:50]
     
@@ -301,11 +299,12 @@ def visualize_distances_in_kernel_monoterpenoides():
         
     
 def visualize_distances_in_ged_monoterpenoides():
-    from fitDistance import compute_geds
-    from ged import GED
+    from gklearn.preimage.fitDistance import compute_geds
+    from gklearn.preimage.ged import GED
+    import os
     
     ds = {'dataset': '../datasets/monoterpenoides/dataset_10+.ds',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'}  # node/edge symb
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '../../datasets/monoterpenoides/'}  # node/edge symb
     Gn_original, y_all = loadDataset(ds['dataset'])
 #    Gn = Gn[0:50]
     
@@ -379,8 +378,8 @@ def visualize_distances_in_ged_monoterpenoides():
     
 def visualize_distances_in_kernel_letter_h():
     
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn_original, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
 #    Gn = Gn[0:50]
     
@@ -455,8 +454,8 @@ def visualize_distances_in_ged_letter_h():
     from fitDistance import compute_geds
     from preimage.test_k_closest_graphs import reform_attributes
     
-    ds = {'dataset': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/collections/Letter.xml',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/data/datasets/Letter/HIGH/'}  # node/edge symb
+    ds = {'dataset': 'cpp_ext/data/collections/Letter.xml',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/data/datasets/Letter/HIGH/'}  # node/edge symb
     Gn_original, y_all = loadDataset(ds['dataset'], extra_params=ds['graph_dir'])
 #    Gn = Gn[0:50]
     

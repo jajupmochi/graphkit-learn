@@ -11,14 +11,12 @@ from tqdm import tqdm
 import random
 #import csv
 from shutil import copyfile
+import os
 
-
-import sys
-sys.path.insert(0, "../")
-from preimage.iam import iam_bash
+from gklearn.preimage.iam import iam_bash
 from gklearn.utils.graphfiles import loadDataset, loadGXL
-from preimage.ged import GED
-from preimage.utils import get_same_item_indices
+from gklearn.preimage.ged import GED
+from gklearn.preimage.utils import get_same_item_indices
 
 def test_knn():
     ds = {'name': 'monoterpenoides', 
@@ -30,7 +28,7 @@ def test_knn():
 #    edge_label = 'bond_type'
 #    ds_name = 'mono'
     dir_output = 'results/knn/'
-    graph_dir='/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'
+    graph_dir = os.path.dirname(os.path.realpath(__file__)) + '../../datasets/monoterpenoides/'
     
     k_nn = 1
     percent = 0.1

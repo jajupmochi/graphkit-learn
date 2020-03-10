@@ -13,14 +13,11 @@ import time
 import random
 #from tqdm import tqdm
 
-#import os
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
 #from gklearn.utils.logger2file import *
-from iam import iam_upgraded
-from utils import remove_edges, compute_kernel, get_same_item_indices, dis_gstar
-#from ged import ged_median
+from gklearn.preimage.iam import iam_upgraded
+from gklearn.preimage.utils import remove_edges, compute_kernel, get_same_item_indices, dis_gstar
+#from gklearn.preimage.ged import ged_median
 
 
 def test_iam_monoterpenoides_with_init40():
@@ -52,7 +49,7 @@ def test_iam_monoterpenoides_with_init40():
                   'stabilizer': ged_stabilizer}
 
     
-    collection_path = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/'
+    collection_path = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/generated_datsets/monoterpenoides/'
     graph_dir = collection_path + 'gxl/'
     y_all = ['3', '1', '4', '6', '7', '8', '9', '2']
     repeats = 50

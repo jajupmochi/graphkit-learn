@@ -28,7 +28,6 @@ from gklearn.utils.kernels import deltakernel
 from gklearn.utils.utils import untotterTransformation
 from gklearn.utils.graphdataset import get_dataset_attributes
 from gklearn.utils.parallel import parallel_gm
-sys.path.insert(0, "../")
 
 
 def marginalizedkernel(*args,

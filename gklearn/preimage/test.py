@@ -52,8 +52,6 @@ def convertGraph(G):
 
 
 def testNxGrapĥ():
-    import sys
-    sys.path.insert(0, "../")
     from gklearn.utils.graphfiles import loadDataset
     ds = {'name': 'MUTAG', 'dataset': '../datasets/MUTAG/MUTAG_A.txt',
           'extra_params': {}}  # node/edge symb

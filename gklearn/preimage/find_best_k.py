@@ -9,10 +9,8 @@ import numpy as np
 import random
 import csv
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset
-from preimage.test_k_closest_graphs import median_on_k_closest_graphs
+from gklearn.preimage.test_k_closest_graphs import median_on_k_closest_graphs
 
 def find_best_k():
     ds = {'name': 'monoterpenoides', 

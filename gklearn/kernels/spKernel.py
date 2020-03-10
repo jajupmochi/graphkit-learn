@@ -20,7 +20,6 @@ import numpy as np
 from gklearn.utils.utils import getSPGraph
 from gklearn.utils.graphdataset import get_dataset_attributes
 from gklearn.utils.parallel import parallel_gm
-sys.path.insert(0, "../")
 
 def spkernel(*args,
              node_label='atom',

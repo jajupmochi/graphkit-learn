@@ -13,15 +13,14 @@ from multiprocessing import Pool
 from functools import partial
 import time
 import random
+import sys
 
 from scipy import optimize
 from scipy.optimize import minimize
 import cvxpy as cp
 
-import sys
-sys.path.insert(0, "../")
-from preimage.ged import GED, get_nb_edit_operations, get_nb_edit_operations_letter, get_nb_edit_operations_nonsymbolic
-from preimage.utils import kernel_distance_matrix
+from gklearn.preimage.ged import GED, get_nb_edit_operations, get_nb_edit_operations_letter, get_nb_edit_operations_nonsymbolic
+from gklearn.preimage.utils import kernel_distance_matrix
 
 def fit_GED_to_kernel_distance(Gn, node_label, edge_label, gkernel, itr_max,
                                params_ged={'lib': 'gedlibpy', 'cost': 'CONSTANT', 

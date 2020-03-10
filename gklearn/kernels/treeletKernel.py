@@ -8,7 +8,6 @@
 """
 
 import sys
-sys.path.insert(0, "../")
 import time
 from collections import Counter
 from itertools import chain

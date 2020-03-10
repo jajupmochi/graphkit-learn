@@ -22,7 +22,7 @@ install:
 
 script:
 - python setup.py bdist_wheel
-- pytest -v --cov-report term --cov=gklearn gklearn/tests/
+- pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/
 
 after_success:
 - codecov

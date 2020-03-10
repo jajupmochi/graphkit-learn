@@ -13,16 +13,16 @@ from shutil import copyfile
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.insert(0, "../")
 from gklearn.utils.graphfiles import loadDataset, loadGXL, saveGXL
-from preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
-from preimage.utils import get_same_item_indices
-from preimage.find_best_k import getRelations
+from gklearn.preimage.test_k_closest_graphs import median_on_k_closest_graphs, reform_attributes
+from gklearn.preimage.utils import get_same_item_indices
+from gklearn.preimage.find_best_k import getRelations
 
 def xp_monoterpenoides():
-    ds = {'dataset': '../datasets/monoterpenoides/dataset_10+.ds',
-          'graph_dir': '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/monoterpenoides/'}  # node/edge symb
+    import os
+
+    ds = {'dataset': '../../datasets/monoterpenoides/dataset_10+.ds',
+          'graph_dir': os.path.dirname(os.path.realpath(__file__)) + '../../datasets/monoterpenoides/'}  # node/edge symb
     Gn, y_all = loadDataset(ds['dataset'])
 #    ds = {'name': 'Letter-high', 
 #          'dataset': '../datasets/Letter-high/Letter-high_A.txt'}  # node/edge symb
@@ -169,11 +169,11 @@ def xp_monoterpenoides():
                     nb_dis_k_gi2gm[2] += 1
                     
                 # save median graphs.
-                fname_sm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/set_median.gxl'
+                fname_sm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/set_median.gxl'
                 fn_pre_sm_new = dir_output + 'medians/set_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + str(int(y)) + '.repeat' + str(repeat)
                 copyfile(fname_sm, fn_pre_sm_new + '.gxl')
-                fname_gm = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/output/tmp_ged/gen_median.gxl'
+                fname_gm = os.path.dirname(os.path.realpath(__file__)) + '/cpp_ext/output/tmp_ged/gen_median.gxl'
                 fn_pre_gm_new = dir_output + 'medians/gen_median.' + fit_method \
                     + '.k' + str(int(k)) + '.y' + str(int(y)) + '.repeat' + str(repeat)
                 copyfile(fname_gm, fn_pre_gm_new + '.gxl')

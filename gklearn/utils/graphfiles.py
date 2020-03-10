@@ -753,15 +753,12 @@ if __name__ == '__main__':
 #          'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb
 #    Gn, y = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
 #    saveDataset(Gn, y, group='xml', filename='temp/temp')
-    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-    Gn, y_all = loadDataset(dataset)
-    filename = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/SYNTHETICnew/SYNTHETICnew'
-    saveDataset(Gn, y_all, gformat='gxl', group='xml', filename=filename)
     
     # test - new way to add labels and attributes.
-#    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-#    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/Fingerprint/Fingerprint_A.txt'
-#    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/Letter-med/Letter-med_A.txt'
-#    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/AIDS/AIDS_A.txt'
-#    dataset = '/media/ljia/DATA/research-repo/codes/Linlin/graphkit-learn/datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'
+#    dataset = '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
+#    dataset = '../../datasets/Fingerprint/Fingerprint_A.txt'
+#    dataset = '../../datasets/Letter-med/Letter-med_A.txt'
+#    dataset = '../../datasets/AIDS/AIDS_A.txt'
+#    dataset = '../../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'
 #    Gn, y_all = loadDataset(dataset)
+    pass

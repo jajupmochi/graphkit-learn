@@ -10,7 +10,6 @@
 
 import sys
 from collections import Counter
-sys.path.insert(0, "../")
 from functools import partial
 import time
 #from multiprocessing import Pool
