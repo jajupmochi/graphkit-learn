@@ -28,7 +28,7 @@ from gklearn.preimage.fitDistance import fit_GED_to_kernel_distance
 def fit_edit_cost_constants(fit_method, edit_cost_name, 
                             edit_cost_constants=None, initial_solutions=1,
                             Gn_median=None, node_label=None, edge_label=None,
-                            gkernel=None, dataset=None,
+                            gkernel=None, dataset=None, init_ecc=None,
                             Gn=None, Kmatrix_median=None):
     """fit edit cost constants.    
     """
@@ -50,26 +50,32 @@ def fit_edit_cost_constants(fit_method, edit_cost_name,
             edit_cost_constants = random.sample(range(1, 10), 6)
         print('edit cost constants used:', edit_cost_constants)
     elif fit_method == 'expert': # expert
-        if edit_cost_name == 'LETTER':
-            edit_cost_constants = [0.9, 1.7, 0.75] 
-        elif edit_cost_name == 'LETTER2':
-            edit_cost_constants = [0.675, 0.675, 0.75, 0.425, 0.425]
+        if init_ecc is None:
+            if edit_cost_name == 'LETTER':
+                edit_cost_constants = [0.9, 1.7, 0.75] 
+            elif edit_cost_name == 'LETTER2':
+                edit_cost_constants = [0.675, 0.675, 0.75, 0.425, 0.425]
+            else:
+                edit_cost_constants = [3, 3, 1, 3, 3, 1] 
         else:
-            edit_cost_constants = [3, 3, 1, 3, 3, 1] 
+            edit_cost_constants = init_ecc
     elif fit_method == 'k-graphs':
         itr_max = 6
-        if edit_cost_name == 'LETTER':
-            init_costs = [0.9, 1.7, 0.75] 
-        elif edit_cost_name == 'LETTER2':
-            init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
-        elif edit_cost_name == 'NON_SYMBOLIC':
-            init_costs = [0, 0, 1, 1, 1, 0]
-            if Gn_median[0].graph['node_attrs'] == []:
-                init_costs[2] = 0
-            if Gn_median[0].graph['edge_attrs'] == []:
-                init_costs[5] = 0
+        if init_ecc is None:
+            if edit_cost_name == 'LETTER':
+                init_costs = [0.9, 1.7, 0.75] 
+            elif edit_cost_name == 'LETTER2':
+                init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
+            elif edit_cost_name == 'NON_SYMBOLIC':
+                init_costs = [0, 0, 1, 1, 1, 0]
+                if Gn_median[0].graph['node_attrs'] == []:
+                    init_costs[2] = 0
+                if Gn_median[0].graph['edge_attrs'] == []:
+                    init_costs[5] = 0
+            else:
+                init_costs = [3, 3, 1, 3, 3, 1] 
         else:
-            init_costs = [3, 3, 1, 3, 3, 1] 
+            init_costs = init_ecc
         algo_options = '--threads 1 --initial-solutions ' \
                         + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1'
         params_ged = {'lib': 'gedlibpy', 'cost': edit_cost_name, 'method': 'IPFP', 
@@ -81,12 +87,15 @@ def fit_edit_cost_constants(fit_method, edit_cost_name,
                 parallel=True)
     elif fit_method == 'whole-dataset':
         itr_max = 6
-        if edit_cost_name == 'LETTER':
-            init_costs = [0.9, 1.7, 0.75] 
-        elif edit_cost_name == 'LETTER2':
-            init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
+        if init_ecc is None:
+            if edit_cost_name == 'LETTER':
+                init_costs = [0.9, 1.7, 0.75] 
+            elif edit_cost_name == 'LETTER2':
+                init_costs = [0.675, 0.675, 0.75, 0.425, 0.425]
+            else:
+                init_costs = [3, 3, 1, 3, 3, 1] 
         else:
-            init_costs = [3, 3, 1, 3, 3, 1] 
+            init_costs = init_ecc
         algo_options = '--threads 1 --initial-solutions ' \
                         + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1'
         params_ged = {'lib': 'gedlibpy', 'cost': edit_cost_name, 'method': 'IPFP', 
@@ -176,7 +185,7 @@ def compute_distances_to_true_median(Gn_median, fname_sm, fname_gm,
 def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_method,
                                graph_dir=None, initial_solutions=1,
                                edit_cost_constants=None, group_min=None, 
-                               dataset=None, edit_cost_name=None, 
+                               dataset=None, edit_cost_name=None, init_ecc=None,
                                Kmatrix=None, parallel=True):
 #    dataset = dataset.lower()
     
@@ -210,7 +219,7 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
     edit_cost_constants = fit_edit_cost_constants(fit_method, edit_cost_name,
         edit_cost_constants=edit_cost_constants, initial_solutions=initial_solutions,
         Gn_median=Gn_median, node_label=node_label, edge_label=edge_label,
-        gkernel=gkernel, dataset=dataset,
+        gkernel=gkernel, dataset=dataset, init_ecc=init_ecc,
         Gn=Gn, Kmatrix_median=Kmatrix_median)
     time_fitting = time.time() - time0
     
