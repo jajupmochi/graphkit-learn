@@ -14,42 +14,13 @@ from multiprocessing import Pool
 from functools import partial
 
 #from gedlibpy_linlin import librariesImport, gedlibpy
-from libs import *
+from gklearn.gedlib import librariesImport, gedlibpy
 
 def GED(g1, g2, dataset='monoterpenoides', lib='gedlibpy', cost='CHEM_1', method='IPFP', 
         edit_cost_constant=[], algo_options='', stabilizer='min', repeat=50):
     """
     Compute GED for 2 graphs.
-    """
-    def convertGraph(G, cost):
-        """Convert a graph to the proper NetworkX format that can be
-        recognized by library gedlibpy.
-        """
-        G_new = nx.Graph()
-        if cost == 'LETTER' or cost == 'LETTER2':   
-            for nd, attrs in G.nodes(data=True):
-                G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
-                               y=str(attrs['attributes'][1]))
-            for nd1, nd2, attrs in G.edges(data=True):
-                G_new.add_edge(str(nd1), str(nd2))
-        elif cost == 'NON_SYMBOLIC':
-            for nd, attrs in G.nodes(data=True):
-                G_new.add_node(str(nd))
-                for a_name in G.graph['node_attrs']:
-                    G_new.nodes[str(nd)][a_name] = str(attrs[a_name])
-            for nd1, nd2, attrs in G.edges(data=True):
-                G_new.add_edge(str(nd1), str(nd2))
-                for a_name in G.graph['edge_attrs']:
-                    G_new.edges[str(nd1), str(nd2)][a_name] = str(attrs[a_name])
-        else:
-            for nd, attrs in G.nodes(data=True):
-                G_new.add_node(str(nd), chem=attrs['atom'])
-            for nd1, nd2, attrs in G.edges(data=True):
-                G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
-#                G_new.add_edge(str(nd1), str(nd2))
-            
-        return G_new
-    
+    """    
     
 #    dataset = dataset.lower()
     
@@ -176,6 +147,36 @@ def GED(g1, g2, dataset='monoterpenoides', lib='gedlibpy', cost='CHEM_1', method
               
         
     return dis, pi_forward, pi_backward
+
+
+def convertGraph(G, cost):
+    """Convert a graph to the proper NetworkX format that can be
+    recognized by library gedlibpy.
+    """
+    G_new = nx.Graph()
+    if cost == 'LETTER' or cost == 'LETTER2':   
+        for nd, attrs in G.nodes(data=True):
+            G_new.add_node(str(nd), x=str(attrs['attributes'][0]), 
+                           y=str(attrs['attributes'][1]))
+        for nd1, nd2, attrs in G.edges(data=True):
+            G_new.add_edge(str(nd1), str(nd2))
+    elif cost == 'NON_SYMBOLIC':
+        for nd, attrs in G.nodes(data=True):
+            G_new.add_node(str(nd))
+            for a_name in G.graph['node_attrs']:
+                G_new.nodes[str(nd)][a_name] = str(attrs[a_name])
+        for nd1, nd2, attrs in G.edges(data=True):
+            G_new.add_edge(str(nd1), str(nd2))
+            for a_name in G.graph['edge_attrs']:
+                G_new.edges[str(nd1), str(nd2)][a_name] = str(attrs[a_name])
+    else:
+        for nd, attrs in G.nodes(data=True):
+            G_new.add_node(str(nd), chem=attrs['atom'])
+        for nd1, nd2, attrs in G.edges(data=True):
+            G_new.add_edge(str(nd1), str(nd2), valence=attrs['bond_type'])
+#                G_new.add_edge(str(nd1), str(nd2))
+        
+    return G_new
 
 
 def GED_n(Gn, lib='gedlibpy', cost='CHEM_1', method='IPFP', 

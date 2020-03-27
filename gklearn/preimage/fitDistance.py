@@ -260,10 +260,29 @@ def update_costs(nb_cost_mat, dis_k_vec, dataset='monoterpenoides',
             nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
             x = cp.Variable(nb_cost_mat_new.shape[1])
             cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
-            constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
+            constraints = [x >= [0.001 for i in range(nb_cost_mat_new.shape[1])],
                            np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
             prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-            prob.solve()
+            try:
+                prob.solve(verbose=True)
+            except MemoryError as error0:
+                print('\nUsing solver "OSQP" caused a memory error.')
+                print('the original error message is\n', error0)
+                print('solver status: ', prob.status)
+                print('trying solver "CVXOPT" instead...\n')
+                try:
+                    prob.solve(solver=cp.CVXOPT, verbose=True)
+                except Exception as error1:
+                    print('\nAn error occured when using solver "CVXOPT".')
+                    print('the original error message is\n', error1)
+                    print('solver status: ', prob.status)
+                    print('trying solver "MOSEK" instead. Notice this solver is commercial and a lisence is required.\n')
+                    prob.solve(solver=cp.MOSEK, verbose=True)
+                else:
+                    print('solver status: ', prob.status)                    
+            else:
+                print('solver status: ', prob.status)
+            print()
             edit_costs_new = x.value
             residual = np.sqrt(prob.value)
         elif rw_constraints == '2constraints':
