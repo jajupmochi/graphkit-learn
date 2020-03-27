@@ -17,15 +17,19 @@ from gklearn.utils.graphfiles import loadDataset, loadGXL
 def main(): 
     # MUTAG dataset.
     dataset, y = loadDataset("../../datasets/MUTAG/MUTAG_A.txt")
-    for idx in [65]:#[6]:
+    for idx in [6]: #[65]:#
         G = dataset[idx]
+        ncolors= []
         for node in G.nodes:
             if G.nodes[node]['atom'] == '0':
                 G.nodes[node]['atom'] = 'C'
+                ncolors.append('#bd3182')
             elif G.nodes[node]['atom'] == '1':
                 G.nodes[node]['atom'] = 'N'
+                ncolors.append('#3182bd')
             elif G.nodes[node]['atom'] == '2':
                 G.nodes[node]['atom'] = 'O'
+                ncolors.append('#82bd31')
             elif G.nodes[node]['atom'] == '3':
                 G.nodes[node]['atom'] = 'F'
             elif G.nodes[node]['atom'] == '4':
@@ -37,11 +41,11 @@ def main():
         ecolors = []
         for edge in G.edges:
             if G.edges[edge]['bond_type'] == '0':
-                ecolors.append('orange')
+                ecolors.append('#bd3182')
             elif G.edges[edge]['bond_type'] == '1':
-                ecolors.append('r')
+                ecolors.append('#3182bd')
             elif G.edges[edge]['bond_type'] == '2':
-                ecolors.append('purple')
+                ecolors.append('#82bd31')
             elif G.edges[edge]['bond_type'] == '3':
                 ecolors.append('orange')
 
@@ -54,7 +58,7 @@ def main():
                 pos,
                 node_size=500,
                 labels=nx.get_node_attributes(G, 'atom'), 
-                node_color='blue', 
+                node_color=ncolors, 
                 font_color='w', 
                 edge_color=ecolors,
                 width=3,

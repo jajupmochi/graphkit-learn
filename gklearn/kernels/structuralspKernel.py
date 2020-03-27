@@ -25,7 +25,6 @@ from gklearn.utils.graphdataset import get_dataset_attributes
 from gklearn.utils.parallel import parallel_gm
 from gklearn.utils.trie import Trie
 
-
 def structuralspkernel(*args,
                        node_label='atom',
                        edge_weight=None,
