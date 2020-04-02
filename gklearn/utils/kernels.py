@@ -47,7 +47,7 @@ def gaussiankernel(x, y, gamma=None):
     if gamma is None:
         gamma = 1.0 / len(x)
 
-    xt = np.array([float(itm) for itm in x])
+    xt = np.array([float(itm) for itm in x]) # @todo: move this to dataset or datafile to speed up.
     yt = np.array([float(itm) for itm in y])
     kernel = xt - yt
     kernel = kernel ** 2

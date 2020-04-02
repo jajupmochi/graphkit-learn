@@ -235,7 +235,7 @@ def median_on_k_closest_graphs(Gn, node_label, edge_label, gkernel, k, fit_metho
     print('\nmedians computed.\n')
     
     
-    # 3. compute distances to real median.
+    # 3. compute distances to the true median.
     print('\nstart computing distances to true median....\n')
     Gn_median = [Gn[g].copy() for g in group_min]
     dis_k_sm, dis_k_gm, dis_k_gi, dis_k_gi_min, idx_dis_k_gi_min = \

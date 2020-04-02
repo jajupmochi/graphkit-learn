@@ -12,7 +12,7 @@ import sys
 
 def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker=None, 
                 glbv=None, method=None, n_jobs=None, chunksize=None, itr_desc='',
-                verbose=True):
+                verbose=2):
     '''
     '''
     if method == 'imap_unordered':
@@ -30,7 +30,7 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                     else:
                         chunksize = 100
                 for result in (tqdm(pool.imap_unordered(func, itr, chunksize),
-                    desc=itr_desc, file=sys.stdout) if verbose else 
+                    desc=itr_desc, file=sys.stdout) if verbose == 2 else 
                     pool.imap_unordered(func, itr, chunksize)):
                     func_assign(result, var_to_assign)
             pool.close()
@@ -45,7 +45,7 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                     else:
                         chunksize = 100
                 for result in (tqdm(pool.imap_unordered(func, itr, chunksize),
-                    desc=itr_desc, file=sys.stdout) if verbose else 
+                    desc=itr_desc, file=sys.stdout) if verbose == 2 else 
                     pool.imap_unordered(func, itr, chunksize)):
                     func_assign(result, var_to_assign)
             pool.close()

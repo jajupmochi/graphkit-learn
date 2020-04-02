@@ -15,3 +15,5 @@ __date__ = "November 2017"
 
 # from utils import graphfiles
 # from utils import utils
+from gklearn.utils.dataset import Dataset
+from gklearn.utils.timer import Timer
