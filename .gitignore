@@ -56,3 +56,10 @@ gklearn/gedlib/Median_Example/
 gklearn/gedlib/build/include/gedlib-master/median/collections/
 gklearn/gedlib/include/
 gklearn/gedlib/libgxlgedlib.so
+
+# misc
+notebooks/preimage/
+notebooks/unfinished
+gklearn/kernels/else/
+gklearn/kernels/unfinished/
+gklearn/kernels/.tags
