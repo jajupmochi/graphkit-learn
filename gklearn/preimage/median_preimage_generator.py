@@ -17,6 +17,7 @@ from gklearn.ged.util import compute_geds, ged_options_to_string
 from gklearn.ged.median import MedianGraphEstimator
 from gklearn.ged.median import constant_node_costs,mge_options_to_string
 from gklearn.gedlib import librariesImport, gedlibpy
+from gklearn.utils import Timer
 # from gklearn.utils.dataset import Dataset
 
 class MedianPreimageGenerator(PreimageGenerator):
@@ -29,10 +30,13 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__mge_options = {}
 		self.__fit_method = 'k-graphs'
 		self.__init_ecc = None
-		self.__max_itrs = 100
 		self.__parallel = True
 		self.__n_jobs = multiprocessing.cpu_count()
 		self.__ds_name = None
+		self.__time_limit_in_sec = 0
+		self.__max_itrs = 100
+		self.__max_itrs_without_update = 3
+		self.__epsilon_ratio = 0.01
 		# values to compute.
 		self.__edit_cost_constants = []
 		self.__runtime_precompute_gm = None
@@ -41,11 +45,15 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__runtime_total = None
 		self.__set_median = None
 		self.__gen_median = None
+		self.__best_from_dataset = None
 		self.__sod_set_median = None
 		self.__sod_gen_median = None
 		self.__k_dis_set_median = None
 		self.__k_dis_gen_median = None
 		self.__k_dis_dataset = None
+		self.__itrs = 0
+		self.__converged = False
+		self.__num_updates_ecc = 0
 		
 		
 	def set_options(self, **kwargs):
@@ -57,10 +65,13 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__fit_method = kwargs.get('fit_method', 'k-graphs')
 		self.__init_ecc = kwargs.get('init_ecc', None)
 		self.__edit_cost_constants = kwargs.get('edit_cost_constants', [])
-		self.__max_itrs = kwargs.get('max_itrs', 100)
 		self.__parallel = kwargs.get('parallel', True)
 		self.__n_jobs = kwargs.get('n_jobs', multiprocessing.cpu_count())
 		self.__ds_name = kwargs.get('ds_name', None)
+		self.__time_limit_in_sec = kwargs.get('time_limit_in_sec', 0)
+		self.__max_itrs = kwargs.get('max_itrs', 100)
+		self.__max_itrs_without_update = kwargs.get('max_itrs_without_update', 3)
+		self.__epsilon_ratio = kwargs.get('epsilon_ratio', 0.01)
 		
 		
 	def run(self):
@@ -75,7 +86,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__runtime_precompute_gm = end_precompute_gm - start
 		
 		# 2. optimize edit cost constants. 
-# 		self.__optimize_edit_cost_constants(dataset=dataset, Gn=Gn, Kmatrix_median=Kmatrix_median)
 		self.__optimize_edit_cost_constants()
 		end_optimize_ec = time.time()
 		self.__runtime_optimize_ec = end_optimize_ec - end_precompute_gm
@@ -108,28 +118,47 @@ class MedianPreimageGenerator(PreimageGenerator):
 		if self._verbose:
 			print()
 			print('================================================================================')
-			print('The optimized edit cost constants: ', self.__edit_cost_constants)
-			print('SOD of the set median: ', self.__sod_set_median)
-			print('SOD of the generalized median: ', self.__sod_gen_median)
+			print('Finished generalization of preimages.')
+			print('--------------------------------------------------------------------------------')
+			print('The optimized edit cost constants:', self.__edit_cost_constants)
+			print('SOD of the set median:', self.__sod_set_median)
+			print('SOD of the generalized median:', self.__sod_gen_median)
 			print('Distance in kernel space for set median:', self.__k_dis_set_median)
 			print('Distance in kernel space for generalized median:', self.__k_dis_gen_median)
 			print('Minimum distance in kernel space for each graph in median set:', self.__k_dis_dataset)
-			print('Time to pre-compute Gram matrix: ', self.__runtime_precompute_gm)
-			print('Time to optimize edit costs: ', self.__runtime_optimize_ec)
-			print('Time to generate pre-images: ', self.__runtime_generate_preimage)
-			print('Total time: ', self.__runtime_total)
+			print('Time to pre-compute Gram matrix:', self.__runtime_precompute_gm)
+			print('Time to optimize edit costs:', self.__runtime_optimize_ec)
+			print('Time to generate pre-images:', self.__runtime_generate_preimage)
+			print('Total time:', self.__runtime_total)
+			print('Total number of iterations for optimizing:', self.__itrs)
+			print('Total number of updating edit costs:', self.__num_updates_ecc)
+			print('Is optimization of edit costs converged:', self.__converged)
 			print('================================================================================')
 			
-
-			
-	
 	# collect return values.
 # 	return (sod_sm, sod_gm), \
 # 		   (dis_k_sm, dis_k_gm, dis_k_gi, dis_k_gi_min, idx_dis_k_gi_min), \
 # 		   (time_fitting, time_generating)
 
+
+	def get_results(self):
+		results = {}
+		results['edit_cost_constants'] = self.__edit_cost_constants
+		results['runtime_precompute_gm'] = self.__runtime_precompute_gm
+		results['runtime_optimize_ec'] = self.__runtime_optimize_ec
+		results['runtime_generate_preimage'] = self.__runtime_generate_preimage
+		results['runtime_total'] = self.__runtime_total
+		results['sod_set_median'] = self.__sod_set_median
+		results['sod_gen_median'] = self.__sod_gen_median
+		results['k_dis_set_median'] = self.__k_dis_set_median
+		results['k_dis_gen_median'] = self.__k_dis_gen_median
+		results['k_dis_dataset'] = self.__k_dis_dataset
+		results['itrs'] = self.__itrs
+		results['converged'] = self.__converged
+		results['num_updates_ecc'] = self.__num_updates_ecc
+		return results
+
 		
-# 	def __optimize_edit_cost_constants(self, dataset=None, Gn=None, Kmatrix_median=None):
 	def __optimize_edit_cost_constants(self):
 		"""fit edit cost constants.	
 		"""
@@ -177,8 +206,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 					self.__init_ecc = [3, 3, 1, 3, 3, 1] 
 			# optimize on the k-graph subset.
 			self.__optimize_ecc_by_kernel_distances()
-# 			fit_GED_to_kernel_distance(Gn_median, 
-# 					dataset=dataset, Kmatrix=Kmatrix_median)
 		elif self.__fit_method == 'whole-dataset':
 			if self.__init_ecc is None:
 				if self.__ged_options['edit_cost'] == 'LETTER':
@@ -189,15 +216,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 					self.__init_ecc = [3, 3, 1, 3, 3, 1] 
 			# optimizeon the whole set.
 			self.__optimize_ecc_by_kernel_distances()
-# 			fit_GED_to_kernel_distance(Gn, dataset=dataset)
 		elif self.__fit_method == 'precomputed':
 			pass
 		
 		
-	def __optimize_ecc_by_kernel_distances(self):
-# 	def fit_GED_to_kernel_distance(Gn, Kmatrix=None,
-# 								   parallel=True):
-		
+	def __optimize_ecc_by_kernel_distances(self):		
 		# compute distances in feature space.
 		dis_k_mat, _, _, _ = self.__graph_kernel.compute_distance_matrix()
 		dis_k_vec = []
@@ -222,20 +245,25 @@ class MedianPreimageGenerator(PreimageGenerator):
 		nb_cost_mat = np.array(n_edit_operations)
 		nb_cost_mat_list = [nb_cost_mat]
 		if self._verbose >= 2:
-			print('edit_cost_constants:', self.__edit_cost_constants)
-			print('residual_list:', residual_list)
+			print('Current edit cost constants:', self.__edit_cost_constants)
+			print('Residual list:', residual_list)
 		
-		for itr in range(self.__max_itrs):
+		# run iteration from initial edit costs.
+		self.__converged = False
+		itrs_without_update = 0
+		self.__itrs = 0
+		self.__num_updates_ecc = 0
+		timer = Timer(self.__time_limit_in_sec)
+		while not self.__termination_criterion_met(self.__converged, timer, self.__itrs, itrs_without_update):
 			if self._verbose >= 2:
-				print('\niteration', itr)
+				print('\niteration', self.__itrs)
 			time0 = time.time()
-			# "fit" geds to distances in feature space by tuning edit costs using the
-			# Least Squares Method.
-			np.savez('results/xp_fit_method/fit_data_debug' + str(itr) + '.gm', 
-					 nb_cost_mat=nb_cost_mat, dis_k_vec=dis_k_vec, 
-					 n_edit_operations=n_edit_operations, ged_vec_init=ged_vec_init,
-					 ged_mat=ged_mat)
-			self.__edit_cost_constants, residual = self.__update_ecc(nb_cost_mat, dis_k_vec)
+			# "fit" geds to distances in feature space by tuning edit costs using theLeast Squares Method.
+# 			np.savez('results/xp_fit_method/fit_data_debug' + str(self.__itrs) + '.gm', 
+# 					 nb_cost_mat=nb_cost_mat, dis_k_vec=dis_k_vec, 
+# 					 n_edit_operations=n_edit_operations, ged_vec_init=ged_vec_init,
+# 					 ged_mat=ged_mat)
+			self.__edit_cost_constants, _ = self.__update_ecc(nb_cost_mat, dis_k_vec)
 			for i in range(len(self.__edit_cost_constants)):
 				if -1e-9 <= self.__edit_cost_constants[i] <= 1e-9:
 					self.__edit_cost_constants[i] = 0
@@ -254,12 +282,59 @@ class MedianPreimageGenerator(PreimageGenerator):
 			edit_cost_list.append(self.__edit_cost_constants)
 			nb_cost_mat = np.array(n_edit_operations)
 			nb_cost_mat_list.append(nb_cost_mat)	
+				
+			# check convergency.
+			ec_changed = False
+			for i, cost in enumerate(self.__edit_cost_constants):
+# 				if cost == 0:
+# 					if edit_cost_list[-2][i] > self.__epsilon_ratio:
+# 						ec_changed = True
+# 						break
+# 				elif abs(cost - edit_cost_list[-2][i]) / cost > self.__epsilon_ratio:
+# 					ec_changed = True
+# 					break
+				if abs(cost - edit_cost_list[-2][i]) > self.__epsilon_ratio:
+ 					ec_changed = True
+ 					break
+			residual_changed = False
+			if residual_list[-1] == 0:
+				if residual_list[-2] > self.__epsilon_ratio:
+					residual_changed = True
+			elif abs(residual_list[-1] - residual_list[-2]) / residual_list[-1] > self.__epsilon_ratio:
+				residual_changed = True
+			self.__converged = not (ec_changed or residual_changed)
+			if self.__converged:
+				itrs_without_update += 1
+			else:
+				itrs_without_update = 0
+				self.__num_updates_ecc += 1
+				
+			# print current states.
 			if self._verbose >= 2:
-				print('edit_cost_constants:', self.__edit_cost_constants)
-				print('residual_list:', residual_list)
-		
-# 		return residual_list, edit_cost_list, dis_k_mat, ged_mat, \
-# 			time_list, nb_cost_mat_list
+				print()
+				print('-------------------------------------------------------------------------')
+				print('States of iteration', str(self.__itrs))
+				print('-------------------------------------------------------------------------')
+# 				print('Time spend:', self.__runtime_optimize_ec)
+				print('Total number of iterations for optimizing:', self.__itrs)
+				print('Total number of updating edit costs:', self.__num_updates_ecc)
+				print('Is optimization of edit costs converged:', self.__converged)
+				print('Does edit cost changed:', ec_changed)
+				print('Does residual changed:', residual_changed)
+				print('Iterations without update:', itrs_without_update)
+				print('Current edit cost constants:', self.__edit_cost_constants)
+				print('Residual list:', residual_list)
+				print('-------------------------------------------------------------------------')
+			
+			self.__itrs += 1
+
+
+	def __termination_criterion_met(self, converged, timer, itr, itrs_without_update):
+		if timer.expired() or (itr >= self.__max_itrs if self.__max_itrs >= 0 else False):
+# 			if self.__state == AlgorithmState.TERMINATED:
+# 				self.__state = AlgorithmState.INITIALIZED
+			return True
+		return converged or (itrs_without_update > self.__max_itrs_without_update if self.__max_itrs_without_update >= 0 else False)
 
 
 	def __update_ecc(self, nb_cost_mat, dis_k_vec, rw_constraints='inequality'):
@@ -591,6 +666,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 								 gram_with_gm, withterm3=False))
 		idx_k_dis_median_set_min = np.argmin(k_dis_median_set)
 		self.__k_dis_dataset = k_dis_median_set[idx_k_dis_median_set_min]
+		self.__best_from_dataset = self._dataset.graphs[idx_k_dis_median_set_min].copy()
 			
 		if self._verbose >= 2:
 			print()
@@ -598,8 +674,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 			print('distance in kernel space for generalized median:', self.__k_dis_gen_median)
 			print('minimum distance in kernel space for each graph in median set:', self.__k_dis_dataset)
 			print('distance in kernel space for each graph in median set:', k_dis_median_set)	
-		
-# 		return dis_k_sm, dis_k_gm, k_dis_median_set, dis_k_gi_min, idx_dis_k_gi_min
 		
 
 	def __set_graph_kernel_by_name(self):
@@ -670,5 +744,20 @@ class MedianPreimageGenerator(PreimageGenerator):
 		return self.__init_ecc
 
 	@init_ecc.setter
-	def fit_method(self, value):
+	def init_ecc(self, value):
 		self.__init_ecc = value
+		
+	
+	@property
+	def set_median(self):
+		return self.__set_median
+
+
+	@property
+	def gen_median(self):
+		return self.__gen_median
+	
+	
+	@property
+	def best_from_dataset(self):
+		return self.__best_from_dataset

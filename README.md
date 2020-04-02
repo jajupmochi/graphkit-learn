@@ -105,7 +105,7 @@ A comparison of performances of graph kernels on benchmark datasets can be found
 
 ## Authors
 
-* [Linlin Jia](https://github.com/jajupmochi), LITIS, INSA Rouen Normandie
+* [Linlin Jia](https://jajupmochi.github.io/), LITIS, INSA Rouen Normandie
 * [Benoit Gaüzère](http://pagesperso.litislab.fr/~bgauzere/#contact_en), LITIS, INSA Rouen Normandie
 * [Paul Honeine](http://honeine.fr/paul/Welcome.html), LITIS, Université de Rouen Normandie
 

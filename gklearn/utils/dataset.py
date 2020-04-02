@@ -8,6 +8,7 @@ Created on Thu Mar 26 18:48:27 2020
 import numpy as np
 import networkx as nx
 from gklearn.utils.graphfiles import loadDataset
+import os
 
 
 class Dataset(object):
@@ -15,7 +16,7 @@ class Dataset(object):
 	def __init__(self, filename=None, filename_y=None, extra_params=None):
 		if filename is None:
 			self.__graphs = None
-			self.__target = None
+			self.__targets = None
 			self.__node_labels = None
 			self.__edge_labels = None
 			self.__node_attrs = None
@@ -50,33 +51,40 @@ class Dataset(object):
 	
 	
 	def load_dataset(self, filename, filename_y=None, extra_params=None):
-		self.__graphs, self.__target = loadDataset(filename, filename_y=filename_y, extra_params=extra_params)
+		self.__graphs, self.__targets = loadDataset(filename, filename_y=filename_y, extra_params=extra_params)
+		self.set_labels_attrs()
+		
+		
+	def load_graphs(self, graphs, targets=None):
+		self.__graphs = graphs
+		self.__targets = targets
 		self.set_labels_attrs()
 		
 		
 	def load_predefined_dataset(self, ds_name):
+		current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if ds_name == 'Letter-high': # node non-symb
-			ds_file = '../../datasets/Letter-high/Letter-high_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'Letter-med': # node non-symb
-			ds_file = '../../datasets/Letter-high/Letter-med_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'Letter-low': # node non-symb
-			ds_file = '../../datasets/Letter-high/Letter-low_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/Letter-high/Letter-low_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'Fingerprint':
-			ds_file = '../../datasets/Fingerprint/Fingerprint_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'SYNTHETIC':
 			pass
 		elif ds_name == 'SYNTHETICnew':
-			ds_file = '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'Synthie':
 			pass
 		elif ds_name == 'COIL-DEL':
-			ds_file = '../../datasets/COIL-DEL/COIL-DEL_A.txt'
-			self.__graphs, self.__target = loadDataset(ds_file)
+			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
+			self.__graphs, self.__targets = loadDataset(ds_file)
 		elif ds_name == 'COIL-RAG':
 			pass
 		elif ds_name == 'COLORS-3':
@@ -514,7 +522,7 @@ class Dataset(object):
 	
 		
 	def __get_class_num(self):
-		return len(set(self.__target))
+		return len(set(self.__targets))
 	
 		
 	def __get_node_attr_dim(self):
@@ -529,6 +537,11 @@ class Dataset(object):
 	def graphs(self):
 		return self.__graphs
 
+
+	@property
+	def targets(self):
+		return self.__targets
+	
 		
 	@property
 	def node_labels(self):
@@ -548,3 +561,18 @@ class Dataset(object):
 	@property
 	def edge_attrs(self):
 		return self.__edge_attrs
+	
+	
+def split_dataset_by_target(dataset):
+	from gklearn.preimage.utils import get_same_item_indices
+	
+	graphs = dataset.graphs
+	targets = dataset.targets
+	datasets = []
+	idx_targets = get_same_item_indices(targets)
+	for key, val in idx_targets.items():
+		sub_graphs = [graphs[i] for i in val]
+		sub_dataset = Dataset()
+		sub_dataset.load_graphs(sub_graphs, [key] * len(val))
+		datasets.append(sub_dataset)
+	return datasets
