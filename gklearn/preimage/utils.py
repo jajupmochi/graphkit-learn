@@ -39,6 +39,19 @@ def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
     return np.sqrt(term1 - term2 + term3)
 
 
+def compute_k_dis(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
+    term1 = Kmatrix[idx_g, idx_g]
+    term2 = 0
+    for i, a in enumerate(alpha):
+        term2 += a * Kmatrix[idx_g, idx_gi[i]]
+    term2 *= 2
+    if withterm3 == False:
+        for i1, a1 in enumerate(alpha):
+            for i2, a2 in enumerate(alpha):
+                term3 += a1 * a2 * Kmatrix[idx_gi[i1], idx_gi[i2]]
+    return np.sqrt(term1 - term2 + term3)
+
+
 def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose, parallel='imap_unordered'):
     if graph_kernel == 'marginalizedkernel':
         Kmatrix, _ = marginalizedkernel(Gn, node_label=node_label, edge_label=edge_label,
