@@ -36,10 +36,9 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__time_limit_in_sec = 0
 		self.__max_itrs = 100
 		self.__max_itrs_without_update = 3
-		self.__epsilon_ratio = 0.01
+		self.__epsilon_residual = 0.01
+		self.__epsilon_ec = 0.1
 		# values to compute.
-		self.__edit_cost_constants = []
-		self.__runtime_precompute_gm = None
 		self.__runtime_optimize_ec = None
 		self.__runtime_generate_preimage = None
 		self.__runtime_total = None
@@ -54,7 +53,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__itrs = 0
 		self.__converged = False
 		self.__num_updates_ecc = 0
-		
+		# values that can be set or to be computed.
+		self.__edit_cost_constants = []
+		self.__gram_matrix_unnorm = None
+		self.__runtime_precompute_gm = None
+
 		
 	def set_options(self, **kwargs):
 		self._kernel_options = kwargs.get('kernel_options', {})
@@ -71,7 +74,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__time_limit_in_sec = kwargs.get('time_limit_in_sec', 0)
 		self.__max_itrs = kwargs.get('max_itrs', 100)
 		self.__max_itrs_without_update = kwargs.get('max_itrs_without_update', 3)
-		self.__epsilon_ratio = kwargs.get('epsilon_ratio', 0.01)
+		self.__epsilon_residual = kwargs.get('epsilon_residual', 0.01)
+		self.__epsilon_ec = kwargs.get('epsilon_ec', 0.1)
+		self.__gram_matrix_unnorm = kwargs.get('gram_matrix_unnorm', None)
+		self.__runtime_precompute_gm = kwargs.get('runtime_precompute_gm', None)
 		
 		
 	def run(self):
@@ -81,9 +87,18 @@ class MedianPreimageGenerator(PreimageGenerator):
 		start = time.time()
 		
 		# 1. precompute gram matrix.
-		gram_matrix, run_time = self.__graph_kernel.compute(self._dataset.graphs, **self._kernel_options)
-		end_precompute_gm = time.time()
-		self.__runtime_precompute_gm = end_precompute_gm - start
+		if self.__gram_matrix_unnorm is None:
+			gram_matrix, run_time = self._graph_kernel.compute(self._dataset.graphs, **self._kernel_options)
+			self.__gram_matrix_unnorm = self._graph_kernel.gram_matrix_unnorm
+			end_precompute_gm = time.time()
+			self.__runtime_precompute_gm = end_precompute_gm - start
+		else:
+			if self.__runtime_precompute_gm is None:
+				raise Exception('Parameter "runtime_precompute_gm" must be given when using pre-computed Gram matrix.')
+			self._graph_kernel.gram_matrix_unnorm = self.__gram_matrix_unnorm
+			self._graph_kernel.gram_matrix = self._graph_kernel.normalize_gm(np.copy(self.__gram_matrix_unnorm))
+			end_precompute_gm = time.time()
+			start -= self.__runtime_precompute_gm
 		
 		# 2. optimize edit cost constants. 
 		self.__optimize_edit_cost_constants()
@@ -134,6 +149,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 			print('Total number of updating edit costs:', self.__num_updates_ecc)
 			print('Is optimization of edit costs converged:', self.__converged)
 			print('================================================================================')
+			print()
 			
 	# collect return values.
 # 	return (sod_sm, sod_gm), \
@@ -222,7 +238,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 	def __optimize_ecc_by_kernel_distances(self):		
 		# compute distances in feature space.
-		dis_k_mat, _, _, _ = self.__graph_kernel.compute_distance_matrix()
+		dis_k_mat, _, _, _ = self._graph_kernel.compute_distance_matrix()
 		dis_k_vec = []
 		for i in range(len(dis_k_mat)):
 	#		for j in range(i, len(dis_k_mat)):
@@ -256,7 +272,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		timer = Timer(self.__time_limit_in_sec)
 		while not self.__termination_criterion_met(self.__converged, timer, self.__itrs, itrs_without_update):
 			if self._verbose >= 2:
-				print('\niteration', self.__itrs)
+				print('\niteration', self.__itrs + 1)
 			time0 = time.time()
 			# "fit" geds to distances in feature space by tuning edit costs using theLeast Squares Method.
 # 			np.savez('results/xp_fit_method/fit_data_debug' + str(self.__itrs) + '.gm', 
@@ -286,21 +302,21 @@ class MedianPreimageGenerator(PreimageGenerator):
 			# check convergency.
 			ec_changed = False
 			for i, cost in enumerate(self.__edit_cost_constants):
-# 				if cost == 0:
-# 					if edit_cost_list[-2][i] > self.__epsilon_ratio:
-# 						ec_changed = True
-# 						break
-# 				elif abs(cost - edit_cost_list[-2][i]) / cost > self.__epsilon_ratio:
-# 					ec_changed = True
-# 					break
-				if abs(cost - edit_cost_list[-2][i]) > self.__epsilon_ratio:
+				if cost == 0:
+ 					if edit_cost_list[-2][i] > self.__epsilon_ec:
+						 ec_changed = True
+						 break
+				elif abs(cost - edit_cost_list[-2][i]) / cost > self.__epsilon_ec:
  					ec_changed = True
  					break
+# 				if abs(cost - edit_cost_list[-2][i]) > self.__epsilon_ec:
+#  					ec_changed = True
+#  					break
 			residual_changed = False
 			if residual_list[-1] == 0:
-				if residual_list[-2] > self.__epsilon_ratio:
+				if residual_list[-2] > self.__epsilon_residual:
 					residual_changed = True
-			elif abs(residual_list[-1] - residual_list[-2]) / residual_list[-1] > self.__epsilon_ratio:
+			elif abs(residual_list[-1] - residual_list[-2]) / residual_list[-1] > self.__epsilon_residual:
 				residual_changed = True
 			self.__converged = not (ec_changed or residual_changed)
 			if self.__converged:
@@ -313,14 +329,14 @@ class MedianPreimageGenerator(PreimageGenerator):
 			if self._verbose >= 2:
 				print()
 				print('-------------------------------------------------------------------------')
-				print('States of iteration', str(self.__itrs))
+				print('States of iteration', self.__itrs + 1)
 				print('-------------------------------------------------------------------------')
 # 				print('Time spend:', self.__runtime_optimize_ec)
-				print('Total number of iterations for optimizing:', self.__itrs)
+				print('Total number of iterations for optimizing:', self.__itrs + 1)
 				print('Total number of updating edit costs:', self.__num_updates_ecc)
-				print('Is optimization of edit costs converged:', self.__converged)
-				print('Does edit cost changed:', ec_changed)
-				print('Does residual changed:', residual_changed)
+				print('Was optimization of edit costs converged:', self.__converged)
+				print('Did edit costs change:', ec_changed)
+				print('Did residual change:', residual_changed)
 				print('Iterations without update:', itrs_without_update)
 				print('Current edit cost constants:', self.__edit_cost_constants)
 				print('Residual list:', residual_list)
@@ -634,11 +650,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 	def __compute_distances_to_true_median(self):		
 		# compute distance in kernel space for set median.
-		kernels_to_sm, _ = self.__graph_kernel.compute(self.__set_median, self._dataset.graphs, **self._kernel_options)
-		kernel_sm, _ = self.__graph_kernel.compute(self.__set_median, self.__set_median, **self._kernel_options)
-		kernels_to_sm = [kernels_to_sm[i] / np.sqrt(self.__graph_kernel.gram_matrix_unnorm[i, i] * kernel_sm) for i in range(len(kernels_to_sm))] # normalize 
+		kernels_to_sm, _ = self._graph_kernel.compute(self.__set_median, self._dataset.graphs, **self._kernel_options)
+		kernel_sm, _ = self._graph_kernel.compute(self.__set_median, self.__set_median, **self._kernel_options)
+		kernels_to_sm = [kernels_to_sm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_sm) for i in range(len(kernels_to_sm))] # normalize 
 		# @todo: not correct kernel value
-		gram_with_sm = np.concatenate((np.array([kernels_to_sm]), np.copy(self.__graph_kernel.gram_matrix)), axis=0)
+		gram_with_sm = np.concatenate((np.array([kernels_to_sm]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
 		gram_with_sm = np.concatenate((np.array([[1] + kernels_to_sm]).T, gram_with_sm), axis=1)
 		self.__k_dis_set_median = compute_k_dis(0, range(1, 1+len(self._dataset.graphs)), 
 										  [1 / len(self._dataset.graphs)] * len(self._dataset.graphs),
@@ -649,10 +665,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#	print(set_median.edges(data=True))
 		
 		# compute distance in kernel space for generalized median.
-		kernels_to_gm, _ = self.__graph_kernel.compute(self.__gen_median, self._dataset.graphs, **self._kernel_options)
-		kernel_gm, _ = self.__graph_kernel.compute(self.__gen_median, self.__gen_median, **self._kernel_options)
-		kernels_to_gm = [kernels_to_gm[i] / np.sqrt(self.__graph_kernel.gram_matrix_unnorm[i, i] * kernel_gm) for i in range(len(kernels_to_gm))] # normalize
-		gram_with_gm = np.concatenate((np.array([kernels_to_gm]), np.copy(self.__graph_kernel.gram_matrix)), axis=0)
+		kernels_to_gm, _ = self._graph_kernel.compute(self.__gen_median, self._dataset.graphs, **self._kernel_options)
+		kernel_gm, _ = self._graph_kernel.compute(self.__gen_median, self.__gen_median, **self._kernel_options)
+		kernels_to_gm = [kernels_to_gm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gm) for i in range(len(kernels_to_gm))] # normalize
+		gram_with_gm = np.concatenate((np.array([kernels_to_gm]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
 		gram_with_gm = np.concatenate((np.array([[1] + kernels_to_gm]).T, gram_with_gm), axis=1)
 		self.__k_dis_gen_median = compute_k_dis(0, range(1, 1+len(self._dataset.graphs)), 
 										  [1 / len(self._dataset.graphs)] * len(self._dataset.graphs),
@@ -679,12 +695,12 @@ class MedianPreimageGenerator(PreimageGenerator):
 	def __set_graph_kernel_by_name(self):
 		if self.kernel_options['name'] == 'structuralspkernel':
 			from gklearn.kernels import StructuralSP
-			self.__graph_kernel = StructuralSP(node_labels=self.dataset.node_labels,
-									  edge_labels=self.dataset.edge_labels, 
-									  node_attrs=self.dataset.node_attrs,
-									  edge_attrs=self.dataset.edge_attrs,
-									  ds_infos=self.dataset.get_dataset_infos(keys=['directed']),
-									  **self.kernel_options)
+			self._graph_kernel = StructuralSP(node_labels=self._dataset.node_labels,
+									  edge_labels=self._dataset.edge_labels, 
+									  node_attrs=self._dataset.node_attrs,
+									  edge_attrs=self._dataset.edge_attrs,
+									  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
+									  **self._kernel_options)
 			
 			
 # 	def __clean_graph(self, G, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
@@ -692,7 +708,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		"""
 		Cleans node and edge labels and attributes of the given graph.
 		"""
-		G_new = nx.Graph()
+		G_new = nx.Graph(**G.graph)
 		for nd, attrs in G.nodes(data=True):
 			G_new.add_node(str(nd)) # @todo: should we keep this as str()?
 			for l_name in self._dataset.node_labels:
@@ -761,3 +777,12 @@ class MedianPreimageGenerator(PreimageGenerator):
 	@property
 	def best_from_dataset(self):
 		return self.__best_from_dataset
+	
+	
+	@property
+	def gram_matrix_unnorm(self):
+		return self.__gram_matrix_unnorm
+	
+	@gram_matrix_unnorm.setter
+	def gram_matrix_unnorm(self, value):
+		self.__gram_matrix_unnorm = value

@@ -56,9 +56,10 @@ class Dataset(object):
 		
 		
 	def load_graphs(self, graphs, targets=None):
+		# this has to be followed by set_labels().
 		self.__graphs = graphs
 		self.__targets = targets
-		self.set_labels_attrs()
+# 		self.set_labels_attrs()
 		
 		
 	def load_predefined_dataset(self, ds_name):
@@ -94,6 +95,13 @@ class Dataset(object):
 	
 		self.set_labels_attrs()
 	
+
+	def set_labels(self, node_labels=[], node_attrs=[], edge_labels=[], edge_attrs=[]):
+		self.__node_labels = node_labels
+		self.__node_attrs = node_attrs
+		self.__edge_labels = edge_labels
+		self.__edge_attrs = edge_attrs
+
 		
 	def set_labels_attrs(self, node_labels=None, node_attrs=None, edge_labels=None, edge_attrs=None):
 		# @todo: remove labels which have only one possible values.
@@ -371,9 +379,34 @@ class Dataset(object):
 		print(OrderedDict(sorted(infos.items(), key=lambda i: keys.index(i[0]))))
 		
 		
+	def remove_labels(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
+		for g in self.__graphs:
+			for nd in g.nodes():
+				for nl in node_labels:
+ 					del g.nodes[nd][nl]
+				for na in node_attrs:
+					del g.nodes[nd][na]
+			for ed in g.edges():
+				for el in edge_labels:
+ 					del g.edges[ed][el]
+				for ea in edge_attrs:
+ 					del g.edges[ed][ea]
+		if len(node_labels) > 0:
+ 			self.__node_labels = [nl for nl in self.__node_labels if nl not in node_labels]
+		if len(edge_labels) > 0:
+ 			self.__edge_labels = [el for el in self.__edge_labels if el not in edge_labels]
+		if len(node_attrs) > 0:
+ 			self.__node_attrs = [na for na in self.__node_attrs if na not in node_attrs]
+		if len(edge_attrs) > 0:
+ 			self.__edge_attrs = [ea for ea in self.__edge_attrs if ea not in edge_attrs]
+		
+		
 	def cut_graphs(self, range_):
 		self.__graphs = [self.__graphs[i] for i in range_]
-		self.set_labels_attrs()
+		if self.__targets is not None:
+			self.__targets = [self.__targets[i] for i in range_]
+		# @todo
+# 		self.set_labels_attrs()
 	
 	
 	def __get_dataset_size(self):
@@ -574,5 +607,6 @@ def split_dataset_by_target(dataset):
 		sub_graphs = [graphs[i] for i in val]
 		sub_dataset = Dataset()
 		sub_dataset.load_graphs(sub_graphs, [key] * len(val))
+		sub_dataset.set_labels(node_labels=dataset.node_labels, node_attrs=dataset.node_attrs, edge_labels=dataset.edge_labels, edge_attrs=dataset.edge_attrs)
 		datasets.append(sub_dataset)
 	return datasets

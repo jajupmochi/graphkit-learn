@@ -21,21 +21,23 @@ from gklearn.kernels.treeletKernel import treeletkernel
 from gklearn.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
 from gklearn.utils import Dataset
 import csv
-import matplotlib.pyplot as plt
 import networkx as nx
 
 
-def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, dir_save='', ):
+def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None):
+	import os.path
 	from gklearn.preimage import MedianPreimageGenerator
 	from gklearn.utils import split_dataset_by_target
 	from gklearn.utils.graphfiles import saveGXL
 	
 	# 1. get dataset.
-	print('getting dataset...')
+	print('1. getting dataset...')
 	dataset_all = Dataset()
 	dataset_all.load_predefined_dataset(ds_name)
+	if not irrelevant_labels is None:
+		dataset_all.remove_labels(**irrelevant_labels)
+# 	dataset_all.cut_graphs(range(0, 100))
 	datasets = split_dataset_by_target(dataset_all)
-# 	dataset.cut_graphs(range(0, 10))
 
 	if save_results:
 		# create result files.
@@ -47,7 +49,6 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 	dis_k_sm_list = []
 	dis_k_gm_list = []
 	dis_k_gi_min_list = []
-	time_precompute_gm_list = []
 	time_optimize_ec_list = []
 	time_generate_list = []
 	time_total_list = []
@@ -58,6 +59,26 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 	nb_dis_k_sm2gm = [0, 0, 0]
 	nb_dis_k_gi2sm = [0, 0, 0]
 	nb_dis_k_gi2gm = [0, 0, 0]
+	dis_k_max_list = []	
+	dis_k_min_list = []
+	dis_k_mean_list = []
+	if load_gm == 'auto':
+		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
+		gmfile_exist = os.path.isfile(os.path.abspath(gm_fname))
+		if gmfile_exist:
+			gmfile = np.load(gm_fname)
+			gram_matrix_unnorm_list = gmfile['gram_matrix_unnorm_list']
+			time_precompute_gm_list = gmfile['run_time_list'].tolist()
+		else:
+			gram_matrix_unnorm_list = []
+			time_precompute_gm_list = []
+	elif not load_gm:
+		gram_matrix_unnorm_list = []
+		time_precompute_gm_list = []
+	else:
+		gmfile = np.load()
+		gram_matrix_unnorm_list = gmfile['gram_matrix_unnorm_list']
+		time_precompute_gm_list = gmfile['run_time_list']
 # 	repeats_better_sod_sm2gm = []
 # 	repeats_better_dis_k_sm2gm = []
 # 	repeats_better_dis_k_gi2sm = []
@@ -65,16 +86,23 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 		
 		
 	print('start generating preimage for each class of target...')
-	for dataset in datasets:
-		print('\ntarget =', dataset.targets[0], '\n')
-		num_graphs = len(dataset.graphs)
+	for idx, dataset in enumerate(datasets):
+		target = dataset.targets[0]
+		print('\ntarget =', target, '\n')
+# 		if target != 1:
+#  			continue
 		
+		num_graphs = len(dataset.graphs)
 		if num_graphs < 2:
 			print('\nnumber of graphs = ', num_graphs, ', skip.\n')
 			continue
 			
 		# 2. set parameters.
-		print('1. initializing mpg and setting parameters...')
+		print('2. initializing mpg and setting parameters...')
+		if load_gm:
+			if gmfile_exist:
+				mpg_options['gram_matrix_unnorm'] = gram_matrix_unnorm_list[idx]
+				mpg_options['runtime_precompute_gm'] = time_precompute_gm_list[idx]
 		mpg = MedianPreimageGenerator()
 		mpg.dataset = dataset
 		mpg.set_options(**mpg_options.copy())
@@ -83,10 +111,19 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 		mpg.mge_options = mge_options.copy()
 
 		# 3. compute median preimage.
-		print('2. computing median preimage...')
+		print('3. computing median preimage...')
 		mpg.run()
 		results = mpg.get_results()
 		
+		# 4. compute pairwise kernel distances.
+		print('4. computing pairwise kernel distances...')
+		_, dis_k_max, dis_k_min, dis_k_mean = mpg.graph_kernel.compute_distance_matrix()
+		dis_k_max_list.append(dis_k_max)
+		dis_k_min_list.append(dis_k_min)
+		dis_k_mean_list.append(dis_k_mean)
+		
+		# 5. save results (and median graphs).
+		print('5. saving results (and median graphs)...')
 		# write result detail.
 		if save_results:
 			print('writing results to files...')
@@ -99,7 +136,7 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 			csv.writer(f_detail).writerow([ds_name, kernel_options['name'], 
 					  ged_options['edit_cost'], ged_options['method'], 
 					  ged_options['attr_distance'], mpg_options['fit_method'], 
-					  num_graphs, dataset.targets[0], 1, 
+					  num_graphs, target, 1, 
 					  results['sod_set_median'], results['sod_gen_median'],
 					  results['k_dis_set_median'], results['k_dis_gen_median'], 
 					  results['k_dis_dataset'], sod_sm2gm, dis_k_sm2gm, 
@@ -161,7 +198,7 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 			csv.writer(f_summary).writerow([ds_name, kernel_options['name'], 
 					  ged_options['edit_cost'], ged_options['method'], 
 					  ged_options['attr_distance'], mpg_options['fit_method'], 
-					  num_graphs, dataset.targets[0],
+					  num_graphs, target,
 					  results['sod_set_median'], results['sod_gen_median'],
 					  results['k_dis_set_median'], results['k_dis_gen_median'], 
 					  results['k_dis_dataset'], sod_sm2gm, dis_k_sm2gm, 
@@ -175,17 +212,18 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 			 
 		# save median graphs.
 		if save_medians:
-			fn_pre_sm = dir_save + 'medians/set_median.' + mpg_options['fit_method'] + '.k' + str(num_graphs) + '.y' + str(dataset.targets[0]) + '.repeat' + str(1)
+			print('Saving median graphs to files...')
+			fn_pre_sm = dir_save + 'medians/set_median.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.set_median, fn_pre_sm + '.gxl', method='default', 
-				    node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+					node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
-			fn_pre_gm = dir_save + 'medians/gen_median.' + mpg_options['fit_method'] + '.k' + str(num_graphs) + '.y' + str(dataset.targets[0]) + '.repeat' + str(1)
+			fn_pre_gm = dir_save + 'medians/gen_median.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.gen_median, fn_pre_gm + '.gxl', method='default',
-		   		    node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+		   			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
-			fn_best_dataset = dir_save + 'medians/g_best_dataset.' + mpg_options['fit_method'] + '.k' + str(num_graphs) + '.y' + str(dataset.targets[0]) + '.repeat' + str(1)
+			fn_best_dataset = dir_save + 'medians/g_best_dataset.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.best_from_dataset, fn_best_dataset + '.gxl', method='default',
-		   		    node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+		   			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
 		
 		# plot median graphs.
@@ -194,7 +232,9 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 				draw_Letter_graph(mpg.set_median, fn_pre_sm)
 				draw_Letter_graph(mpg.gen_median, fn_pre_gm)
 				draw_Letter_graph(mpg.best_from_dataset, fn_best_dataset)
-		
+				
+		if (load_gm == 'auto' and not gmfile_exist) or not load_gm:
+			gram_matrix_unnorm_list.append(mpg.gram_matrix_unnorm)
 
 	# write result summary for each letter. 
 	if save_results:
@@ -227,6 +267,18 @@ def generate_median_preimage_by_class(ds_name, mpg_options, kernel_options, ged_
 				  num_converged, num_updates_ecc_mean])
 		f_summary.close()
 		
+	# save total pairwise kernel distances.
+	dis_k_max = np.max(dis_k_max_list)
+	dis_k_min = np.min(dis_k_min_list)
+	dis_k_mean = np.mean(dis_k_mean_list)
+	print('The maximum pairwise distance in kernel space:', dis_k_max)
+	print('The minimum pairwise distance in kernel space:', dis_k_min)
+	print('The average pairwise distance in kernel space:', dis_k_mean)
+	
+	# write Gram matrices to file.
+	if (load_gm == 'auto' and not gmfile_exist) or not load_gm:
+		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=time_precompute_gm_list)	
+
 	print('\ncomplete.')	
 
 	
@@ -235,7 +287,7 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.csv'
 	f_detail = open(dir_output + fn_output_detail, 'a')
 	csv.writer(f_detail).writerow(['dataset', 'graph kernel', 'edit cost', 
-			  'GED method', 'attr distance', 'fit method', 'k', 
+			  'GED method', 'attr distance', 'fit method', 'num graphs', 
 			  'target', 'repeat', 'SOD SM', 'SOD GM', 'dis_k SM', 'dis_k GM',
 			  'min dis_k gi', 'SOD SM -> GM', 'dis_k SM -> GM', 'dis_k gi -> SM', 
 			  'dis_k gi -> GM', 'edit cost constants', 'time precompute gm',
@@ -247,7 +299,7 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 	fn_output_summary = 'results_summary.' + ds_name + '.' + gkernel + '.csv'
 	f_summary = open(dir_output + fn_output_summary, 'a')
 	csv.writer(f_summary).writerow(['dataset', 'graph kernel', 'edit cost', 
-			  'GED method', 'attr distance', 'fit method', 'k', 
+			  'GED method', 'attr distance', 'fit method', 'num graphs', 
 			  'target', 'SOD SM', 'SOD GM', 'dis_k SM', 'dis_k GM',
 			  'min dis_k gi', 'SOD SM -> GM', 'dis_k SM -> GM', 'dis_k gi -> SM', 
 			  'dis_k gi -> GM', 'time precompute gm', 'time optimize ec', 
@@ -263,30 +315,35 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 
 
 def get_relations(sign):
-    if sign == -1:
-        return 'better'
-    elif sign == 0:
-        return 'same'
-    elif sign == 1:
-        return 'worse'
+	if sign == -1:
+		return 'better'
+	elif sign == 0:
+		return 'same'
+	elif sign == 1:
+		return 'worse'
 	
 	
 #Dessin median courrant
 def draw_Letter_graph(graph, file_prefix):
-    plt.figure()
-    pos = {}
-    for n in graph.nodes:
-        pos[n] = np.array([float(graph.node[n]['x']),float(graph.node[n]['y'])])
-    nx.draw_networkx(graph, pos)
-    plt.savefig(file_prefix + '.eps', format='eps', dpi=300)
-#    plt.show()
-    plt.clf()
+	import matplotlib
+	matplotlib.use('agg')
+	import matplotlib.pyplot as plt
+	plt.figure()
+	pos = {}
+	for n in graph.nodes:
+		pos[n] = np.array([float(graph.nodes[n]['x']),float(graph.nodes[n]['y'])])
+	nx.draw_networkx(graph, pos)
+	plt.savefig(file_prefix + '.eps', format='eps', dpi=300)
+#	plt.show()
+	plt.clf()
+	plt.close()
 
 
 def remove_edges(Gn):
 	for G in Gn:
 		for _, _, attrs in G.edges(data=True):
 			attrs.clear()
+			
 			
 def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
 	term1 = Kmatrix[idx_g, idx_g]

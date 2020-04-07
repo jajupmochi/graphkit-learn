@@ -76,11 +76,11 @@ class GraphKernel(object):
 	
 	
 	def compute_distance_matrix(self):
-		dis_mat = np.empty((len(self._graphs), len(self._graphs)))
 		if self._gram_matrix is None:
 			raise Exception('Please compute the Gram matrix before computing distance matrix.')
-		for i in range(len(self._graphs)):
-			for j in range(i, len(self._graphs)):
+		dis_mat = np.empty((len(self._gram_matrix), len(self._gram_matrix)))
+		for i in range(len(self._gram_matrix)):
+			for j in range(i, len(self._gram_matrix)):
 				dis = self._gram_matrix[i, i] + self._gram_matrix[j, j] - 2 * self._gram_matrix[i, j]
 				if dis < 0:
 					if dis > -1e-10:
@@ -184,17 +184,21 @@ class GraphKernel(object):
 	def parallel(self):
 		return self._parallel
 	
+	
 	@property
 	def n_jobs(self):
 		return self._n_jobs
+
 
 	@property
 	def verbose(self):
 		return self._verbose
 	
+	
 	@property
 	def normalize(self):
 		return self._normalize
+	
 	
 	@property
 	def run_time(self):
@@ -205,7 +209,15 @@ class GraphKernel(object):
 	def gram_matrix(self):
 		return self._gram_matrix
 	
+	@gram_matrix.setter
+	def gram_matrix(self, value):
+		self._gram_matrix = value
+	
 	 
 	@property
 	def gram_matrix_unnorm(self):
 		return self._gram_matrix_unnorm 
+
+	@gram_matrix_unnorm.setter
+	def gram_matrix_unnorm(self, value):
+		self._gram_matrix_unnorm = value
