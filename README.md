@@ -8,14 +8,14 @@ A python package for graph kernels, graph edit distances and graph pre-image pro
 
 ## Requirements
 
-* python==3.6.5
-* numpy==1.15.2
-* scipy==1.1.0
-* matplotlib==3.0.0
-* networkx==2.2
-* scikit-learn==0.20.0
-* tabulate==0.8.2
-* tqdm==4.26.0
+* python==3.6.9
+* numpy>=1.15.2
+* scipy>=1.1.0
+* matplotlib>=3.0.0
+* networkx>=2.2
+* scikit-learn>=0.20.0
+* tabulate>=0.8.2
+* tqdm>=4.26.0
 * control==0.8.0 (for generalized random walk kernels only)
 * slycot==0.3.3 (for generalized random walk kernels only, which requires a fortran compiler, gfortran for example)
 
