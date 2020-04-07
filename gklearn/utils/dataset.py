@@ -407,7 +407,19 @@ class Dataset(object):
 			self.__targets = [self.__targets[i] for i in range_]
 		# @todo
 # 		self.set_labels_attrs()
-	
+
+
+	def trim_dataset(self, edge_required=False):
+		if edge_required:
+			trimed_pairs = [(idx, g) for idx, g in enumerate(self.__graphs) if (nx.number_of_nodes(g) != 0 and nx.number_of_edges(g) != 0)]
+		else:
+			trimed_pairs = [(idx, g) for idx, g in enumerate(self.__graphs) if nx.number_of_nodes(g) != 0]
+		idx = [p[0] for p in trimed_pairs]
+		self.__graphs = [p[1] for p in trimed_pairs]
+		self.__targets = [self.__targets[i] for i in idx]
+		# @todo
+# 		self.set_labels_attrs()
+		
 	
 	def __get_dataset_size(self):
 		return len(self.__graphs)

@@ -4,7 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/graphkit-learn/badge/?version=master)](https://graphkit-learn.readthedocs.io/en/master/?badge=master)
 [![PyPI version](https://badge.fury.io/py/graphkit-learn.svg)](https://badge.fury.io/py/graphkit-learn)
 
-A python package for graph kernels, graph edit distances and graph pre-image problem.
+A Python package for graph kernels, graph edit distances and graph pre-image problem.
 
 ## Requirements
 

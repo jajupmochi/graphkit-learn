@@ -634,7 +634,7 @@ def paths2labelseqs(plist, G, ds_attrs, node_label, edge_label):
                 tuple(
                     list(
                         chain.from_iterable(
-                            (G.node[node][node_label],
+                            (G.nodes[node][node_label],
                              G[node][path[idx + 1]][edge_label])
                             for idx, node in enumerate(path[:-1]))) +
                     [G.nodes[path[-1]][node_label]]) for path in plist
