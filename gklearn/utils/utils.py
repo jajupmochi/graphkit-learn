@@ -134,7 +134,7 @@ def untotterTransformation(G, node_label, edge_label):
 	gt.add_nodes_from(G.nodes(data=True))
 	for edge in G.edges():
 		gt.add_node(edge)
-		gt.node[edge].update({node_label: G.node[edge[1]][node_label]})
+		gt.nodes[edge].update({node_label: G.node[edge[1]][node_label]})
 		gt.add_edge(edge[0], edge)
 		gt.edges[edge[0], edge].update({
 			edge_label:
