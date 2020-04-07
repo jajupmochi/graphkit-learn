@@ -20,9 +20,12 @@ def test_median_preimage_generator():
 	mpg = MedianPreimageGenerator()
 	mpg_options = {'fit_method': 'k-graphs',
 				   'init_ecc': [3, 3, 1, 3, 3],
-				   'max_itrs': 6,
 				   'ds_name': 'Letter-high',
 				   'parallel': True,
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_ratio': 0.01,
 				   'verbose': 2}
 	mpg.set_options(**mpg_options)
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)

@@ -348,7 +348,7 @@ class MedianGraphEstimator(object):
 			
 			# Print information about current iteration.
 			if self.__print_to_stdout == 2:
-				progress = tqdm(desc='\rComputing initial node maps', total=len(graph_ids), file=sys.stdout)
+				progress = tqdm(desc='Computing initial node maps', total=len(graph_ids), file=sys.stdout)
 				
 			# Compute node maps and sum of distances for initial median.
 			self.__sum_of_distances = 0
@@ -457,7 +457,7 @@ class MedianGraphEstimator(object):
 				self.__itrs[median_pos] += 1
 				
 			# Update the best median.
-			if self.__sum_of_distances < self.__best_init_sum_of_distances:
+			if self.__sum_of_distances < best_sum_of_distances:
 				best_sum_of_distances = self.__sum_of_distances
 				node_maps_from_best_median = self.__node_maps_from_median
 				best_median = median
@@ -588,7 +588,7 @@ class MedianGraphEstimator(object):
 		
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
-			progress = tqdm(desc='\rComputing medoid', total=len(graph_ids), file=sys.stdout)
+			progress = tqdm(desc='Computing medoid', total=len(graph_ids), file=sys.stdout)
 			
 		# Compute the medoid.
 		medoid_id = graph_ids[0]
@@ -718,7 +718,7 @@ class MedianGraphEstimator(object):
 	def __update_node_maps(self):
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
-			progress = tqdm(desc='\rUpdating node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
+			progress = tqdm(desc='Updating node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
 			
 		# Update the node maps.
 		node_maps_were_modified = False

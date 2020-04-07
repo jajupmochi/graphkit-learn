@@ -4,7 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/graphkit-learn/badge/?version=master)](https://graphkit-learn.readthedocs.io/en/master/?badge=master)
 [![PyPI version](https://badge.fury.io/py/graphkit-learn.svg)](https://badge.fury.io/py/graphkit-learn)
 
-A python package for graph kernels.
+A python package for graph kernels, graph edit distances and graph pre-image problem.
 
 ## Requirements
 
@@ -105,7 +105,7 @@ A comparison of performances of graph kernels on benchmark datasets can be found
 
 ## Authors
 
-* [Linlin Jia](https://github.com/jajupmochi), LITIS, INSA Rouen Normandie
+* [Linlin Jia](https://jajupmochi.github.io/), LITIS, INSA Rouen Normandie
 * [Benoit Gaüzère](http://pagesperso.litislab.fr/~bgauzere/#contact_en), LITIS, INSA Rouen Normandie
 * [Paul Honeine](http://honeine.fr/paul/Welcome.html), LITIS, Université de Rouen Normandie
 

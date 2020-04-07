@@ -5,7 +5,7 @@ Created on Thu Mar 26 18:26:36 2020
 
 @author: ljia
 """
-from gklearn.utils import Dataset
+# from gklearn.utils import Dataset
 
 class PreimageGenerator(object):
 	
@@ -32,6 +32,11 @@ class PreimageGenerator(object):
 	@kernel_options.setter
 	def kernel_options(self, value):
 		self._kernel_options = value
+
+
+	@property
+	def graph_kernel(self):
+		return self._graph_kernel
 		
 		
 	@property
@@ -41,3 +46,4 @@ class PreimageGenerator(object):
 	@verbose.setter
 	def verbose(self, value):
 		self._verbose = value
+

@@ -307,7 +307,7 @@ def ged_options_to_string(options):
 	opt_str = ' '
 	for key, val in options.items():
 		if key == 'initialization_method':
-			opt_str += '--initial_solutions ' + str(val) + ' '
+			opt_str += '--initialization-method ' + str(val) + ' '
 		elif key == 'initialization_options':
 			opt_str += '--initialization-options ' + str(val) + ' '
 		elif key == 'lower_bound_method':

@@ -296,3 +296,59 @@ def get_edge_labels(Gn, edge_label):
 	for G in Gn:
 		el = el | set(nx.get_edge_attributes(G, edge_label).values())
 	return el
+
+
+def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attrs=None, edge_attrs=None, ds_infos=None, kernel_options={}):
+	if name == 'structuralspkernel':
+		from gklearn.kernels import StructuralSP
+		graph_kernel = StructuralSP(node_labels=node_labels, edge_labels=edge_labels, 
+								  node_attrs=node_attrs, edge_attrs=edge_attrs,
+								  ds_infos=ds_infos, **kernel_options)
+	return graph_kernel
+
+
+def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save='', irrelevant_labels=None):
+	from gklearn.utils import Dataset, split_dataset_by_target
+	
+	# 1. get dataset.
+	print('1. getting dataset...')
+	dataset_all = Dataset()
+	dataset_all.load_predefined_dataset(ds_name)
+	if not irrelevant_labels is None:
+		dataset_all.remove_labels(**irrelevant_labels)
+# 	dataset_all.cut_graphs(range(0, 10))
+	datasets = split_dataset_by_target(dataset_all)
+	
+	gram_matrix_unnorm_list = []
+	run_time_list = []
+	
+	print('start generating preimage for each class of target...')
+	for idx, dataset in enumerate(datasets):
+		target = dataset.targets[0]
+		print('\ntarget =', target, '\n')
+		
+		# 2. initialize graph kernel.
+		print('2. initializing graph kernel and setting parameters...')
+		graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
+										  node_labels=dataset.node_labels,
+										  edge_labels=dataset.edge_labels, 
+										  node_attrs=dataset.node_attrs,
+										  edge_attrs=dataset.edge_attrs,
+										  ds_infos=dataset.get_dataset_infos(keys=['directed']),
+										  kernel_options=kernel_options)
+
+		# 3. compute gram matrix.
+		print('3. computing gram matrix...')
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs, **kernel_options)
+		gram_matrix_unnorm = graph_kernel.gram_matrix_unnorm
+		
+		gram_matrix_unnorm_list.append(gram_matrix_unnorm)
+		run_time_list.append(run_time)
+				
+	# 4. save results.
+	print()
+	print('4. saving results...')
+	if save_results:
+		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)	
+
+	print('\ncomplete.')	
