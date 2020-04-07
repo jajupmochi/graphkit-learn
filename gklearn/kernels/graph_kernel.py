@@ -44,7 +44,7 @@ class GraphKernel(object):
 			
 		elif len(graphs) == 2:
 			if self.is_graph(graphs[0]) and self.is_graph(graphs[1]):
-				kernel = self.__compute_single_kernel(graphs[0], graphs[1])
+				kernel = self.__compute_single_kernel(graphs[0].copy(), graphs[1].copy())
 				return kernel, self._run_time
 			elif self.is_graph(graphs[0]) and isinstance(graphs[1], list):
 				g1 = graphs[0].copy()

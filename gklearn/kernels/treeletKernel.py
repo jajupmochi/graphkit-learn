@@ -308,7 +308,7 @@ def get_canonkeys(G, node_label, edge_label, labeled, is_directed):
         for i in range(1, 6): # for i in range(1, 6):
             treelet = []
             for pattern in patterns[str(i)]:
-                canonlist = list(chain.from_iterable((G.node[node][node_label], \
+                canonlist = list(chain.from_iterable((G.nodes[node][node_label], \
                     G[node][pattern[idx+1]][edge_label]) for idx, node in enumerate(pattern[:-1])))
                 canonlist.append(G.node[pattern[-1]][node_label])
                 canonkey_t = canonlist if canonlist < canonlist[::-1] else canonlist[::-1]

@@ -704,7 +704,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 			
 			
 # 	def __clean_graph(self, G, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
-	def __clean_graph(self, G):
+	def __clean_graph(self, G): # @todo: this may not be needed when datafile is updated.
 		"""
 		Cleans node and edge labels and attributes of the given graph.
 		"""
