@@ -7,13 +7,13 @@ Created on Thu Mar 26 18:48:27 2020
 """
 import numpy as np
 import networkx as nx
-from gklearn.utils.graphfiles import loadDataset
+from gklearn.utils.graph_files import load_dataset
 import os
 
 
 class Dataset(object):
 	
-	def __init__(self, filename=None, filename_y=None, extra_params=None):
+	def __init__(self, filename=None, filename_targets=None, **kwargs):
 		if filename is None:
 			self.__graphs = None
 			self.__targets = None
@@ -22,7 +22,7 @@ class Dataset(object):
 			self.__node_attrs = None
 			self.__edge_attrs = None
 		else:
-			self.load_dataset(filename, filename_y=filename_y, extra_params=extra_params)
+			self.load_dataset(filename, filename_targets=filename_targets, **kwargs)
 		
 		self.__substructures = None
 		self.__node_label_dim = None
@@ -50,9 +50,12 @@ class Dataset(object):
 		self.__class_number = None
 	
 	
-	def load_dataset(self, filename, filename_y=None, extra_params=None):
-		self.__graphs, self.__targets = loadDataset(filename, filename_y=filename_y, extra_params=extra_params)
-		self.set_labels_attrs()
+	def load_dataset(self, filename, filename_targets=None, **kwargs):
+		self.__graphs, self.__targets, label_names = load_dataset(filename, filename_targets=filename_targets, **kwargs)
+		self.__node_labels = label_names['node_labels']
+		self.__node_attrs = label_names['node_attrs']
+		self.__edge_labels = label_names['edge_labels']
+		self.__edge_attrs = label_names['edge_attrs']
 		
 		
 	def load_graphs(self, graphs, targets=None):
@@ -66,26 +69,26 @@ class Dataset(object):
 		current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if ds_name == 'Letter-high': # node non-symb
 			ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Letter-med': # node non-symb
 			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Letter-low': # node non-symb
 			ds_file = current_path + '../../datasets/Letter-high/Letter-low_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Fingerprint':
 			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'SYNTHETIC':
 			pass
 		elif ds_name == 'SYNTHETICnew':
 			ds_file = current_path + '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Synthie':
 			pass
 		elif ds_name == 'COIL-DEL':
 			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
-			self.__graphs, self.__targets = loadDataset(ds_file)
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'COIL-RAG':
 			pass
 		elif ds_name == 'COLORS-3':
@@ -93,7 +96,10 @@ class Dataset(object):
 		elif ds_name == 'FRANKENSTEIN':
 			pass
 	
-		self.set_labels_attrs()
+		self.__node_labels = label_names['node_labels']
+		self.__node_attrs = label_names['node_attrs']
+		self.__edge_labels = label_names['edge_labels']
+		self.__edge_attrs = label_names['edge_attrs']
 	
 
 	def set_labels(self, node_labels=[], node_attrs=[], edge_labels=[], edge_attrs=[]):

@@ -16,6 +16,7 @@ __date__ = "November 2017"
 # from utils import graphfiles
 # from utils import utils
 from gklearn.utils.dataset import Dataset, split_dataset_by_target
+from gklearn.utils.graph_files import load_dataset, save_dataset
 from gklearn.utils.timer import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 from gklearn.utils.utils import compute_gram_matrices_by_class
