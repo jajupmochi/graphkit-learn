@@ -99,6 +99,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 			self._graph_kernel.gram_matrix = self._graph_kernel.normalize_gm(np.copy(self.__gram_matrix_unnorm))
 			end_precompute_gm = time.time()
 			start -= self.__runtime_precompute_gm
+			
+		if self.__fit_method != 'k-graphs' and self.__fit_method != 'whole-dataset':
+			start = time.time()
+			self.__runtime_precompute_gm = 0
+			end_precompute_gm = start
 		
 		# 2. optimize edit cost constants. 
 		self.__optimize_edit_cost_constants()

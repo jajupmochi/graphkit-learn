@@ -24,7 +24,7 @@ import csv
 import networkx as nx
 
 
-def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None):
+def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None, edge_required=False):
 	import os.path
 	from gklearn.preimage import MedianPreimageGenerator
 	from gklearn.utils import split_dataset_by_target
@@ -34,7 +34,8 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	print('1. getting dataset...')
 	dataset_all = Dataset()
 	dataset_all.load_predefined_dataset(ds_name)
-	if not irrelevant_labels is None:
+	dataset_all.trim_dataset(edge_required=edge_required)
+	if irrelevant_labels is not None:
 		dataset_all.remove_labels(**irrelevant_labels)
 # 	dataset_all.cut_graphs(range(0, 100))
 	datasets = split_dataset_by_target(dataset_all)
@@ -228,7 +229,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		
 		# plot median graphs.
 		if plot_medians and save_medians:
-			if ds_name == 'Letter-high' or ds_name == 'Letter-med' or ds_name == 'Letter-low':			
+			if ged_options['edit_cost'] == 'LETTER2' or ged_options['edit_cost'] == 'LETTER' or ds_name == 'Letter-high' or ds_name == 'Letter-med' or ds_name == 'Letter-low':			
 				draw_Letter_graph(mpg.set_median, fn_pre_sm)
 				draw_Letter_graph(mpg.gen_median, fn_pre_gm)
 				draw_Letter_graph(mpg.best_from_dataset, fn_best_dataset)
