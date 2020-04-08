@@ -92,9 +92,11 @@ class Dataset(object):
 		elif ds_name == 'COIL-RAG':
 			pass
 		elif ds_name == 'COLORS-3':
-			pass
+			ds_file = current_path + '../../datasets/COLORS-3/COLORS-3_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'FRANKENSTEIN':
-			pass
+			ds_file = current_path + '../../datasets/FRANKENSTEIN/FRANKENSTEIN_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 	
 		self.__node_labels = label_names['node_labels']
 		self.__node_attrs = label_names['node_attrs']

@@ -67,8 +67,8 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
 		gmfile_exist = os.path.isfile(os.path.abspath(gm_fname))
 		if gmfile_exist:
-			gmfile = np.load(gm_fname)
-			gram_matrix_unnorm_list = gmfile['gram_matrix_unnorm_list']
+			gmfile = np.load(gm_fname, allow_pickle=True) # @todo: may not be safe.
+			gram_matrix_unnorm_list = [item for item in gmfile['gram_matrix_unnorm_list']]
 			time_precompute_gm_list = gmfile['run_time_list'].tolist()
 		else:
 			gram_matrix_unnorm_list = []
@@ -87,6 +87,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		
 		
 	print('start generating preimage for each class of target...')
+	idx_offset = 0
 	for idx, dataset in enumerate(datasets):
 		target = dataset.targets[0]
 		print('\ntarget =', target, '\n')
@@ -96,14 +97,15 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		num_graphs = len(dataset.graphs)
 		if num_graphs < 2:
 			print('\nnumber of graphs = ', num_graphs, ', skip.\n')
+			idx_offset += 1
 			continue
 			
 		# 2. set parameters.
 		print('2. initializing mpg and setting parameters...')
 		if load_gm:
 			if gmfile_exist:
-				mpg_options['gram_matrix_unnorm'] = gram_matrix_unnorm_list[idx]
-				mpg_options['runtime_precompute_gm'] = time_precompute_gm_list[idx]
+				mpg_options['gram_matrix_unnorm'] = gram_matrix_unnorm_list[idx - idx_offset]
+				mpg_options['runtime_precompute_gm'] = time_precompute_gm_list[idx - idx_offset]
 		mpg = MedianPreimageGenerator()
 		mpg.dataset = dataset
 		mpg.set_options(**mpg_options.copy())

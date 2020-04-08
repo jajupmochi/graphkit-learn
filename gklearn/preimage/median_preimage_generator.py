@@ -96,7 +96,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 			if self.__runtime_precompute_gm is None:
 				raise Exception('Parameter "runtime_precompute_gm" must be given when using pre-computed Gram matrix.')
 			self._graph_kernel.gram_matrix_unnorm = self.__gram_matrix_unnorm
-			self._graph_kernel.gram_matrix = self._graph_kernel.normalize_gm(np.copy(self.__gram_matrix_unnorm))
+			if self._kernel_options['normalize']:
+				self._graph_kernel.gram_matrix = self._graph_kernel.normalize_gm(np.copy(self.__gram_matrix_unnorm))
+			else:
+				self._graph_kernel.gram_matrix = np.copy(self.__gram_matrix_unnorm)
 			end_precompute_gm = time.time()
 			start -= self.__runtime_precompute_gm
 			
@@ -447,31 +450,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 				constraints = [x >= [0.001 for i in range(nb_cost_mat_new.shape[1])],
 							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				try:
-					prob.solve(verbose=True)
-				except MemoryError as error0:
-					if self._verbose >= 2:
-						print('\nUsing solver "OSQP" caused a memory error.')
-						print('the original error message is\n', error0)
-						print('solver status: ', prob.status)
-						print('trying solver "CVXOPT" instead...\n')
-					try:
-						prob.solve(solver=cp.CVXOPT, verbose=True)
-					except Exception as error1:
-						if self._verbose >= 2:
-							print('\nAn error occured when using solver "CVXOPT".')
-							print('the original error message is\n', error1)
-							print('solver status: ', prob.status)
-							print('trying solver "MOSEK" instead. Notice this solver is commercial and a lisence is required.\n')
-						prob.solve(solver=cp.MOSEK, verbose=True)
-					else:
-						if self._verbose >= 2:
-							print('solver status: ', prob.status)					
-				else:
-					if self._verbose >= 2:
-						print('solver status: ', prob.status)
-				if self._verbose >= 2:				
-					print()
+				self.__execute_cvx(prob)
 				edit_costs_new = x.value
 				residual = np.sqrt(prob.value)
 			elif rw_constraints == '2constraints':
@@ -551,9 +530,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 					constraints = [x >= [0.001 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					prob.solve()
-					if self._verbose >= 2:
-						print(x.value)
+					self.execute_cvx(prob)
 					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
 					residual = np.sqrt(prob.value)
 				elif not is_n_attr and is_e_attr:
@@ -615,6 +592,34 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 		return edit_costs_new, residual
 	
+	
+	def __execute_cvx(self, prob):
+		try:
+			prob.solve(verbose=(self._verbose>=2))
+		except MemoryError as error0:
+			if self._verbose >= 2:
+				print('\nUsing solver "OSQP" caused a memory error.')
+				print('the original error message is\n', error0)
+				print('solver status: ', prob.status)
+				print('trying solver "CVXOPT" instead...\n')
+			try:
+				prob.solve(solver=cp.CVXOPT, verbose=(self._verbose>=2))
+			except Exception as error1:
+				if self._verbose >= 2:
+					print('\nAn error occured when using solver "CVXOPT".')
+					print('the original error message is\n', error1)
+					print('solver status: ', prob.status)
+					print('trying solver "MOSEK" instead. Notice this solver is commercial and a lisence is required.\n')
+				prob.solve(solver=cp.MOSEK, verbose=(self._verbose>=2))
+			else:
+				if self._verbose >= 2:
+					print('solver status: ', prob.status)					
+		else:
+			if self._verbose >= 2:
+				print('solver status: ', prob.status)
+		if self._verbose >= 2:				
+			print()
+
 	
 	def __generate_preimage_iam(self):
 		# Set up the ged environment.

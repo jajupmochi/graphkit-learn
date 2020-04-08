@@ -666,7 +666,8 @@ class MedianGraphEstimator(object):
 					
 			# Compute the median label and update the median.
 			if len(node_labels) > 0:
-				median_label = self.__ged_env.get_median_node_label(node_labels)
+# 				median_label = self.__ged_env.get_median_node_label(node_labels)
+				median_label = self.__get_median_node_label(node_labels)
 				if self.__ged_env.get_node_rel_cost(median.nodes[i], median_label) > self.__epsilon:
 					nx.set_node_attributes(median, {i: median_label})
 					
@@ -701,7 +702,7 @@ class MedianGraphEstimator(object):
 				if median.has_edge(i, j):
 					median_label = median.edges[(i, j)]
 				if self.__labeled_edges and len(edge_labels) > 0:
-					new_median_label = self.__ged_env.median_edge_label(edge_labels)
+					new_median_label = self.__get_median_edge_label(edge_labels)
 					if self.__ged_env.get_edge_rel_cost(median_label, new_median_label) > self.__epsilon:
 						median_label = new_median_label
 					for edge_label in edge_labels:
@@ -822,3 +823,143 @@ class MedianGraphEstimator(object):
 		cost = 0.0
 		for node in g.nodes:
 			cost += 0
+			
+	
+	def __get_median_node_label(self, node_labels):
+		if True:
+			return self.__get_median_label_nonsymbolic(node_labels)
+		else:
+			return self.__get_median_node_label_symbolic(node_labels)
+		
+			
+	def __get_median_edge_label(self, edge_labels):
+		if True:
+			return self.__get_median_label_nonsymbolic(edge_labels)
+		else:
+			return self.__get_median_edge_label_symbolic(edge_labels)
+		
+		
+	def __get_median_label_nonsymbolic(self, labels):
+		if len(labels) == 0:
+			return {} # @todo
+		else:
+			# Transform the labels into coordinates and compute mean label as initial solution.
+			labels_as_coords = []
+			sums = {}
+			for key, val in labels[0].items():
+				sums[key] = 0
+			for label in labels:
+				coords = {}
+				for key, val in label.items():
+					label = float(val)
+					sums[key] += label
+					coords[key] = label
+				labels_as_coords.append(coords)
+			median = {}
+			for key, val in sums.items():
+				median[key] = val / len(labels)
+				
+			# Run main loop of Weiszfeld's Algorithm.
+			epsilon = 0.0001
+			delta = 1.0
+			num_itrs = 0
+			all_equal = False
+			while ((delta > epsilon) and (num_itrs < 100) and (not all_equal)):
+				numerator = {}
+				for key, val in sums.items():
+					numerator[key] = 0
+				denominator = 0
+				for label_as_coord in labels_as_coords:
+					norm = 0
+					for key, val in label_as_coord.items():
+						norm += (val - median[key]) ** 2
+					norm += np.sqrt(norm)
+					if norm > 0:
+						for key, val in label_as_coord.items():
+							numerator[key] += val / norm
+						denominator += 1.0 / norm
+				if denominator == 0:
+					all_equal = True
+				else:
+					new_median = {}
+					delta = 0.0
+					for key, val in numerator.items():
+						this_median = val / denominator
+						new_median[key] = this_median
+						delta += np.abs(median[key] - this_median)
+					median = new_median
+				
+				num_itrs += 1
+				
+			# Transform the solution to strings and return it.
+			median_label = {}
+			for key, val in median.items():
+				median_label[key] = str(val)
+			return median_label
+		
+	
+	def __get_median_node_label_symbolic(self, node_labels):
+		pass
+
+		
+	def __get_median_edge_label_symbolic(self, edge_labels):
+		pass
+	
+	
+# 	def __get_median_edge_label_nonsymbolic(self, edge_labels):
+# 		if len(edge_labels) == 0:
+# 			return {}
+# 		else:
+# 			# Transform the labels into coordinates and compute mean label as initial solution.
+# 			edge_labels_as_coords = []
+# 			sums = {}
+# 			for key, val in edge_labels[0].items():
+# 				sums[key] = 0
+# 			for edge_label in edge_labels:
+# 				coords = {}
+# 				for key, val in edge_label.items():
+# 					label = float(val)
+# 					sums[key] += label
+# 					coords[key] = label
+# 				edge_labels_as_coords.append(coords)
+# 			median = {}
+# 			for key, val in sums.items():
+# 				median[key] = val / len(edge_labels)
+# 				
+# 			# Run main loop of Weiszfeld's Algorithm.
+# 			epsilon = 0.0001
+# 			delta = 1.0
+# 			num_itrs = 0
+# 			all_equal = False
+# 			while ((delta > epsilon) and (num_itrs < 100) and (not all_equal)):
+# 				numerator = {}
+# 				for key, val in sums.items():
+# 					numerator[key] = 0
+# 				denominator = 0
+# 				for edge_label_as_coord in edge_labels_as_coords:
+# 					norm = 0
+# 					for key, val in edge_label_as_coord.items():
+# 						norm += (val - median[key]) ** 2
+# 					norm += np.sqrt(norm)
+# 					if norm > 0:
+# 						for key, val in edge_label_as_coord.items():
+# 							numerator[key] += val / norm
+# 						denominator += 1.0 / norm
+# 				if denominator == 0:
+# 					all_equal = True
+# 				else:
+# 					new_median = {}
+# 					delta = 0.0
+# 					for key, val in numerator.items():
+# 						this_median = val / denominator
+# 						new_median[key] = this_median
+# 						delta += np.abs(median[key] - this_median)
+# 					median = new_median
+# 					
+# 				num_itrs += 1
+# 				
+# 			# Transform the solution to ged::GXLLabel and return it.
+# 			median_label = {}
+# 			for key, val in median.items():
+# 				median_label[key] = str(val)
+# 			return median_label
