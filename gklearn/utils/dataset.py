@@ -90,7 +90,8 @@ class Dataset(object):
 			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'COIL-RAG':
-			pass
+			ds_file = current_path + '../../datasets/COIL-RAG/COIL-RAG_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'COLORS-3':
 			ds_file = current_path + '../../datasets/COLORS-3/COLORS-3_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)

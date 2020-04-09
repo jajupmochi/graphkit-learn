@@ -262,6 +262,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__edit_cost_constants = self.__init_ecc
 		options = self.__ged_options.copy()
 		options['edit_cost_constants'] = self.__edit_cost_constants # @todo
+		options['node_attrs'] = self._dataset.node_attrs
+		options['edge_attrs'] = self._dataset.edge_attrs
 		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
 		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
 		time_list = [time.time() - time0]
@@ -300,6 +302,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 			# compute new GEDs and numbers of edit operations.
 			options = self.__ged_options.copy() # np.array([self.__edit_cost_constants[0], self.__edit_cost_constants[1], 0.75])
 			options['edit_cost_constants'] = self.__edit_cost_constants # @todo
+			options['node_attrs'] = self._dataset.node_attrs
+			options['edge_attrs'] = self._dataset.edge_attrs
 			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
 			residual_list.append(np.sqrt(np.sum(np.square(np.array(ged_vec) - dis_k_vec))))
 			time_list.append(time.time() - time0)
