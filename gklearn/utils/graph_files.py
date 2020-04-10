@@ -47,7 +47,7 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 	"""
 	extension = splitext(filename)[1][1:]
 	if extension == "ds":
-		data, y = loadFromDS(filename, filename_targets)
+		data, y, label_names = load_from_ds(filename, filename_targets)
 	elif extension == "cxl":
 		import xml.etree.ElementTree as ET
 		
@@ -59,7 +59,7 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 		for graph in root.iter('graph'):
 			mol_filename = graph.attrib['file']
 			mol_class = graph.attrib['class']
-			data.append(loadGXL(dirname_dataset + '/' + mol_filename))
+			data.append(load_gxl(dirname_dataset + '/' + mol_filename))
 			y.append(mol_class)
 	elif extension == 'xml':
 		dir_dataset = kwargs.get('dirname_dataset', None)
@@ -127,7 +127,7 @@ def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=Non
 			fgroup.close()
 
 
-def loadCT(filename):
+def load_ct(filename):
 	"""load data from a Chemical Table (.ct) file.
 
 	Notes
@@ -180,7 +180,7 @@ def loadCT(filename):
 	return g
 
 
-def loadGXL(filename):
+def load_gxl(filename): # @todo: directed graphs.
 	from os.path import basename
 	import networkx as nx
 	import xml.etree.ElementTree as ET
@@ -195,9 +195,6 @@ def loadGXL(filename):
 		labels = {}
 		for attr in node.iter('attr'):
 			labels[attr.attrib['name']] = attr[0].text
-		if 'chem' in labels:
-			labels['label'] = labels['chem']
-			labels['atom'] = labels['chem']
 		g.add_node(index, **labels)
 		index += 1
 
@@ -205,11 +202,26 @@ def loadGXL(filename):
 		labels = {}
 		for attr in edge.iter('attr'):
 			labels[attr.attrib['name']] = attr[0].text
-		if 'valence' in labels:
-			labels['label'] = labels['valence']
-			labels['bond_type'] = labels['valence']
 		g.add_edge(dic[edge.attrib['from']], dic[edge.attrib['to']], **labels)
-	return g
+		
+	# get label names.
+	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
+	for node in root.iter('node'):
+		for attr in node.iter('attr'):
+			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow. 
+				label_names['node_labels'].append(attr.attrib['name'])
+			else:
+				label_names['node_attrs'].append(attr.attrib['name'])
+		break
+	for edge in root.iter('edge'):
+		for attr in edge.iter('attr'):
+			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow. 
+				label_names['edge_labels'].append(attr.attrib['name'])
+			else:
+				label_names['edge_attrs'].append(attr.attrib['name'])
+		break
+
+	return g, label_names
 
 
 def saveGXL(graph, filename, method='default', node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
@@ -649,43 +661,49 @@ def loadFromXML(filename, dir_dataset=None):
 	for graph in root.iter('graph'):
 		mol_filename = graph.attrib['file']
 		mol_class = graph.attrib['class']
-		data.append(loadGXL(dir_dataset + '/' + mol_filename))
+		data.append(load_gxl(dir_dataset + '/' + mol_filename))
 		y.append(mol_class)
 		
 	return data, y
 			
 
-def loadFromDS(filename, filename_y):
+def load_from_ds(filename, filename_targets):
 	"""Load data from .ds file.
 
 	Possible graph formats include:
 
-	'.ct': see function loadCT for detail.
+	'.ct': see function load_ct for detail.
 
-	'.gxl': see dunction loadGXL for detail.
+	'.gxl': see dunction load_gxl for detail.
 
 	Note these graph formats are checked automatically by the extensions of 
 	graph files.
 	"""
+	def append_label_names(label_names, new_names):
+		for key, val in label_names.items():
+			label_names[key] += [name for name in new_names[key] if name not in val]
+		
 	dirname_dataset = dirname(filename)
 	data = []
 	y = []
+	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 	content = open(filename).read().splitlines()
 	extension = splitext(content[0].split(' ')[0])[1][1:]
-	if filename_y is None or filename_y == '':
+	if filename_targets is None or filename_targets == '':
 		if extension == 'ct': 
 			for i in range(0, len(content)):
 				tmp = content[i].split(' ')
 				# remove the '#'s in file names
 				data.append(
-					loadCT(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
+					load_ct(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
 				y.append(float(tmp[1]))
 		elif extension == 'gxl':
 			for i in range(0, len(content)):
 				tmp = content[i].split(' ')
 				# remove the '#'s in file names
-				data.append(
-					loadGXL(dirname_dataset + '/' + tmp[0].replace('#', '', 1)))
+				g, l_names = load_gxl(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
+				data.append(g)
+				append_label_names(label_names, l_names)
 				y.append(float(tmp[1]))
 	else:  # y in a seperate file
 		if extension == 'ct':
@@ -693,22 +711,23 @@ def loadFromDS(filename, filename_y):
 				tmp = content[i]
 				# remove the '#'s in file names
 				data.append(
-					loadCT(dirname_dataset + '/' + tmp.replace('#', '', 1)))
+					load_ct(dirname_dataset + '/' + tmp.replace('#', '', 1)))
 		elif extension == 'gxl':
 			for i in range(0, len(content)):
 				tmp = content[i]
 				# remove the '#'s in file names
-				data.append(
-					loadGXL(dirname_dataset + '/' + tmp.replace('#', '', 1)))													   
+				g, l_names = load_gxl(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
+				data.append(g)
+				append_label_names(label_names, l_names)
 															   
-		content_y = open(filename_y).read().splitlines()
-		# assume entries in filename and filename_y have the same order.
+		content_y = open(filename_targets).read().splitlines()
+		# assume entries in filename and filename_targets have the same order.
 		for item in content_y:
 			tmp = item.split(' ')
 			# assume the 3rd entry in a line is y (for Alkane dataset)
 			y.append(float(tmp[2]))
 			
-	return data, y
+	return data, y, label_names
 			
 			
 if __name__ == '__main__':	
@@ -727,13 +746,14 @@ if __name__ == '__main__':
 #	print(Gn[1].edges(data=True))
 #	print(y[1])
 	
-#	# .gxl file.
-#	ds = {'name': 'monoterpenoides', 
-#		  'dataset': '../../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
-#	Gn, y = loadDataset(ds['dataset'])
-#	print(Gn[1].nodes(data=True))
-#	print(Gn[1].edges(data=True))
-#	print(y[1])
+	# .gxl file.
+	ds = {'name': 'monoterpenoides', 
+		  'dataset': '../../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
+	Gn, y, label_names = load_dataset(ds['dataset'])
+	print(Gn[1].graph)
+	print(Gn[1].nodes(data=True))
+	print(Gn[1].edges(data=True))
+	print(y[1])
 	
 #	### Convert graph from one format to another.
 #	# .gxl file.
@@ -774,5 +794,5 @@ if __name__ == '__main__':
 #	dataset = '../../datasets/Letter-med/Letter-med_A.txt'
 #	dataset = '../../datasets/AIDS/AIDS_A.txt'
 #	dataset = '../../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'
-# 	Gn, targets = load_dataset(filename)
+# 	Gn, targets, label_names = load_dataset(filename)
 	pass
