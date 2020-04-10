@@ -68,7 +68,8 @@ class Dataset(object):
 	def load_predefined_dataset(self, ds_name):
 		current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 		if ds_name == 'Acyclic':
-			pass
+			ds_file = current_path + '../../datasets/Acyclic/dataset_bps.ds'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'COIL-DEL':
 			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)

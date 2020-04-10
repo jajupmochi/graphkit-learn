@@ -720,38 +720,26 @@ def load_from_ds(filename, filename_targets):
 	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 	content = open(filename).read().splitlines()
 	extension = splitext(content[0].split(' ')[0])[1][1:]
+	if extension == 'ct':
+		load_file_fun = load_ct
+	elif extension == 'gxl':
+		load_file_fun = load_gxl
+		
 	if filename_targets is None or filename_targets == '':
-		if extension == 'ct': 
-			for i in range(0, len(content)):
-				tmp = content[i].split(' ')
-				# remove the '#'s in file names
-				g, l_names = load_ct(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
-				data.append(g)
-				__append_label_names(label_names, l_names)
-				y.append(float(tmp[1]))
-		elif extension == 'gxl':
-			for i in range(0, len(content)):
-				tmp = content[i].split(' ')
-				# remove the '#'s in file names
-				g, l_names = load_gxl(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
-				data.append(g)
-				__append_label_names(label_names, l_names)
-				y.append(float(tmp[1]))
-	else:  # y in a seperate file
-		if extension == 'ct':
-			for i in range(0, len(content)):
-				tmp = content[i]
-				# remove the '#'s in file names
-				g, l_names = load_ct(dirname_dataset + '/' + tmp.replace('#', '', 1))
-				data.append(g)
-				__append_label_names(label_names, l_names)
-		elif extension == 'gxl':
-			for i in range(0, len(content)):
-				tmp = content[i]
-				# remove the '#'s in file names
-				g, l_names = load_gxl(dirname_dataset + '/' + tmp.replace('#', '', 1))
-				data.append(g)
-				__append_label_names(label_names, l_names)
+		for i in range(0, len(content)):
+			tmp = content[i].split(' ')
+			# remove the '#'s in file names
+			g, l_names = load_file_fun(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
+			data.append(g)
+			__append_label_names(label_names, l_names)
+			y.append(float(tmp[1]))
+	else:  # targets in a seperate file
+		for i in range(0, len(content)):
+			tmp = content[i]
+			# remove the '#'s in file names
+			g, l_names = load_file_fun(dirname_dataset + '/' + tmp.replace('#', '', 1))
+			data.append(g)
+			__append_label_names(label_names, l_names)
 															   
 		content_y = open(filename_targets).read().splitlines()
 		# assume entries in filename and filename_targets have the same order.
@@ -774,16 +762,16 @@ if __name__ == '__main__':
 #	ds = {'name': 'Alkane', 'dataset': '../../datasets/Alkane/dataset.ds',
 #		'dataset_y': '../../datasets/Alkane/dataset_boiling_point_names.txt'}
 #	Gn, y = loadDataset(ds['dataset'], filename_y=ds['dataset_y'])
-	ds_file = '../../datasets/acyclic/dataset_bps.ds'  # node symb
-	Gn, targets, label_names = load_dataset(ds_file)
+# 	ds_file = '../../datasets/Acyclic/dataset_bps.ds'  # node symb
+# 	Gn, targets, label_names = load_dataset(ds_file)
 ##	ds = {'name': 'MAO', 'dataset': '../../datasets/MAO/dataset.ds'} # node/edge symb
 ##	Gn, y = loadDataset(ds['dataset'])
 ##	ds = {'name': 'PAH', 'dataset': '../../datasets/PAH/dataset.ds'} # unlabeled
 ##	Gn, y = loadDataset(ds['dataset'])
-	print(Gn[1].graph)
-	print(Gn[1].nodes(data=True))
-	print(Gn[1].edges(data=True))
-	print(targets[1])
+# 	print(Gn[1].graph)
+# 	print(Gn[1].nodes(data=True))
+# 	print(Gn[1].edges(data=True))
+# 	print(targets[1])
 	
 # 	# .gxl file.
 # 	ds_file = '../../datasets/monoterpenoides/dataset_10+.ds'  # node/edge symb
