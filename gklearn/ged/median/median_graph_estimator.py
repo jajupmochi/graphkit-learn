@@ -70,6 +70,7 @@ class MedianGraphEstimator(object):
 		self.__num_increase_order = 0
 		self.__num_converged_descents = 0
 		self.__state = AlgorithmState.TERMINATED
+		self.__label_names = {}
 		
 		if ged_env is None:
 			raise Exception('The GED environment pointer passed to the constructor of MedianGraphEstimator is null.')
@@ -551,6 +552,7 @@ class MedianGraphEstimator(object):
 		self.__init_type_increase_order = 'K-MEANS++'
 		self.__max_itrs_increase_order = 10
 		self.__print_to_stdout = 2
+		self.__label_names = {}
 		
 		
 	def __construct_initial_medians(self, graph_ids, timer, initial_medians):
@@ -824,19 +826,49 @@ class MedianGraphEstimator(object):
 		for node in g.nodes:
 			cost += 0
 			
+			
+	def set_label_names(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
+		self.__label_names = {'node_labels': node_labels, 'edge_labels': edge_labels,
+						'node_attrs': node_attrs, 'edge_attrs': edge_attrs}
+			
 	
 	def __get_median_node_label(self, node_labels):
-		if True:
+		if len(self.__label_names['node_labels']) > 0:
+			return self.__get_median_label_symbolic(node_labels)
+		elif len(self.__label_names['node_attrs']) > 0:
 			return self.__get_median_label_nonsymbolic(node_labels)
 		else:
-			return self.__get_median_node_label_symbolic(node_labels)
+			raise Exception('Node label names are not given.')
 		
 			
 	def __get_median_edge_label(self, edge_labels):
-		if True:
+		if len(self.__label_names['edge_labels']) > 0:
+			return self.__get_median_label_symbolic(edge_labels)
+		elif len(self.__label_names['edge_attrs']) > 0:
 			return self.__get_median_label_nonsymbolic(edge_labels)
 		else:
-			return self.__get_median_edge_label_symbolic(edge_labels)
+			raise Exception('Edge label names are not given.')
+			
+			
+	def __get_median_label_symbolic(self, labels):
+		# Construct histogram.
+		hist = {}
+		for label in labels:
+			label = tuple([kv for kv in label.items()]) # @todo: this may be slow.
+			if label not in hist:
+				hist[label] = 1
+			else:
+				hist[label] += 1
+		
+		# Return the label that appears most frequently.
+		best_count = 0
+		median_label = {}
+		for label, count in hist.items():
+			if count > best_count:
+				best_count = count
+				median_label = {kv[0]: kv[1] for kv in label}
+				
+		return median_label
 		
 		
 	def __get_median_label_nonsymbolic(self, labels):
@@ -896,14 +928,10 @@ class MedianGraphEstimator(object):
 			for key, val in median.items():
 				median_label[key] = str(val)
 			return median_label
-		
-	
-	def __get_median_node_label_symbolic(self, node_labels):
-		pass
 
 		
-	def __get_median_edge_label_symbolic(self, edge_labels):
-		pass
+# 	def __get_median_edge_label_symbolic(self, edge_labels):
+# 		pass
 	
 	
 # 	def __get_median_edge_label_nonsymbolic(self, edge_labels):

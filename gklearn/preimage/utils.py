@@ -37,7 +37,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	dataset_all.trim_dataset(edge_required=edge_required)
 	if irrelevant_labels is not None:
 		dataset_all.remove_labels(**irrelevant_labels)
-# 	dataset_all.cut_graphs(range(0, 100))
+# 	dataset_all.cut_graphs(range(0, 10))
 	datasets = split_dataset_by_target(dataset_all)
 
 	if save_results:

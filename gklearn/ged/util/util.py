@@ -58,7 +58,8 @@ def compute_geds(graphs, options={}, parallel=False):
 	ged_env.init_method()
 
 	# compute ged.
-	neo_options = {'edit_cost': options['edit_cost'], 
+	neo_options = {'edit_cost': options['edit_cost'],
+				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
 				'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
@@ -147,12 +148,18 @@ def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, **
 		edge_attrs = kwargs.get('edge_attrs', [])
 		return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map, 
 											node_attrs=node_attrs, edge_attrs=edge_attrs)
+	elif edit_cost == 'CONSTANT':
+		node_labels = kwargs.get('node_labels', [])
+		edge_labels = kwargs.get('edge_labels', [])
+		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map, 
+										 node_labels=node_labels, edge_labels=edge_labels)
 	else: 
 		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)
 	
 
-def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
-	"""Compute the number of each edit operations.
+def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
+									node_labels=[], edge_labels=[]):
+	"""Compute the number of each edit operations for symbolic-labeled graphs.
 	"""
 	n_vi = 0
 	n_vr = 0
@@ -165,8 +172,13 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
 	for i, map_i in enumerate(forward_map):
 		if map_i == np.inf:
 			n_vr += 1
-		elif g1.node[nodes1[i]]['atom'] != g2.node[map_i]['atom']:
-			n_vs += 1
+		else:
+			for nl in node_labels:
+				label1 = g1.nodes[nodes1[i]][nl]
+				label2 = g2.nodes[map_i][nl]
+				if label1 != label2:
+					n_vs += 1
+					break
 	for map_i in backward_map:
 		if map_i == np.inf:
 			n_vi += 1
@@ -185,15 +197,21 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
 		elif (forward_map[idx1], forward_map[idx2]) in g2.edges():
 			nb_edges2_cnted += 1
 			# edge labels are different.
-			if g2.edges[((forward_map[idx1], forward_map[idx2]))]['bond_type'] \
-				!= g1.edges[(n1, n2)]['bond_type']:
+			for el in edge_labels:
+				label1 = g2.edges[((forward_map[idx1], forward_map[idx2]))][el]
+				label2 = g1.edges[(n1, n2)][el]
+				if label1 != label2:
 					n_es += 1
+					break
 		elif (forward_map[idx2], forward_map[idx1]) in g2.edges():
 			nb_edges2_cnted += 1
 			# edge labels are different.
-			if g2.edges[((forward_map[idx2], forward_map[idx1]))]['bond_type'] \
-				!= g1.edges[(n1, n2)]['bond_type']:
-					n_es += 1				
+			for el in edge_labels:
+				label1 = g2.edges[((forward_map[idx2], forward_map[idx1]))][el]
+				label2 = g1.edges[(n1, n2)][el]
+				if label1 != label2:
+					n_es += 1
+					break
 		# corresponding nodes are in g2, however the edge is removed.
 		else:
 			n_er += 1

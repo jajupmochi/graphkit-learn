@@ -67,24 +67,7 @@ class Dataset(object):
 		
 	def load_predefined_dataset(self, ds_name):
 		current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
-		if ds_name == 'Letter-high': # node non-symb
-			ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
-			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
-		elif ds_name == 'Letter-med': # node non-symb
-			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
-			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
-		elif ds_name == 'Letter-low': # node non-symb
-			ds_file = current_path + '../../datasets/Letter-high/Letter-low_A.txt'
-			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
-		elif ds_name == 'Fingerprint':
-			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
-			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
-		elif ds_name == 'SYNTHETIC':
-			pass
-		elif ds_name == 'SYNTHETICnew':
-			ds_file = current_path + '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
-			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
-		elif ds_name == 'Synthie':
+		if ds_name == 'acyclic':
 			pass
 		elif ds_name == 'COIL-DEL':
 			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
@@ -95,9 +78,31 @@ class Dataset(object):
 		elif ds_name == 'COLORS-3':
 			ds_file = current_path + '../../datasets/COLORS-3/COLORS-3_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Fingerprint':
+			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'FRANKENSTEIN':
 			ds_file = current_path + '../../datasets/FRANKENSTEIN/FRANKENSTEIN_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Letter-high': # node non-symb
+			ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Letter-low': # node non-symb
+			ds_file = current_path + '../../datasets/Letter-high/Letter-low_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Letter-med': # node non-symb
+			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'MUTAG':
+			ds_file = current_path + '../../datasets/MUTAG/MUTAG_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'SYNTHETIC':
+			pass
+		elif ds_name == 'SYNTHETICnew':
+			ds_file = current_path + '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Synthie':
+			pass
 	
 		self.__node_labels = label_names['node_labels']
 		self.__node_attrs = label_names['node_attrs']

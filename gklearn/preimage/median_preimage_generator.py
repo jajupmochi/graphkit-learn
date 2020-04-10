@@ -262,6 +262,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__edit_cost_constants = self.__init_ecc
 		options = self.__ged_options.copy()
 		options['edit_cost_constants'] = self.__edit_cost_constants # @todo
+		options['node_labels'] = self._dataset.node_labels
+		options['edge_labels'] = self._dataset.edge_labels
 		options['node_attrs'] = self._dataset.node_attrs
 		options['edge_attrs'] = self._dataset.edge_attrs
 		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
@@ -302,6 +304,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 			# compute new GEDs and numbers of edit operations.
 			options = self.__ged_options.copy() # np.array([self.__edit_cost_constants[0], self.__edit_cost_constants[1], 0.75])
 			options['edit_cost_constants'] = self.__edit_cost_constants # @todo
+			options['node_labels'] = self._dataset.node_labels
+			options['edge_labels'] = self._dataset.edge_labels
 			options['node_attrs'] = self._dataset.node_attrs
 			options['edge_attrs'] = self._dataset.edge_attrs
 			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
@@ -451,7 +455,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 				x = cp.Variable(nb_cost_mat_new.shape[1])
 				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
-				constraints = [x >= [0.001 for i in range(nb_cost_mat_new.shape[1])],
+				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
 				self.__execute_cvx(prob)
@@ -524,17 +528,17 @@ class MedianPreimageGenerator(PreimageGenerator):
 								   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
 								   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					prob.solve()
+					self.__execute_cvx(prob)
 					edit_costs_new = x.value
 					residual = np.sqrt(prob.value)
 				elif is_n_attr and not is_e_attr:
 					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
 					x = cp.Variable(nb_cost_mat_new.shape[1])
 					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
-					constraints = [x >= [0.001 for i in range(nb_cost_mat_new.shape[1])],
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.execute_cvx(prob)
+					self.__execute_cvx(prob)
 					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
 					residual = np.sqrt(prob.value)
 				elif not is_n_attr and is_e_attr:
@@ -544,7 +548,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					prob.solve()
+					self.__execute_cvx(prob)
 					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
 					residual = np.sqrt(prob.value)
 				else:
@@ -553,10 +557,20 @@ class MedianPreimageGenerator(PreimageGenerator):
 					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					prob.solve()
+					self.__execute_cvx(prob)
 					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
 													 x.value[2:], np.array([0.0])))
 					residual = np.sqrt(prob.value)
+		elif self.__ged_options['edit_cost'] == 'CONSTANT': # @todo: node/edge may not labeled.
+			x = cp.Variable(nb_cost_mat.shape[1])
+			cost_fun = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
+			constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
+						   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
+						   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+			prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+			self.__execute_cvx(prob)
+			edit_costs_new = x.value
+			residual = np.sqrt(prob.value)
 		else:
 	#	# method 1: simple least square method.
 	#	edit_costs_new, residual, _, _ = np.linalg.lstsq(nb_cost_mat, dis_k_vec,
@@ -588,7 +602,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 						   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
 						   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 			prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-			prob.solve()
+			self.__execute_cvx(prob)
 			edit_costs_new = x.value
 			residual = np.sqrt(prob.value)
 		
@@ -647,6 +661,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 		# Select the GED algorithm.
 		mge.set_options(mge_options_to_string(options))
+		mge.set_label_names(node_labels=self._dataset.node_labels, 
+					  edge_labels=self._dataset.edge_labels, 
+					  node_attrs=self._dataset.node_attrs, 
+					  edge_attrs=self._dataset.edge_attrs)
 		mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		
