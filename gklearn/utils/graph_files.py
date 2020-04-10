@@ -49,47 +49,14 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 	if extension == "ds":
 		data, y, label_names = load_from_ds(filename, filename_targets)
 	elif extension == "cxl":
-		import xml.etree.ElementTree as ET
-		
-		dirname_dataset = dirname(filename)
-		tree = ET.parse(filename)
-		root = tree.getroot()
-		data = []
-		y = []
-		for graph in root.iter('graph'):
-			mol_filename = graph.attrib['file']
-			mol_class = graph.attrib['class']
-			data.append(load_gxl(dirname_dataset + '/' + mol_filename))
-			y.append(mol_class)
+		dir_dataset = kwargs.get('dirname_dataset', None)
+		data, y, label_names = load_from_xml(filename, dir_dataset)
 	elif extension == 'xml':
 		dir_dataset = kwargs.get('dirname_dataset', None)
-		data, y = loadFromXML(filename, dir_dataset)
-	elif extension == "sdf":
-#		import numpy as np
-		from tqdm import tqdm
-		import sys
-
-		data = loadSDF(filename)
-
-		y_raw = open(filename_targets).read().splitlines()
-		y_raw.pop(0)
-		tmp0 = []
-		tmp1 = []
-		for i in range(0, len(y_raw)):
-			tmp = y_raw[i].split(',')
-			tmp0.append(tmp[0])
-			tmp1.append(tmp[1].strip())
-
-		y = []
-		for i in tqdm(range(0, len(data)), desc='ajust data', file=sys.stdout):
-			try:
-				y.append(tmp1[tmp0.index(data[i].name)].strip())
-			except ValueError:  # if data[i].name not in tmp0
-				data[i] = []
-		data = list(filter(lambda a: a != [], data))
+		data, y, label_names = load_from_xml(filename, dir_dataset)
 	elif extension == "mat":
 		order = kwargs.get('order')
-		data, y = loadMAT(filename, order)
+		data, y, label_names = load_mat(filename, order)
 	elif extension == 'txt':
 		data, y, label_names = load_tud(filename)
 
@@ -368,57 +335,57 @@ def saveGXL(graph, filename, method='default', node_labels=[], edge_labels=[], n
 		gxl_file.close()
 
 
-def loadSDF(filename):
-	"""load data from structured data file (.sdf file).
+# def loadSDF(filename):
+# 	"""load data from structured data file (.sdf file).
 
-	Notes
-	------
-	A SDF file contains a group of molecules, represented in the similar way as in MOL format.
-	Check `here <http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx>`__ for detailed structure.
-	"""
-	import networkx as nx
-	from os.path import basename
-	from tqdm import tqdm
-	import sys
-	data = []
-	with open(filename) as f:
-		content = f.read().splitlines()
-		index = 0
-		pbar = tqdm(total=len(content) + 1, desc='load SDF', file=sys.stdout)
-		while index < len(content):
-			index_old = index
+# 	Notes
+# 	------
+# 	A SDF file contains a group of molecules, represented in the similar way as in MOL format.
+# 	Check `here <http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx>`__ for detailed structure.
+# 	"""
+# 	import networkx as nx
+# 	from os.path import basename
+# 	from tqdm import tqdm
+# 	import sys
+# 	data = []
+# 	with open(filename) as f:
+# 		content = f.read().splitlines()
+# 		index = 0
+# 		pbar = tqdm(total=len(content) + 1, desc='load SDF', file=sys.stdout)
+# 		while index < len(content):
+# 			index_old = index
 
-			g = nx.Graph(name=content[index].strip())  # set name of the graph
+# 			g = nx.Graph(name=content[index].strip())  # set name of the graph
 
-			tmp = content[index + 3]
-			nb_nodes = int(tmp[:3])  # number of the nodes
-			nb_edges = int(tmp[3:6])  # number of the edges
+# 			tmp = content[index + 3]
+# 			nb_nodes = int(tmp[:3])  # number of the nodes
+# 			nb_edges = int(tmp[3:6])  # number of the edges
 
-			for i in range(0, nb_nodes):
-				tmp = content[i + index + 4]
-				g.add_node(i, atom=tmp[31:34].strip())
+# 			for i in range(0, nb_nodes):
+# 				tmp = content[i + index + 4]
+# 				g.add_node(i, atom=tmp[31:34].strip())
 
-			for i in range(0, nb_edges):
-				tmp = content[i + index + g.number_of_nodes() + 4]
-				tmp = [tmp[i:i + 3] for i in range(0, len(tmp), 3)]
-				g.add_edge(
-					int(tmp[0]) - 1, int(tmp[1]) - 1, bond_type=tmp[2].strip())
+# 			for i in range(0, nb_edges):
+# 				tmp = content[i + index + g.number_of_nodes() + 4]
+# 				tmp = [tmp[i:i + 3] for i in range(0, len(tmp), 3)]
+# 				g.add_edge(
+# 					int(tmp[0]) - 1, int(tmp[1]) - 1, bond_type=tmp[2].strip())
 
-			data.append(g)
+# 			data.append(g)
 
-			index += 4 + g.number_of_nodes() + g.number_of_edges()
-			while content[index].strip() != '$$$$':  # seperator
-				index += 1
-			index += 1
+# 			index += 4 + g.number_of_nodes() + g.number_of_edges()
+# 			while content[index].strip() != '$$$$':  # seperator
+# 				index += 1
+# 			index += 1
 
-			pbar.update(index - index_old)
-		pbar.update(1)
-		pbar.close()
+# 			pbar.update(index - index_old)
+# 		pbar.update(1)
+# 		pbar.close()
 
-	return data
+# 	return data
 
 
-def loadMAT(filename, order):
+def load_mat(filename, order): # @todo: need to be updated (auto order) or deprecated.
 	"""Load graph data from a MATLAB (up to version 7.1) .mat file.
 
 	Notes
@@ -457,14 +424,13 @@ def loadMAT(filename, order):
 					# print(item[order[3]])
 					# print()
 					for index, label in enumerate(nl[0]):
-						g.add_node(index, atom=str(label))
+						g.add_node(index, label_1=str(label))
 					el = item[order[4]][0][0][0]  # edge label
 					for edge in el:
-						g.add_edge(
-							edge[0] - 1, edge[1] - 1, bond_type=str(edge[2]))
+						g.add_edge(edge[0] - 1, edge[1] - 1, label_1=str(edge[2]))
 					data.append(g)
 			else:
-				from scipy.sparse import csc_matrix
+# 				from scipy.sparse import csc_matrix
 				for i, item in enumerate(value[0]):
 					# print(item)
 					# print('------')
@@ -473,7 +439,7 @@ def loadMAT(filename, order):
 					# print(nl)
 					# print()
 					for index, label in enumerate(nl[0]):
-						g.add_node(index, atom=str(label))
+						g.add_node(index, label_1=str(label))
 					sam = item[order[0]]  # sparse adjacency matrix
 					index_no0 = sam.nonzero()
 					for col, row in zip(index_no0[0], index_no0[1]):
@@ -482,7 +448,12 @@ def loadMAT(filename, order):
 						g.add_edge(col, row)
 					data.append(g)
 					# print(g.edges(data=True))
-	return data, y
+					
+	label_names = {'node_labels': ['label_1'], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
+	if order[1] == 0:
+		label_names['edge_labels'].append('label_1')
+		
+	return data, y, label_names
 
 
 def load_tud(filename):
@@ -680,26 +651,6 @@ def load_tud(filename):
 					data[g].edges[n[0], n[1]][a_name] = attrs[i]
 
 	return data, targets, label_names
-
-
-def loadFromXML(filename, dir_dataset=None):
-	import xml.etree.ElementTree as ET
-	
-	if dir_dataset is not None:
-		dir_dataset = dir_dataset
-	else:
-		dir_dataset = dirname(filename)
-	tree = ET.parse(filename)
-	root = tree.getroot()
-	data = []
-	y = []
-	for graph in root.iter('graph'):
-		mol_filename = graph.attrib['file']
-		mol_class = graph.attrib['class']
-		data.append(load_gxl(dir_dataset + '/' + mol_filename))
-		y.append(mol_class)
-		
-	return data, y
 			
 
 def load_from_ds(filename, filename_targets):
@@ -722,7 +673,7 @@ def load_from_ds(filename, filename_targets):
 	extension = splitext(content[0].split(' ')[0])[1][1:]
 	if extension == 'ct':
 		load_file_fun = load_ct
-	elif extension == 'gxl':
+	elif extension == 'gxl' or extension == 'sdf': # @todo: .sdf not tested yet.
 		load_file_fun = load_gxl
 		
 	if filename_targets is None or filename_targets == '':
@@ -751,6 +702,44 @@ def load_from_ds(filename, filename_targets):
 	return data, y, label_names
 
 
+# def load_from_cxl(filename):
+# 	import xml.etree.ElementTree as ET
+# 	
+# 	dirname_dataset = dirname(filename)
+# 	tree = ET.parse(filename)
+# 	root = tree.getroot()
+# 	data = []
+# 	y = []
+# 	for graph in root.iter('graph'):
+# 		mol_filename = graph.attrib['file']
+# 		mol_class = graph.attrib['class']
+# 		data.append(load_gxl(dirname_dataset + '/' + mol_filename))
+# 		y.append(mol_class)
+		
+		
+def load_from_xml(filename, dir_dataset=None):
+	import xml.etree.ElementTree as ET
+	
+	if dir_dataset is not None:
+		dir_dataset = dir_dataset
+	else:
+		dir_dataset = dirname(filename)
+	tree = ET.parse(filename)
+	root = tree.getroot()
+	data = []
+	y = []
+	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
+	for graph in root.iter('graph'):
+		mol_filename = graph.attrib['file']
+		mol_class = graph.attrib['class']
+		g, l_names = load_gxl(dir_dataset + '/' + mol_filename)
+		data.append(g)
+		__append_label_names(label_names, l_names)
+		y.append(mol_class)
+		
+	return data, y, label_names
+
+
 def __append_label_names(label_names, new_names):
 	for key, val in label_names.items():
 		label_names[key] += [name for name in new_names[key] if name not in val]
@@ -764,8 +753,8 @@ if __name__ == '__main__':
 #	Gn, y = loadDataset(ds['dataset'], filename_y=ds['dataset_y'])
 # 	ds_file = '../../datasets/Acyclic/dataset_bps.ds'  # node symb
 # 	Gn, targets, label_names = load_dataset(ds_file)
-##	ds = {'name': 'MAO', 'dataset': '../../datasets/MAO/dataset.ds'} # node/edge symb
-##	Gn, y = loadDataset(ds['dataset'])
+# 	ds_file = '../../datasets/MAO/dataset.ds' # node/edge symb
+# 	Gn, targets, label_names = load_dataset(ds_file)
 ##	ds = {'name': 'PAH', 'dataset': '../../datasets/PAH/dataset.ds'} # unlabeled
 ##	Gn, y = loadDataset(ds['dataset'])
 # 	print(Gn[1].graph)
@@ -780,7 +769,16 @@ if __name__ == '__main__':
 # 	print(Gn[1].nodes(data=True))
 # 	print(Gn[1].edges(data=True))
 # 	print(y[1])
-	
+
+	# .mat file.
+	ds_file = '../../datasets/MUTAG_mat/MUTAG.mat'
+	order = [0, 0, 3, 1, 2]
+	Gn, targets, label_names = load_dataset(ds_file, order=order)
+	print(Gn[1].graph)
+	print(Gn[1].nodes(data=True))
+	print(Gn[1].edges(data=True))
+	print(targets[1])
+
 #	### Convert graph from one format to another.
 #	# .gxl file.
 #	import networkx as nx

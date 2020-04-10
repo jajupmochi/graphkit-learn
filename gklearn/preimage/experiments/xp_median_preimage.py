@@ -13,10 +13,10 @@ from gklearn.utils import compute_gram_matrices_by_class
 
 
 def xp_median_preimage_9_1():
-	"""xp 9_1: Acyclic, sspkernel, using CONSTANT.
+	"""xp 9_1: MAO, sspkernel, using CONSTANT.
 	"""
 	# set parameters.
-	ds_name = 'Acyclic' #
+	ds_name = 'MAO' #
 	mpg_options = {'fit_method': 'k-graphs',
 				   'init_ecc': [4, 4, 2, 1, 1, 1], #
 				   'ds_name': ds_name,
@@ -612,5 +612,5 @@ if __name__ == "__main__":
     #### xp 8_1: Monoterpenoides, sspkernel, using CONSTANT.
 # 	xp_median_preimage_8_1()
 
-	#### xp 9_1: Acyclic, sspkernel, using CONSTANT.
+	#### xp 9_1: MAO, sspkernel, using CONSTANT.
 	xp_median_preimage_9_1()

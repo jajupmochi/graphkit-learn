@@ -94,6 +94,9 @@ class Dataset(object):
 		elif ds_name == 'Letter-med': # node non-symb
 			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'MAO':
+			ds_file = current_path + '../../datasets/MAO/dataset.ds'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Monoterpenoides':
 			ds_file = current_path + '../../datasets/Monoterpenoides/dataset_10+.ds'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
