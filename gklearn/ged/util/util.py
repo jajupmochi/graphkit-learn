@@ -57,7 +57,10 @@ def compute_geds(graphs, options={}, parallel=False):
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
-	# compute ged.	
+	# compute ged.
+	neo_options = {'edit_cost': options['edit_cost'],
+				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
+				'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
 		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
@@ -74,7 +77,7 @@ def compute_geds(graphs, options={}, parallel=False):
 			G_graphs = graphs_toshare
 			G_ged_env = ged_env_toshare
 			G_listID = listID_toshare
-		do_partial = partial(_wrapper_compute_ged_parallel, options)
+		do_partial = partial(_wrapper_compute_ged_parallel, neo_options)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
 		iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
 						desc='computing GEDs', file=sys.stdout)
@@ -100,7 +103,7 @@ def compute_geds(graphs, options={}, parallel=False):
 				ged_vec.append(dis)
 				ged_mat[i][j] = dis
 				ged_mat[j][i] = dis
-				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, edit_cost=options['edit_cost'])
+				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, **neo_options)
 				n_edit_operations.append(n_eo_tmp)
 					
 	return ged_vec, ged_mat, n_edit_operations
@@ -115,7 +118,7 @@ def _wrapper_compute_ged_parallel(options, itr):
 
 def _compute_ged_parallel(env, gid1, gid2, g1, g2, options):
 	dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2)
-	n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward, edit_cost=options['edit_cost']) # [0,0,0,0,0,0]
+	n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward, **options) # [0,0,0,0,0,0]
 	return dis, n_eo_tmp
 
 
@@ -137,17 +140,26 @@ def _compute_ged(env, gid1, gid2, g1, g2):
 	return dis, pi_forward, pi_backward
 
 
-def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None):
+def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, **kwargs):
 	if edit_cost == 'LETTER' or edit_cost == 'LETTER2':
 		return get_nb_edit_operations_letter(g1, g2, forward_map, backward_map)
 	elif edit_cost == 'NON_SYMBOLIC':
-		return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map)
+		node_attrs = kwargs.get('node_attrs', [])
+		edge_attrs = kwargs.get('edge_attrs', [])
+		return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map, 
+											node_attrs=node_attrs, edge_attrs=edge_attrs)
+	elif edit_cost == 'CONSTANT':
+		node_labels = kwargs.get('node_labels', [])
+		edge_labels = kwargs.get('edge_labels', [])
+		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map, 
+										 node_labels=node_labels, edge_labels=edge_labels)
 	else: 
 		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)
 	
 
-def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
-	"""Compute the number of each edit operations.
+def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
+									node_labels=[], edge_labels=[]):
+	"""Compute the number of each edit operations for symbolic-labeled graphs.
 	"""
 	n_vi = 0
 	n_vr = 0
@@ -160,8 +172,13 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
 	for i, map_i in enumerate(forward_map):
 		if map_i == np.inf:
 			n_vr += 1
-		elif g1.node[nodes1[i]]['atom'] != g2.node[map_i]['atom']:
-			n_vs += 1
+		else:
+			for nl in node_labels:
+				label1 = g1.nodes[nodes1[i]][nl]
+				label2 = g2.nodes[map_i][nl]
+				if label1 != label2:
+					n_vs += 1
+					break
 	for map_i in backward_map:
 		if map_i == np.inf:
 			n_vi += 1
@@ -180,15 +197,21 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map):
 		elif (forward_map[idx1], forward_map[idx2]) in g2.edges():
 			nb_edges2_cnted += 1
 			# edge labels are different.
-			if g2.edges[((forward_map[idx1], forward_map[idx2]))]['bond_type'] \
-				!= g1.edges[(n1, n2)]['bond_type']:
+			for el in edge_labels:
+				label1 = g2.edges[((forward_map[idx1], forward_map[idx2]))][el]
+				label2 = g1.edges[(n1, n2)][el]
+				if label1 != label2:
 					n_es += 1
+					break
 		elif (forward_map[idx2], forward_map[idx1]) in g2.edges():
 			nb_edges2_cnted += 1
 			# edge labels are different.
-			if g2.edges[((forward_map[idx2], forward_map[idx1]))]['bond_type'] \
-				!= g1.edges[(n1, n2)]['bond_type']:
-					n_es += 1				
+			for el in edge_labels:
+				label1 = g2.edges[((forward_map[idx2], forward_map[idx1]))][el]
+				label2 = g1.edges[(n1, n2)][el]
+				if label1 != label2:
+					n_es += 1
+					break
 		# corresponding nodes are in g2, however the edge is removed.
 		else:
 			n_er += 1
@@ -242,7 +265,8 @@ def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
 	return n_vi, n_vr, n_vs, sod_vs, n_ei, n_er
 
 
-def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map):
+def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
+									   node_attrs=[], edge_attrs=[]):
 	"""Compute the number of each edit operations.
 	"""
 	n_vi = 0
@@ -261,7 +285,7 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map):
 		else:
 			n_vs += 1
 			sum_squares = 0
-			for a_name in g1.graph['node_attrs']:
+			for a_name in node_attrs:
 				diff = float(g1.nodes[nodes1[i]][a_name]) - float(g2.nodes[map_i][a_name])
 				sum_squares += np.square(diff)
 			sod_vs += np.sqrt(sum_squares)
@@ -284,15 +308,15 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map):
 		elif (n1_g2, n2_g2) in g2.edges():
 			n_es += 1
 			sum_squares = 0
-			for a_name in g1.graph['edge_attrs']:
-				diff = float(g1.edges[n1, n2][a_name]) - float(g2.nodes[n1_g2, n2_g2][a_name])
+			for a_name in edge_attrs:
+				diff = float(g1.edges[n1, n2][a_name]) - float(g2.edges[n1_g2, n2_g2][a_name])
 				sum_squares += np.square(diff)
 			sod_es += np.sqrt(sum_squares)
 		elif (n2_g2, n1_g2) in g2.edges():
 			n_es += 1
 			sum_squares = 0
-			for a_name in g1.graph['edge_attrs']:
-				diff = float(g1.edges[n2, n1][a_name]) - float(g2.nodes[n2_g2, n1_g2][a_name])
+			for a_name in edge_attrs:
+				diff = float(g1.edges[n2, n1][a_name]) - float(g2.edges[n2_g2, n1_g2][a_name])
 				sum_squares += np.square(diff)
 			sod_es += np.sqrt(sum_squares)
 		# corresponding nodes are in g2, however the edge is removed.

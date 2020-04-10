@@ -29,6 +29,7 @@ gklearn/kernels/*_sym.py
 
 gklearn/preimage/*
 !gklearn/preimage/*.py
+!gklearn/preimage/experiments/*.py
 
 __pycache__
 ##*#

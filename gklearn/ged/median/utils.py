@@ -9,6 +9,10 @@ Created on Wed Apr  1 15:12:31 2020
 def constant_node_costs(edit_cost_name):
 	if edit_cost_name == 'NON_SYMBOLIC' or edit_cost_name == 'LETTER2' or edit_cost_name == 'LETTER':
 		return False
+	elif edit_cost_name == 'CONSTANT':
+		return True
+	else:
+		raise Exception('Can not recognize the given edit cost. Possible edit costs include: "NON_SYMBOLIC", "LETTER", "LETTER2", "CONSTANT".')
 #	 elif edit_cost_name != '':
 # # 		throw ged::Error("Invalid dataset " + dataset + ". Usage: ./median_tests <AIDS|Mutagenicity|Letter-high|Letter-med|Letter-low|monoterpenoides|SYNTHETICnew|Fingerprint|COIL-DEL>");
 #		 return False

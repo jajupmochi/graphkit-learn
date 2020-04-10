@@ -474,6 +474,7 @@ def load_tud(filename):
 
 		label_names = {'node_labels': [], 'node_attrs': [], 
 					   'edge_labels': [], 'edge_attrs': []}
+		class_label_map = None
 		class_label_map_strings = []
 		content_rm = open(frm).read().splitlines()
 		i = 0
@@ -538,20 +539,32 @@ def load_tud(filename):
 	else:
 		label_names = {'node_labels': [], 'node_attrs': [], 
 					   'edge_labels': [], 'edge_attrs': []}
+		class_label_map = None
 
 	content_gi = open(fgi).read().splitlines()  # graph indicator
 	content_am = open(fam).read().splitlines()  # adjacency matrix
-	content_gl = open(fgl).read().splitlines()  # graph labels
+	
+	# load targets.
+	if 'fgl' in locals():
+		content_targets = open(fgl).read().splitlines()  # targets (classification)
+		targets = [float(i) for i in content_targets]
+	elif 'fga' in locals():
+		content_targets = open(fga).read().splitlines()  # targets (regression)
+		targets = [int(i) for i in content_targets]
+		if class_label_map is not None:
+			targets = [class_label_map[t] for t in targets]
+	else:
+		raise Exception('Can not find targets file. Please make sure there is a "', ds_name, '_graph_labels.txt" or "', ds_name, '_graph_attributes.txt"', 'file in your dataset folder.')
 
 	# create graphs and add nodes
-	data = [nx.Graph(name=str(i)) for i in range(0, len(content_gl))]
+	data = [nx.Graph(name=str(i)) for i in range(0, len(content_targets))]
 	if 'fnl' in locals():
 		content_nl = open(fnl).read().splitlines()  # node labels
 		for idx, line in enumerate(content_gi):
 			# transfer to int first in case of unexpected blanks
 			data[int(line) - 1].add_node(idx)
 			labels = [l.strip() for l in content_nl[idx].split(',')]
-			if label_names['node_labels'] == []:
+			if label_names['node_labels'] == []: # @todo: need fix bug.
 				for i, label in enumerate(labels):
 					l_name = 'label_' + str(i)
 					data[int(line) - 1].nodes[idx][l_name] = label
@@ -618,11 +631,6 @@ def load_tud(filename):
 			else:
 				for i, a_name in enumerate(label_names['edge_attrs']):
 					data[g].edges[n[0], n[1]][a_name] = attrs[i]
-
-	# load targets.
-	targets = [int(i) for i in content_gl]
-	if 'class_label_map' in locals():
-		targets = [class_label_map[t] for t in targets]
 
 	return data, targets, label_names
 
