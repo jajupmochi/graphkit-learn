@@ -4,6 +4,11 @@
 Created on Tue Apr  7 15:24:58 2020
 
 @author: ljia
+
+@references: 
+    
+    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData 
+    Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
 """
 
 import sys
