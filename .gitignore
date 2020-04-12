@@ -64,3 +64,9 @@ notebooks/unfinished
 gklearn/kernels/else/
 gklearn/kernels/unfinished/
 gklearn/kernels/.tags
+
+# pyenv
+.python-version
+
+# docker travis debug.
+ci.sh
