@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr  7 15:24:58 2020
+Created on Fri Apr 10 18:33:13 2020
 
 @author: ljia
 
 @references: 
-    
-    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData 
-    Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
-"""
 
+    [1] Liva Ralaivola, Sanjay J Swamidass, Hiroto Saigo, and Pierre 
+    Baldi. Graph kernels for chemical informatics. Neural networks, 
+    18(8):1093–1110, 2005.
+"""
 import sys
 from itertools import product
 # from functools import partial
@@ -22,14 +22,15 @@ from gklearn.utils.utils import getSPGraph
 from gklearn.kernels import GraphKernel
 
 
-class ShortestPath(GraphKernel):
+class PathUpToH(GraphKernel):
 	
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
 		self.__node_labels = kwargs.get('node_labels', [])
-		self.__node_attrs = kwargs.get('node_attrs', [])
-		self.__edge_weight = kwargs.get('edge_weight', None)
-		self.__node_kernels = kwargs.get('node_kernels', None)
+		self.__edge_labels = kwargs.get('edge_labels', [])
+		self.__depth = int(kwargs.get('depth', 10))
+		self.__k_func = kwargs.get('k_func', 'MinMax')
+		self.__compute_method = kwargs.get('compute_method', 'trie')
 		self.__ds_infos = kwargs.get('ds_infos', {})
 
 

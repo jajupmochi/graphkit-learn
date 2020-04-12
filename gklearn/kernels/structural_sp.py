@@ -4,6 +4,11 @@
 Created on Mon Mar 30 11:59:57 2020
 
 @author: ljia
+
+@references: 
+
+    [1] Suard F, Rakotomamonjy A, Bensrhair A. Kernel on Bag of Paths For 
+    Measuring Similarity of Shapes. InESANN 2007 Apr 25 (pp. 355-360).
 """
 import sys
 from itertools import product
