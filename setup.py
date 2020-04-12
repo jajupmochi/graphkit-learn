@@ -8,7 +8,7 @@ with open('requirements.txt') as fp:
 
 setuptools.setup(
     name="graphkit-learn",
-    version="0.1",
+    version="0.2b1",
     author="Linlin Jia",
     author_email="linlin.jia@insa-rouen.fr",
     description="A Python library for graph kernels based on linear patterns",
