@@ -92,7 +92,7 @@ def xp_median_preimage_9_2():
 				   'epsilon_ec': 0.1,
 				   'verbose': 2}
 	kernel_options = {'name': 'PathUpToH',
-					  'depth': 2, #
+					  'depth': 9, #
 					  'k_func': 'MinMax', #
 					  'compute_method': 'trie',
  					  'parallel': 'imap_unordered', 
@@ -217,7 +217,7 @@ def xp_median_preimage_8_2():
 				   'epsilon_ec': 0.1,
 				   'verbose': 2}
 	kernel_options = {'name': 'PathUpToH',
-					  'depth': 2, #
+					  'depth': 7, #
 					  'k_func': 'MinMax', #
 					  'compute_method': 'trie',
  					  'parallel': 'imap_unordered', 

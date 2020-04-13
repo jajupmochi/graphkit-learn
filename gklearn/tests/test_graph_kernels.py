@@ -162,6 +162,11 @@ def test_ShortestPath(ds_name, parallel):
 					 node_kernels=sub_kernels)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 	except Exception as exception:
 		assert False, exception
 
@@ -190,6 +195,11 @@ def test_StructuralSP(ds_name, parallel):
 					  edge_kernels=sub_kernels)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 	except Exception as exception:
 		assert False, exception
 
@@ -212,6 +222,10 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
 					  depth=2, k_func=k_func, compute_method=compute_method)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 	except Exception as exception:
 		assert False, exception
