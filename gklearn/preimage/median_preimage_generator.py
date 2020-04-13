@@ -725,7 +725,13 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 
 	def __set_graph_kernel_by_name(self):
-		if self.kernel_options['name'] == 'structuralspkernel':
+		if self._kernel_options['name'] == 'ShortestPath':
+			from gklearn.kernels import ShortestPath
+			self._graph_kernel = ShortestPath(node_labels=self._dataset.node_labels,
+									 node_attrs=self._dataset.node_attrs,
+									 ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
+									 **self._kernel_options)
+		elif self._kernel_options['name'] == 'StructuralSP':
 			from gklearn.kernels import StructuralSP
 			self._graph_kernel = StructuralSP(node_labels=self._dataset.node_labels,
 									  edge_labels=self._dataset.edge_labels, 
@@ -733,6 +739,14 @@ class MedianPreimageGenerator(PreimageGenerator):
 									  edge_attrs=self._dataset.edge_attrs,
 									  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
 									  **self._kernel_options)
+		elif self._kernel_options['name'] == 'PathUpToH':
+			from gklearn.kernels import PathUpToH
+			self._graph_kernel = PathUpToH(node_labels=self._dataset.node_labels,
+								  edge_labels=self._dataset.edge_labels,
+								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
+								  **self._kernel_options)
+		else:
+			raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH".')
 			
 			
 # 	def __clean_graph(self, G, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):

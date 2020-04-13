@@ -10,3 +10,4 @@ __date__ = "November 2018"
 from gklearn.kernels.graph_kernel import GraphKernel
 from gklearn.kernels.structural_sp import StructuralSP
 from gklearn.kernels.shortest_path import ShortestPath
+from gklearn.kernels.path_up_to_h import PathUpToH

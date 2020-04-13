@@ -70,6 +70,13 @@ class Dataset(object):
 		if ds_name == 'Acyclic':
 			ds_file = current_path + '../../datasets/Acyclic/dataset_bps.ds'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'AIDS':
+			ds_file = current_path + '../../datasets/AIDS/AIDS_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Alkane':
+			ds_file = current_path + '../../datasets/Alkane/dataset.ds'
+			fn_targets = current_path + '../../datasets/Alkane/dataset_boiling_point_names.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file, filename_targets=fn_targets)
 		elif ds_name == 'COIL-DEL':
 			ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
@@ -78,6 +85,9 @@ class Dataset(object):
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'COLORS-3':
 			ds_file = current_path + '../../datasets/COLORS-3/COLORS-3_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'Cuneiform':
+			ds_file = current_path + '../../datasets/Cuneiform/Cuneiform_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Fingerprint':
 			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
@@ -89,10 +99,10 @@ class Dataset(object):
 			ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Letter-low': # node non-symb
-			ds_file = current_path + '../../datasets/Letter-high/Letter-low_A.txt'
+			ds_file = current_path + '../../datasets/Letter-low/Letter-low_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Letter-med': # node non-symb
-			ds_file = current_path + '../../datasets/Letter-high/Letter-med_A.txt'
+			ds_file = current_path + '../../datasets/Letter-med/Letter-med_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'MAO':
 			ds_file = current_path + '../../datasets/MAO/dataset.ds'

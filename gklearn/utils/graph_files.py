@@ -569,10 +569,10 @@ def load_tud(filename):
 	elif 'fga' in locals():
 		content_targets = open(fga).read().splitlines()  # targets (regression)
 		targets = [int(i) for i in content_targets]
-		if class_label_map is not None:
-			targets = [class_label_map[t] for t in targets]
 	else:
 		raise Exception('Can not find targets file. Please make sure there is a "', ds_name, '_graph_labels.txt" or "', ds_name, '_graph_attributes.txt"', 'file in your dataset folder.')
+	if class_label_map is not None:
+		targets = [class_label_map[t] for t in targets]
 
 	# create graphs and add nodes
 	data = [nx.Graph(name=str(i)) for i in range(0, len(content_targets))]
