@@ -1,0 +1,11 @@
+1 Ocimen : 1-48
+2 Geraniol : 49-94
+3 Caren : 95-131
+4 Lavandulol : 132-148
+5 Sabinol : 149-158
+6 Pinen : 159-179 181 183-188
+7 Borneol : 193-211
+8 Limonen : 212-283
+9 Terpinolen : 284-302
+
+10 Orpheline : 180 182 189-192
