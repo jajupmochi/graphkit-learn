@@ -131,13 +131,13 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 
 		if self.__compute_method == 'trie':
 			paths_g1 = self.__find_all_path_as_trie(g1)
-			paths_g_list = [self.__find_all_path_as_trie(self._graphs[i]) for i in iterator_ps]
+			paths_g_list = [self.__find_all_path_as_trie(g) for g in iterator_ps]
 			for i in iterator_kernel:
 				kernel = self.__kernel_do_trie(paths_g1, paths_g_list[i])
 				kernel_list[i] = kernel
 		else:
 			paths_g1 = self.__find_all_paths_until_length(g1)
-			paths_g_list = [self.__find_all_paths_until_length(self._graphs[i]) for i in iterator_ps]
+			paths_g_list = [self.__find_all_paths_until_length(g) for g in iterator_ps]
 			for i in iterator_kernel:
 				kernel = self.__kernel_do_naive(paths_g1, paths_g_list[i])
 				kernel_list[i] = kernel
