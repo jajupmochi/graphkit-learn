@@ -231,28 +231,31 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 		assert False, exception
 	
 	
-# @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
-# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-# def test_treeletkernel(ds_name, parallel):
-#	 """Test treelet kernel.
-#	 """
-#	 from gklearn.kernels.treeletKernel import treeletkernel
-#	 from gklearn.utils.kernels import polynomialkernel
-#	 import functools
+@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_treeletkernel(ds_name, parallel):
+	"""Test treelet kernel.
+	"""
+	from gklearn.kernels import Treelet
+	from gklearn.utils.kernels import polynomialkernel
+	import functools
 	
-#	 Gn, y = chooseDataset(ds_name)
+	dataset = chooseDataset(ds_name)
 
-#	 pkernel = functools.partial(polynomialkernel, d=2, c=1e5)	
-#	 try:
-#		 Kmatrix, run_time = treeletkernel(Gn, 
-#										   sub_kernel=pkernel,
-#										   node_label='atom', 
-#										   edge_label='bond_type',
-#										   parallel=parallel,
-#										   n_jobs=multiprocessing.cpu_count(), 
-#										   verbose=True)
-#	 except Exception as exception:
-#		 assert False, exception
+	pkernel = functools.partial(polynomialkernel, d=2, c=1e5)	
+	try:
+		graph_kernel = Treelet(node_labels=dataset.node_labels,
+					  edge_labels=dataset.edge_labels,
+					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					  sub_kernel=pkernel)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	except Exception as exception:
+		assert False, exception
 		
 		
 # @pytest.mark.parametrize('ds_name', ['Acyclic'])

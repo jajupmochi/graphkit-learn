@@ -176,7 +176,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 		pool.close()
 		pool.join()
 		
-		# compute Gram matrix.
+		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		
 		def init_worker(p1_toshare, plist_toshare):

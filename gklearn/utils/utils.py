@@ -352,3 +352,76 @@ def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, d
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)	
 
 	print('\ncomplete.')	
+	
+	
+def find_paths(G, source_node, length):
+	"""Find all paths with a certain length those start from a source node. 
+	A recursive depth first search is applied.
+	
+	Parameters
+	----------
+	G : NetworkX graphs
+		The graph in which paths are searched.
+	source_node : integer
+		The number of the node from where all paths start.
+	length : integer
+		The length of paths.
+		
+	Return
+	------
+	path : list of list
+		List of paths retrieved, where each path is represented by a list of nodes.
+	"""
+	if length == 0:
+		return [[source_node]]
+	path = [[source_node] + path for neighbor in G[source_node] \
+		for path in find_paths(G, neighbor, length - 1) if source_node not in path]
+	return path
+
+
+def find_all_paths(G, length, is_directed):
+	"""Find all paths with a certain length in a graph. A recursive depth first
+	search is applied.
+	
+	Parameters
+	----------
+	G : NetworkX graphs
+		The graph in which paths are searched.
+	length : integer
+		The length of paths.
+		
+	Return
+	------
+	path : list of list
+		List of paths retrieved, where each path is represented by a list of nodes.
+	"""
+	all_paths = []
+	for node in G:
+		all_paths.extend(find_paths(G, node, length))
+		
+	if not is_directed:
+		# For each path, two presentations are retrieved from its two extremities. 
+		# Remove one of them.
+		all_paths_r = [path[::-1] for path in all_paths]  
+		for idx, path in enumerate(all_paths[:-1]):
+			for path2 in all_paths_r[idx+1::]:
+				if path == path2:
+					all_paths[idx] = []
+					break
+		all_paths = list(filter(lambda a: a != [], all_paths))
+			
+	return all_paths
+
+
+def get_mlti_dim_node_attrs(G, attr_names):
+	attributes = []
+	for nd, attrs in G.nodes(data=True):
+		attributes.append(tuple(attrs[aname] for aname in attr_names))
+	return attributes
+
+
+def get_mlti_dim_edge_attrs(G, attr_names):
+	attributes = []
+	for ed, attrs in G.edges(data=True):
+		attributes.append(tuple(attrs[aname] for aname in attr_names))
+	return attributes
