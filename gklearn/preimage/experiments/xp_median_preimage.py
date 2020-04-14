@@ -13,7 +13,7 @@ from gklearn.utils import compute_gram_matrices_by_class
 
 
 def xp_median_preimage_9_1():
-	"""xp 9_1: MAO, sspkernel, using CONSTANT.
+	"""xp 9_1: MAO, StructuralSP, using CONSTANT, symbolic only.
 	"""
 	# set parameters.
 	ds_name = 'MAO' #
@@ -29,7 +29,7 @@ def xp_median_preimage_9_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -53,7 +53,7 @@ def xp_median_preimage_9_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']} #
 	edge_required = False #
 	
@@ -69,7 +69,189 @@ def xp_median_preimage_9_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'expert', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_9_2():
+	"""xp 9_2: MAO, PathUpToH, using CONSTANT, symbolic only.
+	"""
+	# set parameters.
+	ds_name = 'MAO' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'PathUpToH',
+					  'depth': 9, #
+					  'k_func': 'MinMax', #
+					  'compute_method': 'trie',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']} #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_9_3():
+	"""xp 9_3: MAO, Treelet, using CONSTANT.
+	"""
+	from gklearn.utils.kernels import polynomialkernel
+	# set parameters.
+	ds_name = 'MAO' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	pkernel = functools.partial(polynomialkernel, d=4, c=1e+7)
+	kernel_options = {'name': 'Treelet', #
+				      'sub_kernel': pkernel,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_9_4():
+	"""xp 9_4: MAO, WeisfeilerLehman, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'MAO' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'WeisfeilerLehman',
+				      'height': 6,
+					  'base_kernel': 'subtree',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -77,7 +259,7 @@ def xp_median_preimage_9_1():
 
 
 def xp_median_preimage_8_1():
-	"""xp 8_1: Monoterpenoides, sspkernel, using CONSTANT.
+	"""xp 8_1: Monoterpenoides, StructuralSP, using CONSTANT.
 	"""
 	# set parameters.
 	ds_name = 'Monoterpenoides' #
@@ -93,7 +275,7 @@ def xp_median_preimage_8_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -117,7 +299,7 @@ def xp_median_preimage_8_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = None #
 	edge_required = False #
 	
@@ -133,7 +315,189 @@ def xp_median_preimage_8_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'expert', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_8_2():
+	"""xp 8_2: Monoterpenoides, PathUpToH, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'Monoterpenoides' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'PathUpToH',
+					  'depth': 7, #
+					  'k_func': 'MinMax', #
+					  'compute_method': 'trie',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_8_3():
+	"""xp 8_3: Monoterpenoides, Treelet, using CONSTANT.
+	"""
+	from gklearn.utils.kernels import polynomialkernel
+	# set parameters.
+	ds_name = 'Monoterpenoides' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	pkernel = functools.partial(polynomialkernel, d=2, c=1e+5)
+	kernel_options = {'name': 'Treelet',
+				      'sub_kernel': pkernel,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_8_4():
+	"""xp 8_4: Monoterpenoides, WeisfeilerLehman, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'Monoterpenoides' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'WeisfeilerLehman',
+				      'height': 4,
+					  'base_kernel': 'subtree',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -141,7 +505,7 @@ def xp_median_preimage_8_1():
 		
 
 def xp_median_preimage_7_1():
-	"""xp 7_1: MUTAG, sspkernel, using CONSTANT.
+	"""xp 7_1: MUTAG, StructuralSP, using CONSTANT.
 	"""
 	# set parameters.
 	ds_name = 'MUTAG' #
@@ -157,7 +521,7 @@ def xp_median_preimage_7_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -181,7 +545,7 @@ def xp_median_preimage_7_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = None #
 	edge_required = False #
 	
@@ -197,7 +561,189 @@ def xp_median_preimage_7_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'expert', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_7_2():
+	"""xp 7_2: MUTAG, PathUpToH, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'MUTAG' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'PathUpToH',
+					  'depth': 2, #
+					  'k_func': 'MinMax', #
+					  'compute_method': 'trie',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_7_3():
+	"""xp 7_3: MUTAG, Treelet, using CONSTANT.
+	"""
+	from gklearn.utils.kernels import polynomialkernel
+	# set parameters.
+	ds_name = 'MUTAG' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	pkernel = functools.partial(polynomialkernel, d=3, c=1e+8)
+	kernel_options = {'name': 'Treelet',
+				      'sub_kernel': pkernel,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_7_4():
+	"""xp 7_4: MUTAG, WeisfeilerLehman, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'MUTAG' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'WeisfeilerLehman',
+				      'height': 1,
+					  'base_kernel': 'subtree',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -205,7 +751,7 @@ def xp_median_preimage_7_1():
 
 
 def xp_median_preimage_6_1():
-	"""xp 6_1: COIL-RAG, sspkernel, using NON_SYMBOLIC.
+	"""xp 6_1: COIL-RAG, StructuralSP, using NON_SYMBOLIC.
 	"""
 	# set parameters.
 	ds_name = 'COIL-RAG' #
@@ -221,7 +767,7 @@ def xp_median_preimage_6_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -245,7 +791,7 @@ def xp_median_preimage_6_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = None #
 	edge_required = False #
 	
@@ -261,7 +807,69 @@ def xp_median_preimage_6_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+		
+def xp_median_preimage_6_2():
+	"""xp 6_2: COIL-RAG, ShortestPath, using NON_SYMBOLIC.
+	"""
+	# set parameters.
+	ds_name = 'COIL-RAG' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [3, 3, 1, 3, 3, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'ShortestPath',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'NON_SYMBOLIC', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = True #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -269,7 +877,7 @@ def xp_median_preimage_6_1():
 
 
 def xp_median_preimage_5_1():
-	"""xp 5_1: FRANKENSTEIN, sspkernel, using NON_SYMBOLIC.
+	"""xp 5_1: FRANKENSTEIN, StructuralSP, using NON_SYMBOLIC.
 	"""
 	# set parameters.
 	ds_name = 'FRANKENSTEIN' #
@@ -285,7 +893,7 @@ def xp_median_preimage_5_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -309,7 +917,7 @@ def xp_median_preimage_5_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = None #
 	edge_required = False #
 	
@@ -325,7 +933,7 @@ def xp_median_preimage_5_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -333,7 +941,7 @@ def xp_median_preimage_5_1():
 		
 
 def xp_median_preimage_4_1():
-	"""xp 4_1: COLORS-3, sspkernel, using NON_SYMBOLIC.
+	"""xp 4_1: COLORS-3, StructuralSP, using NON_SYMBOLIC.
 	"""
 	# set parameters.
 	ds_name = 'COLORS-3' #
@@ -349,7 +957,7 @@ def xp_median_preimage_4_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -373,7 +981,7 @@ def xp_median_preimage_4_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = None #
 	edge_required = False #
 	
@@ -389,15 +997,15 @@ def xp_median_preimage_4_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
 		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
-
-
-def xp_median_preimage_3_1():
-	"""xp 3_1: Fingerprint, sspkernel, using LETTER2, only node attrs.
+		
+		
+def xp_median_preimage_3_2():
+	"""xp 3_2: Fingerprint, ShortestPath, using LETTER2, only node attrs.
 	"""
 	# set parameters.
 	ds_name = 'Fingerprint' #
@@ -413,7 +1021,69 @@ def xp_median_preimage_3_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'ShortestPath',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = {'edge_attrs': ['orient', 'angle']} #
+	edge_required = True #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+
+
+def xp_median_preimage_3_1():
+	"""xp 3_1: Fingerprint, StructuralSP, using LETTER2, only node attrs.
+	"""
+	# set parameters.
+	ds_name = 'Fingerprint' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.525, 0.525, 0.001, 0.125, 0.125], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -437,7 +1107,7 @@ def xp_median_preimage_3_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = {'edge_attrs': ['orient', 'angle']} #
 	edge_required = False #
 	
@@ -453,7 +1123,7 @@ def xp_median_preimage_3_1():
 	print()
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -461,7 +1131,7 @@ def xp_median_preimage_3_1():
 		
 
 def xp_median_preimage_2_1():
-	"""xp 2_1: COIL-DEL, sspkernel, using LETTER2, only node attrs.
+	"""xp 2_1: COIL-DEL, StructuralSP, using LETTER2, only node attrs.
 	"""
 	# set parameters.
 	ds_name = 'COIL-DEL' #
@@ -477,7 +1147,7 @@ def xp_median_preimage_2_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -501,7 +1171,7 @@ def xp_median_preimage_2_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
-	dir_save='../results/xp_median_preimage/'
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	irrelevant_labels = {'edge_labels': ['valence']}
 	
 	# print settings.
@@ -520,7 +1190,7 @@ def xp_median_preimage_2_1():
 # 	compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save=dir_save, irrelevant_labels=irrelevant_labels)
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
@@ -528,12 +1198,12 @@ def xp_median_preimage_2_1():
 
 
 def xp_median_preimage_1_1():
-	"""xp 1_1: Letter-high, sspkernel.
+	"""xp 1_1: Letter-high, StructuralSP.
 	"""
 	# set parameters.
 	ds_name = 'Letter-high'
 	mpg_options = {'fit_method': 'k-graphs',
-				   'init_ecc': [3, 3, 1, 3, 3],
+				   'init_ecc': [0.675, 0.675, 0.75, 0.425, 0.425],
 				   'ds_name': ds_name,
 				   'parallel': True, # False
 				   'time_limit_in_sec': 0,
@@ -544,7 +1214,7 @@ def xp_median_preimage_1_1():
 				   'verbose': 2}
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-	kernel_options = {'name': 'structuralspkernel',
+	kernel_options = {'name': 'StructuralSP',
 					  'edge_weight': None,
 					  'node_kernels': sub_kernels,
 					  'edge_kernels': sub_kernels, 
@@ -556,7 +1226,7 @@ def xp_median_preimage_1_1():
 					  'verbose': 2}
 	ged_options = {'method': 'IPFP',
 				   'initialization_method': 'RANDOM', # 'NODE'
-				   'initial_solutions': 1, # 1
+				   'initial_solutions': 10, # 1
 				   'edit_cost': 'LETTER2',
 				   'attr_distance': 'euclidean',
 				   'ratio_runs_from_initial_solutions': 1,
@@ -568,6 +1238,7 @@ def xp_median_preimage_1_1():
 				   'verbose': 2,
 				   'refine': False}
 	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	
 	# print settings.
 	print('parameters:')
@@ -579,38 +1250,392 @@ def xp_median_preimage_1_1():
 	print('save_results:', save_results)
 	
 	# generate preimages.
-	for fit_method in ['k-graphs', 'expert', 'random', 'random', 'random']:
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
 		print('\n-------------------------------------')
 		print('fit method:', fit_method, '\n')
 		mpg_options['fit_method'] = fit_method
-		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save='../results/xp_median_preimage/')
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save)
+		
+		
+def xp_median_preimage_1_2():
+	"""xp 1_2: Letter-high, ShortestPath.
+	"""
+	# set parameters.
+	ds_name = 'Letter-high'
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.675, 0.675, 0.75, 0.425, 0.425],
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'ShortestPath',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+					  'parallel': 'imap_unordered', 
+# 						  'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = True #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+		
+
+def xp_median_preimage_10_1():
+	"""xp 10_1: Letter-med, StructuralSP.
+	"""
+	# set parameters.
+	ds_name = 'Letter-med'
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.525, 0.525, 0.75, 0.475, 0.475],
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'StructuralSP',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+					  'edge_kernels': sub_kernels, 
+					  'compute_method': 'naive',
+					  'parallel': 'imap_unordered', 
+# 						  'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save)
+		
+		
+def xp_median_preimage_10_2():
+	"""xp 10_2: Letter-med, ShortestPath.
+	"""
+	# set parameters.
+	ds_name = 'Letter-med'
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.525, 0.525, 0.75, 0.475, 0.475],
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'ShortestPath',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+					  'parallel': 'imap_unordered', 
+# 						  'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = True #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+
+
+def xp_median_preimage_11_1():
+	"""xp 11_1: Letter-low, StructuralSP.
+	"""
+	# set parameters.
+	ds_name = 'Letter-low'
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.075, 0.075, 0.25, 0.075, 0.075],
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'StructuralSP',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+					  'edge_kernels': sub_kernels, 
+					  'compute_method': 'naive',
+					  'parallel': 'imap_unordered', 
+# 						  'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save)
+		
+		
+def xp_median_preimage_11_2():
+	"""xp 11_2: Letter-low, ShortestPath.
+	"""
+	# set parameters.
+	ds_name = 'Letter-low'
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [0.075, 0.075, 0.25, 0.075, 0.075],
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100,
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+	kernel_options = {'name': 'ShortestPath',
+					  'edge_weight': None,
+					  'node_kernels': sub_kernels,
+					  'parallel': 'imap_unordered', 
+# 						  'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'LETTER2',
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 600,
+				   'verbose': 2,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = True #
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs', 'expert'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
 
 
 if __name__ == "__main__":
 	
-	#### xp 1_1: Letter-high, sspkernel.
+	#### xp 1_1: Letter-high, StructuralSP.
  	# xp_median_preimage_1_1()
+
+	#### xp 1_2: Letter-high, ShortestPath.
+# 	xp_median_preimage_1_2()
+
+	#### xp 10_1: Letter-med, StructuralSP.
+ 	# xp_median_preimage_10_1()
+
+	#### xp 10_2: Letter-med, ShortestPath.
+ 	# xp_median_preimage_10_2()
+
+	#### xp 11_1: Letter-low, StructuralSP.
+ 	# xp_median_preimage_11_1()
+
+	#### xp 11_2: Letter-low, ShortestPath.
+# 	xp_median_preimage_11_2()
 	
-	#### xp 2_1: COIL-DEL, sspkernel, using LETTER2, only node attrs.
+	#### xp 2_1: COIL-DEL, StructuralSP, using LETTER2, only node attrs.
 # 	xp_median_preimage_2_1()
 	
-	#### xp 3_1: Fingerprint, sspkernel, using LETTER2, only node attrs.
+	#### xp 3_1: Fingerprint, StructuralSP, using LETTER2, only node attrs.
  	# xp_median_preimage_3_1()
 
-	#### xp 4_1: COLORS-3, sspkernel, using NON_SYMBOLIC.
+	#### xp 3_2: Fingerprint, ShortestPath, using LETTER2, only node attrs.
+# 	xp_median_preimage_3_2()
+
+	#### xp 4_1: COLORS-3, StructuralSP, using NON_SYMBOLIC.
 # 	xp_median_preimage_4_1()
 	
-	#### xp 5_1: FRANKENSTEIN, sspkernel, using NON_SYMBOLIC.
+	#### xp 5_1: FRANKENSTEIN, StructuralSP, using NON_SYMBOLIC.
 # 	xp_median_preimage_5_1()
 	
-	#### xp 6_1: COIL-RAG, sspkernel, using NON_SYMBOLIC.
+	#### xp 6_1: COIL-RAG, StructuralSP, using NON_SYMBOLIC.
  	# xp_median_preimage_6_1()
 
-	#### xp 7_1: MUTAG, sspkernel, using CONSTANT.
+	#### xp 6_2: COIL-RAG, ShortestPath, using NON_SYMBOLIC.
+# 	xp_median_preimage_6_2()
+
+	#### xp 7_1: MUTAG, StructuralSP, using CONSTANT.
  	# xp_median_preimage_7_1()
+
+	#### xp 7_2: MUTAG, PathUpToH, using CONSTANT.
+ 	# xp_median_preimage_7_2()
+
+	#### xp 7_3: MUTAG, Treelet, using CONSTANT.
+ 	# xp_median_preimage_7_3()
+
+	#### xp 7_4: MUTAG, WeisfeilerLehman, using CONSTANT.
+# 	xp_median_preimage_7_4()
 	 
-    #### xp 8_1: Monoterpenoides, sspkernel, using CONSTANT.
+    #### xp 8_1: Monoterpenoides, StructuralSP, using CONSTANT.
 # 	xp_median_preimage_8_1()
 
-	#### xp 9_1: MAO, sspkernel, using CONSTANT.
-	xp_median_preimage_9_1()
+	#### xp 8_2: Monoterpenoides, PathUpToH, using CONSTANT.
+ 	# xp_median_preimage_8_2()
+
+	#### xp 8_3: Monoterpenoides, Treelet, using CONSTANT.
+# 	xp_median_preimage_8_3()
+
+	#### xp 8_4: Monoterpenoides, WeisfeilerLehman, using CONSTANT.
+# 	xp_median_preimage_8_4()
+
+	#### xp 9_1: MAO, StructuralSP, using CONSTANT, symbolic only.
+# 	xp_median_preimage_9_1()
+
+	#### xp 9_2: MAO, PathUpToH, using CONSTANT, symbolic only.
+ 	# xp_median_preimage_9_2()
+
+	#### xp 9_3: MAO, Treelet, using CONSTANT.
+# 	xp_median_preimage_9_3()
+
+	#### xp 9_4: MAO, WeisfeilerLehman, using CONSTANT.
+	xp_median_preimage_9_4()

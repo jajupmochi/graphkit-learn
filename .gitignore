@@ -4,6 +4,7 @@ datasets/*
 !datasets/ds.py
 !datasets/Alkane/
 !datasets/acyclic/
+!datasets/Acyclic/
 !datasets/MAO/
 !datasets/PAH/
 !datasets/MUTAG/
@@ -14,6 +15,7 @@ datasets/*
 !datasets/NCI109/
 !datasets/AIDS/
 !datasets/monoterpenoides/
+!datasets/Monoterpenoides/
 !datasets/Fingerprint/*.txt
 !datasets/Cuneiform/*.txt
 notebooks/results/*

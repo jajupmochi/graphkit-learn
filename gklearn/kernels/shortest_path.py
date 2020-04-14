@@ -51,7 +51,7 @@ class ShortestPath(GraphKernel):
 		else:
 			iterator = itr
 		for i, j in iterator:
-			kernel = self.__sp_do_(self._graphs[i], self._graphs[j])
+			kernel = self.__sp_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel
 				
