@@ -233,7 +233,7 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 	
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-def test_treeletkernel(ds_name, parallel):
+def test_Treelet(ds_name, parallel):
 	"""Test treelet kernel.
 	"""
 	from gklearn.kernels import Treelet
@@ -258,28 +258,30 @@ def test_treeletkernel(ds_name, parallel):
 		assert False, exception
 		
 		
-# @pytest.mark.parametrize('ds_name', ['Acyclic'])
-# #@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
-# @pytest.mark.parametrize('base_kernel', ['subtree'])
-# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-# def test_weisfeilerlehmankernel(ds_name, parallel, base_kernel):
-#	 """Test Weisfeiler-Lehman kernel.
-#	 """
-#	 from gklearn.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
+@pytest.mark.parametrize('ds_name', ['Acyclic'])
+#@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
+@pytest.mark.parametrize('base_kernel', ['subtree'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_WeisfeilerLehman(ds_name, parallel, base_kernel):
+	"""Test Weisfeiler-Lehman kernel.
+	"""
+	from gklearn.kernels import WeisfeilerLehman
 	
-#	 Gn, y = chooseDataset(ds_name)
+	dataset = chooseDataset(ds_name)
 
-#	 try:
-#		 Kmatrix, run_time = weisfeilerlehmankernel(Gn, 
-#													node_label='atom', 
-#													edge_label='bond_type',
-#													height=2,
-#													base_kernel=base_kernel,
-#													parallel=parallel,
-#													n_jobs=multiprocessing.cpu_count(), 
-#													verbose=True)
-#	 except Exception as exception:
-#		 assert False, exception
+	try:
+		graph_kernel = WeisfeilerLehman(node_labels=dataset.node_labels,
+					  edge_labels=dataset.edge_labels,
+					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					  height=2, base_kernel=base_kernel)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	except Exception as exception:
+		assert False, exception
 		
 
 if __name__ == "__main__":

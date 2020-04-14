@@ -751,8 +751,14 @@ class MedianPreimageGenerator(PreimageGenerator):
 								  edge_labels=self._dataset.edge_labels,
 								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
 								  **self._kernel_options)
+		elif self._kernel_options['name'] == 'WeisfeilerLehman':
+			from gklearn.kernels import WeisfeilerLehman
+			self._graph_kernel = WeisfeilerLehman(node_labels=self._dataset.node_labels,
+								  edge_labels=self._dataset.edge_labels,
+								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
+								  **self._kernel_options)
 		else:
-			raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet".')
+			raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet", "WeisfeilerLehman".')
 			
 			
 # 	def __clean_graph(self, G, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
