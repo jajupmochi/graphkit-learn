@@ -113,6 +113,9 @@ class Dataset(object):
 		elif ds_name == 'MUTAG':
 			ds_file = current_path + '../../datasets/MUTAG/MUTAG_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'PAH':
+			ds_file = current_path + '../../datasets/PAH/dataset.ds'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'SYNTHETIC':
 			pass
 		elif ds_name == 'SYNTHETICnew':

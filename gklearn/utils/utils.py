@@ -299,11 +299,41 @@ def get_edge_labels(Gn, edge_label):
 
 
 def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attrs=None, edge_attrs=None, ds_infos=None, kernel_options={}):
-	if name == 'structuralspkernel':
+	if name == 'ShortestPath':
+		from gklearn.kernels import ShortestPath
+		graph_kernel = ShortestPath(node_labels=node_labels,
+								 node_attrs=node_attrs,
+								 ds_infos=ds_infos,
+								 **kernel_options)
+	elif name == 'StructuralSP':
 		from gklearn.kernels import StructuralSP
-		graph_kernel = StructuralSP(node_labels=node_labels, edge_labels=edge_labels, 
-								  node_attrs=node_attrs, edge_attrs=edge_attrs,
-								  ds_infos=ds_infos, **kernel_options)
+		graph_kernel = StructuralSP(node_labels=node_labels,
+								  edge_labels=edge_labels, 
+								  node_attrs=node_attrs,
+								  edge_attrs=edge_attrs,
+								  ds_infos=ds_infos,
+								  **kernel_options)
+	elif name == 'PathUpToH':
+		from gklearn.kernels import PathUpToH
+		graph_kernel = PathUpToH(node_labels=node_labels,
+							  edge_labels=edge_labels,
+							  ds_infos=ds_infos,
+							  **kernel_options)
+	elif name == 'Treelet':
+		from gklearn.kernels import Treelet
+		graph_kernel = Treelet(node_labels=node_labels,
+							  edge_labels=edge_labels,
+							  ds_infos=ds_infos,
+							  **kernel_options)
+	elif name == 'WeisfeilerLehman':
+		from gklearn.kernels import WeisfeilerLehman
+		graph_kernel = WeisfeilerLehman(node_labels=node_labels,
+							  edge_labels=edge_labels,
+							  ds_infos=ds_infos,
+							  **kernel_options)
+	else:
+		raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet", "WeisfeilerLehman".')
+
 	return graph_kernel
 
 

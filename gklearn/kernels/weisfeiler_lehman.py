@@ -32,6 +32,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 
 
 	def _compute_gm_series(self):
+		if self._verbose >= 2:
+			import warnings
+			warnings.warn('A part of the computation is parallelized.')
+			
 		self.__add_dummy_node_labels(self._graphs)
 		
 		# for WL subtree kernel
@@ -55,11 +59,16 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			
 	def _compute_gm_imap_unordered(self):
 		if self._verbose >= 2:
-			raise Warning('Only a part of the computation is parallelized due to the structure of this kernel.')
+			import warnings
+			warnings.warn('Only a part of the computation is parallelized due to the structure of this kernel.')
 		return self._compute_gm_series()
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list): # @todo: this should be better.
+		if self._verbose >= 2:
+			import warnings
+			warnings.warn('A part of the computation is parallelized.')
+			
 		self.__add_dummy_node_labels(g_list + [g1])
 				
 		# for WL subtree kernel
@@ -83,8 +92,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		if self._verbose >= 2:
-			raise Warning('Only a part of the computation is parallelized due to the structure of this kernel.')
-		return self._compute_gm_imap_unordered()
+			import warnings
+			warnings.warn('Only a part of the computation is parallelized due to the structure of this kernel.')
+		return self._compute_kernel_list_series(g1, g_list)
 	
 	
 	def _wrapper_kernel_list_do(self, itr):
