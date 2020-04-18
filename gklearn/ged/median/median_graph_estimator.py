@@ -392,7 +392,7 @@ class MedianGraphEstimator(object):
 				# Update the median. # @todo!!!!!!!!!!!!!!!!!!!!!!
 				median_modified = self.__update_median(graphs, median)
 				if not median_modified or self.__itrs[median_pos] == 0:
-					decreased_order = False
+					decreased_order = self.__decrease_order(graphs, median)
 					if not decreased_order or self.__itrs[median_pos] == 0:
 						increased_order = False
 						
@@ -741,6 +741,81 @@ class MedianGraphEstimator(object):
 		# Return true if the node maps were modified.
 		return node_maps_were_modified
 	
+	
+	def __decrease_order(self, graphs, median):
+		# Print information about current iteration
+		if self.__print_to_stdout == 2:
+			print('Trying to decrease order: ... ', end='')
+			
+		# Initialize ID of the node that is to be deleted.
+		id_deleted_node = None # @todo: or np.inf
+		decreased_order = False
+		
+		# Decrease the order as long as the best deletion delta is negative.
+		while self.__compute_best_deletion_delta(graphs, median, [id_deleted_node]) < -self.__epsilon:
+			decreased_order = True
+			self.__delete_node_from_median(id_deleted_node, median)
+			
+		# Print information about current iteration.
+		if self.__print_to_stdout == 2:
+			print('done.')
+			
+		# Return true iff the order was decreased.
+		return decreased_order
+	
+	
+	def __compute_best_deletion_delta(self, graphs, median, id_deleted_node):
+		best_delta = 0.0
+		
+		# Determine node that should be deleted (if any).
+		for i in range(0, nx.number_of_nodes(median)):
+			# Compute cost delta.
+			delta = 0.0
+			for graph_id, graph in graphs.items():
+				k = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], i)
+				if k == np.inf:
+					delta -= self.__node_del_cost
+				else:
+					delta += self.__node_ins_cost - self.__ged_env.get_node_rel_cost(median.nodes[i], graph.nodes[k])
+				for j, j_label in median[i]:
+					l = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], j)
+					if k == np.inf or l == np.inf:
+						delta -= self.__edge_del_cost
+					elif not graph.has_edge(k, l):
+						delta -= self.__edge_del_cost
+					else:
+						delta += self.__edge_ins_cost - self.__ged_env.get_edge_rel_cost(j_label, graph.edges[(k, l)])
+						
+			# Update best deletion delta.
+			if delta < best_delta - self.__epsilon:
+				best_delta = delta
+				id_deleted_node[0] = i
+				
+		return best_delta
+	
+	
+	def __delete_node_from_median(self, id_deleted_node, median):
+		# Update the nodes of the median.
+		median.remove_node(id_deleted_node) # @todo: test if it is right.
+		
+		# Update the node maps.
+		for _, node_map in self.__node_maps_from_median.items():
+			new_node_map = {nx.number_of_nodes(median): ''} # @todo
+			is_unassigned_target_node = ['', True]
+			for i in range(0, nx.number_of_nodes(median)):
+				if i != id_deleted_node:
+					new_i = (i if i < id_deleted_node else i - 1)
+					k = self.__get_node_image_from_map(node_map, i)
+					new_node_map["ds"] # @todo
+					if k != np.inf:
+						is_unassigned_target_node[k] = False
+			for k in range(0, ''):
+				if is_unassigned_target_node[k]:
+					new_node_map.sdf[]
+			node_map = new_node_map
+			
+		# Increase overall number of decreases.
+		self.__num_decrease_order += 1
 	
 	def __improve_sum_of_distances(self, timer):
 		pass

@@ -325,6 +325,12 @@ def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attr
 							  edge_labels=edge_labels,
 							  ds_infos=ds_infos,
 							  **kernel_options)
+	elif name == 'WLSubtree':
+		from gklearn.kernels import WLSubtree
+		graph_kernel = WLSubtree(node_labels=node_labels,
+							  edge_labels=edge_labels,
+							  ds_infos=ds_infos,
+							  **kernel_options)
 	elif name == 'WeisfeilerLehman':
 		from gklearn.kernels import WeisfeilerLehman
 		graph_kernel = WeisfeilerLehman(node_labels=node_labels,
@@ -332,7 +338,7 @@ def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attr
 							  ds_infos=ds_infos,
 							  **kernel_options)
 	else:
-		raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet", "WeisfeilerLehman".')
+		raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet", "WLSubtree", "WeisfeilerLehman".')
 
 	return graph_kernel
 

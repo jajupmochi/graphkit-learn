@@ -473,3 +473,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			for G in Gn:
 				nx.set_node_attributes(G, '0', 'dummy')
 			self.__node_labels.append('dummy')
+			
+			
+class WLSubtree(WeisfeilerLehman):
+	
+	def __init__(self, **kwargs):
+		kwargs['base_kernel'] = 'subtree'
+		super().__init__(**kwargs)
