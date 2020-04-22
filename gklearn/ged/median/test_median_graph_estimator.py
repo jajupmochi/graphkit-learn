@@ -56,7 +56,7 @@ def test_median_graph_estimator():
 	mge.set_refine_method(algo, '--threads ' + str(threads) + ' --initial-solutions ' + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1')
 	
 	mge_options = '--time-limit ' + str(time_limit) + ' --stdout 2 --init-type ' + init_type
-	mge_options += ' --random-inits ' + str(num_inits) + ' --seed ' + '1'  + ' --update-order FALSE --refine FALSE'# @todo: std::to_string(rng())
+	mge_options += ' --random-inits ' + str(num_inits) + ' --seed ' + '1'  + ' --update-order TRUE --refine FALSE'# @todo: std::to_string(rng())
 	
 	# Select the GED algorithm.
 	algo_options = '--threads ' + str(threads) + algo_options_suffix

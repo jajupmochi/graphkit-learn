@@ -6,7 +6,7 @@ Created on Mon Mar 16 18:04:55 2020
 @author: ljia
 """
 import numpy as np
-from gklearn.ged.env import AlgorithmState
+from gklearn.ged.env import AlgorithmState, NodeMap
 from gklearn.ged.util import misc
 from gklearn.utils import Timer
 import time
@@ -770,7 +770,7 @@ class MedianGraphEstimator(object):
 		decreased_order = False
 		
 		# Decrease the order as long as the best deletion delta is negative.
-		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon: # @todo
+		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) > -self.__epsilon: # @todo
 			decreased_order = True
 			self.__delete_node_from_median(id_deleted_node[0], median)
 			
@@ -790,13 +790,13 @@ class MedianGraphEstimator(object):
 			# Compute cost delta.
 			delta = 0.0
 			for graph_id, graph in graphs.items():
-				k = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], i)
+				k = self.__node_maps_from_median[graph_id].image(i)
 				if k == np.inf:
 					delta -= self.__node_del_cost
 				else:
 					delta += self.__node_ins_cost - self.__ged_env.get_node_rel_cost(median.nodes[i], graph.nodes[k])
 				for j, j_label in median[i].items():
-					l = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], j)
+					l = self.__node_maps_from_median[graph_id].image(j)
 					if k == np.inf or l == np.inf:
 						delta -= self.__edge_del_cost
 					elif not graph.has_edge(k, l):
@@ -813,25 +813,25 @@ class MedianGraphEstimator(object):
 		return best_delta
 	
 	
-	def __delete_node_from_median(self, id_deleted_node, median): # @todo: update env.node_map?
+	def __delete_node_from_median(self, id_deleted_node, median):
 		# Update the median.
 		median.remove_node(id_deleted_node)
 		
 		# Update the node maps.
-		for _, node_map in self.__node_maps_from_median.items():
-			new_node_map = [] # @todo
-			is_unassigned_target_node = [True] * len(node_map)
+		for key, node_map in self.__node_maps_from_median.items():
+			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
+			is_unassigned_target_node = [True] * node_map.num_target_nodes()
 			for i in range(0, nx.number_of_nodes(median)):
 				if i != id_deleted_node:
 					new_i = (i if i < id_deleted_node else i - 1)
-					k = self.__get_node_image_from_map(node_map, i)
-					new_node_map.append((new_i, k)) # @todo
+					k = node_map.image(i)
+					new_node_map.add_assignment(new_i, k)
 					if k != np.inf:
 						is_unassigned_target_node[k] = False
-			for k in range(0, len(node_map)):
+			for k in range(0, node_map.num_target_nodes()):
 				if is_unassigned_target_node[k]:
-					new_node_map.append(np.inf, k)
-			node_map = new_node_map # @todo
+					new_node_map.add_assignment(np.inf, k)
+			self.__node_maps_from_median[key] = new_node_map
 			
 		# Increase overall number of decreases.
 		self.__num_decrease_order += 1
