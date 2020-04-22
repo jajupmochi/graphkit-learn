@@ -25,7 +25,7 @@ import networkx as nx
 import os
 
 
-def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None, edge_required=False):
+def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None, edge_required=False, cut_range=None):
 	import os.path
 	from gklearn.preimage import MedianPreimageGenerator
 	from gklearn.utils import split_dataset_by_target
@@ -38,7 +38,8 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	dataset_all.trim_dataset(edge_required=edge_required)
 	if irrelevant_labels is not None:
 		dataset_all.remove_labels(**irrelevant_labels)
-# 	dataset_all.cut_graphs(range(0, 10))
+	if cut_range is not None:
+		dataset_all.cut_graphs(cut_range)
 	datasets = split_dataset_by_target(dataset_all)
 
 	if save_results:

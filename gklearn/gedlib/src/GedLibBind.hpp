@@ -475,8 +475,9 @@ public:
 	 * @brief Computes the edit cost between two graphs induced by a node map.
 	 * @param[in] g_id ID of input graph.
 	 * @param[in] h_id ID of input graph.
+     * @return Computed induced cost.
 	 */
-	void computeInducedCost(std::size_t g_id, std::size_t h_id) const;
+	double computeInducedCost(std::size_t g_id, std::size_t h_id) const;
 
     // /*!
 	//  * @brief Returns node relabeling, insertion, or deletion cost.
@@ -492,7 +493,7 @@ public:
 
 private:
 
-    ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel> env; // environment variable
+    ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel> * env_; // environment variable
 
     bool initialized; // initialization boolean (because env has one but not accessible)
 

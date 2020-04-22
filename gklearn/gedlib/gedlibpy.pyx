@@ -35,8 +35,8 @@ from libcpp.pair cimport pair
 from libcpp.list cimport list
 
 #Long unsigned int equivalent
-cimport numpy as np
-ctypedef np.npy_uint32 UINT32_t
+cimport numpy as cnp
+ctypedef cnp.npy_uint32 UINT32_t
 from cpython cimport array
 
 		
@@ -76,14 +76,14 @@ cdef extern from "src/GedLibBind.hpp" namespace "pyged":
 		void runMethod(size_t g, size_t h) except +
 		double getUpperBound(size_t g, size_t h) except +
 		double getLowerBound(size_t g, size_t h) except +
-		vector[np.npy_uint64] getForwardMap(size_t g, size_t h) except +
-		vector[np.npy_uint64] getBackwardMap(size_t g, size_t h) except +
+		vector[cnp.npy_uint64] getForwardMap(size_t g, size_t h) except +
+		vector[cnp.npy_uint64] getBackwardMap(size_t g, size_t h) except +
 		size_t getNodeImage(size_t g, size_t h, size_t nodeId) except +
 		size_t getNodePreImage(size_t g, size_t h, size_t nodeId) except +
 		double getInducedCost(size_t g, size_t h) except +
 		vector[pair[size_t,size_t]] getNodeMap(size_t g, size_t h) except +
 		vector[vector[int]] getAssignmentMatrix(size_t g, size_t h) except +
-		vector[vector[np.npy_uint64]] getAllMap(size_t g, size_t h) except +
+		vector[vector[cnp.npy_uint64]] getAllMap(size_t g, size_t h) except +
 		double getRuntime(size_t g, size_t h) except +
 		bool quasimetricCosts() except +
 		vector[vector[size_t]] hungarianLSAP(vector[vector[size_t]] matrixCost) except +
@@ -105,14 +105,16 @@ cdef extern from "src/GedLibBind.hpp" namespace "pyged":
 		map[string, string] getMedianEdgeLabel(vector[map[string, string]] & edge_labels) except +
 		string getInitType() except +
 # 		double getNodeCost(size_t label1, size_t label2) except +
-		void computeInducedCost(size_t g_id, size_t h_id) except +
+		double computeInducedCost(size_t g_id, size_t h_id) except +
 		
 		
 #############################
 ##CYTHON WRAPPER INTERFACES##
 #############################
 
+import numpy as np
 import networkx as nx
+from gklearn.ged.env import NodeMap
 
 # import librariesImport
 from ctypes import *
@@ -726,13 +728,30 @@ cdef class GEDEnv:
 			:type g: size_t
 			:type h: size_t
 			:return: The Node Map between the two selected graph. 
-			:rtype: list[tuple(size_t, size_t)]
+			:rtype: gklearn.ged.env.NodeMap.
 			
 			.. seealso:: run_method(), get_forward_map(), get_backward_map(), get_node_image(), get_node_pre_image(), get_assignment_matrix()
 			.. warning:: run_method() between the same two graph must be called before this function. 
 			.. note:: This function creates datas so use it if necessary, however you can understand how assignement works with this example.	 
 		"""
-		return self.c_env.getNodeMap(g, h)
+		map_as_relation = self.c_env.getNodeMap(g, h)
+		induced_cost = self.c_env.getInducedCost(g, h) # @todo: the C++ implementation for this function in GedLibBind.ipp re-call get_node_map() once more, this is not neccessary.
+		source_map = [item.first if item.first < len(map_as_relation) else np.inf for item in map_as_relation] # item.first < len(map_as_relation) is not exactly correct.
+# 		print(source_map)
+		target_map = [item.second if item.second < len(map_as_relation) else np.inf for item in map_as_relation]
+# 		print(target_map)
+		num_node_source = len([item for item in source_map if item != np.inf])
+# 		print(num_node_source)
+		num_node_target = len([item for item in target_map if item != np.inf])
+# 		print(num_node_target)
+		
+		node_map = NodeMap(num_node_source, num_node_target)
+# 		print(node_map.get_forward_map(), node_map.get_backward_map())
+		for i in range(len(source_map)):
+			node_map.add_assignment(source_map[i], target_map[i])
+		node_map.set_induced_cost(induced_cost)
+		
+		return node_map
 	
 	
 	def get_assignment_matrix(self, g, h) :
@@ -1320,7 +1339,7 @@ cdef class GEDEnv:
 		return graph_id
 	
 	
-	def compute_induced_cost(self, g_id, h_id):
+	def compute_induced_cost(self, g_id, h_id, node_map):
 		"""
 		Computes the edit cost between two graphs induced by a node map.
 
@@ -1330,19 +1349,15 @@ cdef class GEDEnv:
 			ID of input graph.
 		h_id : int
 			ID of input graph.
+		node_map: gklearn.ged.env.NodeMap.
+			The NodeMap instance whose reduced cost will be computed and re-assigned.
 
 		Returns
 		-------
-		None.
-		
-		Notes
-		-----
-		The induced edit cost of the node map between `g_id` and `h_id` is implictly computed and stored in `GEDEnv::node_maps_`.
-
+		None.		
 		"""
-		
-		cost = 0.0
-		self.c_env.computeInducedCost(g_id, h_id)
+		induced_cost = self.c_env.computeInducedCost(g_id, h_id)
+		node_map.set_induced_cost(induced_cost)
 
 	
 #####################################################################

@@ -47,6 +47,7 @@ class MedianGraphEstimator(object):
 		self.__desired_num_random_inits = 10
 		self.__use_real_randomness = True
 		self.__seed = 0
+		self.__update_order = True
 		self.__refine = True
 		self.__time_limit_in_sec = 0
 		self.__epsilon = 0.0001
@@ -126,6 +127,16 @@ class MedianGraphEstimator(object):
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option stdout. Usage: options = "[--stdout 0|1|2] [...]"')
 	
+			elif opt_name == 'update-order':
+				if opt_val == 'TRUE':
+					self.__update_order = True
+	
+				elif opt_val == 'FALSE':
+					self.__update_order = False
+	
+				else:
+					raise Exception('Invalid argument "' + opt_val  + '" for option update-order. Usage: options = "[--update-order TRUE|FALSE] [...]"')
+					
 			elif opt_name == 'refine':
 				if opt_val == 'TRUE':
 					self.__refine = True
@@ -298,11 +309,11 @@ class MedianGraphEstimator(object):
 		for graph_id in graph_ids:
 			# @todo: get_nx_graph() function may need to be modified according to the coming code.
 			graphs[graph_id] = self.__ged_env.get_nx_graph(graph_id, True, True, False)
-# 		print(self.__ged_env.get_graph_internal_id(0))
-# 		print(graphs[0].graph)
-# 		print(graphs[0].nodes(data=True))
-# 		print(graphs[0].edges(data=True))
-# 		print(nx.adjacency_matrix(graphs[0]))
+#		print(self.__ged_env.get_graph_internal_id(0))
+#		print(graphs[0].graph)
+#		print(graphs[0].nodes(data=True))
+#		print(graphs[0].edges(data=True))
+#		print(nx.adjacency_matrix(graphs[0]))
 
 			
 		# Construct initial medians.
@@ -310,10 +321,10 @@ class MedianGraphEstimator(object):
 		self.__construct_initial_medians(graph_ids, timer, medians)
 		end_init = time.time()
 		self.__runtime_initialized = end_init - start
-# 		print(medians[0].graph)
-# 		print(medians[0].nodes(data=True))
-# 		print(medians[0].edges(data=True))
-# 		print(nx.adjacency_matrix(medians[0]))
+#		print(medians[0].graph)
+#		print(medians[0].nodes(data=True))
+#		print(medians[0].edges(data=True))
+#		print(nx.adjacency_matrix(medians[0]))
 		
 		# Reset information about iterations and number of times the median decreases and increases.
 		self.__itrs = [0] * len(medians)
@@ -353,12 +364,12 @@ class MedianGraphEstimator(object):
 				
 			# Compute node maps and sum of distances for initial median.
 			self.__sum_of_distances = 0
-			self.__node_maps_from_median.clear() # @todo
+			self.__node_maps_from_median.clear()
 			for graph_id in graph_ids:
 				self.__ged_env.run_method(gen_median_id, graph_id)
 				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(gen_median_id, graph_id)
 # 				print(self.__node_maps_from_median[graph_id])
-				self.__sum_of_distances += self.__ged_env.get_induced_cost(gen_median_id, graph_id) # @todo: the C++ implementation for this function in GedLibBind.ipp re-call get_node_map() once more, this is not neccessary.
+				self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()
 # 				print(self.__sum_of_distances)
 				# Print information about current iteration.
 				if self.__print_to_stdout == 2:
@@ -366,7 +377,7 @@ class MedianGraphEstimator(object):
 					
 			self.__best_init_sum_of_distances = min(self.__best_init_sum_of_distances, self.__sum_of_distances)
 			self.__ged_env.load_nx_graph(median, set_median_id)
-# 			print(self.__best_init_sum_of_distances)
+			print(self.__best_init_sum_of_distances)
 			
 			# Print information about current iteration.
 			if self.__print_to_stdout == 2:
@@ -391,10 +402,11 @@ class MedianGraphEstimator(object):
 				
 				# Update the median. # @todo!!!!!!!!!!!!!!!!!!!!!!
 				median_modified = self.__update_median(graphs, median)
-				if not median_modified or self.__itrs[median_pos] == 0:
-					decreased_order = self.__decrease_order(graphs, median)
-					if not decreased_order or self.__itrs[median_pos] == 0:
-						increased_order = False
+				if self.__update_order:
+					if not median_modified or self.__itrs[median_pos] == 0:
+						decreased_order = self.__decrease_order(graphs, median)
+						if not decreased_order or self.__itrs[median_pos] == 0:
+							increased_order = False
 						
 				# Update the number of iterations without update of the median.
 				if median_modified or decreased_order or increased_order:
@@ -421,11 +433,11 @@ class MedianGraphEstimator(object):
 
 				# Compute induced costs of the old node maps w.r.t. the updated median.
 				for graph_id in graph_ids:
-# 					print(self.__ged_env.get_induced_cost(gen_median_id, graph_id))
-					# @todo: watch out if compute_induced_cost is correct, this may influence: increase/decrease order, induced_cost() in the following code.!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-					self.__ged_env.compute_induced_cost(gen_median_id, graph_id)
-# 					print('---------------------------------------')
-# 					print(self.__ged_env.get_induced_cost(gen_median_id, graph_id))
+# 					print(self.__node_maps_from_median[graph_id].induced_cost())
+					self.__ged_env.compute_induced_cost(gen_median_id, graph_id, self.__node_maps_from_median[graph_id])
+#					print('---------------------------------------')
+# 					print(self.__node_maps_from_median[graph_id].induced_cost())
+					# @todo:!!!!!!!!!!!!!!!!!!!!!!!!!!!!This value is a slight different from the c++ program, which might be a bug! Use it very carefully!
 					
 				# Print information about current iteration.
 				if self.__print_to_stdout == 2:
@@ -439,8 +451,9 @@ class MedianGraphEstimator(object):
 				# Update the sum of distances.
 				old_sum_of_distances = self.__sum_of_distances
 				self.__sum_of_distances = 0
-				for graph_id in self.__node_maps_from_median:
-					self.__sum_of_distances += self.__ged_env.get_induced_cost(gen_median_id, graph_id) # @todo: see above.
+				for graph_id, node_map in self.__node_maps_from_median.items():
+					self.__sum_of_distances += node_map.induced_cost()
+# 					print(self.__sum_of_distances)
 					
 				# Print information about current iteration.
 				if self.__print_to_stdout == 2:
@@ -460,7 +473,7 @@ class MedianGraphEstimator(object):
 			# Update the best median.
 			if self.__sum_of_distances < best_sum_of_distances:
 				best_sum_of_distances = self.__sum_of_distances
-				node_maps_from_best_median = self.__node_maps_from_median
+				node_maps_from_best_median = self.__node_maps_from_median.copy() # @todo: this is a shallow copy, not sure if it is enough.
 				best_median = median
 				
 			# Update the number of converged descents.
@@ -543,6 +556,7 @@ class MedianGraphEstimator(object):
 		self.__desired_num_random_inits = 10
 		self.__use_real_randomness = True
 		self.__seed = 0
+		self.__update_order = True
 		self.__refine = True
 		self.__time_limit_in_sec = 0
 		self.__epsilon = 0.0001
@@ -568,16 +582,16 @@ class MedianGraphEstimator(object):
 			self.__compute_medoid(graph_ids, timer, initial_medians)
 		elif self.__init_type == 'MAX':
 			pass # @todo
-# 			compute_max_order_graph_(graph_ids, initial_medians)
+#			compute_max_order_graph_(graph_ids, initial_medians)
 		elif self.__init_type == 'MIN':
 			pass # @todo
-# 			compute_min_order_graph_(graph_ids, initial_medians)
+#			compute_min_order_graph_(graph_ids, initial_medians)
 		elif self.__init_type == 'MEAN':
 			pass # @todo
-# 			compute_mean_order_graph_(graph_ids, initial_medians)
+#			compute_mean_order_graph_(graph_ids, initial_medians)
 		else:
 			pass # @todo
-# 			sample_initial_medians_(graph_ids, initial_medians)
+#			sample_initial_medians_(graph_ids, initial_medians)
 
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
@@ -655,20 +669,20 @@ class MedianGraphEstimator(object):
 			
 		# Iterate through all nodes of the median.
 		for i in range(0, nx.number_of_nodes(median)):
-# 			print('i: ', i)
+#			print('i: ', i)
 			# Collect the labels of the substituted nodes.
 			node_labels = []
 			for graph_id, graph in graphs.items():
-# 				print('graph_id: ', graph_id)
-# 				print(self.__node_maps_from_median[graph_id])
-				k = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], i)
-# 				print('k: ', k)
+#				print('graph_id: ', graph_id)
+#				print(self.__node_maps_from_median[graph_id])
+				k = self.__node_maps_from_median[graph_id].image(i)
+#				print('k: ', k)
 				if k != np.inf:
 					node_labels.append(graph.nodes[k])
 					
 			# Compute the median label and update the median.
 			if len(node_labels) > 0:
-# 				median_label = self.__ged_env.get_median_node_label(node_labels)
+#				median_label = self.__ged_env.get_median_node_label(node_labels)
 				median_label = self.__get_median_node_label(node_labels)
 				if self.__ged_env.get_node_rel_cost(median.nodes[i], median_label) > self.__epsilon:
 					nx.set_node_attributes(median, {i: median_label})
@@ -679,10 +693,10 @@ class MedianGraphEstimator(object):
 		if self.__print_to_stdout == 2:
 			print('edges ... ', end='')
 			
-		# Clear the adjacency lists of the median and reset number of edges to 0.
-		median_edges = list(median.edges)		
-		for (head, tail) in median_edges:
-			median.remove_edge(head, tail)
+#		# Clear the adjacency lists of the median and reset number of edges to 0.
+# 		median_edges = list(median.edges)		
+# 		for (head, tail) in median_edges:
+# 			median.remove_edge(head, tail)
 		
 		# @todo: what if edge is not labeled?
 		# Iterate through all possible edges (i,j) of the median.
@@ -692,8 +706,8 @@ class MedianGraphEstimator(object):
 				# Collect the labels of the edges to which (i,j) is mapped by the node maps.
 				edge_labels = []
 				for graph_id, graph in graphs.items():
-					k = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], i)
-					l = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], j)
+					k = self.__node_maps_from_median[graph_id].image(i)
+					l = self.__node_maps_from_median[graph_id].image(j)
 					if k != np.inf and l != np.inf:
 						if graph.has_edge(k, l):
 							edge_labels.append(graph.edges[(k, l)])
@@ -711,11 +725,13 @@ class MedianGraphEstimator(object):
 						rel_cost += self.__ged_env.get_edge_rel_cost(median_label, edge_label)
 						
 				# Update the median.
+				if median.has_edge(i, j):
+					median.remove_edge(i, j)
 				if rel_cost < (self.__edge_ins_cost + self.__edge_del_cost) * len(edge_labels) - self.__edge_del_cost * len(graphs):
 					median.add_edge(i, j, **median_label)
-				else:
-					if median.has_edge(i, j):
-						median.remove_edge(i, j)
+# 				else:
+# 					if median.has_edge(i, j):
+# 						median.remove_edge(i, j)
 
 
 	def __update_node_maps(self):
@@ -725,10 +741,12 @@ class MedianGraphEstimator(object):
 			
 		# Update the node maps.
 		node_maps_were_modified = False
-		for graph_id in self.__node_maps_from_median:
+		for graph_id, node_map in self.__node_maps_from_median.items():
 			self.__ged_env.run_method(self.__median_id, graph_id)
-			if self.__ged_env.get_upper_bound(self.__median_id, graph_id) < self.__ged_env.get_induced_cost(self.__median_id, graph_id) - self.__epsilon: # @todo: see above.
-				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__median_id, graph_id) # @todo: node_map may not assigned.
+			if self.__ged_env.get_upper_bound(self.__median_id, graph_id) < node_map.induced_cost() - self.__epsilon:
+# 				xxx = self.__node_maps_from_median[graph_id]
+				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__median_id, graph_id)
+# 				yyy = self.__node_maps_from_median[graph_id]
 				node_maps_were_modified = True
 			# Print information about current iteration.
 			if self.__print_to_stdout == 2:
@@ -748,13 +766,13 @@ class MedianGraphEstimator(object):
 			print('Trying to decrease order: ... ', end='')
 			
 		# Initialize ID of the node that is to be deleted.
-		id_deleted_node = None # @todo: or np.inf
+		id_deleted_node = [None] # @todo: or np.inf
 		decreased_order = False
 		
 		# Decrease the order as long as the best deletion delta is negative.
-		while self.__compute_best_deletion_delta(graphs, median, [id_deleted_node]) < -self.__epsilon:
+		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon: # @todo
 			decreased_order = True
-			self.__delete_node_from_median(id_deleted_node, median)
+			self.__delete_node_from_median(id_deleted_node[0], median)
 			
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
@@ -777,7 +795,7 @@ class MedianGraphEstimator(object):
 					delta -= self.__node_del_cost
 				else:
 					delta += self.__node_ins_cost - self.__ged_env.get_node_rel_cost(median.nodes[i], graph.nodes[k])
-				for j, j_label in median[i]:
+				for j, j_label in median[i].items():
 					l = self.__get_node_image_from_map(self.__node_maps_from_median[graph_id], j)
 					if k == np.inf or l == np.inf:
 						delta -= self.__edge_del_cost
@@ -790,32 +808,34 @@ class MedianGraphEstimator(object):
 			if delta < best_delta - self.__epsilon:
 				best_delta = delta
 				id_deleted_node[0] = i
+			id_deleted_node[0] = i # @todo: 
 				
 		return best_delta
 	
 	
-	def __delete_node_from_median(self, id_deleted_node, median):
-		# Update the nodes of the median.
-		median.remove_node(id_deleted_node) # @todo: test if it is right.
+	def __delete_node_from_median(self, id_deleted_node, median): # @todo: update env.node_map?
+		# Update the median.
+		median.remove_node(id_deleted_node)
 		
 		# Update the node maps.
 		for _, node_map in self.__node_maps_from_median.items():
-			new_node_map = {nx.number_of_nodes(median): ''} # @todo
-			is_unassigned_target_node = ['', True]
+			new_node_map = [] # @todo
+			is_unassigned_target_node = [True] * len(node_map)
 			for i in range(0, nx.number_of_nodes(median)):
 				if i != id_deleted_node:
 					new_i = (i if i < id_deleted_node else i - 1)
 					k = self.__get_node_image_from_map(node_map, i)
-					new_node_map["ds"] # @todo
+					new_node_map.append((new_i, k)) # @todo
 					if k != np.inf:
 						is_unassigned_target_node[k] = False
-			for k in range(0, ''):
+			for k in range(0, len(node_map)):
 				if is_unassigned_target_node[k]:
-					new_node_map.sdf[]
-			node_map = new_node_map
+					new_node_map.append(np.inf, k)
+			node_map = new_node_map # @todo
 			
 		# Increase overall number of decreases.
 		self.__num_decrease_order += 1
+		
 	
 	def __improve_sum_of_distances(self, timer):
 		pass
@@ -825,37 +845,37 @@ class MedianGraphEstimator(object):
 		return self.__median_id != np.inf
 		
 				
-	def __get_node_image_from_map(self, node_map, node):
-		"""
-		Return ID of the node mapping of `node` in `node_map`.
+# 	def __get_node_image_from_map(self, node_map, node):
+# 		"""
+# 		Return ID of the node mapping of `node` in `node_map`.
 
-		Parameters
-		----------
-		node_map : list[tuple(int, int)]
-			List of node maps where the mapping node is found.
-		
-		node : int
-			The mapping node of this node is returned
+# 		Parameters
+# 		----------
+# 		node_map : list[tuple(int, int)]
+# 			List of node maps where the mapping node is found.
+# 		
+# 		node : int
+# 			The mapping node of this node is returned
 
-		Raises
-		------
-		Exception
-			If the node with ID `node` is not contained in the source nodes of the node map.
+# 		Raises
+# 		------
+# 		Exception
+# 			If the node with ID `node` is not contained in the source nodes of the node map.
 
-		Returns
-		-------
-		int
-			ID of the mapping of `node`.
-			
-		Notes
-		-----
-		This function is not implemented in the `ged::MedianGraphEstimator` class of the `GEDLIB` library. Instead it is a Python implementation of the `ged::NodeMap::image` function.
-		"""
-		if node < len(node_map):
-			return node_map[node][1] if node_map[node][1] < len(node_map) else np.inf
-		else:
- 			raise Exception('The node with ID ', str(node), ' is not contained in the source nodes of the node map.')
-		return np.inf
+# 		Returns
+# 		-------
+# 		int
+# 			ID of the mapping of `node`.
+# 			
+# 		Notes
+# 		-----
+# 		This function is not implemented in the `ged::MedianGraphEstimator` class of the `GEDLIB` library. Instead it is a Python implementation of the `ged::NodeMap::image` function.
+# 		"""
+# 		if node < len(node_map):
+# 			return node_map[node][1] if node_map[node][1] < len(node_map) else np.inf
+# 		else:
+# 			raise Exception('The node with ID ', str(node), ' is not contained in the source nodes of the node map.')
+# 		return np.inf
 				
 	
 	def __are_graphs_equal(self, g1, g2):
@@ -958,9 +978,9 @@ class MedianGraphEstimator(object):
 			for label in labels:
 				coords = {}
 				for key, val in label.items():
-					label = float(val)
-					sums[key] += label
-					coords[key] = label
+					label_f = float(val)
+					sums[key] += label_f
+					coords[key] = label_f
 				labels_as_coords.append(coords)
 			median = {}
 			for key, val in sums.items():
@@ -980,7 +1000,7 @@ class MedianGraphEstimator(object):
 					norm = 0
 					for key, val in label_as_coord.items():
 						norm += (val - median[key]) ** 2
-					norm += np.sqrt(norm)
+					norm = np.sqrt(norm)
 					if norm > 0:
 						for key, val in label_as_coord.items():
 							numerator[key] += val / norm
@@ -1005,64 +1025,64 @@ class MedianGraphEstimator(object):
 			return median_label
 
 		
-# 	def __get_median_edge_label_symbolic(self, edge_labels):
-# 		pass
+#	def __get_median_edge_label_symbolic(self, edge_labels):
+#		pass
 	
 	
-# 	def __get_median_edge_label_nonsymbolic(self, edge_labels):
-# 		if len(edge_labels) == 0:
-# 			return {}
-# 		else:
-# 			# Transform the labels into coordinates and compute mean label as initial solution.
-# 			edge_labels_as_coords = []
-# 			sums = {}
-# 			for key, val in edge_labels[0].items():
-# 				sums[key] = 0
-# 			for edge_label in edge_labels:
-# 				coords = {}
-# 				for key, val in edge_label.items():
-# 					label = float(val)
-# 					sums[key] += label
-# 					coords[key] = label
-# 				edge_labels_as_coords.append(coords)
-# 			median = {}
-# 			for key, val in sums.items():
-# 				median[key] = val / len(edge_labels)
-# 				
-# 			# Run main loop of Weiszfeld's Algorithm.
-# 			epsilon = 0.0001
-# 			delta = 1.0
-# 			num_itrs = 0
-# 			all_equal = False
-# 			while ((delta > epsilon) and (num_itrs < 100) and (not all_equal)):
-# 				numerator = {}
-# 				for key, val in sums.items():
-# 					numerator[key] = 0
-# 				denominator = 0
-# 				for edge_label_as_coord in edge_labels_as_coords:
-# 					norm = 0
-# 					for key, val in edge_label_as_coord.items():
-# 						norm += (val - median[key]) ** 2
-# 					norm += np.sqrt(norm)
-# 					if norm > 0:
-# 						for key, val in edge_label_as_coord.items():
-# 							numerator[key] += val / norm
-# 						denominator += 1.0 / norm
-# 				if denominator == 0:
-# 					all_equal = True
-# 				else:
-# 					new_median = {}
-# 					delta = 0.0
-# 					for key, val in numerator.items():
-# 						this_median = val / denominator
-# 						new_median[key] = this_median
-# 						delta += np.abs(median[key] - this_median)
-# 					median = new_median
-# 					
-# 				num_itrs += 1
-# 				
-# 			# Transform the solution to ged::GXLLabel and return it.
-# 			median_label = {}
-# 			for key, val in median.items():
-# 				median_label[key] = str(val)
-# 			return median_label
+#	def __get_median_edge_label_nonsymbolic(self, edge_labels):
+#		if len(edge_labels) == 0:
+#			return {}
+#		else:
+#			# Transform the labels into coordinates and compute mean label as initial solution.
+#			edge_labels_as_coords = []
+#			sums = {}
+#			for key, val in edge_labels[0].items():
+#				sums[key] = 0
+#			for edge_label in edge_labels:
+#				coords = {}
+#				for key, val in edge_label.items():
+#					label = float(val)
+#					sums[key] += label
+#					coords[key] = label
+#				edge_labels_as_coords.append(coords)
+#			median = {}
+#			for key, val in sums.items():
+#				median[key] = val / len(edge_labels)
+#				
+#			# Run main loop of Weiszfeld's Algorithm.
+#			epsilon = 0.0001
+#			delta = 1.0
+#			num_itrs = 0
+#			all_equal = False
+#			while ((delta > epsilon) and (num_itrs < 100) and (not all_equal)):
+#				numerator = {}
+#				for key, val in sums.items():
+#					numerator[key] = 0
+#				denominator = 0
+#				for edge_label_as_coord in edge_labels_as_coords:
+#					norm = 0
+#					for key, val in edge_label_as_coord.items():
+#						norm += (val - median[key]) ** 2
+#					norm += np.sqrt(norm)
+#					if norm > 0:
+#						for key, val in edge_label_as_coord.items():
+#							numerator[key] += val / norm
+#						denominator += 1.0 / norm
+#				if denominator == 0:
+#					all_equal = True
+#				else:
+#					new_median = {}
+#					delta = 0.0
+#					for key, val in numerator.items():
+#						this_median = val / denominator
+#						new_median[key] = this_median
+#						delta += np.abs(median[key] - this_median)
+#					median = new_median
+#					
+#				num_itrs += 1
+#				
+#			# Transform the solution to ged::GXLLabel and return it.
+#			median_label = {}
+#			for key, val in median.items():
+#				median_label[key] = str(val)
+#			return median_label

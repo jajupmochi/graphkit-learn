@@ -88,7 +88,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 						  node_attrs=self._dataset.node_attrs,
 						  edge_attrs=self._dataset.edge_attrs,
 						  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-						  **self._kernel_options)
+						  kernel_options=self._kernel_options)
 		
 		# record start time.
 		start = time.time()

@@ -7,11 +7,10 @@ Created on Mon Mar 16 17:26:40 2020
 """
 	
 def test_median_graph_estimator():
-	from gklearn.utils.graphfiles import loadDataset
+	from gklearn.utils import load_dataset
 	from gklearn.ged.median import MedianGraphEstimator, constant_node_costs
 	from gklearn.gedlib import librariesImport, gedlibpy
 	from gklearn.preimage.utils import get_same_item_indices
-	from gklearn.preimage.ged import convertGraph
 	import multiprocessing
 
 	# estimator parameters.
@@ -22,17 +21,20 @@ def test_median_graph_estimator():
 	
 	# algorithm parameters.
 	algo = 'IPFP'
-	initial_solutions = 40
-	algo_options_suffix = ' --initial-solutions ' + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1'
+	initial_solutions = 1
+	algo_options_suffix = ' --initial-solutions ' + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1 --initialization-method NODE '
 
 	edit_cost_name = 'LETTER2'
+# 	edit_cost_name = 'CONSTANT'
 	edit_cost_constants = [0.02987291, 0.0178211, 0.01431966, 0.001, 0.001]
+# 	edit_cost_constants = [4, 4, 2, 1, 1, 1]
 	ds_name = 'COIL-DEL'
 	
 	# Load dataset.
 	# dataset = '../../datasets/COIL-DEL/COIL-DEL_A.txt'
 	dataset = '../../../datasets/Letter-high/Letter-high_A.txt'
-	Gn, y_all = loadDataset(dataset)
+# 	dataset = '../../../datasets/MUTAG/MUTAG_A.txt'
+	Gn, y_all, _ = load_dataset(dataset)
 	y_idx = get_same_item_indices(y_all)
 	for i, (y, values) in enumerate(y_idx.items()):
 		Gn_i = [Gn[val] for val in values]
@@ -43,7 +45,7 @@ def test_median_graph_estimator():
 	# gedlibpy.restart_env()
 	ged_env.set_edit_cost(edit_cost_name, edit_cost_constant=edit_cost_constants)
 	for G in Gn_i:
-		ged_env.add_nx_graph(convertGraph(G, edit_cost_name), '')
+		ged_env.add_nx_graph(G, '')
 	graph_ids = ged_env.get_all_graph_ids()
 	set_median_id = ged_env.add_graph('set_median')
 	gen_median_id = ged_env.add_graph('gen_median')
@@ -54,11 +56,13 @@ def test_median_graph_estimator():
 	mge.set_refine_method(algo, '--threads ' + str(threads) + ' --initial-solutions ' + str(initial_solutions) + ' --ratio-runs-from-initial-solutions 1')
 	
 	mge_options = '--time-limit ' + str(time_limit) + ' --stdout 2 --init-type ' + init_type
-	mge_options += ' --random-inits ' + str(num_inits) + ' --seed ' + '1'  + ' --refine FALSE'# @todo: std::to_string(rng())
+	mge_options += ' --random-inits ' + str(num_inits) + ' --seed ' + '1'  + ' --update-order FALSE --refine FALSE'# @todo: std::to_string(rng())
 	
 	# Select the GED algorithm.
 	algo_options = '--threads ' + str(threads) + algo_options_suffix
 	mge.set_options(mge_options)
+	mge.set_label_names(node_labels=[], edge_labels=[], 
+					 node_attrs=['x', 'y'], edge_attrs=[])
 	mge.set_init_method(algo, algo_options)
 	mge.set_descent_method(algo, algo_options)
 	

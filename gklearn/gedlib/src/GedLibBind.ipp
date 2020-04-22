@@ -277,11 +277,16 @@ std::string toStringVectorInt(std::vector<unsigned long int> vector) {
 
 
 PyGEDEnv::PyGEDEnv () {
-	this->env = ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
+	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
 	this->initialized = false;
 }
 
-PyGEDEnv::~PyGEDEnv () {}
+PyGEDEnv::~PyGEDEnv () {
+	if (env_ != NULL) {
+		delete env_;
+		env_ = NULL;
+	}
+}
 
 // bool initialized = false; //Initialization boolean (because Env has one but not accessible).
 
@@ -290,64 +295,68 @@ bool PyGEDEnv::isInitialized() {
 }
 
 void PyGEDEnv::restartEnv() {
-	this->env = ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
+	if (env_ != NULL) {
+		delete env_;
+		env_ = NULL;
+	}
+	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
 	initialized = false;
 }
 
 void PyGEDEnv::loadGXLGraph(const std::string & pathFolder, const std::string & pathXML, bool node_type, bool edge_type) {
-	 std::vector<ged::GEDGraph::GraphID> tmp_graph_ids(this->env.load_gxl_graph(pathFolder, pathXML, 
+	 std::vector<ged::GEDGraph::GraphID> tmp_graph_ids(env_->load_gxl_graph(pathFolder, pathXML, 
 	 	(node_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
 		(edge_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
 		std::unordered_set<std::string>(), std::unordered_set<std::string>()));
 }
 
 std::pair<std::size_t,std::size_t> PyGEDEnv::getGraphIds() const {
-	return this->env.graph_ids();
+	return env_->graph_ids();
 }
 
 std::vector<std::size_t> PyGEDEnv::getAllGraphIds() {
 	std::vector<std::size_t> listID;
-	for (std::size_t i = this->env.graph_ids().first; i != this->env.graph_ids().second; i++) {
+	for (std::size_t i = env_->graph_ids().first; i != env_->graph_ids().second; i++) {
 		listID.push_back(i);
     }
 	return listID;
 }
 
 const std::string PyGEDEnv::getGraphClass(std::size_t id) const {
-	return this->env.get_graph_class(id);
+	return env_->get_graph_class(id);
 }
 
 const std::string PyGEDEnv::getGraphName(std::size_t id) const {
-	return this->env.get_graph_name(id);
+	return env_->get_graph_name(id);
 }
 
 std::size_t PyGEDEnv::addGraph(const std::string & graph_name, const std::string & graph_class) {
-	ged::GEDGraph::GraphID newId = this->env.add_graph(graph_name, graph_class);
+	ged::GEDGraph::GraphID newId = env_->add_graph(graph_name, graph_class);
 	initialized = false;
 	return std::stoi(std::to_string(newId));
 }
 
 void PyGEDEnv::addNode(std::size_t graphId, const std::string & nodeId, const std::map<std::string, std::string> & nodeLabel) {
-	this->env.add_node(graphId, nodeId, nodeLabel);
+	env_->add_node(graphId, nodeId, nodeLabel);
 	initialized = false;
 }
 
 /*void addEdge(std::size_t graphId, ged::GXLNodeID tail, ged::GXLNodeID head, ged::GXLLabel edgeLabel) {
-	this->env.add_edge(graphId, tail, head, edgeLabel);
+	env_->add_edge(graphId, tail, head, edgeLabel);
 }*/
 
 void PyGEDEnv::addEdge(std::size_t graphId, const std::string & tail, const std::string & head, const std::map<std::string, std::string> & edgeLabel, bool ignoreDuplicates) {
-	this->env.add_edge(graphId, tail, head, edgeLabel, ignoreDuplicates);
+	env_->add_edge(graphId, tail, head, edgeLabel, ignoreDuplicates);
 	initialized = false;
 }
 
 void PyGEDEnv::clearGraph(std::size_t graphId) {
-	this->env.clear_graph(graphId);
+	env_->clear_graph(graphId);
 	initialized = false;
 }
 
 ged::ExchangeGraph<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel> PyGEDEnv::getGraph(std::size_t graphId) const {
-	return this->env.get_graph(graphId);
+	return env_->get_graph(graphId);
 }
 
 std::size_t PyGEDEnv::getGraphInternalId(std::size_t graphId) {
@@ -379,71 +388,71 @@ std::vector<std::vector<std::size_t>> PyGEDEnv::getGraphAdjacenceMatrix(std::siz
 }
 
 void PyGEDEnv::setEditCost(std::string editCost, std::vector<double> editCostConstants) {
-	this->env.set_edit_costs(translateEditCost(editCost), editCostConstants);
+	env_->set_edit_costs(translateEditCost(editCost), editCostConstants);
 }
 
 void PyGEDEnv::setPersonalEditCost(std::vector<double> editCostConstants) {
-	//this->env.set_edit_costs(Your EditCost Class(editCostConstants));
+	//env_->set_edit_costs(Your EditCost Class(editCostConstants));
 }
 
 // void PyGEDEnv::initEnv() {
-// 	this->env.init();
+// 	env_->init();
 // 	initialized = true;
 // }
 
 void PyGEDEnv::initEnv(std::string initOption, bool print_to_stdout) {
-	this->env.init(translateInitOptions(initOption), print_to_stdout);
+	env_->init(translateInitOptions(initOption), print_to_stdout);
 	initialized = true;
 }
 
 void PyGEDEnv::setMethod(std::string method, const std::string & options) {
-	this->env.set_method(translateMethod(method), options);
+	env_->set_method(translateMethod(method), options);
 }
 
 void PyGEDEnv::initMethod() {
-	this->env.init_method();
+	env_->init_method();
 }
 
 double PyGEDEnv::getInitime() const {
-	return this->env.get_init_time();
+	return env_->get_init_time();
 }
 
 void PyGEDEnv::runMethod(std::size_t g, std::size_t h) {
-	this->env.run_method(g, h);
+	env_->run_method(g, h);
 }
 
 double PyGEDEnv::getUpperBound(std::size_t g, std::size_t h) const {
-	return this->env.get_upper_bound(g, h);
+	return env_->get_upper_bound(g, h);
 }
 
 double PyGEDEnv::getLowerBound(std::size_t g, std::size_t h) const {
-	return this->env.get_lower_bound(g, h);
+	return env_->get_lower_bound(g, h);
 }
 
 std::vector<long unsigned int> PyGEDEnv::getForwardMap(std::size_t g, std::size_t h) const {
-	return this->env.get_node_map(g, h).get_forward_map();
+	return env_->get_node_map(g, h).get_forward_map();
 }
 
 std::vector<long unsigned int> PyGEDEnv::getBackwardMap(std::size_t g, std::size_t h) const {
-	return this->env.get_node_map(g, h).get_backward_map();
+	return env_->get_node_map(g, h).get_backward_map();
 }
 
 std::size_t PyGEDEnv::getNodeImage(std::size_t g, std::size_t h, std::size_t nodeId) const {
-	return this->env.get_node_map(g, h).image(nodeId);
+	return env_->get_node_map(g, h).image(nodeId);
 }
 
 std::size_t PyGEDEnv::getNodePreImage(std::size_t g, std::size_t h, std::size_t nodeId) const {
-	return this->env.get_node_map(g, h).pre_image(nodeId);
+	return env_->get_node_map(g, h).pre_image(nodeId);
 }
 
 double PyGEDEnv::getInducedCost(std::size_t g, std::size_t h) const {
-	return this->env.get_node_map(g, h).induced_cost();
+	return env_->get_node_map(g, h).induced_cost();
 }
 
 std::vector<pair<std::size_t, std::size_t>> PyGEDEnv::getNodeMap(std::size_t g, std::size_t h) {
 	std::vector<pair<std::size_t, std::size_t>> res;
 	std::vector<ged::NodeMap::Assignment> relation;
-	this->env.get_node_map(g, h).as_relation(relation);
+	env_->get_node_map(g, h).as_relation(relation);
 	for (const auto & assignment : relation) {
 		res.push_back(std::make_pair(assignment.first, assignment.second));
 	}
@@ -493,11 +502,11 @@ std::vector<std::vector<unsigned long int>> PyGEDEnv::getAllMap(std::size_t g, s
 }
 
 double PyGEDEnv::getRuntime(std::size_t g, std::size_t h) const {
-	return this->env.get_runtime(g, h);
+	return env_->get_runtime(g, h);
 }
 
 bool PyGEDEnv::quasimetricCosts() const {
-	return this->env.quasimetric_costs();
+	return env_->quasimetric_costs();
 }
 
 std::vector<std::vector<size_t>> PyGEDEnv::hungarianLSAP(std::vector<std::vector<std::size_t>> matrixCost) {
@@ -542,73 +551,74 @@ std::vector<std::vector<double>> PyGEDEnv::hungarianLSAPE(std::vector<std::vecto
 }
 
 std::size_t PyGEDEnv::getNumNodeLabels() const {
-	return this->env.num_node_labels();
+	return env_->num_node_labels();
 }
 
 std::map<std::string, std::string> PyGEDEnv::getNodeLabel(std::size_t label_id) const {
-	return this->env.get_node_label(label_id);
+	return env_->get_node_label(label_id);
 }
 
 std::size_t PyGEDEnv::getNumEdgeLabels() const {
-	return this->env.num_edge_labels();
+	return env_->num_edge_labels();
 }
 
 std::map<std::string, std::string> PyGEDEnv::getEdgeLabel(std::size_t label_id) const {
-	return this->env.get_edge_label(label_id);
+	return env_->get_edge_label(label_id);
 }
 
 // std::size_t PyGEDEnv::getNumNodes(std::size_t graph_id) const {
-// 	return this->env.get_num_nodes(graph_id);
+// 	return env_->get_num_nodes(graph_id);
 // }
 
 double PyGEDEnv::getAvgNumNodes() const {
-	return this->env.get_avg_num_nodes();
+	return env_->get_avg_num_nodes();
 }
 
 double PyGEDEnv::getNodeRelCost(const std::map<std::string, std::string> & node_label_1, const std::map<std::string, std::string> & node_label_2) const {
-	return this->env.node_rel_cost(node_label_1, node_label_2);
+	return env_->node_rel_cost(node_label_1, node_label_2);
 }
 
 double PyGEDEnv::getNodeDelCost(const std::map<std::string, std::string> & node_label) const {
-	return this->env.node_del_cost(node_label);
+	return env_->node_del_cost(node_label);
 }
 
 double PyGEDEnv::getNodeInsCost(const std::map<std::string, std::string> & node_label) const {
-	return this->env.node_ins_cost(node_label);
+	return env_->node_ins_cost(node_label);
 }
 
 std::map<std::string, std::string> PyGEDEnv::getMedianNodeLabel(const std::vector<std::map<std::string, std::string>> & node_labels) const {
-	return this->env.median_node_label(node_labels);
+	return env_->median_node_label(node_labels);
 }
 
 double PyGEDEnv::getEdgeRelCost(const std::map<std::string, std::string> & edge_label_1, const std::map<std::string, std::string> & edge_label_2) const {
-	return this->env.edge_rel_cost(edge_label_1, edge_label_2);
+	return env_->edge_rel_cost(edge_label_1, edge_label_2);
 }
 
 double PyGEDEnv::getEdgeDelCost(const std::map<std::string, std::string> & edge_label) const {
-	return this->env.edge_del_cost(edge_label);
+	return env_->edge_del_cost(edge_label);
 }
 
 double PyGEDEnv::getEdgeInsCost(const std::map<std::string, std::string> & edge_label) const {
-	return this->env.edge_ins_cost(edge_label);
+	return env_->edge_ins_cost(edge_label);
 }
 
 std::map<std::string, std::string> PyGEDEnv::getMedianEdgeLabel(const std::vector<std::map<std::string, std::string>> & edge_labels) const {
-	return this->env.median_edge_label(edge_labels);
+	return env_->median_edge_label(edge_labels);
 }
 
 std::string PyGEDEnv::getInitType() const {
-	return initOptionsToString(this->env.get_init_type());
+	return initOptionsToString(env_->get_init_type());
 }
 
-void PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id) const {
-	ged::NodeMap node_map = this->env.get_node_map(g_id, h_id);
-	this->env.compute_induced_cost(g_id, h_id, node_map);
+double PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id) const {
+	ged::NodeMap node_map = env_->get_node_map(g_id, h_id);
+	env_->compute_induced_cost(g_id, h_id, node_map);
+	return node_map.induced_cost();
 }
 
 
 // double PyGEDEnv::getNodeCost(std::size_t label1, std::size_t label2) const {
-// 	return this->env.ged_data_node_cost(label1, label2);
+// 	return env_->ged_data_node_cost(label1, label2);
 // }
 
 
@@ -630,7 +640,7 @@ void PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id) const {
 
 	/*loadGXLGraph(pathFolder, pathXML);
 	std::vector<std::size_t> graph_ids = getAllGraphIds();
-	std::size_t median_id = this->env.add_graph("median", "");
+	std::size_t median_id = env_->add_graph("median", "");
 
 	initEnv(initOption);
 
@@ -640,10 +650,10 @@ void PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id) const {
 	median_estimator.set_options("--init-type RANDOM --randomness PSEUDO --seed " + seed);
 	median_estimator.run(graph_ids, median_id);
 	std::string gxl_file_name("../output/gen_median_Letter_HIGH_" + letter_class + ".gxl");
-	this->env.save_as_gxl_graph(median_id, gxl_file_name);*/
+	env_->save_as_gxl_graph(median_id, gxl_file_name);*/
 
 	/*std::string tikz_file_name("../output/gen_median_Letter_HIGH_" + letter_class + ".tex");
-	save_letter_graph_as_tikz_file(this->env.get_graph(median_id), tikz_file_name);*/
+	save_letter_graph_as_tikz_file(env_->get_graph(median_id), tikz_file_name);*/
 //}
 
 }
