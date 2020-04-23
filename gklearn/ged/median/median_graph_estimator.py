@@ -406,7 +406,7 @@ class MedianGraphEstimator(object):
 					if not median_modified or self.__itrs[median_pos] == 0:
 						decreased_order = self.__decrease_order(graphs, median)
 						if not decreased_order or self.__itrs[median_pos] == 0:
-							increased_order = False
+							increased_order = self.__increase_order(graphs, median)
 						
 				# Update the number of iterations without update of the median.
 				if median_modified or decreased_order or increased_order:
@@ -770,9 +770,9 @@ class MedianGraphEstimator(object):
 		decreased_order = False
 		
 		# Decrease the order as long as the best deletion delta is negative.
-		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) > -self.__epsilon: # @todo
+		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon: # @todo
 			decreased_order = True
-			self.__delete_node_from_median(id_deleted_node[0], median)
+			median = self.__delete_node_from_median(id_deleted_node[0], median)
 			
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
@@ -808,7 +808,7 @@ class MedianGraphEstimator(object):
 			if delta < best_delta - self.__epsilon:
 				best_delta = delta
 				id_deleted_node[0] = i
-			id_deleted_node[0] = i # @todo: 
+# 			id_deleted_node[0] = 3 # @todo: 
 				
 		return best_delta
 	
@@ -816,12 +816,13 @@ class MedianGraphEstimator(object):
 	def __delete_node_from_median(self, id_deleted_node, median):
 		# Update the median.
 		median.remove_node(id_deleted_node)
+		median = nx.convert_node_labels_to_integers(median, first_label=0, ordering='default', label_attribute=None) # @todo:  This doesn't guarantee that the order is the same as in G.
 		
 		# Update the node maps.
 		for key, node_map in self.__node_maps_from_median.items():
 			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
 			is_unassigned_target_node = [True] * node_map.num_target_nodes()
-			for i in range(0, nx.number_of_nodes(median)):
+			for i in range(0, nx.number_of_nodes(median) + 1):
 				if i != id_deleted_node:
 					new_i = (i if i < id_deleted_node else i - 1)
 					k = node_map.image(i)
@@ -831,10 +832,36 @@ class MedianGraphEstimator(object):
 			for k in range(0, node_map.num_target_nodes()):
 				if is_unassigned_target_node[k]:
 					new_node_map.add_assignment(np.inf, k)
+# 			print(new_node_map.get_forward_map(), new_node_map.get_backward_map())
 			self.__node_maps_from_median[key] = new_node_map
 			
 		# Increase overall number of decreases.
 		self.__num_decrease_order += 1
+		
+		return median
+	
+	
+	def __increase_order(self, graphs, median):
+		# Print information about current iteration.
+		if self.__print_to_stdout == 2:
+			print('Trying to increase order: ... ', end='')
+			
+		# Initialize the best configuration and the best label of the node that is to be inserted.
+		best_config = {}
+		best_label = self.__ged_env.get_node_label(1)
+		increased_order = False
+		
+		# Increase the order as long as the best insertion delta is negative.
+		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon:
+			increased_order = True
+			self.__add_node_to_median(best_config, best_label, median)
+			
+		# Print information about current iteration.
+		if self.__print_to_stdout == 2:
+			print('done.')
+			
+		# Return true iff the order was increased.
+		return increased_order
 		
 	
 	def __improve_sum_of_distances(self, timer):

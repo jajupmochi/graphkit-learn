@@ -416,6 +416,11 @@ class Dataset(object):
 		
 		
 	def remove_labels(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
+		node_labels = [item for item in node_labels if item in self.__node_labels]
+		edge_labels = [item for item in edge_labels if item in self.__edge_labels]
+		node_attrs = [item for item in node_attrs if item in self.__node_attrs]
+		edge_attrs = [item for item in edge_attrs if item in self.__edge_attrs]
+
 		for g in self.__graphs:
 			for nd in g.nodes():
 				for nl in node_labels:

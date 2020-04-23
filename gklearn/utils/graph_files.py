@@ -63,7 +63,7 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 	return data, y, label_names
 
 
-def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=None):
+def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', **kwargs):
 	"""Save list of graphs.
 	"""
 	import os
@@ -73,22 +73,22 @@ def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', xparams=Non
 		if not os.path.exists(dirname_ds) :
 			os.makedirs(dirname_ds)
 				
-	if xparams is not None and 'graph_dir' in xparams:
-		graph_dir = xparams['graph_dir'] + '/'
+	if 'graph_dir' in kwargs:
+		graph_dir = kwargs['graph_dir'] + '/'
 		if not os.path.exists(graph_dir):
 			os.makedirs(graph_dir)
+		del kwargs['graph_dir']
 	else:
 		graph_dir = dirname_ds 
 			
 	if group == 'xml' and gformat == 'gxl':
-		kwargs = {'method': xparams['method']} if xparams is not None else {}
 		with open(filename + '.xml', 'w') as fgroup:
 			fgroup.write("<?xml version=\"1.0\"?>")
 			fgroup.write("\n<!DOCTYPE GraphCollection SYSTEM \"http://www.inf.unibz.it/~blumenthal/dtd/GraphCollection.dtd\">")
 			fgroup.write("\n<GraphCollection>")
 			for idx, g in enumerate(Gn):
 				fname_tmp = "graph" + str(idx) + ".gxl"
-				saveGXL(g, graph_dir + fname_tmp, **kwargs)
+				save_gxl(g, graph_dir + fname_tmp, **kwargs)
 				fgroup.write("\n\t<graph file=\"" + fname_tmp + "\" class=\"" + str(y[idx]) + "\"/>")
 			fgroup.write("\n</GraphCollection>")
 			fgroup.close()
@@ -226,7 +226,7 @@ def load_gxl(filename): # @todo: directed graphs.
 	return g, label_names
 
 
-def saveGXL(graph, filename, method='default', node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
+def save_gxl(graph, filename, method='default', node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
 	if method == 'default':
 		gxl_file = open(filename, 'w')
 		gxl_file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
