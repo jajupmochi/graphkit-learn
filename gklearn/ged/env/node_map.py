@@ -47,6 +47,18 @@ class NodeMap(object):
 		return self.__backward_map
 	
 	
+	def as_relation(self, relation):
+		relation.clear()
+		for i in range(0, len(self.__forward_map)):
+			k = self.__forward_map[i]
+			if k != np.inf:
+				relation.append(tuple((i, k)))
+		for k in range(0, len(self.__backward_map)):
+			i = self.__backward_map[k]
+			if i == np.inf:
+				relation.append(tuple((i, k)))
+	
+	
 	def add_assignment(self, i, k):
 		if i != np.inf:
 			if i < len(self.__forward_map):

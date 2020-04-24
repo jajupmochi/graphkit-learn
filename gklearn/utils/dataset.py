@@ -90,6 +90,9 @@ class Dataset(object):
 		elif ds_name == 'Cuneiform':
 			ds_file = current_path + '../../datasets/Cuneiform/Cuneiform_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'DD':
+			ds_file = current_path + '../../datasets/DD/DD_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Fingerprint':
 			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
@@ -124,6 +127,8 @@ class Dataset(object):
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Synthie':
 			pass
+		else:
+			raise Exception('The dataset name "', ds_name, '" is not pre-defined.')
 	
 		self.__node_labels = label_names['node_labels']
 		self.__node_attrs = label_names['node_attrs']

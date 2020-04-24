@@ -491,7 +491,7 @@ class MedianGraphEstimator(object):
 		# Refine the sum of distances and the node maps for the converged median.
 		self.__converged_sum_of_distances = self.__sum_of_distances
 		if self.__refine:
-			self.__improve_sum_of_distances(timer) # @todo
+			self.__improve_sum_of_distances(timer)
 		
 		# Record end time, set runtime and reset the number of initial medians.
 		end = time.time()
@@ -526,8 +526,52 @@ class MedianGraphEstimator(object):
 			print('Overall number of times the order decreased: ', self.__num_decrease_order)
 			print('Overall number of times the order increased: ', self.__num_increase_order)
 			print('===========================================================\n')
+			
+			
+	def __improve_sum_of_distances(self, timer): # @todo: go through and test
+		# Use method selected for refinement phase.
+		self.__ged_env.set_method(self.__refine_method, self.__refine_options)
+		
+		# Print information about current iteration.
+		if self.__print_to_stdout == 2:
+			progress = tqdm(desc='Improving node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
+			print('\n===========================================================')
+			print('Improving node maps and SOD for converged median.')
+			print('-----------------------------------------------------------')
+			progress.update(1)
+			
+		# Improving the node maps.
+		for graph_id, node_map in self.__node_maps_from_median.items():
+			if time.expired():
+				if self.__state == AlgorithmState.TERMINATED:
+					self.__state = AlgorithmState.CONVERGED
+				break
+			self.__ged_env.run_method(self.__gen_median_id, graph_id)
+			if self.__ged_env.get_upper_bound(self.__gen_median_id, graph_id) < node_map.induced_cost():
+				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__gen_median_id, graph_id)
+			self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()
+			# Print information.
+			if self.__print_to_stdout == 2:
+				progress.update(1)
+		self.__sum_of_distances = 0.0
+		for key, val in self.__node_maps_from_median.items():
+			self.__sum_of_distances += val.induced_cost()
+			
+		# Print information.
+		if self.__print_to_stdout == 2:
+			print('===========================================================\n')
+			
+	
+	def __median_available(self):
+		return self.__gen_median_id != np.inf
 	
 	
+	def get_state(self):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_state().')
+		return self.__state
+		
+			
 	def get_sum_of_distances(self, state=''):
 		"""Returns the sum of distances.
 		
@@ -852,7 +896,7 @@ class MedianGraphEstimator(object):
 		increased_order = False
 		
 		# Increase the order as long as the best insertion delta is negative.
-		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon:
+		while self.__compute_best_insertion_delta(graphs, best_config, best_label) > - self.__epsilon:
 			increased_order = True
 			self.__add_node_to_median(best_config, best_label, median)
 			
@@ -862,7 +906,291 @@ class MedianGraphEstimator(object):
 			
 		# Return true iff the order was increased.
 		return increased_order
+	
+	
+	def __compute_best_insertion_delta(self, graphs, best_config, best_label):
+		# Construct sets of inserted nodes.
+		no_inserted_node = True
+		inserted_nodes = {}
+		for graph_id, graph in graphs.items():
+			inserted_nodes[graph_id] = []
+			best_config[graph_id] = np.inf
+			for k in range(nx.number_of_nodes(graph)):
+				if self.__node_maps_from_median[graph_id].pre_image(k) == np.inf:
+					no_inserted_node = False
+					inserted_nodes[graph_id].append((k, tuple(item for item in graph.nodes[k].items()))) # @todo: can order of label names be garantteed?
+					
+		# Return 0.0 if no node is inserted in any of the graphs.
+		if no_inserted_node:
+			return 0.0
 		
+		# Compute insertion configuration, label, and delta.
+		best_delta = 0.0 # @todo
+		if len(self.__label_names['node_labels']) == 0 and len(self.__label_names['node_attrs']) == 0: # @todo
+			best_delta = self.__compute_insertion_delta_unlabeled(inserted_nodes, best_config, best_label)
+		elif self.__constant_node_costs:
+			best_delta = self.__compute_insertion_delta_constant(inserted_nodes, best_config, best_label)
+		else:
+			best_delta = self.__compute_insertion_delta_generic(inserted_nodes, best_config, best_label)
+			
+		# Return the best delta.
+		return best_delta
+	
+	
+	def __compute_insertion_delta_unlabeled(self, inserted_nodes, best_config, best_label):
+		# Construct the nest configuration and compute its insertion delta.
+		best_delta = 0.0
+		best_config.clear()
+		for graph_id, node_set in inserted_nodes.items():
+			if len(node_set) == 0:
+				best_config[graph_id] = np.inf
+				best_delta += self.__node_del_cost
+			else:
+				best_config[graph_id] = node_set[0][0]
+				best_delta -= self.__node_ins_cost
+				
+		# Return the best insertion delta.
+		return best_delta
+	
+	
+	def __compute_insertion_delta_constant(self, inserted_nodes, best_config, best_label):
+		# Construct histogram and inverse label maps.
+		hist = {}
+		inverse_label_maps = {}
+		for graph_id, node_set in inserted_nodes.items():
+			inverse_label_maps[graph_id] = {}
+			for node in node_set:
+				k = node[0]
+				label = node[1]
+				if label not in inverse_label_maps[graph_id]:
+					inverse_label_maps[graph_id][label] = k
+					if label not in hist:
+						hist[label] = 1
+					else:
+						hist[label] += 1
+				
+		# Determine the best label.
+		best_count = 0
+		for key, val in hist.items():
+			if val > best_count:
+				best_count = val
+				best_label_tuple = key
+		
+		# get best label.
+		best_label.clear()
+		for key, val in best_label_tuple:
+			best_label[key] = val
+				
+		# Construct the best configuration and compute its insertion delta.
+		best_config.clear()
+		best_delta = 0.0
+		node_rel_cost = self.__ged_env.get_node_rel_cost(self.__ged_env.get_node_label(1), self.__ged_env.get_node_label(2))
+		triangle_ineq_holds = (node_rel_cost <= self.__node_del_cost + self.__node_ins_cost)
+		for graph_id, _ in inserted_nodes.items():
+			if best_label_tuple in inverse_label_maps[graph_id]:
+				best_config[graph_id] = inverse_label_maps[graph_id][best_label_tuple]
+				best_delta -= self.__node_ins_cost
+			elif triangle_ineq_holds and not len(inserted_nodes[graph_id]) == 0:
+				best_config[graph_id] = inserted_nodes[graph_id][0][0]
+				best_delta += node_rel_cost - self.__node_ins_cost
+			else:
+				best_config[graph_id] = np.inf
+				best_delta += self.__node_del_cost
+				
+		# Return the best insertion delta.
+		return best_delta
+	
+	
+	def __compute_insertion_delta_generic(self, inserted_nodes, best_config, best_label):
+		# Collect all node labels of inserted nodes.
+		node_labels = []
+		for _, node_set in inserted_nodes.items():
+			for node in node_set:
+				node_labels.append(node[1])
+				
+		# Compute node label medians that serve as initial solutions for block gradient descent.
+		initial_node_labels = []
+		self.__compute_initial_node_labels(node_labels, initial_node_labels)
+		
+		# Determine best insertion configuration, label, and delta via parallel block gradient descent from all initial node labels.
+		best_delta = 0.0
+		for node_label in initial_node_labels:
+			# Construct local configuration.
+			config = {}
+			for graph_id, _ in inserted_nodes.items():
+				config[graph_id] = tuple((np.inf, self.__ged_env.get_node_label(1)))
+				
+			# Run block gradient descent.
+			converged = False
+			itr = 0
+			while not self.__insertion_termination_criterion_met(converged, itr):
+				converged = not self.__update_config_(node_label, inserted_nodes, config, node_labels)
+				converged = converged and (not self.__update_node_label(node_labels, node_label))
+				itr += 1
+				
+			# Compute insertion delta of converged solution.
+			delta = 0.0
+			for _, node in config.items():
+				if node[0] == np.inf:
+					delta += self.__node_del_cost
+				else:
+					delta += self.__ged_env.node_rel_cost(node_label, node[1]) - self.__node_ins_cost
+					
+			# Update best delta and global configuration if improvement has been found.
+			if delta < best_delta - self.__epsilon:
+				best_delta = delta
+				best_label = node_label # @todo: may be wrong.
+				best_config.clear()
+				for graph_id, k in config.items():
+					best_config[graph_id] = k
+					
+		# Return the best delta.
+		return best_delta
+
+
+	def __compute_initial_node_labels(self, node_labels, median_labels):
+		median_labels.clear()
+		if self.__use_real_randomness: # @todo: may not work if parallelized.
+			rng = np.random.randint(size=1)
+			urng = np.random.RandomState(seed=rng[0])
+		else:
+			urng = np.random.RandomState(seed=self.__seed)
+			
+		# Generate the initial node label medians.
+		if self.__init_type_increase_order == 'K-MEANS++':
+			# Use k-means++ heuristic to generate the initial node label medians.
+			already_selected = [False] * len(node_labels)
+			selected_label_id = urng.uniform(low=0, high=len(node_labels), size=1)[0]
+			median_labels.append(node_labels[selected_label_id])
+			already_selected[selected_label_id] = True
+			while len(median_labels) > self.__num_inits_increase_order:
+				weights = [np.inf] * len(node_labels)
+				for label_id in range(0, len(node_labels)):
+					if already_selected[label_id]:
+						weights[label_id] = 0
+						continue
+					for label in median_labels:
+						weights[label_id] = min(weights[label_id], self.__ged_env.node_rel_cost(label, node_labels[label_id]))
+				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=weights)
+				median_labels.append(node_labels[selected_label_id])
+				already_selected[selected_label_id] = True
+		else:
+			# Compute the initial node medians as the medians of randomly generated clusters of (roughly) equal size.
+			# @todo: go through and test.
+			shuffled_node_labels = [np.inf] * len(node_labels) #@todo: random?
+			# @todo: std::shuffle(shuffled_node_labels.begin(), shuffled_node_labels.end(), urng);?
+			cluster_size = len(node_labels) / self.__num_inits_increase_order
+			pos = 0.0
+			cluster = []
+			while len(median_labels) < self.__num_inits_increase_order - 1:
+				while pos < (len(median_labels) + 1) * cluster_size:
+					cluster.append(shuffled_node_labels[pos])
+					pos += 1
+				median_labels.append(self.__get_median_node_label(cluster))
+				cluster.clear()
+			while pos < len(shuffled_node_labels):
+				pos += 1
+				cluster.append(shuffled_node_labels[pos])
+			median_labels.append(self.__get_median_node_label(cluster))
+			cluster.clear()
+				
+		# Run Lloyd's Algorithm.
+		converged = False
+		closest_median_ids = [np.inf] * len(node_labels)
+		clusters = [[] for _ in len(median_labels)]
+		itr = 1
+		while not self.__insertion_termination_criterion_met(converged, itr):
+			converged = not self.__update_clusters(node_labels, median_labels, closest_median_ids)
+			if not converged:
+				for cluster in clusters:
+					cluster.clear()
+				for label_id in range(0, len(node_labels)):
+					cluster[closest_median_ids[label_id]].append(node_labels[label_id])
+				for cluster_id in range(0, len(clusters)):
+					self.__update_node_label(cluster[cluster_id], median_labels[cluster_id])
+			itr += 1
+			
+			
+	def __insertion_termination_criterion_met(self, converged, itr):
+		return converged or (itr >= self.__max_itrs_increase_order if self.__max_itrs_increase_order > 0 else False)
+	
+	
+	def __update_config_(self, node_label, inserted_nodes, config, node_labels):
+		# Determine the best configuration.
+		config_modified = False
+		for graph_id, node_set in inserted_nodes.items():
+			best_assignment = config[graph_id]
+			best_cost = 0.0
+			if best_assignment[0] == np.inf:
+				best_cost = self.__node_del_cost
+			else:
+				bets_cost = self.__ged_env.node_rel_cost(node_label, best_assignment[1]) - self.__node_ins_cost
+			for node in node_set:
+				cost = self.__ged_env.node_rel_cost(node_label, node[1]) - self.__node_ins_cost
+				if cost < best_cost - self.__epsilon:
+					best_cost = cost
+					best_assignment = node
+					config_modified = True
+			if self.__node_del_cost < best_cost - self.__epsilon:
+				best_cost = self.__node_del_cost
+				best_assignment[0] = np.inf # @todo: work?
+				config_modified = True
+			config[graph_id] = best_assignment
+			
+		# Collect the node labels contained in the best configuration.
+		node_labels.clear()
+		for key, val in config.items():
+			if val[0] != np.inf:
+				node_labels.append(val[1])
+		
+		# Return true if the configuration was modified.
+		return config_modified
+				 
+	
+	def __update_node_label(self, node_labels, node_label):
+		new_node_label = self.__get_median_node_label(node_labels)
+		if self.__ged_env.node_rel_cost(new_node_label, node_label) > self.__epsilon:
+			node_label = new_node_label # @todo: may be wrong
+			return True
+		return False
+	
+	
+	def __update_clusters(self, node_labels, median_labels, closest_median_ids):
+		# Determine the closest median for each node label.
+		clusters_modified = False
+		for label_id in range(0, len(node_labels)):
+			closest_median_id = np.inf
+			dist_to_closest_median = np.inf
+			for median_id in range(0, len(median_labels)):
+				dist_to_median = self.__ged_env.node_rel_cost(median_labels[median_id], node_labels[label_id])
+				if dist_to_median < dist_to_closest_median - self.__epsilon:
+					dist_to_closest_median = dist_to_median
+					closest_median_id = median_id
+			if closest_median_id != closest_median_ids[label_id]:
+				closest_median_ids[label_id] = closest_median_id
+				clusters_modified = True
+				
+		# Return true if the clusters were modified.
+		return clusters_modified
+	
+	
+	def __add_node_to_median(self, best_config, best_label, median):
+		# Update the median.
+		median.add_node(nx.number_of_nodes(median), **best_label)
+		
+		# Update the node maps.
+		for graph_id, node_map in self.__node_maps_from_median.items():
+			node_map_as_rel = []
+			node_map.as_relation(node_map_as_rel)
+			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
+			for assignment in node_map_as_rel:
+				new_node_map.add_assignment(assignment[0], assignment[1])
+			new_node_map.add_assignment(nx.number_of_nodes(median) - 1, best_config[graph_id])
+			self.__node_maps_from_median[graph_id] = new_node_map
+			
+		# Increase overall number of increases.
+		self.__num_increase_order += 1
+			
 	
 	def __improve_sum_of_distances(self, timer):
 		pass

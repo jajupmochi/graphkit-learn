@@ -16,6 +16,7 @@ import numpy as np
 import networkx as nx
 from collections import Counter
 from functools import partial
+from gklearn.utils import SpecialLabel
 from gklearn.utils.parallel import parallel_gm
 from gklearn.kernels import GraphKernel
 
@@ -469,10 +470,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def __add_dummy_node_labels(self, Gn):
-		if len(self.__node_labels) == 0:
-			for G in Gn:
-				nx.set_node_attributes(G, '0', 'dummy')
-			self.__node_labels.append('dummy')
+		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+			for i in range(len(Gn)):
+				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
+			self.__node_labels = [SpecialLabel.DUMMY]
 			
 			
 class WLSubtree(WeisfeilerLehman):

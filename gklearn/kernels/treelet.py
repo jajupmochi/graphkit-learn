@@ -18,6 +18,7 @@ import numpy as np
 import networkx as nx
 from collections import Counter
 from itertools import chain
+from gklearn.utils import SpecialLabel
 from gklearn.utils.parallel import parallel_gm, parallel_me
 from gklearn.utils.utils import find_all_paths, get_mlti_dim_node_attrs
 from gklearn.kernels import GraphKernel
@@ -495,11 +496,11 @@ class Treelet(GraphKernel):
 	
 	
 	def __add_dummy_labels(self, Gn):
-		if len(self.__node_labels) == 0:
-			for G in Gn:
-				nx.set_node_attributes(G, '0', 'dummy')
-			self.__node_labels.append('dummy')
-		if len(self.__edge_labels) == 0:
-			for G in Gn:
-				nx.set_edge_attributes(G, '0', 'dummy')
-			self.__edge_labels.append('dummy')
+		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+			for i in range(len(Gn)):
+				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
+			self.__node_labels = [SpecialLabel.DUMMY]
+		if len(self.__edge_labels) == 0 or (len(self.__edge_labels) == 1 and self.__edge_labels[0] == SpecialLabel.DUMMY):
+			for i in range(len(Gn)):
+				nx.set_edge_attributes(Gn[i], '0', SpecialLabel.DUMMY)
+			self.__edge_labels = [SpecialLabel.DUMMY]

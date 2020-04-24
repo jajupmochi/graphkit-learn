@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 from copy import deepcopy
+from enum import Enum, auto
 #from itertools import product
 
 # from tqdm import tqdm
@@ -343,13 +344,15 @@ def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attr
 	return graph_kernel
 
 
-def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save='', irrelevant_labels=None):
+def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save='', irrelevant_labels=None, edge_required=False):
+	import os
 	from gklearn.utils import Dataset, split_dataset_by_target
 	
 	# 1. get dataset.
 	print('1. getting dataset...')
 	dataset_all = Dataset()
 	dataset_all.load_predefined_dataset(ds_name)
+	dataset_all.trim_dataset(edge_required=edge_required)
 	if not irrelevant_labels is None:
 		dataset_all.remove_labels(**irrelevant_labels)
 # 	dataset_all.cut_graphs(range(0, 10))
@@ -385,6 +388,8 @@ def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, d
 	print()
 	print('4. saving results...')
 	if save_results:
+		if not os.path.exists(dir_save):
+			os.makedirs(dir_save)
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)	
 
 	print('\ncomplete.')	
@@ -461,3 +466,9 @@ def get_mlti_dim_edge_attrs(G, attr_names):
 	for ed, attrs in G.edges(data=True):
 		attributes.append(tuple(attrs[aname] for aname in attr_names))
 	return attributes
+
+
+class SpecialLabel(Enum):
+    """can be used to define special labels.
+    """
+    DUMMY = auto # The dummy label.

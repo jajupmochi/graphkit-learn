@@ -8,9 +8,81 @@ Created on Tue Jan 14 15:39:29 2020
 import multiprocessing
 import functools
 import sys
+import os
 from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 from gklearn.preimage.utils import generate_median_preimages_by_class
 from gklearn.utils import compute_gram_matrices_by_class
+
+
+def xp_median_preimage_14_1():
+	"""xp 14_1: DD, PathUpToH, using CONSTANT.
+	"""
+	# set parameters.
+	ds_name = 'DD' #
+	mpg_options = {'fit_method': 'k-graphs',
+				   'init_ecc': [4, 4, 2, 1, 1, 1], #
+				   'ds_name': ds_name,
+				   'parallel': True, # False
+				   'time_limit_in_sec': 0,
+				   'max_itrs': 100, # 
+				   'max_itrs_without_update': 3,
+				   'epsilon_residual': 0.01,
+				   'epsilon_ec': 0.1,
+				   'verbose': 2}
+	kernel_options = {'name': 'PathUpToH',
+					  'depth': 2, #
+					  'k_func': 'MinMax', #
+					  'compute_method': 'trie',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+					  'n_jobs': multiprocessing.cpu_count(),
+					  'normalize': True,
+					  'verbose': 2}
+	ged_options = {'method': 'IPFP',
+				   'initialization_method': 'RANDOM', # 'NODE'
+				   'initial_solutions': 10, # 1
+				   'edit_cost': 'CONSTANT', # 
+				   'attr_distance': 'euclidean',
+				   'ratio_runs_from_initial_solutions': 1,
+				   'threads': multiprocessing.cpu_count(),
+				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+	mge_options = {'init_type': 'MEDOID',
+				   'random_inits': 10,
+				   'time_limit': 0,
+				   'verbose': 2,
+				   'update_order': False,
+				   'refine': False}
+	save_results = True
+	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
+	irrelevant_labels = None #
+	edge_required = False #
+
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
+	sys.stdout = file_output
+	
+# 	# compute gram matrices for each class a priori.
+# 	print('Compute gram matrices for each class a priori.')
+# 	compute_gram_matrices_by_class(ds_name, kernel_options, save_results=save_results, dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
+	
+	# print settings.
+	print('parameters:')
+	print('dataset name:', ds_name)
+	print('mpg_options:', mpg_options)
+	print('kernel_options:', kernel_options)
+	print('ged_options:', ged_options)
+	print('mge_options:', mge_options)
+	print('save_results:', save_results)
+	print('irrelevant_labels:', irrelevant_labels)
+	print()
+	
+	# generate preimages.
+	for fit_method in ['k-graphs'] + ['random'] * 5:
+		print('\n-------------------------------------')
+		print('fit method:', fit_method, '\n')
+		mpg_options['fit_method'] = fit_method
+		generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required)
 
 
 def xp_median_preimage_13_1():
@@ -60,7 +132,7 @@ def xp_median_preimage_13_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -125,7 +197,7 @@ def xp_median_preimage_13_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -192,7 +264,7 @@ def xp_median_preimage_12_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -256,7 +328,7 @@ def xp_median_preimage_12_2():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -320,7 +392,9 @@ def xp_median_preimage_12_3():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -383,7 +457,7 @@ def xp_median_preimage_12_4():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -452,7 +526,7 @@ def xp_median_preimage_12_5():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -519,7 +593,7 @@ def xp_median_preimage_9_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -583,7 +657,7 @@ def xp_median_preimage_9_2():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -647,7 +721,7 @@ def xp_median_preimage_9_3():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -710,7 +784,7 @@ def xp_median_preimage_9_4():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -781,7 +855,7 @@ def xp_median_preimage_8_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -845,7 +919,7 @@ def xp_median_preimage_8_2():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -909,7 +983,7 @@ def xp_median_preimage_8_3():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -972,7 +1046,7 @@ def xp_median_preimage_8_4():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1039,7 +1113,7 @@ def xp_median_preimage_7_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1103,7 +1177,7 @@ def xp_median_preimage_7_2():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1167,7 +1241,7 @@ def xp_median_preimage_7_3():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1230,7 +1304,7 @@ def xp_median_preimage_7_4():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1297,7 +1371,7 @@ def xp_median_preimage_6_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1362,7 +1436,9 @@ def xp_median_preimage_6_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1429,7 +1505,7 @@ def xp_median_preimage_5_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1496,7 +1572,7 @@ def xp_median_preimage_4_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1522,7 +1598,7 @@ def xp_median_preimage_3_2():
 	# set parameters.
 	ds_name = 'Fingerprint' #
 	mpg_options = {'fit_method': 'k-graphs',
-				   'init_ecc': [0.525, 0.525, 0.001, 0.125, 0.125], #
+				   'init_ecc': [0.525, 0.525, 0.01, 0.125, 0.125], #
 				   'ds_name': ds_name,
 				   'parallel': True, # False
 				   'time_limit_in_sec': 0,
@@ -1561,7 +1637,9 @@ def xp_median_preimage_3_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1587,7 +1665,7 @@ def xp_median_preimage_3_1():
 	# set parameters.
 	ds_name = 'Fingerprint' #
 	mpg_options = {'fit_method': 'k-graphs',
-				   'init_ecc': [0.525, 0.525, 0.001, 0.125, 0.125], #
+				   'init_ecc': [0.525, 0.525, 0.01, 0.125, 0.125], #
 				   'ds_name': ds_name,
 				   'parallel': True, # False
 				   'time_limit_in_sec': 0,
@@ -1628,7 +1706,9 @@ def xp_median_preimage_3_1():
 	edge_required = False #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1685,7 +1765,7 @@ def xp_median_preimage_2_1():
 				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
 	mge_options = {'init_type': 'MEDOID',
 				   'random_inits': 10,
-				   'time_limit': 600,
+				   'time_limit': 0,
 				   'verbose': 2,
 				   'update_order': False,
 				   'refine': False}
@@ -1694,7 +1774,9 @@ def xp_median_preimage_2_1():
 	irrelevant_labels = {'edge_labels': ['valence']}
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	if not os.path.exists(dir_save):
+		os.makedirs(dir_save)
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1763,7 +1845,7 @@ def xp_median_preimage_1_1():
 	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1826,7 +1908,7 @@ def xp_median_preimage_1_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1891,7 +1973,7 @@ def xp_median_preimage_10_1():
 	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -1954,7 +2036,7 @@ def xp_median_preimage_10_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -2019,7 +2101,7 @@ def xp_median_preimage_11_1():
 	dir_save = '../results/xp_median_preimage/' + ds_name + '.' + kernel_options['name'] + '/'
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -2082,7 +2164,7 @@ def xp_median_preimage_11_2():
 	edge_required = True #
 	
 	# print settings.
-	file_output = open(dir_save + 'output.txt', 'w')
+	file_output = open(dir_save + 'output.txt', 'a')
 	sys.stdout = file_output
 	print('parameters:')
 	print('dataset name:', ds_name)
@@ -2147,7 +2229,7 @@ if __name__ == "__main__":
 #  	# xp_median_preimage_7_1()
 
 # 	#### xp 7_2: MUTAG, PathUpToH, using CONSTANT.
-#  	# xp_median_preimage_7_2()
+ 	# xp_median_preimage_7_2()
 
 # 	#### xp 7_3: MUTAG, Treelet, using CONSTANT.
 #  	# xp_median_preimage_7_3()
@@ -2200,6 +2282,10 @@ if __name__ == "__main__":
 	#### xp 13_2: PAH, ShortestPath, using NON_SYMBOLIC.
 # 	xp_median_preimage_13_2()
 
+	#### xp 14_1: DD, PathUpToH, using CONSTANT.
+	xp_median_preimage_14_1()
+
+
 
 
 # 	#### xp 1_1: Letter-high, StructuralSP.
@@ -2221,10 +2307,10 @@ if __name__ == "__main__":
  	# xp_median_preimage_11_2()
 # 	
 # 	#### xp 2_1: COIL-DEL, StructuralSP, using LETTER2, only node attrs.
-# # 	xp_median_preimage_2_1()
+ 	# xp_median_preimage_2_1()
 # 	
 # 	#### xp 3_1: Fingerprint, StructuralSP, using LETTER2, only node attrs.
-#  	# xp_median_preimage_3_1()
+ 	# xp_median_preimage_3_1()
 
 # 	#### xp 3_2: Fingerprint, ShortestPath, using LETTER2, only node attrs.
  	# xp_median_preimage_3_2()
@@ -2266,35 +2352,35 @@ if __name__ == "__main__":
  	# xp_median_preimage_8_4()
 
 # 	#### xp 9_1: MAO, StructuralSP, using CONSTANT, symbolic only.
- 	xp_median_preimage_9_1()
+ 	# xp_median_preimage_9_1()
 
 # 	#### xp 9_2: MAO, PathUpToH, using CONSTANT, symbolic only.
- 	xp_median_preimage_9_2()
+ 	# xp_median_preimage_9_2()
 
 # 	#### xp 9_3: MAO, Treelet, using CONSTANT, symbolic only.
- 	xp_median_preimage_9_3()
+ 	# xp_median_preimage_9_3()
 
 # 	#### xp 9_4: MAO, WeisfeilerLehman, using CONSTANT, symbolic only.
- 	xp_median_preimage_9_4()
+ 	# xp_median_preimage_9_4()
 
 	#### xp 12_1: PAH, StructuralSP, using NON_SYMBOLIC, unlabeled.
- 	xp_median_preimage_12_1()
+ 	# xp_median_preimage_12_1()
 
 	#### xp 12_2: PAH, PathUpToH, using CONSTANT, unlabeled.
- 	xp_median_preimage_12_2()
+ 	# xp_median_preimage_12_2()
 
 	#### xp 12_3: PAH, Treelet, using CONSTANT, unlabeled.
- 	xp_median_preimage_12_3()
+ 	# xp_median_preimage_12_3()
 
 	#### xp 12_4: PAH, WeisfeilerLehman, using CONSTANT, unlabeled.
- 	xp_median_preimage_12_4()
+ 	# xp_median_preimage_12_4()
 
 	#### xp 12_5: PAH, ShortestPath, using NON_SYMBOLIC, unlabeled.
- 	xp_median_preimage_12_5()
+ 	# xp_median_preimage_12_5()
 
 	#### xp 13_1: PAH, StructuralSP, using NON_SYMBOLIC.
- 	xp_median_preimage_13_1()
+ 	# xp_median_preimage_13_1()
 
 	#### xp 13_2: PAH, ShortestPath, using NON_SYMBOLIC.
- 	xp_median_preimage_13_2()
+ 	# xp_median_preimage_13_2()
 

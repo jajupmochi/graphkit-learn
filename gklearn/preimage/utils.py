@@ -419,6 +419,8 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose, parallel='
 		Kmatrix, _ = weisfeilerlehmankernel(Gn, node_label=node_label, edge_label=edge_label,
 								   height=4, base_kernel='subtree', parallel=None,
 								   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
+	else:
+		raise Exception('The graph kernel "', graph_kernel, '" is not defined.')	
 		
 	# normalization
 	Kmatrix_diag = Kmatrix.diagonal().copy()
