@@ -477,7 +477,7 @@ public:
 	 * @param[in] h_id ID of input graph.
      * @return Computed induced cost.
 	 */
-	double computeInducedCost(std::size_t g_id, std::size_t h_id) const;
+	double computeInducedCost(std::size_t g_id, std::size_t h_id, std::vector<pair<std::size_t, std::size_t>> relation) const;
 
     // /*!
 	//  * @brief Returns node relabeling, insertion, or deletion cost.

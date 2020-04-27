@@ -187,6 +187,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 		results['itrs'] = self.__itrs
 		results['converged'] = self.__converged
 		results['num_updates_ecc'] = self.__num_updates_ecc
+		results['mge'] = {}
+		results['mge']['num_decrease_order'] = self.__mge.get_num_times_order_decreased()
+		results['mge']['num_increase_order'] = self.__mge.get_num_times_order_increased()
+		results['mge']['num_converged_descents'] = self.__mge.get_num_converged_descents()
 		return results
 
 		
@@ -660,27 +664,27 @@ class MedianPreimageGenerator(PreimageGenerator):
 		ged_env.init(init_option=self.__ged_options['init_option'])
 		
 		# Set up the madian graph estimator.
-		mge = MedianGraphEstimator(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
-		mge.set_refine_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge = MedianGraphEstimator(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
+		self.__mge.set_refine_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		options = self.__mge_options.copy()
 		if not 'seed' in options:
 			options['seed'] = int(round(time.time() * 1000)) # @todo: may not work correctly for possible parallel usage.
 		
 		# Select the GED algorithm.
-		mge.set_options(mge_options_to_string(options))
-		mge.set_label_names(node_labels=self._dataset.node_labels, 
+		self.__mge.set_options(mge_options_to_string(options))
+		self.__mge.set_label_names(node_labels=self._dataset.node_labels, 
 					  edge_labels=self._dataset.edge_labels, 
 					  node_attrs=self._dataset.node_attrs, 
 					  edge_attrs=self._dataset.edge_attrs)
-		mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
-		mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		
 		# Run the estimator.
-		mge.run(graph_ids, set_median_id, gen_median_id)
+		self.__mge.run(graph_ids, set_median_id, gen_median_id)
 		
 		# Get SODs.
-		self.__sod_set_median = mge.get_sum_of_distances('initialized')
-		self.__sod_gen_median = mge.get_sum_of_distances('converged')
+		self.__sod_set_median = self.__mge.get_sum_of_distances('initialized')
+		self.__sod_gen_median = self.__mge.get_sum_of_distances('converged')
 		
 		# Get median graphs.
 		self.__set_median = ged_env.get_nx_graph(set_median_id)

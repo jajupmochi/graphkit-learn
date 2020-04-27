@@ -610,11 +610,36 @@ std::string PyGEDEnv::getInitType() const {
 	return initOptionsToString(env_->get_init_type());
 }
 
-double PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id) const {
-	ged::NodeMap node_map = env_->get_node_map(g_id, h_id);
+double PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id, std::vector<pair<std::size_t, std::size_t>> relation) const {
+	ged::NodeMap node_map = ged::NodeMap(env_->get_num_nodes(g_id), env_->get_num_nodes(h_id));
+	for (const auto & assignment : relation) {
+		node_map.add_assignment(assignment.first, assignment.second);
+		// std::cout << assignment.first << assignment.second << endl;
+	}
+	const std::vector<ged::GEDGraph::NodeID> forward_map = node_map.get_forward_map();
+	for (std::size_t i{0}; i < node_map.num_source_nodes(); i++) {
+		if (forward_map.at(i) == ged::GEDGraph::undefined_node()) {
+			node_map.add_assignment(i, ged::GEDGraph::dummy_node());
+		}
+	}
+	const std::vector<ged::GEDGraph::NodeID> backward_map = node_map.get_backward_map();
+	for (std::size_t i{0}; i < node_map.num_target_nodes(); i++) {
+		if (backward_map.at(i) == ged::GEDGraph::undefined_node()) {
+			node_map.add_assignment(ged::GEDGraph::dummy_node(), i);
+		}
+	}
+	// for (auto & map : node_map.get_forward_map()) {
+	// 	std::cout << map << ", ";
+	// }
+	// std::cout << endl;
+	// for (auto & map : node_map.get_backward_map()) {
+	// 	std::cout << map << ", ";
+	// }
 	env_->compute_induced_cost(g_id, h_id, node_map);
 	return node_map.induced_cost();
 }
+
+
 
 
 // double PyGEDEnv::getNodeCost(std::size_t label1, std::size_t label2) const {

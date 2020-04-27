@@ -105,7 +105,7 @@ cdef extern from "src/GedLibBind.hpp" namespace "pyged":
 		map[string, string] getMedianEdgeLabel(vector[map[string, string]] & edge_labels) except +
 		string getInitType() except +
 # 		double getNodeCost(size_t label1, size_t label2) except +
-		double computeInducedCost(size_t g_id, size_t h_id) except +
+		double computeInducedCost(size_t g_id, size_t h_id, vector[pair[size_t,size_t]]) except +
 		
 		
 #############################
@@ -1356,7 +1356,17 @@ cdef class GEDEnv:
 		-------
 		None.		
 		"""
-		induced_cost = self.c_env.computeInducedCost(g_id, h_id)
+		relation = []
+		node_map.as_relation(relation)
+# 		print(relation)
+		dummy_node = get_dummy_node()
+# 		print(dummy_node)
+		for i, val in enumerate(relation):
+			val1 = dummy_node if val[0] == np.inf else val[0]
+			val2 = dummy_node if val[1] == np.inf else val[1]
+			relation[i] = tuple((val1, val2))
+# 		print(relation)
+		induced_cost = self.c_env.computeInducedCost(g_id, h_id, relation)
 		node_map.set_induced_cost(induced_cost)
 
 	

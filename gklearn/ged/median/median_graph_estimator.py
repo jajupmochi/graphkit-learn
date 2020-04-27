@@ -15,7 +15,7 @@ import sys
 import networkx as nx
 
 
-class MedianGraphEstimator(object):
+class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined node?
 	
 	def __init__(self, ged_env, constant_node_costs):
 		"""Constructor.
@@ -377,7 +377,7 @@ class MedianGraphEstimator(object):
 					
 			self.__best_init_sum_of_distances = min(self.__best_init_sum_of_distances, self.__sum_of_distances)
 			self.__ged_env.load_nx_graph(median, set_median_id)
-			print(self.__best_init_sum_of_distances)
+# 			print(self.__best_init_sum_of_distances)
 			
 			# Print information about current iteration.
 			if self.__print_to_stdout == 2:
@@ -400,7 +400,7 @@ class MedianGraphEstimator(object):
 				decreased_order = False
 				increased_order = False
 				
-				# Update the median. # @todo!!!!!!!!!!!!!!!!!!!!!!
+				# Update the median.
 				median_modified = self.__update_median(graphs, median)
 				if self.__update_order:
 					if not median_modified or self.__itrs[median_pos] == 0:
@@ -434,6 +434,7 @@ class MedianGraphEstimator(object):
 				# Compute induced costs of the old node maps w.r.t. the updated median.
 				for graph_id in graph_ids:
 # 					print(self.__node_maps_from_median[graph_id].induced_cost())
+# 					xxx = self.__node_maps_from_median[graph_id]					   
 					self.__ged_env.compute_induced_cost(gen_median_id, graph_id, self.__node_maps_from_median[graph_id])
 #					print('---------------------------------------')
 # 					print(self.__node_maps_from_median[graph_id].induced_cost())
@@ -444,7 +445,7 @@ class MedianGraphEstimator(object):
 					print('done.')					
 					
 				# Update the node maps.
-				node_maps_modified = self.__update_node_maps() # @todo
+				node_maps_modified = self.__update_node_maps()
 
 				# Update the order of the median if no improvement can be found with the current order.
 				
@@ -592,6 +593,44 @@ class MedianGraphEstimator(object):
 		if state == 'converged':
 			return self.__converged_sum_of_distances
 		return self.__sum_of_distances
+
+
+	def get_runtime(self, state):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_runtime().')
+		if state == AlgorithmState.INITIALIZED:
+			return self.__runtime_initialized
+		if state == AlgorithmState.CONVERGED:
+			return self.__runtime_converged
+		return self.__runtime
+	
+
+	def get_num_itrs(self):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_num_itrs().')
+		return self.__itrs
+
+
+	def get_num_times_order_decreased(self):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_num_times_order_decreased().')
+		return self.__num_decrease_order		
+	
+	
+	def get_num_times_order_increased(self):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_num_times_order_increased().')
+		return self.__num_increase_order		
+	
+	
+	def get_num_converged_descents(self):
+		if not self.__median_available():
+			raise Exception('No median has been computed. Call run() before calling get_num_converged_descents().')
+		return self.__num_converged_descents
+	
+	
+	def get_ged_env(self):
+		return self.__ged_env
 	
 	
 	def __set_default_options(self):
@@ -814,7 +853,7 @@ class MedianGraphEstimator(object):
 		decreased_order = False
 		
 		# Decrease the order as long as the best deletion delta is negative.
-		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon: # @todo
+		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon:
 			decreased_order = True
 			median = self.__delete_node_from_median(id_deleted_node[0], median)
 			
@@ -896,7 +935,7 @@ class MedianGraphEstimator(object):
 		increased_order = False
 		
 		# Increase the order as long as the best insertion delta is negative.
-		while self.__compute_best_insertion_delta(graphs, best_config, best_label) > - self.__epsilon:
+		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon: # @todo
 			increased_order = True
 			self.__add_node_to_median(best_config, best_label, median)
 			
