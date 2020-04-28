@@ -58,7 +58,6 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		self.__max_itrs_increase_order = 10
 		self.__print_to_stdout = 2
 		self.__median_id = np.inf # @todo: check
-		self.__median_node_id_prefix = '' # @todo: check
 		self.__node_maps_from_median = {}
 		self.__sum_of_distances = 0
 		self.__best_init_sum_of_distances = np.inf
@@ -292,7 +291,6 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		all_graphs_empty = True
 		for graph_id in graph_ids:
 			if self.__ged_env.get_graph_num_nodes(graph_id) > 0:
-				self.__median_node_id_prefix = self.__ged_env.get_original_node_ids(graph_id)[0]
 				all_graphs_empty = False
 				break
 		if all_graphs_empty:
@@ -935,7 +933,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		increased_order = False
 		
 		# Increase the order as long as the best insertion delta is negative.
-		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon: # @todo
+		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon:
 			increased_order = True
 			self.__add_node_to_median(best_config, best_label, median)
 			
@@ -967,7 +965,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		best_delta = 0.0 # @todo
 		if len(self.__label_names['node_labels']) == 0 and len(self.__label_names['node_attrs']) == 0: # @todo
 			best_delta = self.__compute_insertion_delta_unlabeled(inserted_nodes, best_config, best_label)
-		elif self.__constant_node_costs:
+		elif len(self.__label_names['node_labels']) > 0: # self.__constant_node_costs:
 			best_delta = self.__compute_insertion_delta_constant(inserted_nodes, best_config, best_label)
 		else:
 			best_delta = self.__compute_insertion_delta_generic(inserted_nodes, best_config, best_label)
@@ -976,7 +974,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return best_delta
 	
 	
-	def __compute_insertion_delta_unlabeled(self, inserted_nodes, best_config, best_label):
+	def __compute_insertion_delta_unlabeled(self, inserted_nodes, best_config, best_label): # @todo: go through and test.
 		# Construct the nest configuration and compute its insertion delta.
 		best_delta = 0.0
 		best_config.clear()
@@ -1057,14 +1055,17 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			# Construct local configuration.
 			config = {}
 			for graph_id, _ in inserted_nodes.items():
-				config[graph_id] = tuple((np.inf, self.__ged_env.get_node_label(1)))
+				config[graph_id] = tuple((np.inf, tuple(item for item in self.__ged_env.get_node_label(1).items())))
 				
 			# Run block gradient descent.
 			converged = False
 			itr = 0
 			while not self.__insertion_termination_criterion_met(converged, itr):
-				converged = not self.__update_config_(node_label, inserted_nodes, config, node_labels)
-				converged = converged and (not self.__update_node_label(node_labels, node_label))
+				converged = not self.__update_config(node_label, inserted_nodes, config, node_labels)
+				node_label_dict = dict(node_label)
+				converged = converged and (not self.__update_node_label([dict(item) for item in node_labels], node_label_dict)) # @todo: the dict is tupled again in the function, can be better.
+				node_label = tuple(item for item in node_label_dict.items()) # @todo: watch out: initial_node_labels[i] is not modified here.
+
 				itr += 1
 				
 			# Compute insertion delta of converged solution.
@@ -1073,15 +1074,17 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				if node[0] == np.inf:
 					delta += self.__node_del_cost
 				else:
-					delta += self.__ged_env.node_rel_cost(node_label, node[1]) - self.__node_ins_cost
+					delta += self.__ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self.__node_ins_cost
 					
 			# Update best delta and global configuration if improvement has been found.
 			if delta < best_delta - self.__epsilon:
 				best_delta = delta
-				best_label = node_label # @todo: may be wrong.
+				best_label.clear()
+				for key, val in node_label:
+					best_label[key] = val
 				best_config.clear()
-				for graph_id, k in config.items():
-					best_config[graph_id] = k
+				for graph_id, val in config.items():
+					best_config[graph_id] = val[0]
 					
 		# Return the best delta.
 		return best_delta
@@ -1090,7 +1093,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 	def __compute_initial_node_labels(self, node_labels, median_labels):
 		median_labels.clear()
 		if self.__use_real_randomness: # @todo: may not work if parallelized.
-			rng = np.random.randint(size=1)
+			rng = np.random.randint(0, high=2**32 - 1, size=1)
 			urng = np.random.RandomState(seed=rng[0])
 		else:
 			urng = np.random.RandomState(seed=self.__seed)
@@ -1099,18 +1102,21 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		if self.__init_type_increase_order == 'K-MEANS++':
 			# Use k-means++ heuristic to generate the initial node label medians.
 			already_selected = [False] * len(node_labels)
-			selected_label_id = urng.uniform(low=0, high=len(node_labels), size=1)[0]
+			selected_label_id = urng.randint(low=0, high=len(node_labels), size=1)[0] # c++ test: 23
 			median_labels.append(node_labels[selected_label_id])
 			already_selected[selected_label_id] = True
-			while len(median_labels) > self.__num_inits_increase_order:
+# 			xxx = [41, 0, 18, 9, 6, 14, 21, 25, 33] for c++ test
+# 			iii = 0 for c++ test
+			while len(median_labels) < self.__num_inits_increase_order:
 				weights = [np.inf] * len(node_labels)
 				for label_id in range(0, len(node_labels)):
 					if already_selected[label_id]:
 						weights[label_id] = 0
 						continue
 					for label in median_labels:
-						weights[label_id] = min(weights[label_id], self.__ged_env.node_rel_cost(label, node_labels[label_id]))
-				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=weights)
+						weights[label_id] = min(weights[label_id], self.__ged_env.get_node_rel_cost(dict(label), dict(node_labels[label_id])))
+				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=np.array(weights) / np.sum(weights))[0] # for c++ test: xxx[iii] 
+# 				iii += 1 for c++ test
 				median_labels.append(node_labels[selected_label_id])
 				already_selected[selected_label_id] = True
 		else:
@@ -1136,7 +1142,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		# Run Lloyd's Algorithm.
 		converged = False
 		closest_median_ids = [np.inf] * len(node_labels)
-		clusters = [[] for _ in len(median_labels)]
+		clusters = [[] for _ in range(len(median_labels))]
 		itr = 1
 		while not self.__insertion_termination_criterion_met(converged, itr):
 			converged = not self.__update_clusters(node_labels, median_labels, closest_median_ids)
@@ -1144,9 +1150,11 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				for cluster in clusters:
 					cluster.clear()
 				for label_id in range(0, len(node_labels)):
-					cluster[closest_median_ids[label_id]].append(node_labels[label_id])
+					clusters[closest_median_ids[label_id]].append(node_labels[label_id])
 				for cluster_id in range(0, len(clusters)):
-					self.__update_node_label(cluster[cluster_id], median_labels[cluster_id])
+					node_label = dict(median_labels[cluster_id])
+					self.__update_node_label([dict(item) for item in clusters[cluster_id]], node_label) # @todo: the dict is tupled again in the function, can be better.
+					median_labels[cluster_id] = tuple(item for item in node_label.items())
 			itr += 1
 			
 			
@@ -1154,7 +1162,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return converged or (itr >= self.__max_itrs_increase_order if self.__max_itrs_increase_order > 0 else False)
 	
 	
-	def __update_config_(self, node_label, inserted_nodes, config, node_labels):
+	def __update_config(self, node_label, inserted_nodes, config, node_labels):
 		# Determine the best configuration.
 		config_modified = False
 		for graph_id, node_set in inserted_nodes.items():
@@ -1163,16 +1171,16 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			if best_assignment[0] == np.inf:
 				best_cost = self.__node_del_cost
 			else:
-				bets_cost = self.__ged_env.node_rel_cost(node_label, best_assignment[1]) - self.__node_ins_cost
+				best_cost = self.__ged_env.get_node_rel_cost(dict(node_label), dict(best_assignment[1])) - self.__node_ins_cost
 			for node in node_set:
-				cost = self.__ged_env.node_rel_cost(node_label, node[1]) - self.__node_ins_cost
+				cost = self.__ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self.__node_ins_cost
 				if cost < best_cost - self.__epsilon:
 					best_cost = cost
 					best_assignment = node
 					config_modified = True
 			if self.__node_del_cost < best_cost - self.__epsilon:
 				best_cost = self.__node_del_cost
-				best_assignment[0] = np.inf # @todo: work?
+				best_assignment = tuple((np.inf, best_assignment[1]))
 				config_modified = True
 			config[graph_id] = best_assignment
 			
@@ -1188,8 +1196,10 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 	
 	def __update_node_label(self, node_labels, node_label):
 		new_node_label = self.__get_median_node_label(node_labels)
-		if self.__ged_env.node_rel_cost(new_node_label, node_label) > self.__epsilon:
-			node_label = new_node_label # @todo: may be wrong
+		if self.__ged_env.get_node_rel_cost(new_node_label, node_label) > self.__epsilon:
+			node_label.clear()
+			for key, val in new_node_label.items():
+				node_label[key] = val
 			return True
 		return False
 	
@@ -1201,7 +1211,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			closest_median_id = np.inf
 			dist_to_closest_median = np.inf
 			for median_id in range(0, len(median_labels)):
-				dist_to_median = self.__ged_env.node_rel_cost(median_labels[median_id], node_labels[label_id])
+				dist_to_median = self.__ged_env.get_node_rel_cost(dict(median_labels[median_id]), dict(node_labels[label_id]))
 				if dist_to_median < dist_to_closest_median - self.__epsilon:
 					dist_to_closest_median = dist_to_median
 					closest_median_id = median_id
