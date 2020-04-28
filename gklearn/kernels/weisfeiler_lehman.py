@@ -16,6 +16,7 @@ import numpy as np
 import networkx as nx
 from collections import Counter
 from functools import partial
+from gklearn.utils import SpecialLabel
 from gklearn.utils.parallel import parallel_gm
 from gklearn.kernels import GraphKernel
 
@@ -32,6 +33,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 
 
 	def _compute_gm_series(self):
+		if self._verbose >= 2:
+			import warnings
+			warnings.warn('A part of the computation is parallelized.')
+			
 		self.__add_dummy_node_labels(self._graphs)
 		
 		# for WL subtree kernel
@@ -55,11 +60,16 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			
 	def _compute_gm_imap_unordered(self):
 		if self._verbose >= 2:
-			raise Warning('Only a part of the computation is parallelized due to the structure of this kernel.')
+			import warnings
+			warnings.warn('Only a part of the computation is parallelized due to the structure of this kernel.')
 		return self._compute_gm_series()
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list): # @todo: this should be better.
+		if self._verbose >= 2:
+			import warnings
+			warnings.warn('A part of the computation is parallelized.')
+			
 		self.__add_dummy_node_labels(g_list + [g1])
 				
 		# for WL subtree kernel
@@ -83,8 +93,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		if self._verbose >= 2:
-			raise Warning('Only a part of the computation is parallelized due to the structure of this kernel.')
-		return self._compute_gm_imap_unordered()
+			import warnings
+			warnings.warn('Only a part of the computation is parallelized due to the structure of this kernel.')
+		return self._compute_kernel_list_series(g1, g_list)
 	
 	
 	def _wrapper_kernel_list_do(self, itr):
@@ -459,7 +470,14 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def __add_dummy_node_labels(self, Gn):
-		if len(self.__node_labels) == 0:
-			for G in Gn:
-				nx.set_node_attributes(G, '0', 'dummy')
-			self.__node_labels.append('dummy')
+		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+			for i in range(len(Gn)):
+				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
+			self.__node_labels = [SpecialLabel.DUMMY]
+			
+			
+class WLSubtree(WeisfeilerLehman):
+	
+	def __init__(self, **kwargs):
+		kwargs['base_kernel'] = 'subtree'
+		super().__init__(**kwargs)

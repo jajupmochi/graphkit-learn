@@ -30,6 +30,8 @@ def mge_options_to_string(options):
 			opt_str += '--randomness ' + str(val) + ' '
 		elif key == 'verbose':
 			opt_str += '--stdout ' + str(val) + ' '
+		elif key == 'update_order':
+			opt_str += '--update-order ' + ('TRUE' if val else 'FALSE') + ' '
 		elif key == 'refine':
  			opt_str += '--refine ' + ('TRUE' if val else 'FALSE') + ' '
 		elif key == 'time_limit':

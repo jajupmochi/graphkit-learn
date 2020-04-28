@@ -260,20 +260,20 @@ def test_Treelet(ds_name, parallel):
 		
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
 #@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
-@pytest.mark.parametrize('base_kernel', ['subtree'])
+# @pytest.mark.parametrize('base_kernel', ['subtree'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-def test_WeisfeilerLehman(ds_name, parallel, base_kernel):
-	"""Test Weisfeiler-Lehman kernel.
+def test_WLSubtree(ds_name, parallel):
+	"""Test Weisfeiler-Lehman subtree kernel.
 	"""
-	from gklearn.kernels import WeisfeilerLehman
+	from gklearn.kernels import WLSubtree
 	
 	dataset = chooseDataset(ds_name)
 
 	try:
-		graph_kernel = WeisfeilerLehman(node_labels=dataset.node_labels,
+		graph_kernel = WLSubtree(node_labels=dataset.node_labels,
 					  edge_labels=dataset.edge_labels,
 					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					  height=2, base_kernel=base_kernel)
+					  height=2)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],

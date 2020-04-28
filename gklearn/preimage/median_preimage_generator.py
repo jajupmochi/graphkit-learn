@@ -18,6 +18,7 @@ from gklearn.ged.median import MedianGraphEstimator
 from gklearn.ged.median import constant_node_costs,mge_options_to_string
 from gklearn.gedlib import librariesImport, gedlibpy
 from gklearn.utils import Timer
+from gklearn.utils.utils import get_graph_kernel_by_name
 # from gklearn.utils.dataset import Dataset
 
 class MedianPreimageGenerator(PreimageGenerator):
@@ -81,7 +82,13 @@ class MedianPreimageGenerator(PreimageGenerator):
 		
 		
 	def run(self):
-		self.__set_graph_kernel_by_name()
+		self._graph_kernel = get_graph_kernel_by_name(self._kernel_options['name'], 
+						  node_labels=self._dataset.node_labels,
+						  edge_labels=self._dataset.edge_labels, 
+						  node_attrs=self._dataset.node_attrs,
+						  edge_attrs=self._dataset.edge_attrs,
+						  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
+						  kernel_options=self._kernel_options)
 		
 		# record start time.
 		start = time.time()
@@ -180,6 +187,10 @@ class MedianPreimageGenerator(PreimageGenerator):
 		results['itrs'] = self.__itrs
 		results['converged'] = self.__converged
 		results['num_updates_ecc'] = self.__num_updates_ecc
+		results['mge'] = {}
+		results['mge']['num_decrease_order'] = self.__mge.get_num_times_order_decreased()
+		results['mge']['num_increase_order'] = self.__mge.get_num_times_order_increased()
+		results['mge']['num_converged_descents'] = self.__mge.get_num_converged_descents()
 		return results
 
 		
@@ -653,27 +664,27 @@ class MedianPreimageGenerator(PreimageGenerator):
 		ged_env.init(init_option=self.__ged_options['init_option'])
 		
 		# Set up the madian graph estimator.
-		mge = MedianGraphEstimator(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
-		mge.set_refine_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge = MedianGraphEstimator(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
+		self.__mge.set_refine_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		options = self.__mge_options.copy()
 		if not 'seed' in options:
 			options['seed'] = int(round(time.time() * 1000)) # @todo: may not work correctly for possible parallel usage.
 		
 		# Select the GED algorithm.
-		mge.set_options(mge_options_to_string(options))
-		mge.set_label_names(node_labels=self._dataset.node_labels, 
+		self.__mge.set_options(mge_options_to_string(options))
+		self.__mge.set_label_names(node_labels=self._dataset.node_labels, 
 					  edge_labels=self._dataset.edge_labels, 
 					  node_attrs=self._dataset.node_attrs, 
 					  edge_attrs=self._dataset.edge_attrs)
-		mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
-		mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
 		
 		# Run the estimator.
-		mge.run(graph_ids, set_median_id, gen_median_id)
+		self.__mge.run(graph_ids, set_median_id, gen_median_id)
 		
 		# Get SODs.
-		self.__sod_set_median = mge.get_sum_of_distances('initialized')
-		self.__sod_gen_median = mge.get_sum_of_distances('converged')
+		self.__sod_set_median = self.__mge.get_sum_of_distances('initialized')
+		self.__sod_gen_median = self.__mge.get_sum_of_distances('converged')
 		
 		# Get median graphs.
 		self.__set_median = ged_env.get_nx_graph(set_median_id)
@@ -722,43 +733,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 			print('distance in kernel space for generalized median:', self.__k_dis_gen_median)
 			print('minimum distance in kernel space for each graph in median set:', self.__k_dis_dataset)
 			print('distance in kernel space for each graph in median set:', k_dis_median_set)	
-		
-
-	def __set_graph_kernel_by_name(self):
-		if self._kernel_options['name'] == 'ShortestPath':
-			from gklearn.kernels import ShortestPath
-			self._graph_kernel = ShortestPath(node_labels=self._dataset.node_labels,
-									 node_attrs=self._dataset.node_attrs,
-									 ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-									 **self._kernel_options)
-		elif self._kernel_options['name'] == 'StructuralSP':
-			from gklearn.kernels import StructuralSP
-			self._graph_kernel = StructuralSP(node_labels=self._dataset.node_labels,
-									  edge_labels=self._dataset.edge_labels, 
-									  node_attrs=self._dataset.node_attrs,
-									  edge_attrs=self._dataset.edge_attrs,
-									  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-									  **self._kernel_options)
-		elif self._kernel_options['name'] == 'PathUpToH':
-			from gklearn.kernels import PathUpToH
-			self._graph_kernel = PathUpToH(node_labels=self._dataset.node_labels,
-								  edge_labels=self._dataset.edge_labels,
-								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-								  **self._kernel_options)
-		elif self._kernel_options['name'] == 'Treelet':
-			from gklearn.kernels import Treelet
-			self._graph_kernel = Treelet(node_labels=self._dataset.node_labels,
-								  edge_labels=self._dataset.edge_labels,
-								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-								  **self._kernel_options)
-		elif self._kernel_options['name'] == 'WeisfeilerLehman':
-			from gklearn.kernels import WeisfeilerLehman
-			self._graph_kernel = WeisfeilerLehman(node_labels=self._dataset.node_labels,
-								  edge_labels=self._dataset.edge_labels,
-								  ds_infos=self._dataset.get_dataset_infos(keys=['directed']),
-								  **self._kernel_options)
-		else:
-			raise Exception('The graph kernel given is not defined. Possible choices include: "StructuralSP", "ShortestPath", "PathUpToH", "Treelet", "WeisfeilerLehman".')
 			
 			
 # 	def __clean_graph(self, G, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):

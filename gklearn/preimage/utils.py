@@ -25,7 +25,7 @@ import networkx as nx
 import os
 
 
-def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None, edge_required=False):
+def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=True, save_medians=True, plot_medians=True, load_gm='auto', dir_save='', irrelevant_labels=None, edge_required=False, cut_range=None):
 	import os.path
 	from gklearn.preimage import MedianPreimageGenerator
 	from gklearn.utils import split_dataset_by_target
@@ -38,7 +38,8 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	dataset_all.trim_dataset(edge_required=edge_required)
 	if irrelevant_labels is not None:
 		dataset_all.remove_labels(**irrelevant_labels)
-# 	dataset_all.cut_graphs(range(0, 10))
+	if cut_range is not None:
+		dataset_all.cut_graphs(cut_range)
 	datasets = split_dataset_by_target(dataset_all)
 
 	if save_results:
@@ -57,6 +58,9 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	itrs_list = []
 	converged_list = []
 	num_updates_ecc_list = []
+	mge_decrease_order_list = []
+	mge_increase_order_list = []
+	mge_converged_order_list = []
 	nb_sod_sm2gm = [0, 0, 0]
 	nb_dis_k_sm2gm = [0, 0, 0]
 	nb_dis_k_gi2sm = [0, 0, 0]
@@ -148,7 +152,10 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 					  results['runtime_precompute_gm'], results['runtime_optimize_ec'], 
 					  results['runtime_generate_preimage'], results['runtime_total'],
 					  results['itrs'], results['converged'],
-					  results['num_updates_ecc']])
+					  results['num_updates_ecc'],
+					  results['mge']['num_decrease_order'] > 0, # @todo: not suitable for multi-start mge
+					  results['mge']['num_increase_order'] > 0,
+					  results['mge']['num_converged_descents'] > 0])
 			f_detail.close()
 		
 			# compute result summary.
@@ -164,6 +171,9 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			itrs_list.append(results['itrs'])
 			converged_list.append(results['converged'])
 			num_updates_ecc_list.append(results['num_updates_ecc'])
+			mge_decrease_order_list.append(results['mge']['num_decrease_order'] > 0)
+			mge_increase_order_list.append(results['mge']['num_increase_order'] > 0)
+			mge_converged_order_list.append(results['mge']['num_converged_descents'] > 0)
 			# # SOD SM -> GM
 			if results['sod_set_median'] > results['sod_gen_median']:
 				nb_sod_sm2gm[0] += 1
@@ -210,7 +220,11 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 					  results['runtime_precompute_gm'], results['runtime_optimize_ec'], 
 					  results['runtime_generate_preimage'], results['runtime_total'],
 					  results['itrs'], results['converged'],
-					  results['num_updates_ecc'], nb_sod_sm2gm, 
+					  results['num_updates_ecc'], 
+					  results['mge']['num_decrease_order'] > 0, # @todo: not suitable for multi-start mge
+					  results['mge']['num_increase_order'] > 0,
+					  results['mge']['num_converged_descents'] > 0, 
+					  nb_sod_sm2gm, 
  					  nb_dis_k_sm2gm, nb_dis_k_gi2sm, nb_dis_k_gi2gm])
 			f_summary.close()
 			 
@@ -256,6 +270,9 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		itrs_mean = np.mean(itrs_list)
 		num_converged = np.sum(converged_list)
 		num_updates_ecc_mean = np.mean(num_updates_ecc_list)
+		num_mge_decrease_order = np.sum(mge_decrease_order_list)
+		num_mge_increase_order = np.sum(mge_increase_order_list)
+		num_mge_converged = np.sum(mge_converged_order_list)
 		sod_sm2gm_mean = get_relations(np.sign(sod_gm_mean - sod_sm_mean))
 		dis_k_sm2gm_mean = get_relations(np.sign(dis_k_gm_mean - dis_k_sm_mean))
 		dis_k_gi2sm_mean = get_relations(np.sign(dis_k_sm_mean - dis_k_gi_min_mean))
@@ -270,7 +287,9 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 				  dis_k_gi2sm_mean, dis_k_gi2gm_mean,
 				  time_precompute_gm_mean, time_optimize_ec_mean,
 				  time_generate_mean, time_total_mean, itrs_mean, 
-				  num_converged, num_updates_ecc_mean])
+				  num_converged, num_updates_ecc_mean,
+				  num_mge_decrease_order, num_mge_increase_order,
+				  num_mge_converged])
 		f_summary.close()
 		
 	# save total pairwise kernel distances.
@@ -300,7 +319,8 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 			  'min dis_k gi', 'SOD SM -> GM', 'dis_k SM -> GM', 'dis_k gi -> SM', 
 			  'dis_k gi -> GM', 'edit cost constants', 'time precompute gm',
 			  'time optimize ec', 'time generate preimage', 'time total',
-			  'itrs', 'converged', 'num updates ecc'])
+			  'itrs', 'converged', 'num updates ecc', 'mge decrease order', 
+			  'mge increase order', 'mge converged'])
 	f_detail.close()
 	
 #	fn_output_summary = 'results_summary.' + ds_name + '.' + gkernel + '.' + fit_method + '.csv'
@@ -312,7 +332,8 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 			  'min dis_k gi', 'SOD SM -> GM', 'dis_k SM -> GM', 'dis_k gi -> SM', 
 			  'dis_k gi -> GM', 'time precompute gm', 'time optimize ec', 
 			  'time generate preimage', 'time total', 'itrs', 'num converged', 
-			  'num updates ecc', '# SOD SM -> GM', '# dis_k SM -> GM', 
+			  'num updates ecc', 'mge num decrease order', 'mge num increase order', 
+			  'mge num converged', '# SOD SM -> GM', '# dis_k SM -> GM', 
 			  '# dis_k gi -> SM', '# dis_k gi -> GM'])
 # 			   'repeats better SOD SM -> GM', 
 # 			  'repeats better dis_k SM -> GM', 'repeats better dis_k gi -> SM', 
@@ -418,6 +439,8 @@ def compute_kernel(Gn, graph_kernel, node_label, edge_label, verbose, parallel='
 		Kmatrix, _ = weisfeilerlehmankernel(Gn, node_label=node_label, edge_label=edge_label,
 								   height=4, base_kernel='subtree', parallel=None,
 								   n_jobs=multiprocessing.cpu_count(), verbose=verbose)
+	else:
+		raise Exception('The graph kernel "', graph_kernel, '" is not defined.')	
 		
 	# normalization
 	Kmatrix_diag = Kmatrix.diagonal().copy()

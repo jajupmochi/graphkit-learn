@@ -12,4 +12,4 @@ from gklearn.kernels.structural_sp import StructuralSP
 from gklearn.kernels.shortest_path import ShortestPath
 from gklearn.kernels.path_up_to_h import PathUpToH
 from gklearn.kernels.treelet import Treelet
-from gklearn.kernels.weisfeiler_lehman import WeisfeilerLehman
+from gklearn.kernels.weisfeiler_lehman import WeisfeilerLehman, WLSubtree

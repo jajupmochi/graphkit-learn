@@ -56,13 +56,14 @@ class Dataset(object):
 		self.__node_attrs = label_names['node_attrs']
 		self.__edge_labels = label_names['edge_labels']
 		self.__edge_attrs = label_names['edge_attrs']
+		self.clean_labels()
 		
 		
 	def load_graphs(self, graphs, targets=None):
 		# this has to be followed by set_labels().
 		self.__graphs = graphs
 		self.__targets = targets
-# 		self.set_labels_attrs()
+#		self.set_labels_attrs() # @todo
 		
 		
 	def load_predefined_dataset(self, ds_name):
@@ -89,6 +90,9 @@ class Dataset(object):
 		elif ds_name == 'Cuneiform':
 			ds_file = current_path + '../../datasets/Cuneiform/Cuneiform_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'DD':
+			ds_file = current_path + '../../datasets/DD/DD_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Fingerprint':
 			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
@@ -113,6 +117,9 @@ class Dataset(object):
 		elif ds_name == 'MUTAG':
 			ds_file = current_path + '../../datasets/MUTAG/MUTAG_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'PAH':
+			ds_file = current_path + '../../datasets/PAH/dataset.ds'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'SYNTHETIC':
 			pass
 		elif ds_name == 'SYNTHETICnew':
@@ -120,11 +127,14 @@ class Dataset(object):
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Synthie':
 			pass
+		else:
+			raise Exception('The dataset name "', ds_name, '" is not pre-defined.')
 	
 		self.__node_labels = label_names['node_labels']
 		self.__node_attrs = label_names['node_attrs']
 		self.__edge_labels = label_names['edge_labels']
 		self.__edge_attrs = label_names['edge_attrs']
+		self.clean_labels()
 	
 
 	def set_labels(self, node_labels=[], node_attrs=[], edge_labels=[], edge_attrs=[]):
@@ -138,27 +148,27 @@ class Dataset(object):
 		# @todo: remove labels which have only one possible values.
 		if node_labels is None:
 			self.__node_labels = self.__graphs[0].graph['node_labels']
-# 			# graphs are considered node unlabeled if all nodes have the same label.
-# 			infos.update({'node_labeled': is_nl if node_label_num > 1 else False})
+#			# graphs are considered node unlabeled if all nodes have the same label.
+#			infos.update({'node_labeled': is_nl if node_label_num > 1 else False})
 		if node_attrs is None:
 			self.__node_attrs = self.__graphs[0].graph['node_attrs']
-# 		for G in Gn:
-# 			for n in G.nodes(data=True):
-# 				if 'attributes' in n[1]:
-# 					return len(n[1]['attributes'])
-# 		return 0
+#		for G in Gn:
+#			for n in G.nodes(data=True):
+#				if 'attributes' in n[1]:
+#					return len(n[1]['attributes'])
+#		return 0
 		if edge_labels is None:
 			self.__edge_labels = self.__graphs[0].graph['edge_labels']
-# 			# graphs are considered edge unlabeled if all edges have the same label.
-# 			infos.update({'edge_labeled': is_el if edge_label_num > 1 else False})
+#			# graphs are considered edge unlabeled if all edges have the same label.
+#			infos.update({'edge_labeled': is_el if edge_label_num > 1 else False})
 		if edge_attrs is None:
 			self.__edge_attrs = self.__graphs[0].graph['edge_attrs']
-# 		for G in Gn:
-# 			if nx.number_of_edges(G) > 0:
-# 				for e in G.edges(data=True):
-# 					if 'attributes' in e[2]:
-# 						return len(e[2]['attributes'])
-# 		return 0
+#		for G in Gn:
+#			if nx.number_of_edges(G) > 0:
+#				for e in G.edges(data=True):
+#					if 'attributes' in e[2]:
+#						return len(e[2]['attributes'])
+#		return 0
 			
 			
 	def get_dataset_infos(self, keys=None):
@@ -323,7 +333,7 @@ class Dataset(object):
 			if self.__node_label_nums is None:
 				self.__node_label_nums = {}
 				for node_label in self.__node_labels:
-					self.__node_label_nums[node_label] = self.get_node_label_num(node_label)
+					self.__node_label_nums[node_label] = self.__get_node_label_num(node_label)
 			infos['node_label_nums'] = self.__node_label_nums
 	
 		if 'edge_label_dim' in keys:
@@ -335,7 +345,7 @@ class Dataset(object):
 			if self.__edge_label_nums is None:
 				self.__edge_label_nums = {}
 				for edge_label in self.__edge_labels:
-					self.__edge_label_nums[edge_label] = self.get_edge_label_num(edge_label)
+					self.__edge_label_nums[edge_label] = self.__get_edge_label_num(edge_label)
 			infos['edge_label_nums'] = self.__edge_label_nums
 	
 		if 'directed' in keys or 'substructures' in keys:
@@ -411,33 +421,95 @@ class Dataset(object):
 		
 		
 	def remove_labels(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
+		node_labels = [item for item in node_labels if item in self.__node_labels]
+		edge_labels = [item for item in edge_labels if item in self.__edge_labels]
+		node_attrs = [item for item in node_attrs if item in self.__node_attrs]
+		edge_attrs = [item for item in edge_attrs if item in self.__edge_attrs]
+
 		for g in self.__graphs:
 			for nd in g.nodes():
 				for nl in node_labels:
- 					del g.nodes[nd][nl]
+					del g.nodes[nd][nl]
 				for na in node_attrs:
 					del g.nodes[nd][na]
 			for ed in g.edges():
 				for el in edge_labels:
- 					del g.edges[ed][el]
+					del g.edges[ed][el]
 				for ea in edge_attrs:
- 					del g.edges[ed][ea]
+					del g.edges[ed][ea]
 		if len(node_labels) > 0:
- 			self.__node_labels = [nl for nl in self.__node_labels if nl not in node_labels]
+			self.__node_labels = [nl for nl in self.__node_labels if nl not in node_labels]
 		if len(edge_labels) > 0:
- 			self.__edge_labels = [el for el in self.__edge_labels if el not in edge_labels]
+			self.__edge_labels = [el for el in self.__edge_labels if el not in edge_labels]
 		if len(node_attrs) > 0:
- 			self.__node_attrs = [na for na in self.__node_attrs if na not in node_attrs]
+			self.__node_attrs = [na for na in self.__node_attrs if na not in node_attrs]
 		if len(edge_attrs) > 0:
- 			self.__edge_attrs = [ea for ea in self.__edge_attrs if ea not in edge_attrs]
-		
+			self.__edge_attrs = [ea for ea in self.__edge_attrs if ea not in edge_attrs]
+	
+			
+	def clean_labels(self):
+		labels = []
+		for name in self.__node_labels:
+			label = set()
+			for G in self.__graphs:
+				label = label | set(nx.get_node_attributes(G, name).values())
+				if len(label) > 1:
+					labels.append(name)
+					break
+			if len(label) < 2:
+				for G in self.__graphs:
+					for nd in G.nodes():
+						del G.nodes[nd][name]
+		self.__node_labels = labels
+
+		labels = []
+		for name in self.__edge_labels:
+			label = set()
+			for G in self.__graphs:
+				label = label | set(nx.get_edge_attributes(G, name).values())
+				if len(label) > 1:
+					labels.append(name)
+					break
+			if len(label) < 2:
+				for G in self.__graphs:
+					for ed in G.edges():
+						del G.edges[ed][name]
+		self.__edge_labels = labels
+
+		labels = []
+		for name in self.__node_attrs:
+			label = set()
+			for G in self.__graphs:
+				label = label | set(nx.get_node_attributes(G, name).values())
+				if len(label) > 1:
+					labels.append(name)
+					break
+			if len(label) < 2:
+				for G in self.__graphs:
+					for nd in G.nodes():
+						del G.nodes[nd][name]
+		self.__node_attrs = labels
+
+		labels = []
+		for name in self.__edge_attrs:
+			label = set()
+			for G in self.__graphs:
+				label = label | set(nx.get_edge_attributes(G, name).values())
+				if len(label) > 1:
+					labels.append(name)
+					break
+			if len(label) < 2:
+				for G in self.__graphs:
+					for ed in G.edges():
+						del G.edges[ed][name]
+		self.__edge_attrs = labels
+				
 		
 	def cut_graphs(self, range_):
 		self.__graphs = [self.__graphs[i] for i in range_]
 		if self.__targets is not None:
 			self.__targets = [self.__targets[i] for i in range_]
-		# @todo
-# 		self.set_labels_attrs()
+		self.clean_labels()
 
 
 	def trim_dataset(self, edge_required=False):
@@ -448,8 +520,7 @@ class Dataset(object):
 		idx = [p[0] for p in trimed_pairs]
 		self.__graphs = [p[1] for p in trimed_pairs]
 		self.__targets = [self.__targets[i] for i in idx]
-		# @todo
-# 		self.set_labels_attrs()
+		self.clean_labels()
 		
 	
 	def __get_dataset_size(self):
@@ -652,4 +723,5 @@ def split_dataset_by_target(dataset):
 		sub_dataset.load_graphs(sub_graphs, [key] * len(val))
 		sub_dataset.set_labels(node_labels=dataset.node_labels, node_attrs=dataset.node_attrs, edge_labels=dataset.edge_labels, edge_attrs=dataset.edge_attrs)
 		datasets.append(sub_dataset)
+		# @todo: clean_labels?
 	return datasets
