@@ -1115,7 +1115,12 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 						continue
 					for label in median_labels:
 						weights[label_id] = min(weights[label_id], self.__ged_env.get_node_rel_cost(dict(label), dict(node_labels[label_id])))
-				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=np.array(weights) / np.sum(weights))[0] # for c++ test: xxx[iii] 
+				sum_weight = np.sum(weights)
+				if sum_weight == 0:
+					p = np.array([1 / len(weights)] * len(weights))
+				else:
+					p = np.array(weights) / np.sum(weights)
+				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=p)[0] # for c++ test: xxx[iii] 
 # 				iii += 1 for c++ test
 				median_labels.append(node_labels[selected_label_id])
 				already_selected[selected_label_id] = True
