@@ -5,6 +5,6 @@ networkx>=2.2
 scikit-learn>=0.20.0
 tabulate>=0.8.2
 tqdm>=4.26.0
-# cvxpy # for preimage.
-# cvxopt # for preimage.
-# mosek # for preimage.
+cvxpy # for preimage.
+cvxopt # for preimage.
+mosek # for preimage.
