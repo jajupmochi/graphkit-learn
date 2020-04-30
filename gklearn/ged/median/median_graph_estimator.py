@@ -302,7 +302,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		self.__median_id = gen_median_id
 		self.__state = AlgorithmState.TERMINATED
 		
-		# Get ExchangeGraph representations of the input graphs.
+		# Get NetworkX graph representations of the input graphs.
 		graphs = {}
 		for graph_id in graph_ids:
 			# @todo: get_nx_graph() function may need to be modified according to the coming code.

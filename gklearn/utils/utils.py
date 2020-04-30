@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 from copy import deepcopy
-from enum import Enum, auto
+from enum import Enum, unique
 #from itertools import product
 
 # from tqdm import tqdm
@@ -467,8 +467,9 @@ def get_mlti_dim_edge_attrs(G, attr_names):
 		attributes.append(tuple(attrs[aname] for aname in attr_names))
 	return attributes
 
-
+@unique
 class SpecialLabel(Enum):
-    """can be used to define special labels.
-    """
-    DUMMY = auto # The dummy label.
+	"""can be used to define special labels.
+	"""
+	DUMMY = 1 # The dummy label.
+	# DUMMY = auto # enum.auto does not exist in Python 3.5.
