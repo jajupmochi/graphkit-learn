@@ -7,4 +7,4 @@ tabulate>=0.8.2
 tqdm>=4.26.0
 cvxpy>=1.0.31 # for preimage.
 cvxopt>=1.2.5 # for preimage.
-mosek>=9.2.5 # for preimage.
+mosek>=9.2.5; python_version >= '3.6' # for preimage.
