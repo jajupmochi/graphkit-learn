@@ -54,6 +54,8 @@ def compute_geds(graphs, options={}, parallel=False):
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()	
 	ged_env.init()
+	if parallel:
+		options['threads'] = 1
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 

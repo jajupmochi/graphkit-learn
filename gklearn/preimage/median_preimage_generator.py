@@ -669,6 +669,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		options = self.__mge_options.copy()
 		if not 'seed' in options:
 			options['seed'] = int(round(time.time() * 1000)) # @todo: may not work correctly for possible parallel usage.
+		options['parallel'] = self.__parallel
 		
 		# Select the GED algorithm.
 		self.__mge.set_options(mge_options_to_string(options))
@@ -676,8 +677,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 					  edge_labels=self._dataset.edge_labels, 
 					  node_attrs=self._dataset.node_attrs, 
 					  edge_attrs=self._dataset.edge_attrs)
-		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
-		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		ged_options = self.__ged_options.copy()
+		if self.__parallel:
+			ged_options['threads'] = 1
+		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(ged_options))
+		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(ged_options))
 		
 		# Run the estimator.
 		self.__mge.run(graph_ids, set_median_id, gen_median_id)
