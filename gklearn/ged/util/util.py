@@ -46,7 +46,7 @@ def compute_ged(g1, g2, options):
 	return dis, pi_forward, pi_backward
 
 
-def compute_geds(graphs, options={}, parallel=False):
+def compute_geds(graphs, options={}, parallel=False, verbose=True):
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
@@ -81,8 +81,11 @@ def compute_geds(graphs, options={}, parallel=False):
 			G_listID = listID_toshare
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
+		if verbose:
+			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
 						desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = pool.imap_unordered(do_partial, itr, chunksize)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -98,7 +101,11 @@ def compute_geds(graphs, options={}, parallel=False):
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		for i in tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout):
+		if verbose:
+			iterator = tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = range(len(graphs))
+		for i in iterator:
 #		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
 				dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j])

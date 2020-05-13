@@ -21,4 +21,6 @@ from gklearn.utils.timer import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 from gklearn.utils.utils import compute_gram_matrices_by_class
 from gklearn.utils.utils import SpecialLabel
+from gklearn.utils.utils import normalize_gram_matrix, compute_distance_matrix
 from gklearn.utils.trie import Trie
+from gklearn.utils.knn import knn_cv, knn_classification

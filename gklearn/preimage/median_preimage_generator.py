@@ -281,7 +281,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		options['edge_labels'] = self._dataset.edge_labels
 		options['node_attrs'] = self._dataset.node_attrs
 		options['edge_attrs'] = self._dataset.edge_attrs
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
+		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
 		time_list = [time.time() - time0]
 		edit_cost_list = [self.__init_ecc]  
@@ -323,7 +323,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 			options['edge_labels'] = self._dataset.edge_labels
 			options['node_attrs'] = self._dataset.node_attrs
 			options['edge_attrs'] = self._dataset.edge_attrs
-			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
+			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 			residual_list.append(np.sqrt(np.sum(np.square(np.array(ged_vec) - dis_k_vec))))
 			time_list.append(time.time() - time0)
 			edit_cost_list.append(self.__edit_cost_constants)

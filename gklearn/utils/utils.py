@@ -467,9 +467,37 @@ def get_mlti_dim_edge_attrs(G, attr_names):
 		attributes.append(tuple(attrs[aname] for aname in attr_names))
 	return attributes
 
+
 @unique
 class SpecialLabel(Enum):
 	"""can be used to define special labels.
 	"""
 	DUMMY = 1 # The dummy label.
 	# DUMMY = auto # enum.auto does not exist in Python 3.5.
+	
+	
+def normalize_gram_matrix(gram_matrix):
+	diag = gram_matrix.diagonal().copy()
+	for i in range(len(gram_matrix)):
+		for j in range(i, len(gram_matrix)):
+			gram_matrix[i][j] /= np.sqrt(diag[i] * diag[j])
+			gram_matrix[j][i] = gram_matrix[i][j]
+	return gram_matrix
+	
+	
+def compute_distance_matrix(gram_matrix):
+	dis_mat = np.empty((len(gram_matrix), len(gram_matrix)))
+	for i in range(len(gram_matrix)):
+		for j in range(i, len(gram_matrix)):
+			dis = gram_matrix[i, i] + gram_matrix[j, j] - 2 * gram_matrix[i, j]
+			if dis < 0:
+				if dis > -1e-10:
+					dis = 0
+				else:
+					raise ValueError('The distance is negative.')
+			dis_mat[i, j] = np.sqrt(dis)
+			dis_mat[j, i] = dis_mat[i, j]
+	dis_max = np.max(np.max(dis_mat))
+	dis_min = np.min(np.min(dis_mat[dis_mat != 0]))
+	dis_mean = np.mean(np.mean(dis_mat))
+	return dis_mat, dis_max, dis_min, dis_mean

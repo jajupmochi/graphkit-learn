@@ -522,6 +522,20 @@ class Dataset(object):
 		self.__targets = [self.__targets[i] for i in idx]
 		self.clean_labels()
 		
+		
+	def copy(self):
+		dataset = Dataset()
+		graphs = self.__graphs.copy() if self.__graphs is not None else None
+		target = self.__targets.copy() if self.__targets is not None else None
+		node_labels = self.__node_labels.copy() if self.__node_labels is not None else None
+		node_attrs = self.__node_attrs.copy() if self.__node_attrs is not None else None
+		edge_labels = self.__edge_labels.copy() if self.__edge_labels is not None else None
+		edge_attrs = self.__edge_attrs.copy() if self.__edge_attrs is not None else None
+		dataset.load_graphs(graphs, target)
+		dataset.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
+		# @todo: clean_labels and add other class members?
+		return dataset
+		
 	
 	def __get_dataset_size(self):
 		return len(self.__graphs)
@@ -721,7 +735,11 @@ def split_dataset_by_target(dataset):
 		sub_graphs = [graphs[i] for i in val]
 		sub_dataset = Dataset()
 		sub_dataset.load_graphs(sub_graphs, [key] * len(val))
-		sub_dataset.set_labels(node_labels=dataset.node_labels, node_attrs=dataset.node_attrs, edge_labels=dataset.edge_labels, edge_attrs=dataset.edge_attrs)
+		node_labels = dataset.node_labels.copy() if dataset.node_labels is not None else None
+		node_attrs = dataset.node_attrs.copy() if dataset.node_attrs is not None else None
+		edge_labels = dataset.edge_labels.copy() if dataset.edge_labels is not None else None
+		edge_attrs = dataset.edge_attrs.copy() if dataset.edge_attrs is not None else None
+		sub_dataset.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
 		datasets.append(sub_dataset)
 		# @todo: clean_labels?
 	return datasets

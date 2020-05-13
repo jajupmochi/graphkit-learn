@@ -67,6 +67,9 @@ class GraphKernel(object):
 			
 			
 	def normalize_gm(self, gram_matrix):
+		import warnings
+		warnings.warn('gklearn.kernels.graph_kernel.normalize_gm will be deprecated, use gklearn.utils.normalize_gram_matrix instead', DeprecationWarning)
+
 		diag = gram_matrix.diagonal().copy()
 		for i in range(len(gram_matrix)):
 			for j in range(i, len(gram_matrix)):

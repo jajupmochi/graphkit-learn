@@ -45,7 +45,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	if save_results:
 		# create result files.
 		print('creating output files...')
-		fn_output_detail, fn_output_summary = __init_output_file(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
+		fn_output_detail, fn_output_summary = __init_output_file_preimage(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
 		
 	sod_sm_list = []
 	sod_gm_list = []
@@ -82,22 +82,22 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		gram_matrix_unnorm_list = []
 		time_precompute_gm_list = []
 	else:
-		gmfile = np.load()
-		gram_matrix_unnorm_list = gmfile['gram_matrix_unnorm_list']
-		time_precompute_gm_list = gmfile['run_time_list']
-# 	repeats_better_sod_sm2gm = []
-# 	repeats_better_dis_k_sm2gm = []
-# 	repeats_better_dis_k_gi2sm = []
-# 	repeats_better_dis_k_gi2gm = []
+		gmfile = np.load(gm_fname, allow_pickle=True) # @todo: may not be safe.
+		gram_matrix_unnorm_list = [item for item in gmfile['gram_matrix_unnorm_list']]
+		time_precompute_gm_list = gmfile['run_time_list'].tolist()
+#	repeats_better_sod_sm2gm = []
+#	repeats_better_dis_k_sm2gm = []
+#	repeats_better_dis_k_gi2sm = []
+#	repeats_better_dis_k_gi2gm = []
 		
 		
-	print('start generating preimage for each class of target...')
+	print('starting generating preimage for each class of target...')
 	idx_offset = 0
 	for idx, dataset in enumerate(datasets):
 		target = dataset.targets[0]
 		print('\ntarget =', target, '\n')
-# 		if target != 1:
-#  			continue
+#		if target != 1:
+# 			continue
 		
 		num_graphs = len(dataset.graphs)
 		if num_graphs < 2:
@@ -148,7 +148,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 					  results['sod_set_median'], results['sod_gen_median'],
 					  results['k_dis_set_median'], results['k_dis_gen_median'], 
 					  results['k_dis_dataset'], sod_sm2gm, dis_k_sm2gm, 
-					  dis_k_gi2sm, dis_k_gi2gm, 	results['edit_cost_constants'],
+					  dis_k_gi2sm, dis_k_gi2gm,	results['edit_cost_constants'],
 					  results['runtime_precompute_gm'], results['runtime_optimize_ec'], 
 					  results['runtime_generate_preimage'], results['runtime_total'],
 					  results['itrs'], results['converged'],
@@ -177,7 +177,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			# # SOD SM -> GM
 			if results['sod_set_median'] > results['sod_gen_median']:
 				nb_sod_sm2gm[0] += 1
-	# 			repeats_better_sod_sm2gm.append(1)
+	#			repeats_better_sod_sm2gm.append(1)
 			elif results['sod_set_median'] == results['sod_gen_median']:
 				nb_sod_sm2gm[1] += 1
 			elif results['sod_set_median'] < results['sod_gen_median']:
@@ -185,7 +185,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			# # dis_k SM -> GM
 			if results['k_dis_set_median'] > results['k_dis_gen_median']:
 				nb_dis_k_sm2gm[0] += 1
-	# 			repeats_better_dis_k_sm2gm.append(1)
+	#			repeats_better_dis_k_sm2gm.append(1)
 			elif results['k_dis_set_median'] == results['k_dis_gen_median']:
 				nb_dis_k_sm2gm[1] += 1
 			elif results['k_dis_set_median'] < results['k_dis_gen_median']:
@@ -193,7 +193,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			# # dis_k gi -> SM
 			if results['k_dis_dataset'] > results['k_dis_set_median']:
 				nb_dis_k_gi2sm[0] += 1
-	# 			repeats_better_dis_k_gi2sm.append(1)
+	#			repeats_better_dis_k_gi2sm.append(1)
 			elif results['k_dis_dataset'] == results['k_dis_set_median']:
 				nb_dis_k_gi2sm[1] += 1
 			elif results['k_dis_dataset'] < results['k_dis_set_median']:
@@ -201,7 +201,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			# # dis_k gi -> GM
 			if results['k_dis_dataset'] > results['k_dis_gen_median']:
 				nb_dis_k_gi2gm[0] += 1
-	# 			repeats_better_dis_k_gi2gm.append(1)
+	#			repeats_better_dis_k_gi2gm.append(1)
 			elif results['k_dis_dataset'] == results['k_dis_gen_median']:
 				nb_dis_k_gi2gm[1] += 1
 			elif results['k_dis_dataset'] < results['k_dis_gen_median']:
@@ -225,7 +225,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 					  results['mge']['num_increase_order'] > 0,
 					  results['mge']['num_converged_descents'] > 0, 
 					  nb_sod_sm2gm, 
- 					  nb_dis_k_sm2gm, nb_dis_k_gi2sm, nb_dis_k_gi2gm])
+					  nb_dis_k_sm2gm, nb_dis_k_gi2sm, nb_dis_k_gi2gm])
 			f_summary.close()
 			 
 		# save median graphs.
@@ -235,15 +235,15 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 			print('Saving median graphs to files...')
 			fn_pre_sm = dir_save + 'medians/set_median.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.set_median, fn_pre_sm + '.gxl', method='default', 
-					node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+					node_labels=dataset.node_labels, edge_labels=dataset.edge_labels,	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
 			fn_pre_gm = dir_save + 'medians/gen_median.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.gen_median, fn_pre_gm + '.gxl', method='default',
-		   			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+		  			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels,	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
 			fn_best_dataset = dir_save + 'medians/g_best_dataset.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.best_from_dataset, fn_best_dataset + '.gxl', method='default',
-		   			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels, 	
+		  			node_labels=dataset.node_labels, edge_labels=dataset.edge_labels,	
 					node_attrs=dataset.node_attrs, edge_attrs=dataset.edge_attrs)
 		
 		# plot median graphs.
@@ -304,10 +304,10 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	if (load_gm == 'auto' and not gmfile_exist) or not load_gm:
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=time_precompute_gm_list)	
 
-	print('\ncomplete.')	
+	print('\ncomplete.\n')	
 
 	
-def __init_output_file(ds_name, gkernel, fit_method, dir_output):
+def __init_output_file_preimage(ds_name, gkernel, fit_method, dir_output):
 	if not os.path.exists(dir_output):
 		os.makedirs(dir_output)
 #	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.' + fit_method + '.csv'
@@ -335,9 +335,9 @@ def __init_output_file(ds_name, gkernel, fit_method, dir_output):
 			  'num updates ecc', 'mge num decrease order', 'mge num increase order', 
 			  'mge num converged', '# SOD SM -> GM', '# dis_k SM -> GM', 
 			  '# dis_k gi -> SM', '# dis_k gi -> GM'])
-# 			   'repeats better SOD SM -> GM', 
-# 			  'repeats better dis_k SM -> GM', 'repeats better dis_k gi -> SM', 
-# 			  'repeats better dis_k gi -> GM'])
+#			   'repeats better SOD SM -> GM', 
+#			  'repeats better dis_k SM -> GM', 'repeats better dis_k gi -> SM', 
+#			  'repeats better dis_k gi -> GM'])
 	f_summary.close()
 	
 	return fn_output_detail, fn_output_summary
@@ -462,6 +462,8 @@ def gram2distances(Kmatrix):
 
 def kernel_distance_matrix(Gn, node_label, edge_label, Kmatrix=None, 
 						   gkernel=None, verbose=True):
+	import warnings
+	warnings.warn('gklearn.preimage.utils.kernel_distance_matrix is deprecated, use gklearn.kernels.graph_kernel.compute_distance_matrix or gklearn.utils.compute_distance_matrix instead', DeprecationWarning)
 	dis_mat = np.empty((len(Gn), len(Gn)))
 	if Kmatrix is None:
 		Kmatrix = compute_kernel(Gn, gkernel, node_label, edge_label, verbose)

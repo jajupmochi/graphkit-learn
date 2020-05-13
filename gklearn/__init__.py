@@ -18,4 +18,4 @@ __date__    = "November 2017"
 # import sub modules
 # from gklearn import c_ext
 # from gklearn import ged
-from gklearn import utils
+# from gklearn import utils
