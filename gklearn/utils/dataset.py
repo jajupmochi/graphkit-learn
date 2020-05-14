@@ -525,7 +525,7 @@ class Dataset(object):
 		
 	def copy(self):
 		dataset = Dataset()
-		graphs = self.__graphs.copy() if self.__graphs is not None else None
+		graphs = [g.copy() for g in self.__graphs] if self.__graphs is not None else None
 		target = self.__targets.copy() if self.__targets is not None else None
 		node_labels = self.__node_labels.copy() if self.__node_labels is not None else None
 		node_attrs = self.__node_attrs.copy() if self.__node_attrs is not None else None

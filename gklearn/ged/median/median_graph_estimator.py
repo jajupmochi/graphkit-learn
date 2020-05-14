@@ -370,7 +370,9 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			self.__ged_env.init(self.__ged_env.get_init_type())
 			
 			# Compute node maps and sum of distances for initial median.
+# 			xxx = self.__node_maps_from_median
 			self.__compute_init_node_maps(graph_ids, gen_median_id)
+# 			yyy = self.__node_maps_from_median
 			
 			self.__best_init_sum_of_distances = min(self.__best_init_sum_of_distances, self.__sum_of_distances)
 			self.__ged_env.load_nx_graph(median, set_median_id)
@@ -557,7 +559,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 	
 	def __median_available(self):
-		return self.__gen_median_id != np.inf
+		return self.__median_id != np.inf
 	
 	
 	def get_state(self):
@@ -827,6 +829,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		
 		
 	def __update_node_labels(self, graphs, median):
+# 		print('----------------------------')
 		
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
@@ -834,14 +837,15 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 		# Iterate through all nodes of the median.
 		for i in range(0, nx.number_of_nodes(median)):
-#			print('i: ', i)
+# 			print('i: ', i)
 			# Collect the labels of the substituted nodes.
 			node_labels = []
 			for graph_id, graph in graphs.items():
-#				print('graph_id: ', graph_id)
-#				print(self.__node_maps_from_median[graph_id])
+# 				print('graph_id: ', graph_id)
+# 				print(self.__node_maps_from_median[graph_id])
+# 				print(self.__node_maps_from_median[graph_id].get_forward_map(), self.__node_maps_from_median[graph_id].get_backward_map())
 				k = self.__node_maps_from_median[graph_id].image(i)
-#				print('k: ', k)
+# 				print('k: ', k)
 				if k != np.inf:
 					node_labels.append(graph.nodes[k])
 					
@@ -961,6 +965,11 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		if self.__print_to_stdout == 2:
 			print('Trying to decrease order: ... ', end='')
 			
+		if nx.number_of_nodes(median) <= 1:
+			if self.__print_to_stdout == 2:
+				print('median graph has only 1 node, skip decrease.')
+			return False
+			
 		# Initialize ID of the node that is to be deleted.
 		id_deleted_node = [None] # @todo: or np.inf
 		decreased_order = False
@@ -968,7 +977,11 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		# Decrease the order as long as the best deletion delta is negative.
 		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon:
 			decreased_order = True
-			median = self.__delete_node_from_median(id_deleted_node[0], median)
+			self.__delete_node_from_median(id_deleted_node[0], median)
+			if nx.number_of_nodes(median) <= 1:
+				if self.__print_to_stdout == 2:
+					print('decrease stopped because median graph remains only 1 node. ', end='')
+				break
 			
 		# Print information about current iteration.
 		if self.__print_to_stdout == 2:
@@ -1011,16 +1024,22 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 	
 	def __delete_node_from_median(self, id_deleted_node, median):
 		# Update the median.
+		mapping = {}
+		for i in range(0, nx.number_of_nodes(median)):
+			if i != id_deleted_node:
+				new_i = (i if i < id_deleted_node else (i - 1))
+				mapping[i] = new_i
 		median.remove_node(id_deleted_node)
-		median = nx.convert_node_labels_to_integers(median, first_label=0, ordering='default', label_attribute=None) # @todo:  This doesn't guarantee that the order is the same as in G.
+		nx.relabel_nodes(median, mapping, copy=False)
 		
 		# Update the node maps.
+# 		xxx = self.__node_maps_from_median
 		for key, node_map in self.__node_maps_from_median.items():
 			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
 			is_unassigned_target_node = [True] * node_map.num_target_nodes()
 			for i in range(0, nx.number_of_nodes(median) + 1):
 				if i != id_deleted_node:
-					new_i = (i if i < id_deleted_node else i - 1)
+					new_i = (i if i < id_deleted_node else (i - 1))
 					k = node_map.image(i)
 					new_node_map.add_assignment(new_i, k)
 					if k != np.inf:
@@ -1028,13 +1047,12 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			for k in range(0, node_map.num_target_nodes()):
 				if is_unassigned_target_node[k]:
 					new_node_map.add_assignment(np.inf, k)
+# 			print(self.__node_maps_from_median[key].get_forward_map(), self.__node_maps_from_median[key].get_backward_map())
 # 			print(new_node_map.get_forward_map(), new_node_map.get_backward_map())
 			self.__node_maps_from_median[key] = new_node_map
 			
 		# Increase overall number of decreases.
 		self.__num_decrease_order += 1
-		
-		return median
 	
 	
 	def __increase_order(self, graphs, median):
@@ -1230,15 +1248,22 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 						continue
 					for label in median_labels:
 						weights[label_id] = min(weights[label_id], self.__ged_env.get_node_rel_cost(dict(label), dict(node_labels[label_id])))
-				sum_weight = np.sum(weights)
-				if sum_weight == 0:
-					p = np.array([1 / len(weights)] * len(weights))
-				else:
-					p = np.array(weights) / np.sum(weights)
-				selected_label_id = urng.choice(range(0, len(weights)), size=1, p=p)[0] # for c++ test: xxx[iii] 
+				
+				# get non-zero weights.
+				weights_p, idx_p = [], []
+				for i, w in enumerate(weights):
+					if w != 0:
+						weights_p.append(w)
+						idx_p.append(i)
+				if len(weights_p) > 0:
+					p = np.array(weights_p) / np.sum(weights_p)
+					selected_label_id = urng.choice(range(0, len(weights_p)), size=1, p=p)[0] # for c++ test: xxx[iii] 
+					selected_label_id = idx_p[selected_label_id]
 # 				iii += 1 for c++ test
-				median_labels.append(node_labels[selected_label_id])
-				already_selected[selected_label_id] = True
+					median_labels.append(node_labels[selected_label_id])
+					already_selected[selected_label_id] = True
+				else: # skip the loop when all node_labels are selected. This happens when len(node_labels) <= self.__num_inits_increase_order.
+					break
 		else:
 			# Compute the initial node medians as the medians of randomly generated clusters of (roughly) equal size.
 			# @todo: go through and test.
@@ -1315,6 +1340,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				 
 	
 	def __update_node_label(self, node_labels, node_label):
+		if len(node_labels) == 0: # @todo: check if this is the correct solution. Especially after calling __update_config().
+			return False
 		new_node_label = self.__get_median_node_label(node_labels)
 		if self.__ged_env.get_node_rel_cost(new_node_label, node_label) > self.__epsilon:
 			node_label.clear()
@@ -1360,47 +1387,6 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 		# Increase overall number of increases.
 		self.__num_increase_order += 1
-			
-	
-	def __improve_sum_of_distances(self, timer):
-		pass
-	
-	
-	def __median_available(self):
-		return self.__median_id != np.inf
-		
-				
-# 	def __get_node_image_from_map(self, node_map, node):
-# 		"""
-# 		Return ID of the node mapping of `node` in `node_map`.
-
-# 		Parameters
-# 		----------
-# 		node_map : list[tuple(int, int)]
-# 			List of node maps where the mapping node is found.
-# 		
-# 		node : int
-# 			The mapping node of this node is returned
-
-# 		Raises
-# 		------
-# 		Exception
-# 			If the node with ID `node` is not contained in the source nodes of the node map.
-
-# 		Returns
-# 		-------
-# 		int
-# 			ID of the mapping of `node`.
-# 			
-# 		Notes
-# 		-----
-# 		This function is not implemented in the `ged::MedianGraphEstimator` class of the `GEDLIB` library. Instead it is a Python implementation of the `ged::NodeMap::image` function.
-# 		"""
-# 		if node < len(node_map):
-# 			return node_map[node][1] if node_map[node][1] < len(node_map) else np.inf
-# 		else:
-# 			raise Exception('The node with ID ', str(node), ' is not contained in the source nodes of the node map.')
-# 		return np.inf
 				
 	
 	def __are_graphs_equal(self, g1, g2):

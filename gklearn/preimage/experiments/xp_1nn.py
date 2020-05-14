@@ -31,7 +31,7 @@ def xp_knn_1_1():
 		mpg_options = {'fit_method': 'k-graphs',
 					   'init_ecc': [0.675, 0.675, 0.75, 0.425, 0.425],
 					   'ds_name': ds_name,
-					   'parallel': True, # False
+					   'parallel': False, # False
 					   'time_limit_in_sec': 0,
 					   'max_itrs': 100,
 					   'max_itrs_without_update': 3,
@@ -100,4 +100,10 @@ def xp_knn_1_1():
 
 
 if __name__ == '__main__':
-	xp_knn_1_1()
+	import pdb, traceback
+	try:
+		xp_knn_1_1()
+	except:
+		extype, value, tb = sys.exc_info()
+		traceback.print_exc()
+		pdb.post_mortem(tb)

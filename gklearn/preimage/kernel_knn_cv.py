@@ -29,7 +29,6 @@ def kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_opti
 		dataset_all.remove_labels(**irrelevant_labels)
 	if cut_range is not None:
 		dataset_all.cut_graphs(cut_range)
-#	datasets = split_dataset_by_target(dataset_all)
 
 	if save_results:
 		# create result files.
@@ -86,7 +85,7 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 			median_set = G_app[i_start:i_end]
 			
 			dataset = dataset_all.copy()
-			dataset.load_graphs(median_set.copy(), targets=None)
+			dataset.load_graphs([g.copy() for g in median_set], targets=None)
 			mge_options['update_order'] = True
 			mpg_options['gram_matrix_unnorm'] = gm_unnorm_trial[i_start:i_end,i_start:i_end].copy()
 			mpg_options['runtime_precompute_gm'] = 0
@@ -104,7 +103,7 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 		for i_app, G_app in enumerate(medians):
 			# compute dis_mat between medians.
 			dataset = dataset_all.copy()
-			dataset.load_graphs(G_app.copy(), targets=None)
+			dataset.load_graphs([g.copy() for g in G_app], targets=None)
 			gm_app_unnorm, _ = __compute_gram_matrix_unnorm(dataset, kernel_options.copy())
 			
 			# compute the entire Gram matrix.
@@ -204,7 +203,7 @@ def __kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, g
 		print('\nperforming k-nn...')
 		# compute dis_mat between medians.
 		dataset = dataset_all.copy()
-		dataset.load_graphs(best_graphs.copy(), targets=None)
+		dataset.load_graphs([g.copy() for g in best_graphs], targets=None)
 		gm_app_unnorm, _ = __compute_gram_matrix_unnorm(dataset, kernel_options.copy())
 		
 		# compute the entire Gram matrix.

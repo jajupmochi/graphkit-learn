@@ -891,8 +891,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 		ged_options = self.__ged_options.copy()
 		if self.__parallel:
 			ged_options['threads'] = 1
-		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(ged_options))
-		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(ged_options))
+		self.__mge.set_init_method(ged_options['method'], ged_options_to_string(ged_options))
+		self.__mge.set_descent_method(ged_options['method'], ged_options_to_string(ged_options))
 		
 		# Run the estimator.
 		self.__mge.run(graph_ids, set_median_id, gen_median_id)
