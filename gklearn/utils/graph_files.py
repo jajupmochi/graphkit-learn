@@ -494,7 +494,8 @@ def load_tud(filename):
 					   'edge_labels': [], 'edge_attrs': []}
 		class_label_map = None
 		class_label_map_strings = []
-		content_rm = open(frm).read().splitlines()
+		with open(frm) as rm:
+			content_rm = rm.read().splitlines()
 		i = 0
 		while i < len(content_rm):
 			line = content_rm[i].strip()
@@ -558,16 +559,20 @@ def load_tud(filename):
 		label_names = {'node_labels': [], 'node_attrs': [], 
 					   'edge_labels': [], 'edge_attrs': []}
 		class_label_map = None
-
-	content_gi = open(fgi).read().splitlines()  # graph indicator
-	content_am = open(fam).read().splitlines()  # adjacency matrix
+	
+	with open(fgi) as gi:
+		content_gi = gi.read().splitlines()  # graph indicator
+	with open(fam) as am:
+		content_am = am.read().splitlines()  # adjacency matrix
 	
 	# load targets.
 	if 'fgl' in locals():
-		content_targets = open(fgl).read().splitlines()  # targets (classification)
+		with open(fgl) as gl:
+			content_targets = gl.read().splitlines()  # targets (classification)
 		targets = [float(i) for i in content_targets]
 	elif 'fga' in locals():
-		content_targets = open(fga).read().splitlines()  # targets (regression)
+		with open(fga) as ga:
+			content_targets = ga.read().splitlines()  # targets (regression)
 		targets = [int(i) for i in content_targets]
 	else:
 		raise Exception('Can not find targets file. Please make sure there is a "', ds_name, '_graph_labels.txt" or "', ds_name, '_graph_attributes.txt"', 'file in your dataset folder.')
@@ -577,7 +582,8 @@ def load_tud(filename):
 	# create graphs and add nodes
 	data = [nx.Graph(name=str(i)) for i in range(0, len(content_targets))]
 	if 'fnl' in locals():
-		content_nl = open(fnl).read().splitlines()  # node labels
+		with open(fnl) as nl:
+			content_nl = nl.read().splitlines()  # node labels
 		for idx, line in enumerate(content_gi):
 			# transfer to int first in case of unexpected blanks
 			data[int(line) - 1].add_node(idx)
@@ -605,7 +611,8 @@ def load_tud(filename):
 
 	# add edge labels
 	if 'fel' in locals():
-		content_el = open(fel).read().splitlines()
+		with open(fel) as el:
+			content_el = el.read().splitlines()
 		for idx, line in enumerate(content_el):
 			labels = [l.strip() for l in line.split(',')]
 			n = [int(i) - 1 for i in content_am[idx].split(',')]
@@ -621,7 +628,8 @@ def load_tud(filename):
 
 	# add node attributes
 	if 'fna' in locals():
-		content_na = open(fna).read().splitlines()
+		with open(fna) as na:
+			content_na = na.read().splitlines()
 		for idx, line in enumerate(content_na):
 			attrs = [a.strip() for a in line.split(',')]
 			g = int(content_gi[idx]) - 1
@@ -636,7 +644,8 @@ def load_tud(filename):
 
 	# add edge attributes
 	if 'fea' in locals():
-		content_ea = open(fea).read().splitlines()
+		with open(fea) as ea:
+			content_ea = ea.read().splitlines()
 		for idx, line in enumerate(content_ea):
 			attrs = [a.strip() for a in line.split(',')]
 			n = [int(i) - 1 for i in content_am[idx].split(',')]
@@ -669,7 +678,8 @@ def load_from_ds(filename, filename_targets):
 	data = []
 	y = []
 	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
-	content = open(filename).read().splitlines()
+	with open(filename) as fn:
+		content = fn.read().splitlines()
 	extension = splitext(content[0].split(' ')[0])[1][1:]
 	if extension == 'ct':
 		load_file_fun = load_ct
@@ -691,8 +701,9 @@ def load_from_ds(filename, filename_targets):
 			g, l_names = load_file_fun(dirname_dataset + '/' + tmp.replace('#', '', 1))
 			data.append(g)
 			__append_label_names(label_names, l_names)
-															   
-		content_y = open(filename_targets).read().splitlines()
+		
+		with open(filename_targets) as fnt:
+			content_y = fnt.read().splitlines()
 		# assume entries in filename and filename_targets have the same order.
 		for item in content_y:
 			tmp = item.split(' ')
