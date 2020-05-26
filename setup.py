@@ -11,7 +11,7 @@ setuptools.setup(
     version="0.2b1",
     author="Linlin Jia",
     author_email="linlin.jia@insa-rouen.fr",
-    description="A Python library for graph kernels based on linear patterns",
+    description="A Python library for graph kernels, graph edit distances, and graph pre-images",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/jajupmochi/graphkit-learn",
