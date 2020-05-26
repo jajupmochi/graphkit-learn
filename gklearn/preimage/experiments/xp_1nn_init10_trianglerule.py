@@ -2958,18 +2958,6 @@ if __name__ == "__main__":
 # 	#### xp 7_1: MUTAG, StructuralSP, using CONSTANT.
  	xp_median_preimage_7_1()
 
-# 	#### xp 8_2: Monoterpenoides, PathUpToH, using CONSTANT.
- 	xp_median_preimage_8_2()
-
-# 	#### xp 8_3: Monoterpenoides, Treelet, using CONSTANT.
- 	xp_median_preimage_8_3()
-
-# 	#### xp 8_4: Monoterpenoides, WeisfeilerLehman, using CONSTANT.
- 	xp_median_preimage_8_4()
-	 
-#     #### xp 8_1: Monoterpenoides, StructuralSP, using CONSTANT.
- 	xp_median_preimage_8_1()
-
 # 	#### xp 9_2: MAO, PathUpToH, using CONSTANT, symbolic only.
  	xp_median_preimage_9_2()
 
@@ -2999,6 +2987,18 @@ if __name__ == "__main__":
 	 
 # 	#### xp 6_1: COIL-RAG, StructuralSP, using NON_SYMBOLIC.
  	xp_median_preimage_6_1()
+	 
+# 	#### xp 8_2: Monoterpenoides, PathUpToH, using CONSTANT.
+ 	xp_median_preimage_8_2()
+
+# 	#### xp 8_3: Monoterpenoides, Treelet, using CONSTANT.
+ 	xp_median_preimage_8_3()
+
+# 	#### xp 8_4: Monoterpenoides, WeisfeilerLehman, using CONSTANT.
+ 	xp_median_preimage_8_4()
+	 
+#     #### xp 8_1: Monoterpenoides, StructuralSP, using CONSTANT.
+ 	xp_median_preimage_8_1()
 # 	
 # 	#### xp 2_1: COIL-DEL, StructuralSP, using LETTER2, only node attrs.
  	xp_median_preimage_2_1()

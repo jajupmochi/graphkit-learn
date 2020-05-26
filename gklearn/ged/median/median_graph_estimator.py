@@ -52,6 +52,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		self.__seed = 0
 		self.__parallel = True
 		self.__update_order = True
+		self.__sort_graphs = True # sort graphs by size when computing GEDs.
 		self.__refine = True
 		self.__time_limit_in_sec = 0
 		self.__epsilon = 0.0001
@@ -149,6 +150,16 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option update-order. Usage: options = "[--update-order TRUE|FALSE] [...]"')
+					
+			elif opt_name == 'sort-graphs':
+				if opt_val == 'TRUE':
+					self.__sort_graphs = True
+	
+				elif opt_val == 'FALSE':
+					self.__sort_graphs = False
+	
+				else:
+					raise Exception('Invalid argument "' + opt_val  + '" for option sort-graphs. Usage: options = "[--sort-graphs TRUE|FALSE] [...]"')
 					
 			elif opt_name == 'refine':
 				if opt_val == 'TRUE':
@@ -537,18 +548,31 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			progress.update(1)
 			
 		# Improving the node maps.
+		nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__gen_median_id)
 		for graph_id, node_map in self.__node_maps_from_median.items():
 			if time.expired():
 				if self.__state == AlgorithmState.TERMINATED:
 					self.__state = AlgorithmState.CONVERGED
 				break
-			self.__ged_env.run_method(self.__gen_median_id, graph_id)
-			if self.__ged_env.get_upper_bound(self.__gen_median_id, graph_id) < node_map.induced_cost():
-				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__gen_median_id, graph_id)
-			self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()
+
+			nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
+			if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:			
+				self.__ged_env.run_method(self.__gen_median_id, graph_id)
+				if self.__ged_env.get_upper_bound(self.__gen_median_id, graph_id) < node_map.induced_cost():
+					self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__gen_median_id, graph_id)
+			else:
+				self.__ged_env.run_method(graph_id, self.__gen_median_id)
+				if self.__ged_env.get_upper_bound(graph_id, self.__gen_median_id) < node_map.induced_cost():
+						node_map_tmp = self.__ged_env.get_node_map(graph_id, self.__gen_median_id)
+						node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
+						self.__node_maps_from_median[graph_id] = node_map_tmp	
+			
+			self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()				
+
 			# Print information.
 			if self.__print_to_stdout == 2:
 				progress.update(1)
+
 		self.__sum_of_distances = 0.0
 		for key, val in self.__node_maps_from_median.items():
 			self.__sum_of_distances += val.induced_cost()
@@ -636,6 +660,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		self.__seed = 0
 		self.__parallel = True
 		self.__update_order = True
+		self.__sort_graphs = True
 		self.__refine = True
 		self.__time_limit_in_sec = 0
 		self.__epsilon = 0.0001
@@ -695,7 +720,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			do_fun = partial(_compute_medoid_parallel, graph_ids)
+			do_fun = partial(_compute_medoid_parallel, graph_ids, self.__sort_graphs)
 			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
 			if self.__print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
@@ -723,10 +748,16 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				if timer.expired():
 					self.__state = AlgorithmState.CALLED
 					break
+				nb_nodes_g = self.__ged_env.get_graph_num_nodes(g_id)
 				sum_of_distances = 0
-				for h_id in graph_ids:
-					self.__ged_env.run_method(g_id, h_id)
-					sum_of_distances += self.__ged_env.get_upper_bound(g_id, h_id)
+				for h_id in graph_ids:					
+					nb_nodes_h = self.__ged_env.get_graph_num_nodes(h_id)
+					if nb_nodes_g <= nb_nodes_h or not self.__sort_graphs:
+						self.__ged_env.run_method(g_id, h_id)
+						sum_of_distances += self.__ged_env.get_upper_bound(g_id, h_id)
+					else:
+						self.__ged_env.run_method(h_id, g_id)
+						sum_of_distances += self.__ged_env.get_upper_bound(h_id, g_id)	
 				if sum_of_distances < best_sum_of_distances:
 					best_sum_of_distances = sum_of_distances
 					medoid_id = g_id
@@ -760,7 +791,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			do_fun = partial(_compute_init_node_maps_parallel, gen_median_id)
+			nb_nodes_median = self.__ged_env.get_graph_num_nodes(gen_median_id)
+			do_fun = partial(_compute_init_node_maps_parallel, gen_median_id, self.__sort_graphs, nb_nodes_median)
 			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
 			if self.__print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
@@ -783,9 +815,17 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				
 			self.__sum_of_distances = 0
 			self.__node_maps_from_median.clear()
+			nb_nodes_median = self.__ged_env.get_graph_num_nodes(gen_median_id)
 			for graph_id in graph_ids:
-				self.__ged_env.run_method(gen_median_id, graph_id)
-				self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(gen_median_id, graph_id)
+				nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
+				if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:
+					self.__ged_env.run_method(gen_median_id, graph_id)
+					self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(gen_median_id, graph_id)
+				else:
+					self.__ged_env.run_method(graph_id, gen_median_id)
+					node_map_tmp = self.__ged_env.get_node_map(graph_id, gen_median_id)
+					node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
+					self.__node_maps_from_median[graph_id] = node_map_tmp
 	# 				print(self.__node_maps_from_median[graph_id])
 				self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()
 	# 				print(self.__sum_of_distances)
@@ -843,7 +883,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			for graph_id, graph in graphs.items():
 # 				print('graph_id: ', graph_id)
 # 				print(self.__node_maps_from_median[graph_id])
-# 				print(self.__node_maps_from_median[graph_id].get_forward_map(), self.__node_maps_from_median[graph_id].get_backward_map())
+# 				print(self.__node_maps_from_median[graph_id].forward_map, self.__node_maps_from_median[graph_id].backward_map)
 				k = self.__node_maps_from_median[graph_id].image(i)
 # 				print('k: ', k)
 				if k != np.inf:
@@ -920,7 +960,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			do_fun = partial(_update_node_maps_parallel, self.__median_id, self.__epsilon)
+			nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__median_id)
+			do_fun = partial(_update_node_maps_parallel, self.__median_id, self.__epsilon, self.__sort_graphs, nb_nodes_median)
 			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
 			if self.__print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
@@ -941,13 +982,25 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				progress = tqdm(desc='Updating node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
 				
 			node_maps_were_modified = False
+			nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__median_id)
 			for graph_id, node_map in self.__node_maps_from_median.items():
-				self.__ged_env.run_method(self.__median_id, graph_id)
-				if self.__ged_env.get_upper_bound(self.__median_id, graph_id) < node_map.induced_cost() - self.__epsilon:
-	# 				xxx = self.__node_maps_from_median[graph_id]
-					self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__median_id, graph_id)
-	# 				yyy = self.__node_maps_from_median[graph_id]
-					node_maps_were_modified = True
+				nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
+				
+				if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:
+					self.__ged_env.run_method(self.__median_id, graph_id)
+					if self.__ged_env.get_upper_bound(self.__median_id, graph_id) < node_map.induced_cost() - self.__epsilon:
+		# 				xxx = self.__node_maps_from_median[graph_id]
+						self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__median_id, graph_id)
+						node_maps_were_modified = True
+						
+				else:
+					self.__ged_env.run_method(graph_id, self.__median_id)
+					if self.__ged_env.get_upper_bound(graph_id, self.__median_id) < node_map.induced_cost() - self.__epsilon:
+						node_map_tmp = self.__ged_env.get_node_map(graph_id, self.__median_id)
+						node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
+						self.__node_maps_from_median[graph_id] = node_map_tmp	
+						node_maps_were_modified = True
+					
 				# Print information about current iteration.
 				if self.__print_to_stdout == 2:
 					progress.update(1)
@@ -1047,8 +1100,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			for k in range(0, node_map.num_target_nodes()):
 				if is_unassigned_target_node[k]:
 					new_node_map.add_assignment(np.inf, k)
-# 			print(self.__node_maps_from_median[key].get_forward_map(), self.__node_maps_from_median[key].get_backward_map())
-# 			print(new_node_map.get_forward_map(), new_node_map.get_backward_map())
+# 			print(self.__node_maps_from_median[key].forward_map, self.__node_maps_from_median[key].backward_map)
+# 			print(new_node_map.forward_map, new_node_map.backward_map
 			self.__node_maps_from_median[key] = new_node_map
 			
 		# Increase overall number of decreases.
@@ -1599,37 +1652,58 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 #			return median_label
 
 
-def _compute_medoid_parallel(graph_ids, itr):
+def _compute_medoid_parallel(graph_ids, sort, itr):
 	g_id = itr[0]
 	i = itr[1]
 	# @todo: timer not considered here.
 # 			if timer.expired():
 # 				self.__state = AlgorithmState.CALLED
 # 				break
+	nb_nodes_g = G_ged_env.get_graph_num_nodes(g_id)
 	sum_of_distances = 0
 	for h_id in graph_ids:
-		G_ged_env.run_method(g_id, h_id)
-		sum_of_distances += G_ged_env.get_upper_bound(g_id, h_id)
+		nb_nodes_h = G_ged_env.get_graph_num_nodes(h_id)
+		if nb_nodes_g <= nb_nodes_h or not sort:
+			G_ged_env.run_method(g_id, h_id)
+			sum_of_distances += G_ged_env.get_upper_bound(g_id, h_id)
+		else:
+			G_ged_env.run_method(h_id, g_id)
+			sum_of_distances += G_ged_env.get_upper_bound(h_id, g_id)
 	return i, sum_of_distances
+				
 
-
-def _compute_init_node_maps_parallel(gen_median_id, itr):
+def _compute_init_node_maps_parallel(gen_median_id, sort, nb_nodes_median, itr):
 	graph_id = itr
-	G_ged_env.run_method(gen_median_id, graph_id)
-	node_maps_from_median = G_ged_env.get_node_map(gen_median_id, graph_id)
+	nb_nodes_g = G_ged_env.get_graph_num_nodes(graph_id)
+	if nb_nodes_median <= nb_nodes_g or not sort:
+		G_ged_env.run_method(gen_median_id, graph_id)
+		node_map = G_ged_env.get_node_map(gen_median_id, graph_id)
 # 				print(self.__node_maps_from_median[graph_id])
-	sum_of_distance = node_maps_from_median.induced_cost()
+	else:
+		G_ged_env.run_method(graph_id, gen_median_id)
+		node_map = G_ged_env.get_node_map(graph_id, gen_median_id)
+		node_map.forward_map, node_map.backward_map = node_map.backward_map, node_map.forward_map
+	sum_of_distance = node_map.induced_cost()
 # 				print(self.__sum_of_distances)
-	return graph_id, sum_of_distance, node_maps_from_median
+	return graph_id, sum_of_distance, node_map
+					
 
-
-def _update_node_maps_parallel(median_id, epsilon, itr):
+def _update_node_maps_parallel(median_id, epsilon, sort, nb_nodes_median, itr):
 	graph_id = itr[0]
 	node_map = itr[1]
 
 	node_maps_were_modified = False
-	G_ged_env.run_method(median_id, graph_id)
-	if G_ged_env.get_upper_bound(median_id, graph_id) < node_map.induced_cost() - epsilon:
-		node_map = G_ged_env.get_node_map(median_id, graph_id)
-		node_maps_were_modified = True
+	nb_nodes_g = G_ged_env.get_graph_num_nodes(graph_id)
+	if nb_nodes_median <= nb_nodes_g or not sort:
+		G_ged_env.run_method(median_id, graph_id)
+		if G_ged_env.get_upper_bound(median_id, graph_id) < node_map.induced_cost() - epsilon:
+			node_map = G_ged_env.get_node_map(median_id, graph_id)
+			node_maps_were_modified = True			
+	else:
+		G_ged_env.run_method(graph_id, median_id)
+		if G_ged_env.get_upper_bound(graph_id, median_id) < node_map.induced_cost() - epsilon:
+			node_map = G_ged_env.get_node_map(graph_id, median_id)
+			node_map.forward_map, node_map.backward_map = node_map.backward_map, node_map.forward_map
+			node_maps_were_modified = True	
+			
 	return graph_id, node_map, node_maps_were_modified

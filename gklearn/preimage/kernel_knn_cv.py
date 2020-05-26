@@ -151,7 +151,7 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 	# write result summary for each letter. 
 	if save_results:
 		f_summary = open(dir_save + fn_output_summary, 'a')
-		for i, median_type in enumerate('set-median', 'gen median', 'gen median uo'):
+		for i, median_type in enumerate(['set-median', 'gen median', 'gen median uo']):
 			csv.writer(f_summary).writerow([ds_name, kernel_options['name'], 
 				  train_examples + ': ' + median_type, 
 				  knn_options['n_neighbors'],

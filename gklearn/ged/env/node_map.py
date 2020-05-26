@@ -39,14 +39,6 @@ class NodeMap(object):
 		return np.inf
 	
 	
-	def get_forward_map(self):
-		return self.__forward_map
-	
-	
-	def get_backward_map(self):
-		return self.__backward_map
-	
-	
 	def as_relation(self, relation):
 		relation.clear()
 		for i in range(0, len(self.__forward_map)):
@@ -78,3 +70,21 @@ class NodeMap(object):
 		
 	def induced_cost(self):
 		return self.__induced_cost
+	
+	
+	@property
+	def forward_map(self):
+		return self.__forward_map
+
+	@forward_map.setter
+	def forward_map(self, value):
+		self.__forward_map = value	
+		
+		
+	@property
+	def backward_map(self):
+		return self.__backward_map
+
+	@backward_map.setter
+	def backward_map(self, value):
+		self.__backward_map = value	

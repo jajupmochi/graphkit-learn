@@ -82,5 +82,10 @@ def compute_for_all_experiments(data_dir):
 
 if __name__ == '__main__':
 # 	data_dir = '../results/xp_median_preimage.update_order/'
-	data_dir = '../../results/CRIANN/xp_median_preimage.init10/'
-	compute_for_all_experiments(data_dir)
+	root_dir_tnz = '../../results/CRIANN/xp_median_preimage.init10/'
+	root_dir_ntnz = '../../results/CRIANN/xp_median_preimage.init10.no_triangle_rule/'
+	root_dir_tz = '../../results/CRIANN/xp_median_preimage.init10.triangle_rule.allow_zeros/'
+	root_dir_ntz = '../../results/CRIANN/xp_median_preimage.init10.no_triangle_rule.allow_zeros/'
+	data_dirs = [root_dir_tnz, root_dir_ntnz, root_dir_tz, root_dir_ntz]
+	for data_dir in data_dirs:
+		compute_for_all_experiments(data_dir)
