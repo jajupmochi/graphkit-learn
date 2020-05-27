@@ -23,6 +23,344 @@ update_order = False
 test_sizes = [0.9, 0.7] # , 0.5, 0.3, 0.1]
 
 
+def xp_median_preimage_15_1():
+	"""xp 15_1: AIDS, StructuralSP, using CONSTANT, symbolic only.
+	"""
+	for test_size in test_sizes:
+		# set parameters.
+		ds_name = 'AIDS' #
+		knn_options = {'n_neighbors': 1,
+					   'n_splits': 30,
+					   'test_size': test_size,
+					   'verbose': True}
+		mpg_options = {'fit_method': 'k-graphs',
+					   'init_ecc': [4, 4, 2, 1, 1, 1], #
+					   'ds_name': ds_name,
+					   'parallel': True, # False
+					   'time_limit_in_sec': 0,
+					   'max_itrs': 100, # 
+					   'max_itrs_without_update': 3,
+					   'epsilon_residual': 0.01,
+					   'epsilon_ec': 0.1,
+					   'allow_zeros': allow_zeros,
+					   'triangle_rule': triangle_rule,
+					   'verbose': 1}
+		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+		sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+		kernel_options = {'name': 'StructuralSP',
+						  'edge_weight': None,
+						  'node_kernels': sub_kernels,
+						  'edge_kernels': sub_kernels, 
+						  'compute_method': 'naive',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+						  'n_jobs': multiprocessing.cpu_count(),
+						  'normalize': True,
+						  'verbose': 0}
+		ged_options = {'method': 'IPFP',
+					   'initialization_method': 'RANDOM', # 'NODE'
+					   'initial_solutions': initial_solutions, # 1
+					   'edit_cost': 'CONSTANT', # 
+					   'attr_distance': 'euclidean',
+					   'ratio_runs_from_initial_solutions': 1,
+					   'threads': multiprocessing.cpu_count(),
+					   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+		mge_options = {'init_type': 'MEDOID',
+					   'random_inits': 10,
+					   'time_limit': 0,
+					   'verbose': 1,
+					   'update_order': update_order,
+					   'randomness': 'REAL',
+					   'refine': False}
+		save_results = True
+		dir_save = dir_root + ds_name + '.' + kernel_options['name'] + '.symb/'
+		irrelevant_labels = {'node_attrs': ['chem', 'charge', 'x', 'y']} #
+		edge_required = False #
+		
+		if not os.path.exists(dir_save):
+			os.makedirs(dir_save)
+		file_output = open(dir_save + 'output.txt', 'a')
+		sys.stdout = file_output
+
+		# print settings.
+		print('parameters:')
+		print('dataset name:', ds_name)
+		print('knn_options:', knn_options)
+		print('mpg_options:', mpg_options)
+		print('kernel_options:', kernel_options)
+		print('ged_options:', ged_options)
+		print('mge_options:', mge_options)
+		print('save_results:', save_results)
+		print('irrelevant_labels:', irrelevant_labels)
+		print()
+		
+		# generate preimages.
+		for train_examples in ['k-graphs', 'expert', 'random', 'best-dataset', 'trainset']:
+			print('\n-------------------------------------')
+			print('train examples used:', train_examples, '\n')
+			mpg_options['fit_method'] = train_examples
+			try:
+				kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required, cut_range=None)
+			except Exception as exp:
+				print('An exception occured when running this experiment:')
+				LOG_FILENAME = dir_save + 'error.txt'
+				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+				logging.exception('')
+				print(repr(exp))
+			
+			
+def xp_median_preimage_15_2():
+	"""xp 15_2: AIDS, PathUpToH, using CONSTANT, symbolic only.
+	"""
+	for test_size in test_sizes:
+		# set parameters.
+		ds_name = 'AIDS' #
+		knn_options = {'n_neighbors': 1,
+					   'n_splits': 30,
+					   'test_size': test_size,
+					   'verbose': True}
+		mpg_options = {'fit_method': 'k-graphs',
+					   'init_ecc': [4, 4, 2, 1, 1, 1], #
+					   'ds_name': ds_name,
+					   'parallel': True, # False
+					   'time_limit_in_sec': 0,
+					   'max_itrs': 100, # 
+					   'max_itrs_without_update': 3,
+					   'epsilon_residual': 0.01,
+					   'epsilon_ec': 0.1,
+					   'allow_zeros': allow_zeros,
+					   'triangle_rule': triangle_rule,
+					   'verbose': 1}
+		kernel_options = {'name': 'PathUpToH',
+						  'depth': 1, #
+						  'k_func': 'MinMax', #
+						  'compute_method': 'trie',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+						  'n_jobs': multiprocessing.cpu_count(),
+						  'normalize': True,
+						  'verbose': 0}
+		ged_options = {'method': 'IPFP',
+					   'initialization_method': 'RANDOM', # 'NODE'
+					   'initial_solutions': initial_solutions, # 1
+					   'edit_cost': 'CONSTANT', # 
+					   'attr_distance': 'euclidean',
+					   'ratio_runs_from_initial_solutions': 1,
+					   'threads': multiprocessing.cpu_count(),
+					   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+		mge_options = {'init_type': 'MEDOID',
+					   'random_inits': 10,
+					   'time_limit': 0,
+					   'verbose': 1,
+					   'update_order': update_order,
+					   'randomness': 'REAL',
+					   'refine': False}
+		save_results = True
+		dir_save = dir_root + ds_name + '.' + kernel_options['name'] + '.symb/'
+		irrelevant_labels = {'node_attrs': ['chem', 'charge', 'x', 'y']} #
+		edge_required = False #
+		
+		if not os.path.exists(dir_save):
+			os.makedirs(dir_save)
+		file_output = open(dir_save + 'output.txt', 'a')
+		sys.stdout = file_output
+
+		# print settings.
+		print('parameters:')
+		print('dataset name:', ds_name)
+		print('knn_options:', knn_options)
+		print('mpg_options:', mpg_options)
+		print('kernel_options:', kernel_options)
+		print('ged_options:', ged_options)
+		print('mge_options:', mge_options)
+		print('save_results:', save_results)
+		print('irrelevant_labels:', irrelevant_labels)
+		print()
+		
+		# generate preimages.
+		for train_examples in ['k-graphs', 'expert', 'random', 'best-dataset', 'trainset']:
+			print('\n-------------------------------------')
+			print('train examples used:', train_examples, '\n')
+			mpg_options['fit_method'] = train_examples
+			try:
+				kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required, cut_range=None)
+			except Exception as exp:
+				print('An exception occured when running this experiment:')
+				LOG_FILENAME = dir_save + 'error.txt'
+				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+				logging.exception('')
+				print(repr(exp))
+			
+			
+def xp_median_preimage_15_3():
+	"""xp 15_3: AIDS, Treelet, using CONSTANT, symbolic only.
+	"""
+	for test_size in test_sizes:
+		from gklearn.utils.kernels import polynomialkernel
+		# set parameters.
+		ds_name = 'AIDS' #
+		knn_options = {'n_neighbors': 1,
+					   'n_splits': 30,
+					   'test_size': test_size,
+					   'verbose': True}
+		mpg_options = {'fit_method': 'k-graphs',
+					   'init_ecc': [4, 4, 2, 1, 1, 1], #
+					   'ds_name': ds_name,
+					   'parallel': True, # False
+					   'time_limit_in_sec': 0,
+					   'max_itrs': 100, # 
+					   'max_itrs_without_update': 3,
+					   'epsilon_residual': 0.01,
+					   'epsilon_ec': 0.1,
+					   'allow_zeros': allow_zeros,
+					   'triangle_rule': triangle_rule,
+					   'verbose': 1}
+		pkernel = functools.partial(polynomialkernel, d=1, c=1e+2)
+		kernel_options = {'name': 'Treelet', #
+					      'sub_kernel': pkernel,
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+						  'n_jobs': multiprocessing.cpu_count(),
+						  'normalize': True,
+						  'verbose': 0}
+		ged_options = {'method': 'IPFP',
+					   'initialization_method': 'RANDOM', # 'NODE'
+					   'initial_solutions': initial_solutions, # 1
+					   'edit_cost': 'CONSTANT', # 
+					   'attr_distance': 'euclidean',
+					   'ratio_runs_from_initial_solutions': 1,
+					   'threads': multiprocessing.cpu_count(),
+					   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+		mge_options = {'init_type': 'MEDOID',
+					   'random_inits': 10,
+					   'time_limit': 0,
+					   'verbose': 1,
+					   'update_order': update_order,
+					   'randomness': 'REAL',
+					   'refine': False}
+		save_results = True
+		dir_save = dir_root + ds_name + '.' + kernel_options['name'] + '.symb/'
+		irrelevant_labels = {'node_attrs': ['chem', 'charge', 'x', 'y']} #
+		edge_required = False #
+		
+		if not os.path.exists(dir_save):
+			os.makedirs(dir_save)
+		file_output = open(dir_save + 'output.txt', 'a')
+		sys.stdout = file_output
+
+		# print settings.
+		print('parameters:')
+		print('dataset name:', ds_name)
+		print('knn_options:', knn_options)
+		print('mpg_options:', mpg_options)
+		print('kernel_options:', kernel_options)
+		print('ged_options:', ged_options)
+		print('mge_options:', mge_options)
+		print('save_results:', save_results)
+		print('irrelevant_labels:', irrelevant_labels)
+		print()
+		
+		# generate preimages.
+		for train_examples in ['k-graphs', 'expert', 'random', 'best-dataset', 'trainset']:
+			print('\n-------------------------------------')
+			print('train examples used:', train_examples, '\n')
+			mpg_options['fit_method'] = train_examples
+			try:
+				kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required, cut_range=None)
+			except Exception as exp:
+				print('An exception occured when running this experiment:')
+				LOG_FILENAME = dir_save + 'error.txt'
+				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+				logging.exception('')
+				print(repr(exp))
+			
+			
+def xp_median_preimage_15_4():
+	"""xp 15_4: AIDS, WeisfeilerLehman, using CONSTANT, symbolic only.
+	"""
+	for test_size in test_sizes:
+		# set parameters.
+		ds_name = 'AIDS' #
+		knn_options = {'n_neighbors': 1,
+					   'n_splits': 30,
+					   'test_size': test_size,
+					   'verbose': True}
+		mpg_options = {'fit_method': 'k-graphs',
+					   'init_ecc': [4, 4, 2, 1, 1, 1], #
+					   'ds_name': ds_name,
+					   'parallel': True, # False
+					   'time_limit_in_sec': 0,
+					   'max_itrs': 100, # 
+					   'max_itrs_without_update': 3,
+					   'epsilon_residual': 0.01,
+					   'epsilon_ec': 0.1,
+					   'allow_zeros': allow_zeros,
+					   'triangle_rule': triangle_rule,
+					   'verbose': 1}
+		kernel_options = {'name': 'WeisfeilerLehman',
+					      'height': 10,
+						  'base_kernel': 'subtree',
+ 					  'parallel': 'imap_unordered', 
+                      # 'parallel': None, 
+						  'n_jobs': multiprocessing.cpu_count(),
+						  'normalize': True,
+						  'verbose': 0}
+		ged_options = {'method': 'IPFP',
+					   'initialization_method': 'RANDOM', # 'NODE'
+					   'initial_solutions': initial_solutions, # 1
+					   'edit_cost': 'CONSTANT', # 
+					   'attr_distance': 'euclidean',
+					   'ratio_runs_from_initial_solutions': 1,
+					   'threads': multiprocessing.cpu_count(),
+					   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'}
+		mge_options = {'init_type': 'MEDOID',
+					   'random_inits': 10,
+					   'time_limit': 0,
+					   'verbose': 1,
+					   'update_order': update_order,
+					   'randomness': 'REAL',
+					   'refine': False}
+		save_results = True
+		dir_save = dir_root + ds_name + '.' + kernel_options['name'] + '.symb/'
+		irrelevant_labels = {'node_attrs': ['chem', 'charge', 'x', 'y']} #
+		edge_required = False #
+		
+		if not os.path.exists(dir_save):
+			os.makedirs(dir_save)
+		file_output = open(dir_save + 'output.txt', 'a')
+		sys.stdout = file_output
+
+		# print settings.
+		print('parameters:')
+		print('dataset name:', ds_name)
+		print('knn_options:', knn_options)
+		print('mpg_options:', mpg_options)
+		print('kernel_options:', kernel_options)
+		print('ged_options:', ged_options)
+		print('mge_options:', mge_options)
+		print('save_results:', save_results)
+		print('irrelevant_labels:', irrelevant_labels)
+		print()
+		
+# 	# compute gram matrices for each class a priori.
+# 	print('Compute gram matrices for each class a priori.')
+# 	compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save=dir_save, irrelevant_labels=irrelevant_labels)
+		
+		# generate preimages.
+		for train_examples in ['k-graphs', 'expert', 'random', 'best-dataset', 'trainset']:
+			print('\n-------------------------------------')
+			print('train examples used:', train_examples, '\n')
+			mpg_options['fit_method'] = train_examples
+			try:
+				kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required, cut_range=None)
+			except Exception as exp:
+				print('An exception occured when running this experiment:')
+				LOG_FILENAME = dir_save + 'error.txt'
+				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+				logging.exception('')
+				print(repr(exp))
+
+
 def xp_median_preimage_14_1():
 	"""xp 14_1: DD, PathUpToH, using CONSTANT.
 	"""
@@ -2915,7 +3253,17 @@ if __name__ == "__main__":
 	#### xp 14_1: DD, PathUpToH, using CONSTANT.
 # 	xp_median_preimage_14_1()
 
+# 	#### xp 15_1: AIDS, StructuralSP, using CONSTANT, symbolic only.
+ 	# xp_median_preimage_15_1()
 
+# 	#### xp 15_2: AIDS, PathUpToH, using CONSTANT, symbolic only.
+ 	# xp_median_preimage_15_2()
+
+# 	#### xp 15_3: AIDS, Treelet, using CONSTANT, symbolic only.
+ 	# xp_median_preimage_15_3()
+
+# 	#### xp 15_4: AIDS, WeisfeilerLehman, using CONSTANT, symbolic only.
+ 	# xp_median_preimage_15_4()
 
 
 
@@ -2999,6 +3347,18 @@ if __name__ == "__main__":
 	 
 #     #### xp 8_1: Monoterpenoides, StructuralSP, using CONSTANT.
  	xp_median_preimage_8_1()
+	 
+	 # 	#### xp 15_1: AIDS, StructuralSP, using CONSTANT, symbolic only.
+ 	xp_median_preimage_15_1()
+
+# 	#### xp 15_2: AIDS, PathUpToH, using CONSTANT, symbolic only.
+ 	xp_median_preimage_15_2()
+
+# 	#### xp 15_3: AIDS, Treelet, using CONSTANT, symbolic only.
+ 	xp_median_preimage_15_3()
+
+# 	#### xp 15_4: AIDS, WeisfeilerLehman, using CONSTANT, symbolic only.
+ 	xp_median_preimage_15_4()
 # 	
 # 	#### xp 2_1: COIL-DEL, StructuralSP, using LETTER2, only node attrs.
  	xp_median_preimage_2_1()

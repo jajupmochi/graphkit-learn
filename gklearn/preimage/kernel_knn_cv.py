@@ -361,7 +361,8 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all):
 		gram_matrix_unnorm, time_precompute_gm = __compute_gram_matrix_unnorm(dataset_all, kernel_options)
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm=gram_matrix_unnorm, run_time=time_precompute_gm)
 	else:
-		gmfile = np.load()
+		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
+		gmfile = np.load(gm_fname, allow_pickle=True)
 		gram_matrix_unnorm = gmfile['gram_matrix_unnorm']
 		time_precompute_gm = float(gmfile['run_time'])
 		
