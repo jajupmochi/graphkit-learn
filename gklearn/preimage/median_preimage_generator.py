@@ -39,6 +39,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__max_itrs_without_update = 3
 		self.__epsilon_residual = 0.01
 		self.__epsilon_ec = 0.1
+		self.__allow_zeros = False
+		self.__triangle_rule = True
 		# values to compute.
 		self.__runtime_optimize_ec = None
 		self.__runtime_generate_preimage = None
@@ -79,6 +81,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__epsilon_ec = kwargs.get('epsilon_ec', 0.1)
 		self.__gram_matrix_unnorm = kwargs.get('gram_matrix_unnorm', None)
 		self.__runtime_precompute_gm = kwargs.get('runtime_precompute_gm', None)
+		self.__allow_zeros = kwargs.get('allow_zeros', False)
+		self.__triangle_rule = kwargs.get('triangle_rule', True)
 		
 		
 	def run(self):
@@ -277,7 +281,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		options['edge_labels'] = self._dataset.edge_labels
 		options['node_attrs'] = self._dataset.node_attrs
 		options['edge_attrs'] = self._dataset.edge_attrs
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
+		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
 		time_list = [time.time() - time0]
 		edit_cost_list = [self.__init_ecc]  
@@ -319,7 +323,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 			options['edge_labels'] = self._dataset.edge_labels
 			options['node_attrs'] = self._dataset.node_attrs
 			options['edge_attrs'] = self._dataset.edge_attrs
-			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel)
+			ged_vec, ged_mat, n_edit_operations = compute_geds(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 			residual_list.append(np.sqrt(np.sum(np.square(np.array(ged_vec) - dis_k_vec))))
 			time_list.append(time.time() - time0)
 			edit_cost_list.append(self.__edit_cost_constants)
@@ -382,7 +386,8 @@ class MedianPreimageGenerator(PreimageGenerator):
 
 	def __update_ecc(self, nb_cost_mat, dis_k_vec, rw_constraints='inequality'):
 	#	if self.__ds_name == 'Letter-high':
-		if self.__ged_options['edit_cost'] == 'LETTER':			
+		if self.__ged_options['edit_cost'] == 'LETTER':
+			raise Exception('Cannot compute for cost "LETTER".')
 			pass
 	#		# method 1: set alpha automatically, just tune c_vir and c_eir by 
 	#		# LMS using cvxpy.
@@ -438,7 +443,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#			# 1. if c_vi != c_vr, c_ei != c_er.
 	#			nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 	#			x = cp.Variable(nb_cost_mat_new.shape[1])
-	#			cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+	#			cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 	##			# 1.1 no constraints.
 	##			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])]]
 	#			# 1.2 c_vs <= c_vi + c_vr.
@@ -449,7 +454,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 	##			nb_cost_mat_new[:,0] += nb_cost_mat[:,1]
 	##			nb_cost_mat_new[:,2] += nb_cost_mat[:,5]
 	##			x = cp.Variable(nb_cost_mat_new.shape[1])
-	##			cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+	##			cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 	##			# 2.1 no constraints.
 	##			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])]]
 	###			# 2.2 c_vs <= c_vi + c_vr.
@@ -461,35 +466,37 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#			edit_costs_new = [x.value[0], x.value[0], x.value[1], x.value[2], x.value[2]]
 	#			edit_costs_new = np.array(edit_costs_new)
 	#			residual = np.sqrt(prob.value)
-			if rw_constraints == 'inequality':
-				# c_vs <= c_vi + c_vr.
+			if not self.__triangle_rule and self.__allow_zeros:
 				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+							   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and self.__allow_zeros:
+				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+				x = cp.Variable(nb_cost_mat_new.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+							   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01,
 							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
 				self.__execute_cvx(prob)
 				edit_costs_new = x.value
 				residual = np.sqrt(prob.value)
-			elif rw_constraints == '2constraints':
-				# c_vs <= c_vi + c_vr and c_vi == c_vr, c_ei == c_er.
+			elif not self.__triangle_rule and not self.__allow_zeros:
 				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0,
-							   np.array([1.0, -1.0, 0.0, 0.0, 0.0]).T@x == 0.0,
-							   np.array([0.0, 0.0, 0.0, 1.0, -1.0]).T@x == 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				prob.solve()
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif rw_constraints == 'no-constraint':
-				# no constraint.
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
 				prob.solve()
@@ -499,7 +506,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#				# c_vs <= c_vi + c_vr.
 	#				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 	#				x = cp.Variable(nb_cost_mat_new.shape[1])
-	#				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+	#				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 	#				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
 	#							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 	#				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
@@ -508,15 +515,40 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#				edit_costs_new = [x.value[0], x.value[0], x.value[1], x.value[2], x.value[2]]
 	#				edit_costs_new = np.array(edit_costs_new)
 	#				residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and not self.__allow_zeros:
+				# c_vs <= c_vi + c_vr.
+				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+				x = cp.Variable(nb_cost_mat_new.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
+							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)				
+			elif rw_constraints == '2constraints': # @todo: rearrange it later.
+				# c_vs <= c_vi + c_vr and c_vi == c_vr, c_ei == c_er.
+				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+				x = cp.Variable(nb_cost_mat_new.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
+							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0,
+							   np.array([1.0, -1.0, 0.0, 0.0, 0.0]).T@x == 0.0,
+							   np.array([0.0, 0.0, 0.0, 1.0, -1.0]).T@x == 0.0]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				prob.solve()
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
+
 		elif self.__ged_options['edit_cost'] == 'NON_SYMBOLIC':
 			is_n_attr = np.count_nonzero(nb_cost_mat[:,2])
 			is_e_attr = np.count_nonzero(nb_cost_mat[:,5])
 			
-			if self.__ds_name == 'SYNTHETICnew':
+			if self.__ds_name == 'SYNTHETICnew': # @todo: rearrenge this later.
 	#			nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
 				nb_cost_mat_new = nb_cost_mat[:,[2,3,4]]
 				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 	#			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
 	#						   np.array([0.0, 0.0, 0.0, 1.0, -1.0]).T@x == 0.0]
 	#			constraints = [x >= [0.0001 for i in range(nb_cost_mat_new.shape[1])]]
@@ -529,12 +561,154 @@ class MedianPreimageGenerator(PreimageGenerator):
 												 np.array([0.0])))
 				residual = np.sqrt(prob.value)
 				
-			elif rw_constraints == 'inequality':
+			elif not self.__triangle_rule and self.__allow_zeros:
+				if is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = x.value
+					residual = np.sqrt(prob.value)
+				elif is_n_attr and not is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
+					residual = np.sqrt(prob.value)
+				elif not is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
+					residual = np.sqrt(prob.value)
+				else:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
+													 x.value[2:], np.array([0.0])))
+					residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and self.__allow_zeros:
+				if is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+								   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
+								   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = x.value
+					residual = np.sqrt(prob.value)
+				elif is_n_attr and not is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01,
+								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
+					residual = np.sqrt(prob.value)
+				elif not is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
+								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+								   np.array([0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
+					residual = np.sqrt(prob.value)
+				else:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
+													 x.value[2:], np.array([0.0])))
+					residual = np.sqrt(prob.value)
+			elif not self.__triangle_rule and not self.__allow_zeros:
+				if is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = x.value
+					residual = np.sqrt(prob.value)
+				elif is_n_attr and not is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
+					residual = np.sqrt(prob.value)
+				elif not is_n_attr and is_e_attr:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
+					residual = np.sqrt(prob.value)
+				else:
+					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
+					x = cp.Variable(nb_cost_mat_new.shape[1])
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
+					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
+					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+					self.__execute_cvx(prob)
+					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
+													 x.value[2:], np.array([0.0])))
+					residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and not self.__allow_zeros:
 				# c_vs <= c_vi + c_vr.
 				if is_n_attr and is_e_attr:
 					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
 					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
 								   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
@@ -545,7 +719,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 				elif is_n_attr and not is_e_attr:
 					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
 					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
@@ -555,7 +729,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 				elif not is_n_attr and is_e_attr:
 					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
 					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
 								   np.array([0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
@@ -565,24 +739,61 @@ class MedianPreimageGenerator(PreimageGenerator):
 				else:
 					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
 					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new * x - dis_k_vec)
+					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
 					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
 					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
 					self.__execute_cvx(prob)
 					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
 													 x.value[2:], np.array([0.0])))
 					residual = np.sqrt(prob.value)
+
 		elif self.__ged_options['edit_cost'] == 'CONSTANT': # @todo: node/edge may not labeled.
-			x = cp.Variable(nb_cost_mat.shape[1])
-			cost_fun = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
-			constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
-						   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-						   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-			prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-			self.__execute_cvx(prob)
-			edit_costs_new = x.value
-			residual = np.sqrt(prob.value)
+			if not self.__triangle_rule and self.__allow_zeros:
+				x = cp.Variable(nb_cost_mat.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
+				constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
+							   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and self.__allow_zeros:
+				x = cp.Variable(nb_cost_mat.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
+				constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
+							   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
+							   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
+							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
+							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
+			elif not self.__triangle_rule and not self.__allow_zeros:
+				x = cp.Variable(nb_cost_mat.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
+				constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])]]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
+			elif self.__triangle_rule and not self.__allow_zeros:
+				x = cp.Variable(nb_cost_mat.shape[1])
+				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
+				constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
+							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
+							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
+				self.__execute_cvx(prob)
+				edit_costs_new = x.value
+				residual = np.sqrt(prob.value)
 		else:
+			raise Exception('The edit cost "', self.__ged_options['edit_cost'], '" is not supported for update progress.')
 	#	# method 1: simple least square method.
 	#	edit_costs_new, residual, _, _ = np.linalg.lstsq(nb_cost_mat, dis_k_vec,
 	#													 rcond=None)
@@ -607,7 +818,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 	#	G = -1 * np.identity(nb_cost_mat.shape[1])
 	#	h = np.array([0 for i in range(nb_cost_mat.shape[1])])
 			x = cp.Variable(nb_cost_mat.shape[1])
-			cost_fun = cp.sum_squares(nb_cost_mat * x - dis_k_vec)
+			cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
 			constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
 		#				   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
 						   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
@@ -669,6 +880,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		options = self.__mge_options.copy()
 		if not 'seed' in options:
 			options['seed'] = int(round(time.time() * 1000)) # @todo: may not work correctly for possible parallel usage.
+		options['parallel'] = self.__parallel
 		
 		# Select the GED algorithm.
 		self.__mge.set_options(mge_options_to_string(options))
@@ -676,8 +888,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 					  edge_labels=self._dataset.edge_labels, 
 					  node_attrs=self._dataset.node_attrs, 
 					  edge_attrs=self._dataset.edge_attrs)
-		self.__mge.set_init_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
-		self.__mge.set_descent_method(self.__ged_options['method'], ged_options_to_string(self.__ged_options))
+		ged_options = self.__ged_options.copy()
+		if self.__parallel:
+			ged_options['threads'] = 1
+		self.__mge.set_init_method(ged_options['method'], ged_options_to_string(ged_options))
+		self.__mge.set_descent_method(ged_options['method'], ged_options_to_string(ged_options))
 		
 		# Run the estimator.
 		self.__mge.run(graph_ids, set_median_id, gen_median_id)

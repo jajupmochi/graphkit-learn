@@ -46,7 +46,7 @@ def compute_ged(g1, g2, options):
 	return dis, pi_forward, pi_backward
 
 
-def compute_geds(graphs, options={}, parallel=False):
+def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
@@ -54,6 +54,8 @@ def compute_geds(graphs, options={}, parallel=False):
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()	
 	ged_env.init()
+	if parallel:
+		options['threads'] = 1
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
@@ -77,10 +79,13 @@ def compute_geds(graphs, options={}, parallel=False):
 			G_graphs = graphs_toshare
 			G_ged_env = ged_env_toshare
 			G_listID = listID_toshare
-		do_partial = partial(_wrapper_compute_ged_parallel, neo_options)
+		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
+		if verbose:
+			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
 						desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = pool.imap_unordered(do_partial, itr, chunksize)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -96,28 +101,38 @@ def compute_geds(graphs, options={}, parallel=False):
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		for i in tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout):
+		if verbose:
+			iterator = tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = range(len(graphs))
+		for i in iterator:
 #		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
-				dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j])
+				if nx.number_of_nodes(graphs[i]) <= nx.number_of_nodes(graphs[j]) or not sort:
+					dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j])
+				else:
+					dis, pi_backward, pi_forward = _compute_ged(ged_env, listID[j], listID[i], graphs[j], graphs[i])
 				ged_vec.append(dis)
 				ged_mat[i][j] = dis
 				ged_mat[j][i] = dis
-				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, **neo_options)
+				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, 	**neo_options)
 				n_edit_operations.append(n_eo_tmp)
-					
+
 	return ged_vec, ged_mat, n_edit_operations
 
 
-def _wrapper_compute_ged_parallel(options, itr):
+def _wrapper_compute_ged_parallel(options, sort, itr):
 	i = itr[0]
 	j = itr[1]
-	dis, n_eo_tmp = _compute_ged_parallel(G_ged_env, G_listID[i], G_listID[j], G_graphs[i], G_graphs[j], options)
+	dis, n_eo_tmp = _compute_ged_parallel(G_ged_env, G_listID[i], G_listID[j], G_graphs[i], G_graphs[j], options, sort)
 	return i, j, dis, n_eo_tmp
 
 
-def _compute_ged_parallel(env, gid1, gid2, g1, g2, options):
-	dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2)
+def _compute_ged_parallel(env, gid1, gid2, g1, g2, options, sort):
+	if nx.number_of_nodes(g1) <= nx.number_of_nodes(g2) or not sort:
+		dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2)
+	else:
+		dis, pi_backward, pi_forward = _compute_ged(env, gid2, gid1, g2, g1)
 	n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward, **options) # [0,0,0,0,0,0]
 	return dis, n_eo_tmp
 

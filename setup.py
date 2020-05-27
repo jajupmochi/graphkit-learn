@@ -3,15 +3,15 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as fp:
+with open('requirements_pypi.txt') as fp:
     install_requires = fp.read()
 
 setuptools.setup(
     name="graphkit-learn",
-    version="0.2b1",
+    version="0.2b2",
     author="Linlin Jia",
     author_email="linlin.jia@insa-rouen.fr",
-    description="A Python library for graph kernels based on linear patterns",
+    description="A Python library for graph kernels, graph edit distances, and graph pre-images",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/jajupmochi/graphkit-learn",

@@ -112,6 +112,7 @@ cdef extern from "src/GedLibBind.hpp" namespace "pyged":
 ##CYTHON WRAPPER INTERFACES##
 #############################
 
+# import cython
 import numpy as np
 import networkx as nx
 from gklearn.ged.env import NodeMap
@@ -177,19 +178,26 @@ def get_dummy_node() :
 	return getDummyNode()
 	
 
+# @cython.auto_pickle(True)
 cdef class GEDEnv:
 	"""Cython wrapper class for C++ class PyGEDEnv
 	"""
-	# cdef PyGEDEnv c_env  # Hold a C++ instance which we're wrapping
+# 	cdef PyGEDEnv c_env  # Hold a C++ instance which we're wrapping
 	cdef PyGEDEnv* c_env  # hold a pointer to the C++ instance which we're wrapping
 
 
 	def __cinit__(self):
+# 		self.c_env = PyGEDEnv()
 		self.c_env = new PyGEDEnv()
 		
 	
 	def __dealloc__(self):
 		del self.c_env
+
+
+# 	def __reduce__(self):
+# # 		return GEDEnv, (self.c_env,)
+# 		return GEDEnv, tuple()
 
 
 	def is_initialized(self) :
