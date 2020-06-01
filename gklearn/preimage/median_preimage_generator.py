@@ -19,7 +19,7 @@ from gklearn.ged.median import constant_node_costs,mge_options_to_string
 from gklearn.gedlib import librariesImport, gedlibpy
 from gklearn.utils import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
-# from gklearn.utils.dataset import Dataset
+
 
 class MedianPreimageGenerator(PreimageGenerator):
 	
@@ -127,8 +127,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		# 3. compute set median and gen median using optimized edit costs.
 		if self._verbose >= 2:
 			print('\nstart computing set median and gen median using optimized edit costs...\n')
-# 		group_fnames = [Gn[g].graph['filename'] for g in group_min]
-		self.__generate_preimage_iam()
+		self.__gmg_bcu()
 		end_generate_preimage = time.time()
 		self.__runtime_generate_preimage = end_generate_preimage - end_optimize_ec
 		self.__runtime_total = end_generate_preimage - start
@@ -140,13 +139,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		# 4. compute kernel distances to the true median.
 		if self._verbose >= 2:
 			print('\nstart computing distances to true median....\n')
-# 		Gn_median = [Gn[g].copy() for g in group_min]
 		self.__compute_distances_to_true_median()
-# 		dis_k_sm, dis_k_gm, dis_k_gi, dis_k_gi_min, idx_dis_k_gi_min = 
-# 		idx_dis_k_gi_min = group_min[idx_dis_k_gi_min]
-# 		print('index min dis_k_gi:', idx_dis_k_gi_min)
-# 		print('sod_sm:', sod_sm)
-# 		print('sod_gm:', sod_gm)
 
 		# 5. print out results.
 		if self._verbose:
@@ -169,11 +162,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 			print('Is optimization of edit costs converged:', self.__converged)
 			print('================================================================================')
 			print()
-			
-	# collect return values.
-# 	return (sod_sm, sod_gm), \
-# 		   (dis_k_sm, dis_k_gm, dis_k_gi, dis_k_gi_min, idx_dis_k_gi_min), \
-# 		   (time_fitting, time_generating)
 
 
 	def get_results(self):
@@ -861,7 +849,15 @@ class MedianPreimageGenerator(PreimageGenerator):
 			print()
 
 	
-	def __generate_preimage_iam(self):
+	def __gmg_bcu(self):
+		"""
+		The local search algorithm based on block coordinate update (BCU) for estimating a generalized median graph (GMG).
+
+		Returns
+		-------
+		None.
+
+		"""
 		# Set up the ged environment.
 		ged_env = gedlibpy.GEDEnv() # @todo: maybe create a ged_env as a private varible.
 		# gedlibpy.restart_env()
@@ -917,10 +913,6 @@ class MedianPreimageGenerator(PreimageGenerator):
 		self.__k_dis_set_median = compute_k_dis(0, range(1, 1+len(self._dataset.graphs)), 
 										  [1 / len(self._dataset.graphs)] * len(self._dataset.graphs),
 										  gram_with_sm, withterm3=False)
-	#	print(gen_median.nodes(data=True))
-	#	print(gen_median.edges(data=True))
-	#	print(set_median.nodes(data=True))
-	#	print(set_median.edges(data=True))
 		
 		# compute distance in kernel space for generalized median.
 		kernels_to_gm, _ = self._graph_kernel.compute(self.__gen_median, self._dataset.graphs, **self._kernel_options)
