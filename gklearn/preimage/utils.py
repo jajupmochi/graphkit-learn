@@ -256,7 +256,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		if (load_gm == 'auto' and not gmfile_exist) or not load_gm:
 			gram_matrix_unnorm_list.append(mpg.gram_matrix_unnorm)
 
-	# write result summary for each letter. 
+	# write result summary for each class. 
 	if save_results:
 		sod_sm_mean = np.mean(sod_sm_list)
 		sod_gm_mean = np.mean(sod_gm_list)
