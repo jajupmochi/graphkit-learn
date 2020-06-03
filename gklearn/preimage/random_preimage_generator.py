@@ -155,11 +155,27 @@ class RandomPreimageGenerator(PreimageGenerator):
 			# compute numbers of edges to be inserted/deleted.
 			# @todo what if the log is negetive? how to choose alpha (scalar)?
 			fdgs_list = np.array(dis_bests)
-			if np.min(fdgs_list) < 1:
+			if np.min(fdgs_list) < 1: # in case the log is negetive.
 				fdgs_list /= np.min(fdgs_list)
 			fdgs_list = [int(item) for item in np.ceil(np.log(fdgs_list))]
-			if np.min(fdgs_list) < 1:
+			if np.min(fdgs_list) < 1: # in case the log is smaller than 1.
 				fdgs_list = np.array(fdgs_list) + 1
+			# expand the number of modifications to increase the possiblity.
+			nb_vpairs_list = [nx.number_of_nodes(g) * (nx.number_of_nodes(g) - 1) for g in (Gs_nearest + gihat_list)]
+			nb_vpairs_min = np.min(nb_vpairs_list)
+			idx_fdgs_max = np.argmax(fdgs_list)
+			fdgs_max_old = fdgs_list[idx_fdgs_max]
+			fdgs_max = fdgs_max_old
+			nb_modif = 1
+			for idx, nb in enumerate(range(nb_vpairs_min, nb_vpairs_min - fdgs_max, -1)):
+				nb_modif *= nb / (fdgs_max - idx)
+			while fdgs_max < nb_vpairs_min and nb_modif < self.__l:
+				fdgs_max += 1
+				nb_modif *= (nb_vpairs_min - fdgs_max + 1) / fdgs_max
+			nb_increase = int(fdgs_max - fdgs_max_old)
+			if nb_increase > 0:
+				fdgs_list += 1
+				
 				
 			for ig, gs in enumerate(Gs_nearest + gihat_list):
 				if self._verbose >= 2:
@@ -303,6 +319,7 @@ class RandomPreimageGenerator(PreimageGenerator):
 		# @todo: what if fdgs is bigger than nb_vpairs?
 		idx_change = rdm_state.randint(0, high=nb_vpairs, size=(fdgs if 
 									   fdgs < nb_vpairs else nb_vpairs))
+# 		print(idx_change)
 		for item in idx_change:
 			node1 = int(item / (nx.number_of_nodes(g_init) - 1))
 			node2 = (item - node1 * (nx.number_of_nodes(g_init) - 1))
