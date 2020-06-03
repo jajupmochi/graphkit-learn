@@ -8,7 +8,6 @@ Created on Fri May 29 14:29:52 2020
 
 import numpy as np
 import time
-import random
 import sys
 from tqdm import tqdm
 import multiprocessing
@@ -157,7 +156,7 @@ class RandomPreimageGenerator(PreimageGenerator):
 			# @todo what if the log is negetive? how to choose alpha (scalar)?
 			fdgs_list = np.array(dis_bests)
 			if np.min(fdgs_list) < 1:
-				fdgs_list /= np.min(dis_bests)
+				fdgs_list /= np.min(fdgs_list)
 			fdgs_list = [int(item) for item in np.ceil(np.log(fdgs_list))]
 			if np.min(fdgs_list) < 1:
 				fdgs_list = np.array(fdgs_list) + 1
@@ -214,54 +213,31 @@ class RandomPreimageGenerator(PreimageGenerator):
 			
 	def __generate_l_graphs_series(self, g_init, fdgs, dhat, ig, found, term3):
 		gnew = None
-		for trail in range(0, self.__l):
+		updated = False
+		for trial in range(0, self.__l):
 			if self._verbose >= 2:
-				print('---', trail + 1, 'trail out of', self.__l)
+				print('---', trial + 1, 'trial out of', self.__l)
 
-			# add and delete edges.
-			gtemp = g_init.copy()
-			np.random.seed() # @todo: may not work for possible parallel.
-			# which edges to change.
-			# @todo: should we use just half of the adjacency matrix for undirected graphs?
-			nb_vpairs = nx.number_of_nodes(g_init) * (nx.number_of_nodes(g_init) - 1)
-			# @todo: what if fdgs is bigger than nb_vpairs?
-			idx_change = random.sample(range(nb_vpairs), fdgs if 
-									   fdgs < nb_vpairs else nb_vpairs)
-			for item in idx_change:
-				node1 = int(item / (nx.number_of_nodes(g_init) - 1))
-				node2 = (item - node1 * (nx.number_of_nodes(g_init) - 1))
-				if node2 >= node1: # skip the self pair.
-					node2 += 1
-				# @todo: is the randomness correct?
-				if not gtemp.has_edge(node1, node2):
-					gtemp.add_edge(node1, node2)
-				else:
-					gtemp.remove_edge(node1, node2)
-					
-			# compute new distances.
-			kernels_to_gtmp, _ = self._graph_kernel.compute(gtemp, self._dataset.graphs, **self._kernel_options)
-			kernel_gtmp, _ = self._graph_kernel.compute(gtemp, gtemp, **self._kernel_options)
-			kernels_to_gtmp = [kernels_to_gtmp[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gtmp) for i in range(len(kernels_to_gtmp))] # normalize 
-			# @todo: not correct kernel value
-			gram_with_gtmp = np.concatenate((np.array([kernels_to_gtmp]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
-			gram_with_gtmp = np.concatenate((np.array([[1] + kernels_to_gtmp]).T, gram_with_gtmp), axis=1)
-			dnew = compute_k_dis(0, range(1, 1 + len(self._dataset.graphs)), self.__alphas, gram_with_gtmp, term3=term3, withterm3=True)
+			gtemp, dnew = self.__do_trial(g_init, fdgs, term3, trial)
 
 			# get the better graph preimage.
 			if dnew <= dhat: # @todo: the new distance is smaller or also equal?
 				if dnew < dhat:
 					if self._verbose >= 2:
-						print('trail =', str(trail))
+						print('trial =', str(trial))
 						print('\nI am smaller!')
 						print('index (as in D_k U {gihat} =', str(ig))
 						print('distance:', dhat, '->', dnew)
-					self.__num_updates += 1
+					updated = True
 				elif dnew == dhat:
 					if self._verbose >= 2:
 						print('I am equal!') 
 				dhat = dnew
 				gnew = gtemp.copy()
-				found = True # found better graph.
+				found = True # found better or equally good graph.
+		
+		if updated:
+			self.__num_updates += 1
 				
 		return gnew, dhat, found
 	
@@ -311,17 +287,22 @@ class RandomPreimageGenerator(PreimageGenerator):
 		
 		
 	def _generate_graph_parallel(self, g_init, fdgs, term3, itr):
-		trail = itr			
-
+		trial = itr			
+		gtemp, dnew = self.__do_trial(g_init, fdgs, term3, trial)		
+		return trial, gtemp, dnew
+	
+	
+	def __do_trial(self, g_init, fdgs, term3, trial):
 		# add and delete edges.
 		gtemp = g_init.copy()
-		np.random.seed() # @todo: may not work for possible parallel.
+		seed = (trial + int(time.time())) % (2 ** 32 - 1)
+		rdm_state = np.random.RandomState(seed=seed)
 		# which edges to change.
 		# @todo: should we use just half of the adjacency matrix for undirected graphs?
 		nb_vpairs = nx.number_of_nodes(g_init) * (nx.number_of_nodes(g_init) - 1)
 		# @todo: what if fdgs is bigger than nb_vpairs?
-		idx_change = random.sample(range(nb_vpairs), fdgs if 
-								   fdgs < nb_vpairs else nb_vpairs)
+		idx_change = rdm_state.randint(0, high=nb_vpairs, size=(fdgs if 
+									   fdgs < nb_vpairs else nb_vpairs))
 		for item in idx_change:
 			node1 = int(item / (nx.number_of_nodes(g_init) - 1))
 			node2 = (item - node1 * (nx.number_of_nodes(g_init) - 1))
@@ -342,7 +323,7 @@ class RandomPreimageGenerator(PreimageGenerator):
 		gram_with_gtmp = np.concatenate((np.array([[1] + kernels_to_gtmp]).T, gram_with_gtmp), axis=1)
 		dnew = compute_k_dis(0, range(1, 1 + len(self._dataset.graphs)), self.__alphas, gram_with_gtmp, term3=term3, withterm3=True)
 		
-		return trail, gtemp, dnew
+		return gtemp, dnew
 			
 
 	def get_results(self):
