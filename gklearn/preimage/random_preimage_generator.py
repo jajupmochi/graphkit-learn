@@ -31,8 +31,8 @@ class RandomPreimageGenerator(PreimageGenerator):
 		self.__alphas = None # weights of linear combinations of points in kernel space.
 		self.__parallel = True
 		self.__n_jobs = multiprocessing.cpu_count()
-		self.__time_limit_in_sec = 0 # @todo
-		self.__max_itrs = 100 # @todo
+		self.__time_limit_in_sec = 0
+		self.__max_itrs = 20
 		# values to compute.
 		self.__runtime_generate_preimage = None
 		self.__runtime_total = None
@@ -59,7 +59,7 @@ class RandomPreimageGenerator(PreimageGenerator):
 		self.__parallel = kwargs.get('parallel', True)
 		self.__n_jobs = kwargs.get('n_jobs', multiprocessing.cpu_count())
 		self.__time_limit_in_sec = kwargs.get('time_limit_in_sec', 0)
-		self.__max_itrs = kwargs.get('max_itrs', 100)
+		self.__max_itrs = kwargs.get('max_itrs', 20)
 		self.__gram_matrix_unnorm = kwargs.get('gram_matrix_unnorm', None)
 		self.__runtime_precompute_gm = kwargs.get('runtime_precompute_gm', None)
 		
@@ -147,7 +147,10 @@ class RandomPreimageGenerator(PreimageGenerator):
 		dis_of_each_itr = [dhat]
 		if self.__parallel:
 			self._kernel_options['parallel'] = None
-		while r < self.__r_max:
+		self.__itrs = 0
+		self.__num_updates = 0
+		timer = Timer(self.__time_limit_in_sec)
+		while not self.__termination_criterion_met(timer, self.__itrs, r):
 			print('\n- r =', r)
 			found = False
 			dis_bests = dis_gs + dihat_list
@@ -238,14 +241,14 @@ class RandomPreimageGenerator(PreimageGenerator):
 
 			# get the better graph preimage.
 			if dnew <= dhat: # @todo: the new distance is smaller or also equal?
-				if dnew < dhat:
+				if dhat - dnew > 1e-6:
 					if self._verbose >= 2:
 						print('trial =', str(trial))
 						print('\nI am smaller!')
 						print('index (as in D_k U {gihat} =', str(ig))
 						print('distance:', dhat, '->', dnew)
 					updated = True
-				elif dnew == dhat:
+				else:
 					if self._verbose >= 2:
 						print('I am equal!') 
 				dhat = dnew
@@ -286,13 +289,13 @@ class RandomPreimageGenerator(PreimageGenerator):
 		idx_min = np.argmin(dnew_list)
 		dnew = dnew_list[idx_min]
 		if dnew <= dhat: # @todo: the new distance is smaller or also equal?
-			if dnew < dhat:
+			if dhat - dnew > 1e-6: # @todo: use a proportion and watch out for 0.
 				if self._verbose >= 2:
-					print('\nI am smaller!')
-					print('index (as in D_k U {gihat} =', str(ig))
-					print('distance:', dhat, '->', dnew)
+					print('I am smaller!')
+					print('index (as in D_k U {gihat}) =', str(ig))
+					print('distance:', dhat, '->', dnew, '\n')
 				self.__num_updates += 1
-			elif dnew == dhat:
+			else:
 				if self._verbose >= 2:
 					print('I am equal!') 
 			dhat = dnew
@@ -355,12 +358,13 @@ class RandomPreimageGenerator(PreimageGenerator):
 		return results
 
 
-	def __termination_criterion_met(self, converged, timer, itr, itrs_without_update):
+	def __termination_criterion_met(self, timer, itr, r):
 		if timer.expired() or (itr >= self.__max_itrs if self.__max_itrs >= 0 else False):
 # 			if self.__state == AlgorithmState.TERMINATED:
 # 				self.__state = AlgorithmState.INITIALIZED
 			return True
-		return converged or (itrs_without_update > self.__max_itrs_without_update if self.__max_itrs_without_update >= 0 else False)
+		return (r >= self.__r_max if self.__r_max >= 0 else False)
+# 		return converged or (itrs_without_update > self.__max_itrs_without_update if self.__max_itrs_without_update >= 0 else False)
 		
 	
 	@property
