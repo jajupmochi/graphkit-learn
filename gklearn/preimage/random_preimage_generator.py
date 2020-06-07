@@ -20,6 +20,7 @@ from gklearn.utils import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 # from gklearn.utils.dataset import Dataset
 
+
 class RandomPreimageGenerator(PreimageGenerator):
 	
 	def __init__(self, dataset=None):
@@ -337,10 +338,12 @@ class RandomPreimageGenerator(PreimageGenerator):
 		# compute new distances.
 		kernels_to_gtmp, _ = self._graph_kernel.compute(gtemp, self._dataset.graphs, **self._kernel_options)
 		kernel_gtmp, _ = self._graph_kernel.compute(gtemp, gtemp, **self._kernel_options)
-		kernels_to_gtmp = [kernels_to_gtmp[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gtmp) for i in range(len(kernels_to_gtmp))] # normalize 
+		if self._kernel_options['normalize']:
+			kernels_to_gtmp = [kernels_to_gtmp[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gtmp) for i in range(len(kernels_to_gtmp))] # normalize 
+			kernel_gtmp = 1
 		# @todo: not correct kernel value
 		gram_with_gtmp = np.concatenate((np.array([kernels_to_gtmp]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
-		gram_with_gtmp = np.concatenate((np.array([[1] + kernels_to_gtmp]).T, gram_with_gtmp), axis=1)
+		gram_with_gtmp = np.concatenate((np.array([[kernel_gtmp] + kernels_to_gtmp]).T, gram_with_gtmp), axis=1)
 		dnew = compute_k_dis(0, range(1, 1 + len(self._dataset.graphs)), self.__alphas, gram_with_gtmp, term3=term3, withterm3=True)
 		
 		return gtemp, dnew
