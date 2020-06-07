@@ -191,20 +191,22 @@ class MedianPreimageGenerator(PreimageGenerator):
 		"""
 		if self.__fit_method == 'random': # random
 			if self.__ged_options['edit_cost'] == 'LETTER':
-				self.__edit_cost_constants = random.sample(range(1, 10), 3)
-				self.__edit_cost_constants = [item * 0.1 for item in self.__edit_cost_constants]
+				self.__edit_cost_constants = random.sample(range(1, 1000), 3)
+				self.__edit_cost_constants = [item * 0.001 for item in self.__edit_cost_constants]
 			elif self.__ged_options['edit_cost'] == 'LETTER2':
 				random.seed(time.time())
-				self.__edit_cost_constants = random.sample(range(1, 10), 5)
-	#			self.__edit_cost_constants = [item * 0.1 for item in self.__edit_cost_constants]
+				self.__edit_cost_constants = random.sample(range(1, 1000), 5)
+				self.__edit_cost_constants = [item * 0.01 for item in self.__edit_cost_constants]
 			elif self.__ged_options['edit_cost'] == 'NON_SYMBOLIC':
-				self.__edit_cost_constants = random.sample(range(1, 10), 6)
+				self.__edit_cost_constants = random.sample(range(1, 1000), 6)
+				self.__edit_cost_constants = [item * 0.01 for item in self.__edit_cost_constants]
 				if self._dataset.node_attrs == []:
 					self.__edit_cost_constants[2] = 0
 				if self._dataset.edge_attrs == []:
 					self.__edit_cost_constants[5] = 0
 			else:
-				self.__edit_cost_constants = random.sample(range(1, 10), 6)
+				self.__edit_cost_constants = random.sample(range(1, 1000), 6)
+				self.__edit_cost_constants = [item * 0.01 for item in self.__edit_cost_constants]
 			if self._verbose >= 2:
 				print('edit cost constants used:', self.__edit_cost_constants)
 		elif self.__fit_method == 'expert': # expert
