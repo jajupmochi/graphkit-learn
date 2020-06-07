@@ -908,10 +908,12 @@ class MedianPreimageGenerator(PreimageGenerator):
 		# compute distance in kernel space for set median.
 		kernels_to_sm, _ = self._graph_kernel.compute(self.__set_median, self._dataset.graphs, **self._kernel_options)
 		kernel_sm, _ = self._graph_kernel.compute(self.__set_median, self.__set_median, **self._kernel_options)
-		kernels_to_sm = [kernels_to_sm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_sm) for i in range(len(kernels_to_sm))] # normalize 
+		if self._kernel_options['normalize']:
+			kernels_to_sm = [kernels_to_sm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_sm) for i in range(len(kernels_to_sm))] # normalize 
+			kernel_sm = 1
 		# @todo: not correct kernel value
 		gram_with_sm = np.concatenate((np.array([kernels_to_sm]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
-		gram_with_sm = np.concatenate((np.array([[1] + kernels_to_sm]).T, gram_with_sm), axis=1)
+		gram_with_sm = np.concatenate((np.array([[kernel_sm] + kernels_to_sm]).T, gram_with_sm), axis=1)
 		self.__k_dis_set_median = compute_k_dis(0, range(1, 1+len(self._dataset.graphs)), 
 										  [1 / len(self._dataset.graphs)] * len(self._dataset.graphs),
 										  gram_with_sm, withterm3=False)
@@ -919,9 +921,11 @@ class MedianPreimageGenerator(PreimageGenerator):
 		# compute distance in kernel space for generalized median.
 		kernels_to_gm, _ = self._graph_kernel.compute(self.__gen_median, self._dataset.graphs, **self._kernel_options)
 		kernel_gm, _ = self._graph_kernel.compute(self.__gen_median, self.__gen_median, **self._kernel_options)
-		kernels_to_gm = [kernels_to_gm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gm) for i in range(len(kernels_to_gm))] # normalize
+		if self._kernel_options['normalize']:
+			kernels_to_gm = [kernels_to_gm[i] / np.sqrt(self.__gram_matrix_unnorm[i, i] * kernel_gm) for i in range(len(kernels_to_gm))] # normalize
+			kernel_gm = 1
 		gram_with_gm = np.concatenate((np.array([kernels_to_gm]), np.copy(self._graph_kernel.gram_matrix)), axis=0)
-		gram_with_gm = np.concatenate((np.array([[1] + kernels_to_gm]).T, gram_with_gm), axis=1)
+		gram_with_gm = np.concatenate((np.array([[kernel_gm] + kernels_to_gm]).T, gram_with_gm), axis=1)
 		self.__k_dis_gen_median = compute_k_dis(0, range(1, 1+len(self._dataset.graphs)), 
 										  [1 / len(self._dataset.graphs)] * len(self._dataset.graphs),
 										  gram_with_gm, withterm3=False)
