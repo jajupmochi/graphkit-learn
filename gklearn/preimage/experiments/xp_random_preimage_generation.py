@@ -146,9 +146,12 @@ def xp_random_preimage_generation(kernel_name):
 		__draw_graph(rpg.best_from_dataset, fn_best_dataset)
 		__draw_graph(rpg.preimage, fn_preimage)
 		
+	# save distances.
+	np.savez(dir_save + 'distances.' + ds_name + '.' + kernel_options['name'], k_dis_datasets=k_dis_datasets, k_dis_preimages=k_dis_preimages)
+
 	# plot results figure.
 	__plot_results(alpha1_list, k_dis_datasets, k_dis_preimages, dir_save)
-		
+			
 	print('\ncomplete.\n')
 	
 	return k_dis_datasets, k_dis_preimages, bests_from_dataset, preimages
@@ -174,7 +177,7 @@ def __plot_results(alpha1_list, k_dis_datasets, k_dis_preimages, dir_save):
 	ind = np.arange(len(alpha1_list))    # the x locations for the groups
 	width = 0.35       # the width of the bars: can also be len(x) sequence
 	
-	p1 = ax.bar(ind, k_dis_preimages, width, label='Reconstructed pre-image', zorder=3, color='#133AAC')
+	ax.bar(ind, k_dis_preimages, width, label='Reconstructed pre-image', zorder=3, color='#133AAC')
 	
 	ax.set_xlabel(r'$\alpha \in [0,1]$')
 	ax.set_ylabel(r'$d(g_i,g^\star(\alpha))$')
@@ -189,7 +192,7 @@ def __plot_results(alpha1_list, k_dis_datasets, k_dis_preimages, dir_save):
 	ax.spines['right'].set_visible(False)
 	ax.xaxis.set_ticks_position('none')
 
-	p2 = ax.plot(ind, k_dis_datasets, 'b.-', label=r'Nearest neighbor in $D_N$', color='orange', zorder=4)
+	ax.plot(ind, k_dis_datasets, 'b.-', label=r'Nearest neighbor in $D_N$', color='orange', zorder=4)
 	ax.yaxis.set_ticks_position('none')
 	
 	fig.subplots_adjust(bottom=.2)
