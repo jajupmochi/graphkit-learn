@@ -145,7 +145,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		if self._verbose:
 			print()
 			print('================================================================================')
-			print('Finished generalization of preimages.')
+			print('Finished generation of preimages.')
 			print('--------------------------------------------------------------------------------')
 			print('The optimized edit cost constants:', self.__edit_cost_constants)
 			print('SOD of the set median:', self.__sod_set_median)

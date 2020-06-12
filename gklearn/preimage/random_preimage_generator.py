@@ -210,7 +210,7 @@ class RandomPreimageGenerator(PreimageGenerator):
 		if self._verbose:
 			print()
 			print('=============================================================================')
-			print('Finished generalization of preimages.')
+			print('Finished generation of preimages.')
 			print('-----------------------------------------------------------------------------')
 			print('Distance in kernel space for the best graph from dataset:', self.__k_dis_dataset)
 			print('Distance in kernel space for the preimage:', self.__k_dis_preimage)
