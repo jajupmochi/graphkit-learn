@@ -1,9 +1,11 @@
 language: python
+
 python:
 - '3.5'
 - '3.6'
 - '3.7'
 - '3.8'
+
 before_install:
 - python --version
 - pip install -U pip
@@ -16,9 +18,13 @@ install:
 - pip install -r requirements.txt
 - pip install wheel
 
+
 script:
 - python setup.py bdist_wheel
-- pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/
+- if [ $TRAVIS_PYTHON_VERSION == 3.6 ]; 
+  then pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/;
+  else pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py;
+  fi
 
 after_success:
 - codecov
