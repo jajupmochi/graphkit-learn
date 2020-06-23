@@ -300,7 +300,13 @@ def get_edge_labels(Gn, edge_label):
 
 
 def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attrs=None, edge_attrs=None, ds_infos=None, kernel_options={}):
-	if name == 'ShortestPath':
+	if name == 'Marginalized':
+		from gklearn.kernels import Marginalized
+		graph_kernel = Marginalized(node_labels=node_labels,
+								 edge_labels=edge_labels,
+								 ds_infos=ds_infos,
+								 **kernel_options)
+	elif name == 'ShortestPath':
 		from gklearn.kernels import ShortestPath
 		graph_kernel = ShortestPath(node_labels=node_labels,
 								 node_attrs=node_attrs,

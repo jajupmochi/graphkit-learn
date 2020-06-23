@@ -195,7 +195,7 @@ class Treelet(GraphKernel):
 		Return
 		------
 		kernel : float
-			Treelet Kernel between 2 graphs.
+			Treelet kernel between 2 graphs.
 		"""
 		keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
 		vector1 = np.array([(canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys])

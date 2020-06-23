@@ -256,7 +256,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 		if (load_gm == 'auto' and not gmfile_exist) or not load_gm:
 			gram_matrix_unnorm_list.append(mpg.gram_matrix_unnorm)
 
-	# write result summary for each letter. 
+	# write result summary for each class. 
 	if save_results:
 		sod_sm_mean = np.mean(sod_sm_list)
 		sod_gm_mean = np.mean(sod_gm_list)
@@ -387,15 +387,15 @@ def dis_gstar(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
 	return np.sqrt(term1 - term2 + term3)
 
 
-def compute_k_dis(idx_g, idx_gi, alpha, Kmatrix, term3=0, withterm3=True):
+def compute_k_dis(idx_g, idx_gi, alphas, Kmatrix, term3=0, withterm3=True):
 	term1 = Kmatrix[idx_g, idx_g]
 	term2 = 0
-	for i, a in enumerate(alpha):
+	for i, a in enumerate(alphas):
 		term2 += a * Kmatrix[idx_g, idx_gi[i]]
 	term2 *= 2
 	if withterm3 == False:
-		for i1, a1 in enumerate(alpha):
-			for i2, a2 in enumerate(alpha):
+		for i1, a1 in enumerate(alphas):
+			for i2, a2 in enumerate(alphas):
 				term3 += a1 * a2 * Kmatrix[idx_gi[i1], idx_gi[i2]]
 	return np.sqrt(term1 - term2 + term3)
 
