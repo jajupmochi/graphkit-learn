@@ -22,19 +22,53 @@ A Python package for graph kernels, graph edit distances and graph pre-image pro
 
 ## How to use?
 
+### Install the library
+
+* Install stable version from PyPI (may not be up-to-date):
+```
+$ pip install graphkit-learn
+```
+
+* Install latest version from GitHub:
+```
+$ git clone https://github.com/jajupmochi/graphkit-learn.git
+$ cd graphkit-learn/
+$ python setup.py install
+```
+
+### Run the test
+
+A series of [tests](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/tests) can be run to check if the library works correctly.
+```
+$ pip install -U pip pytest codecov coverage pytest-cov
+$ pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/
+```
+
+### Check examples
+
+A series of demos of using the library can be found on [Google Colab](https://drive.google.com/drive/folders/1r2gtPuFzIys2_MZw1wXqE2w3oCoVoQUG?usp=sharing) and in the [`example`](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/examples) folder.
+
+### Other demos
+
 Simply clone this repository and voilà! Then check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks) directory for demos:
 * [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks) directory includes test codes of graph kernels based on linear patterns;
 * [`notebooks/tests`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/tests) directory includes codes that test some libraries and functions;
 * [`notebooks/utils`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/utils) directory includes some useful tools, such as a Gram matrix checker and a function to get properties of datasets;
 * [`notebooks/else`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/else) directory includes other codes that we used for experiments.
 
-## List of graph kernels
+### Check the docs.
+
+The docs of the library can be found [here](https://graphkit-learn.readthedocs.io/en/master/?badge=master).
+
+## Main contents.
+
+### List of graph kernels
 
 * Based on walks
   * The common walk kernel [1]
     * Exponential
     * Geometric
-  * The marginalized kenrel
+  * [The marginalized kenrel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/marginalized.py)
     * With tottering [2]
     * Without tottering [7]
   * The generalized random walk kernel [3]
@@ -43,15 +77,27 @@ Simply clone this repository and voilà! Then check [`notebooks`](https://github
     * Fixed-point iterations
     * Spectral decomposition
 * Based on paths
-  * The shortest path kernel [4]
-  * The structural shortest path kernel [5]
-  * The path kernel up to length h [6]
+  * [The shortest path kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/shortest_path.py) [4]
+  * [The structural shortest path kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/structural_sp.py) [5]
+  * [The path kernel up to length h](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/path_up_to_h.py) [6]
     * The Tanimoto kernel
     * The MinMax kernel
 * Non-linear kernels
-  * The treelet kernel [10]
-  * Weisfeiler-Lehman kernel [11]
-    * Subtree
+  * [The treelet kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/treelet.py) [10]
+  * [Weisfeiler-Lehman kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/weisfeiler_lehman.py) [11]
+    * [Subtree](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/weisfeiler_lehman.py#L479)
+
+A demo of computing graph kernels can be found on [Google Colab](https://colab.research.google.com/drive/17Q2QCl9CAtDweGF8LiWnWoN2laeJqT0u?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/compute_graph_kernel.py) folder.
+
+### Graph Edit Distances
+
+### Graph preimage methods
+
+A demo of generating graph preimages can be found on [Google Colab](https://colab.research.google.com/drive/1PIDvHOcmiLEQ5Np3bgBDdu0kLOquOMQK?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/median_preimege_generator.py) folder.
+
+### Interface to `GEDLIB`
+
+[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. A Python interface for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
 
 ## Computation optimization methods
 
@@ -80,6 +126,10 @@ Check this paper for detailed description of graph kernels and experimental resu
 Linlin Jia, Benoit Gaüzère, and Paul Honeine. Graph Kernels Based on Linear Patterns: Theoretical and Experimental Comparisons. working paper or preprint, March 2019. URL https://hal-normandie-univ.archives-ouvertes.fr/hal-02053946.
 
 A comparison of performances of graph kernels on benchmark datasets can be found [here](https://graphkit-learn.readthedocs.io/en/master/experiments.html).
+
+## How to contribute
+
+Fork the library and open a pull request! Make your own contribute to the community!
 
 ## References
 [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
