@@ -38,7 +38,7 @@ $ python setup.py install
 
 ### Run the test
 
-A series of [tests](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/tests) can be run to check if the library works correctly.
+A series of [tests](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/tests) can be run to check if the library works correctly:
 ```
 $ pip install -U pip pytest codecov coverage pytest-cov
 $ pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/
@@ -50,17 +50,17 @@ A series of demos of using the library can be found on [Google Colab](https://dr
 
 ### Other demos
 
-Simply clone this repository and voilà! Then check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks) directory for demos:
+Check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks) directory for more demos:
 * [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks) directory includes test codes of graph kernels based on linear patterns;
 * [`notebooks/tests`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/tests) directory includes codes that test some libraries and functions;
 * [`notebooks/utils`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/utils) directory includes some useful tools, such as a Gram matrix checker and a function to get properties of datasets;
 * [`notebooks/else`](https://github.com/jajupmochi/graphkit-learn/tree/master/notebooks/else) directory includes other codes that we used for experiments.
 
-### Check the docs.
+### Documentation
 
 The docs of the library can be found [here](https://graphkit-learn.readthedocs.io/en/master/?badge=master).
 
-## Main contents.
+## Main contents
 
 ### List of graph kernels
 
@@ -97,9 +97,9 @@ A demo of generating graph preimages can be found on [Google Colab](https://cola
 
 ### Interface to `GEDLIB`
 
-[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. A Python interface for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
+[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. [A Python interface](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib) for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
 
-## Computation optimization methods
+### Computation optimization methods
 
 * Python’s `multiprocessing.Pool` module is applied to perform **parallelization** on the computations of all kernels as well as the model selection.
 * **The Fast Computation of Shortest Path Kernel (FCSP) method** [8] is implemented in *the random walk kernel*, *the shortest path kernel*, as well as *the structural shortest path kernel* where FCSP is applied on both vertex and edge kernels.
