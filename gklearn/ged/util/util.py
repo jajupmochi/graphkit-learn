@@ -13,6 +13,7 @@ from functools import partial
 import sys
 from tqdm import tqdm
 import networkx as nx
+from gklearn.ged.env import GEDEnv
 from gklearn.gedlib import librariesImport, gedlibpy
 
 
@@ -22,7 +23,7 @@ def compute_ged(g1, g2, options):
 	ged_env.add_nx_graph(g1, '')
 	ged_env.add_nx_graph(g2, '')
 	listID = ged_env.get_all_graph_ids()	
-	ged_env.init()
+	ged_env.init(init_type=options['init_option'])
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
@@ -44,6 +45,82 @@ def compute_ged(g1, g2, options):
 #		print(pi_forward)
 
 	return dis, pi_forward, pi_backward
+
+
+def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True):
+	# initialize ged env.
+	ged_env = GEDEnv()
+	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constants=options['edit_cost_constants'])
+	for g in graphs:
+		ged_env.add_nx_graph(g, '')
+	listID = ged_env.get_all_graph_ids()	
+	ged_env.init(init_type=options['init_option'])
+	if parallel:
+		options['threads'] = 1
+	ged_env.set_method(options['method'], options)
+	ged_env.init_method()
+
+	# compute ged.
+	neo_options = {'edit_cost': options['edit_cost'],
+				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
+				'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
+	ged_mat = np.zeros((len(graphs), len(graphs)))
+	if parallel:
+		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
+		ged_vec = [0 for i in range(len_itr)]
+		n_edit_operations = [0 for i in range(len_itr)]
+		itr = combinations(range(0, len(graphs)), 2)
+		n_jobs = multiprocessing.cpu_count()
+		if len_itr < 100 * n_jobs:
+			chunksize = int(len_itr / n_jobs) + 1
+		else:
+			chunksize = 100
+		def init_worker(graphs_toshare, ged_env_toshare, listID_toshare):
+			global G_graphs, G_ged_env, G_listID
+			G_graphs = graphs_toshare
+			G_ged_env = ged_env_toshare
+			G_listID = listID_toshare
+		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
+		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
+		if verbose:
+			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
+						desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = pool.imap_unordered(do_partial, itr, chunksize)
+#		iterator = pool.imap_unordered(do_partial, itr, chunksize)
+		for i, j, dis, n_eo_tmp in iterator:
+			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
+			ged_vec[idx_itr] = dis
+			ged_mat[i][j] = dis
+			ged_mat[j][i] = dis
+			n_edit_operations[idx_itr] = n_eo_tmp
+#			print('\n-------------------------------------------')
+#			print(i, j, idx_itr, dis)
+		pool.close()
+		pool.join()
+		
+	else:
+		ged_vec = []
+		n_edit_operations = []
+		if verbose:
+			iterator = tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout)
+		else:
+			iterator = range(len(graphs))
+		for i in iterator:
+#		for i in range(len(graphs)):
+			for j in range(i + 1, len(graphs)):
+				if nx.number_of_nodes(graphs[i]) <= nx.number_of_nodes(graphs[j]) or not sort:
+					dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j])
+				else:
+					dis, pi_backward, pi_forward = _compute_ged(ged_env, listID[j], listID[i], graphs[j], graphs[i])
+				ged_vec.append(dis)
+				ged_mat[i][j] = dis
+				ged_mat[j][i] = dis
+				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, 	**neo_options)
+				n_edit_operations.append(n_eo_tmp)
+
+	return ged_vec, ged_mat, n_edit_operations	
+
 
 
 def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):

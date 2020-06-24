@@ -472,14 +472,6 @@ def get_mlti_dim_edge_attrs(G, attr_names):
 	for ed, attrs in G.edges(data=True):
 		attributes.append(tuple(attrs[aname] for aname in attr_names))
 	return attributes
-
-
-@unique
-class SpecialLabel(Enum):
-	"""can be used to define special labels.
-	"""
-	DUMMY = 1 # The dummy label.
-	# DUMMY = auto # enum.auto does not exist in Python 3.5.
 	
 	
 def normalize_gram_matrix(gram_matrix):
@@ -507,3 +499,43 @@ def compute_distance_matrix(gram_matrix):
 	dis_min = np.min(np.min(dis_mat[dis_mat != 0]))
 	dis_mean = np.mean(np.mean(dis_mat))
 	return dis_mat, dis_max, dis_min, dis_mean
+
+
+def dummy_node():
+	"""
+	/*!
+	 * @brief Returns a dummy node.
+	 * @return ID of dummy node.
+	 */
+	"""
+	return np.inf # @todo: in GEDLIB, this is the max - 1 rather than max, I don't know why.
+
+
+def undefined_node():
+	"""
+	/*!
+	 * @brief Returns an undefined node.
+	 * @return ID of undefined node.
+	 */
+
+	"""
+	return np.inf
+
+
+def dummy_edge():
+	"""
+	/*!
+	 * @brief Returns a dummy edge.
+	 * @return ID of dummy edge.
+	 */
+
+	"""
+	return np.inf
+
+
+@unique
+class SpecialLabel(Enum):
+	"""can be used to define special labels.
+	"""
+	DUMMY = 1 # The dummy label.
+	# DUMMY = auto # enum.auto does not exist in Python 3.5.

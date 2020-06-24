@@ -20,7 +20,7 @@ from gklearn.utils.graph_files import load_dataset, save_dataset
 from gklearn.utils.timer import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 from gklearn.utils.utils import compute_gram_matrices_by_class
-from gklearn.utils.utils import SpecialLabel
+from gklearn.utils.utils import SpecialLabel, dummy_node, undefined_node, dummy_edge
 from gklearn.utils.utils import normalize_gram_matrix, compute_distance_matrix
 from gklearn.utils.trie import Trie
 from gklearn.utils.knn import knn_cv, knn_classification
