@@ -5,6 +5,27 @@ Created on Thu Mar 19 18:13:56 2020
 
 @author: ljia
 """
+from gklearn.utils import dummy_node
+
+
+def construct_node_map_from_solver(solver, node_map, solution_id):
+	node_map.clear()
+	num_nodes_g = node_map.num_source_nodes()
+	num_nodes_h = node_map.num_target_nodes()
+	
+	# add deletions and substitutions
+	for row in range(0, num_nodes_g):
+		col = solver.get_assigned_col(row, solution_id)
+		if col >= num_nodes_h:
+			node_map.add_assignment(row, dummy_node())
+		else:
+			node_map.add_assignment(row, col)
+			
+	# insertions.
+	for col in range(0, num_nodes_h):
+		if solver.get_assigned_row(col, solution_id) >= num_nodes_g:
+			node_map.add_assignment(dummy_node(), col)
+	
 
 def options_string_to_options_map(options_string):
     """Transforms an options string into an options map.
