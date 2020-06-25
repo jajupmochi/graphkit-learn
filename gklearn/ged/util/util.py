@@ -14,10 +14,11 @@ import sys
 from tqdm import tqdm
 import networkx as nx
 from gklearn.ged.env import GEDEnv
-from gklearn.gedlib import librariesImport, gedlibpy
 
 
 def compute_ged(g1, g2, options):
+	from gklearn.gedlib import librariesImport, gedlibpy
+
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
 	ged_env.add_nx_graph(g1, '')
@@ -124,6 +125,8 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 
 
 def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
+	from gklearn.gedlib import librariesImport, gedlibpy
+
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
