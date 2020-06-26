@@ -63,6 +63,23 @@ class GEDEnv(object):
 		return graph_id
 	
 	
+	def clear_graph(self, graph_id):
+		"""
+	/*!
+	 * @brief Clears and de-initializes a graph that has previously been added to the environment. Call init() after calling this method.
+	 * @param[in] graph_id ID of graph that has to be cleared.
+	 */
+		"""
+		if graph_id > self.__ged_data.num_graphs_without_shuffled_copies():
+			raise Exception('The graph', self.get_graph_name(graph_id), 'has not been added to the environment.')
+		self.__ged_data._graphs[graph_id].clear()
+		self.__original_to_internal_node_ids[graph_id].clear()
+		self.__internal_to_original_node_ids[graph_id].clear()
+		self.__ged_data._strings_to_internal_node_ids[graph_id].clear()
+		self.__ged_data._internal_node_ids_to_strings[graph_id].clear()
+		self.__initialized = False
+	
+	
 	def add_node(self, graph_id, node_id, node_label):
 		"""
 	/*!
@@ -80,7 +97,9 @@ class GEDEnv(object):
 		self.__internal_to_original_node_ids[graph_id][internal_node_id] = node_id
 		self.__ged_data._strings_to_internal_node_ids[graph_id][str(node_id)] = internal_node_id
 		self.__ged_data._internal_node_ids_to_strings[graph_id][internal_node_id] = str(node_id)
-		# @todo: node_label_to_id_
+		self.__ged_data._node_label_to_id(node_label)
+		label_id = self.__ged_data._node_label_to_id(node_label)
+		# @todo: ged_data_.graphs_[graph_id].set_label
 		
 		
 	def add_edge(self, graph_id, nd_from, nd_to, edge_label, ignore_duplicates=True):
@@ -98,7 +117,8 @@ class GEDEnv(object):
 		self.__initialized = False
 		# @todo: check ignore_duplicates.
 		self.__ged_data._graphs[graph_id].add_edge(self.__original_to_internal_node_ids[graph_id][nd_from], self.__original_to_internal_node_ids[graph_id][nd_to], label=edge_label)
-		# @todo: edge_id and label_id, edge_label_to_id_.
+		label_id = self.__ged_data._edge_label_to_id(edge_label)
+		# @todo: ged_data_.graphs_[graph_id].set_label
 		
 	
 	def add_nx_graph(self, g, classe, ignore_duplicates=True) :
@@ -120,6 +140,40 @@ class GEDEnv(object):
 			self.add_node(graph_id, node, tuple(sorted(g.nodes[node].items(), key=lambda kv: kv[0])))
 		for edge in g.edges:
 			self.add_edge(graph_id, edge[0], edge[1], tuple(sorted(g.edges[(edge[0], edge[1])].items(), key=lambda kv: kv[0])), ignore_duplicates)
+		return graph_id
+	
+	
+	def load_nx_graph(self, nx_graph, graph_id, graph_name='', graph_class=''):
+		"""
+		Loads NetworkX Graph into the GED environment.
+
+		Parameters
+		----------
+		nx_graph : NetworkX Graph object
+			The graph that should be loaded.
+			
+		graph_id : int or None
+			The ID of a graph contained the environment (overwrite existing graph) or add new graph if `None`.
+																							
+		graph_name : string, optional
+			The name of newly added graph. The default is ''. Has no effect unless `graph_id` equals `None`.
+			
+		graph_class : string, optional
+			The class of newly added graph. The default is ''. Has no effect unless `graph_id` equals `None`.
+
+		Returns
+		-------
+		int
+			The ID of the newly loaded graph.
+		"""
+		if graph_id is None: # @todo: undefined.
+			graph_id = self.add_graph(graph_name, graph_class)
+		else:
+			self.clear_graph(graph_id)
+		for node in nx_graph.nodes:
+			self.add_node(graph_id, node, tuple(sorted(nx_graph.nodes[node].items(), key=lambda kv: kv[0])))
+		for edge in nx_graph.edges:
+			self.add_edge(graph_id, edge[0], edge[1], tuple(sorted(nx_graph.edges[(edge[0], edge[1])].items(), key=lambda kv: kv[0])))
 		return graph_id
 	
 	
@@ -152,6 +206,26 @@ class GEDEnv(object):
 		# Mark environment as initialized.
 		self.__initialized = True
 		self.__new_graph_ids.clear()
+		
+		
+	def is_initialized(self):
+		"""
+	/*!
+	 * @brief Check if the environment is initialized.
+	 * @return True if the environment is initialized.
+	 */
+		"""
+		return self.__initialized
+	
+	
+	def get_init_type(self):
+		"""
+	/*!
+	 * @brief Returns the initialization type of the last initialization.
+	 * @return Initialization type.
+	 */
+		"""
+		return self.__ged_data._init_type
 		
 		
 	def set_method(self, method, options=''):
@@ -263,6 +337,58 @@ class GEDEnv(object):
 		self.__ged_method.init()
 		
 		
+	def get_num_node_labels(self):
+		"""
+	/*!
+	 * @brief Returns the number of node labels.
+	 * @return Number of pairwise different node labels contained in the environment.
+	 * @note If @p 1 is returned, the nodes are unlabeled.
+	 */
+		"""
+		return len(self.__ged_data._node_labels)
+	
+	
+	def get_node_label(self, label_id, to_dict=True):
+		"""
+	/*!
+	 * @brief Returns node label.
+	 * @param[in] label_id ID of node label that should be returned. Must be between 1 and num_node_labels().
+	 * @return Node label for selected label ID.
+	 */
+		"""
+		if label_id < 1 or label_id > self.get_num_node_labels():
+			raise Exception('The environment does not contain a node label with ID', str(label_id), '.')
+		if to_dict:
+			return dict(self.__ged_data._node_labels[label_id - 1])
+		return self.__ged_data._node_labels[label_id - 1]
+		
+		
+	def get_num_edge_labels(self):
+		"""
+	/*!
+	 * @brief Returns the number of edge labels.
+	 * @return Number of pairwise different edge labels contained in the environment.
+	 * @note If @p 1 is returned, the edges are unlabeled.
+	 */
+		"""
+		return len(self.__ged_data._edge_labels)
+	
+		
+	def get_edge_label(self, label_id, to_dict=True):
+		"""
+	/*!
+	 * @brief Returns edge label.
+	 * @param[in] label_id ID of edge label that should be returned. Must be between 1 and num_node_labels().
+	 * @return Edge label for selected label ID.
+	 */
+		"""
+		if label_id < 1 or label_id > self.get_num_edge_labels():
+			raise Exception('The environment does not contain an edge label with ID', str(label_id), '.')
+		if to_dict:
+			return dict(self.__ged_data._edge_labels[label_id - 1])
+		return self.__ged_data._edge_labels[label_id - 1]
+	
+		
 	def get_upper_bound(self, g_id, h_id):
 		"""
 	/*!
@@ -363,6 +489,205 @@ class GEDEnv(object):
 			.. note:: I don't know how to connect the two map to reconstruct the adjacence matrix. Please come back when I know how it's work ! 
 		"""
 		return self.get_node_map(g_id, h_id).backward_map
+	
+	
+	def compute_induced_cost(self, g_id, h_id, node_map):
+		"""
+	/*!
+	 * @brief Computes the edit cost between two graphs induced by a node map.
+	 * @param[in] g_id ID of input graph.
+	 * @param[in] h_id ID of input graph.
+	 * @param[in,out] node_map Node map whose induced edit cost is to be computed.
+	 */
+		"""
+		self.__ged_data.compute_induced_cost(self.__ged_data._graphs[g_id], self.__ged_data._graphs[h_id], node_map)
+	
+	
+	def get_nx_graph(self, graph_id):
+		"""
+	 * @brief Returns NetworkX.Graph() representation.
+	 * @param[in] graph_id ID of the selected graph.
+		"""
+		graph = nx.Graph() # @todo: add graph attributes.
+		graph.graph['id'] = graph_id
+		
+		nb_nodes = self.get_graph_num_nodes(graph_id)
+		original_node_ids = self.get_original_node_ids(graph_id)
+		node_labels = self.get_graph_node_labels(graph_id, to_dict=True)
+		graph.graph['original_node_ids'] = original_node_ids		
+		
+		for node_id in range(0, nb_nodes):
+			graph.add_node(node_id, **node_labels[node_id])
+			
+		edges = self.get_graph_edges(graph_id, to_dict=True)
+		for (head, tail), labels in edges.items():
+			graph.add_edge(head, tail, **labels)
+
+		return graph
+	
+	
+	def get_graph_node_labels(self, graph_id, to_dict=True):
+		"""
+			Searchs and returns all the labels of nodes on a graph, selected by its ID. 
+	
+			:param graph_id: The ID of the wanted graph
+			:type graph_id: size_t
+			:return: The list of nodes' labels on the selected graph
+			:rtype: list[dict{string : string}]
+			
+			.. seealso:: get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_original_node_ids(), get_graph_edges(), get_graph_adjacence_matrix()
+			.. note:: These functions allow to collect all the graph's informations.
+		"""
+		graph = self.__ged_data.graph(graph_id)
+		node_labels = []
+		for n in graph.nodes():
+			node_labels.append(graph.nodes[n]['label'])
+		if to_dict:
+			return [dict(i) for i in node_labels]
+		return node_labels
+	
+	
+	def get_graph_edges(self, graph_id, to_dict=True):
+		"""
+			Searchs and returns all the edges on a graph, selected by its ID. 
+	
+			:param graph_id: The ID of the wanted graph
+			:type graph_id: size_t
+			:return: The list of edges on the selected graph
+			:rtype: dict{tuple(size_t, size_t) : dict{string : string}}
+			
+			.. seealso::get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_original_node_ids(), get_graph_node_labels(), get_graph_adjacence_matrix()
+			.. note:: These functions allow to collect all the graph's informations.
+		"""
+		graph = self.__ged_data.graph(graph_id)		
+		if to_dict:
+			edges = {}		
+			for n1, n2, attr in graph.edges(data=True):
+				edges[(n1, n2)] = dict(attr['label'])
+			return edges
+		return {(n1, n2): attr['label'] for n1, n2, attr in graph.edges(data=True)}
+
+	
+	
+	def get_graph_name(self, graph_id):
+		"""
+	/*!
+	 * @brief Returns the graph name.
+	 * @param[in] graph_id ID of an input graph that has been added to the environment.
+	 * @return Name of the input graph.
+	 */
+		"""
+		return self.__ged_data._graph_names[graph_id]
+	
+	
+	def get_graph_num_nodes(self, graph_id):
+		"""
+	/*!
+	 * @brief Returns the number of nodes.
+	 * @param[in] graph_id ID of an input graph that has been added to the environment.
+	 * @return Number of nodes in the graph.
+	 */
+		"""
+		return nx.number_of_nodes(self.__ged_data.graph(graph_id))
+	
+	
+	def get_original_node_ids(self, graph_id):
+		"""
+			Searchs and returns all th Ids of nodes on a graph, selected by its ID. 
+	
+			:param graph_id: The ID of the wanted graph
+			:type graph_id: size_t
+			:return: The list of IDs's nodes on the selected graph
+			:rtype: list[string]
+			
+			.. seealso::get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_graph_node_labels(), get_graph_edges(), get_graph_adjacence_matrix()
+			.. note:: These functions allow to collect all the graph's informations.
+		"""
+		return [i for i in self.__internal_to_original_node_ids[graph_id].values()]		
+	
+	
+	def get_node_rel_cost(self, node_label_1, node_label_2):
+		"""
+	/*!
+	 * @brief Returns node relabeling cost.
+	 * @param[in] node_label_1 First node label.
+	 * @param[in] node_label_2 Second node label.
+	 * @return Node relabeling cost for the given node labels.
+	 */
+		"""
+		if isinstance(node_label_1, dict):
+			node_label_1 = tuple(sorted(node_label_1.items(), key=lambda kv: kv[0]))
+		if isinstance(node_label_2, dict):
+			node_label_2 = tuple(sorted(node_label_2.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.node_rel_cost_fun(node_label_1, node_label_2)
+		
+		
+	def get_node_del_cost(self, node_label):
+		"""
+	/*!
+	 * @brief Returns node deletion cost.
+	 * @param[in] node_label Node label.
+	 * @return Cost of deleting node with given label.
+	 */
+		"""
+		if isinstance(node_label, dict):
+			node_label = tuple(sorted(node_label.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.node_del_cost_fun(node_label)
+		
+		
+	def get_node_ins_cost(self, node_label):
+		"""
+	/*!
+	 * @brief Returns node insertion cost.
+	 * @param[in] node_label Node label.
+	 * @return Cost of inserting node with given label.
+	 */
+		"""
+		if isinstance(node_label, dict):
+			node_label = tuple(sorted(node_label.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.node_ins_cost_fun(node_label)
+		
+		
+	def get_edge_rel_cost(self, edge_label_1, edge_label_2):
+		"""
+	/*!
+	 * @brief Returns edge relabeling cost.
+	 * @param[in] edge_label_1 First edge label.
+	 * @param[in] edge_label_2 Second edge label.
+	 * @return Edge relabeling cost for the given edge labels.
+	 */
+		"""
+		if isinstance(edge_label_1, dict):
+			edge_label_1 = tuple(sorted(edge_label_1.items(), key=lambda kv: kv[0]))
+		if isinstance(edge_label_2, dict):
+			edge_label_2 = tuple(sorted(edge_label_2.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.edge_rel_cost_fun(edge_label_1, edge_label_2)
+		
+		
+	def get_edge_del_cost(self, edge_label):
+		"""
+	/*!
+	 * @brief Returns edge deletion cost.
+	 * @param[in] edge_label Edge label.
+	 * @return Cost of deleting edge with given label.
+	 */
+		"""
+		if isinstance(edge_label, dict):
+			edge_label = tuple(sorted(edge_label.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.edge_del_cost_fun(edge_label)
+		
+		
+	def get_edge_ins_cost(self, edge_label):
+		"""
+	/*!
+	 * @brief Returns edge insertion cost.
+	 * @param[in] edge_label Edge label.
+	 * @return Cost of inserting edge with given label.
+	 */
+		"""
+		if isinstance(edge_label, dict):
+			edge_label = tuple(sorted(edge_label.items(), key=lambda kv: kv[0]))
+		return self.__ged_data._edit_cost.edge_ins_cost_fun(edge_label)
 		
 		
 	def get_all_graph_ids(self):
