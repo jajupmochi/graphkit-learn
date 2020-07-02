@@ -226,6 +226,12 @@ class GEDEnv(object):
 	 */
 		"""
 		return self.__ged_data._init_type
+	
+	
+	def set_label_costs(self, label_costs):
+		"""Set the costs between labels. 
+		"""
+		self.__ged_data._node_label_costs = label_costs
 		
 		
 	def set_method(self, method, options=''):

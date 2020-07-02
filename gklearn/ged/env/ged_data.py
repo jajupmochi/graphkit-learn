@@ -23,6 +23,7 @@ class GEDData(object):
 		self._edit_cost = None
 		self._node_costs = None
 		self._edge_costs = None
+		self._node_label_costs = None
 		self._node_labels = []
 		self._edge_labels = []
 		self._init_type = Options.InitType.EAGER_WITHOUT_SHUFFLED_COPIES
@@ -84,15 +85,21 @@ class GEDData(object):
 	 * and 0 otherwise.
 	 */
 		"""
-		if self._eager_init(): # @todo: check if correct
-			return self._node_costs[label1, label2]
-		if label1 == label2:
-			return 0
-		if label1 == SpecialLabel.DUMMY: # @todo: check dummy
-			return self._edit_cost.node_ins_cost_fun(label2) # self._node_labels[label2 - 1]) # @todo: check
-		if label2 == SpecialLabel.DUMMY: # @todo: check dummy
-			return self._edit_cost.node_del_cost_fun(label1) # self._node_labels[label1 - 1])
-		return self._edit_cost.node_rel_cost_fun(label1, label2) # self._node_labels[label1 - 1], self._node_labels[label2 - 1])
+		if self._node_label_costs is None:
+			if self._eager_init(): # @todo: check if correct
+				return self._node_costs[label1, label2]
+			if label1 == label2:
+				return 0
+			if label1 == SpecialLabel.DUMMY: # @todo: check dummy
+				return self._edit_cost.node_ins_cost_fun(label2) # self._node_labels[label2 - 1]) # @todo: check
+			if label2 == SpecialLabel.DUMMY: # @todo: check dummy
+				return self._edit_cost.node_del_cost_fun(label1) # self._node_labels[label1 - 1])
+			return self._edit_cost.node_rel_cost_fun(label1, label2) # self._node_labels[label1 - 1], self._node_labels[label2 - 1])
+		# use pre-computed node label costs.
+		else:
+			id1 = 0 if label1 == SpecialLabel.DUMMY else self._node_label_to_id(label1) # @todo: this is slow.
+			id2 = 0 if label2 == SpecialLabel.DUMMY else self._node_label_to_id(label2)
+			return self._node_label_costs[id1, id2]
 	
 	
 	def edge_cost(self, label1, label2):
@@ -198,6 +205,12 @@ class GEDData(object):
 		self._delete_edit_cost = True
 		
 		
+	def id_to_node_label(self, label_id):
+		if label_id > len(self._node_labels) or label_id == 0:
+			raise Exception('Invalid node label ID', str(label_id), '.')
+		return self._node_labels[label_id - 1]
+		
+		
 	def _node_label_to_id(self, node_label):
 		n_id = 0
 		for n_l in self._node_labels:
@@ -206,6 +219,12 @@ class GEDData(object):
 			n_id += 1
 		self._node_labels.append(node_label)
 		return n_id + 1
+
+
+	def id_to_edge_label(self, label_id):
+		if label_id > len(self._edge_labels) or label_id == 0:
+			raise Exception('Invalid edge label ID', str(label_id), '.')
+		return self._edge_labels[label_id - 1]
 
 
 	def _edge_label_to_id(self, edge_label):

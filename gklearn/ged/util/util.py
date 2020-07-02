@@ -55,6 +55,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()	
+	ged_env.set_label_costs(options['node_label_costs'] if 'node_label_costs' in options else None)
 	ged_env.init(init_type=options['init_option'])
 	if parallel:
 		options['threads'] = 1
