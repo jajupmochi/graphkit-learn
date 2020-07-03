@@ -357,6 +357,17 @@ class GEDEnv(object):
 		return len(self.__ged_data._node_labels)
 	
 	
+	def get_all_node_labels(self):
+		"""
+	/*!
+	 * @brief Returns the list of all node labels.
+	 * @return List of pairwise different node labels contained in the environment.
+	 * @note If @p 1 is returned, the nodes are unlabeled.
+	 */
+		"""
+		return self.__ged_data._node_labels
+	
+	
 	def get_node_label(self, label_id, to_dict=True):
 		"""
 	/*!
@@ -381,6 +392,17 @@ class GEDEnv(object):
 	 */
 		"""
 		return len(self.__ged_data._edge_labels)
+	
+	
+	def get_all_edge_labels(self):
+		"""
+	/*!
+	 * @brief Returns the list of all edge labels.
+	 * @return List of pairwise different edge labels contained in the environment.
+	 * @note If @p 1 is returned, the edges are unlabeled.
+	 */
+		"""
+		return self.__ged_data._edge_labels
 	
 		
 	def get_edge_label(self, label_id, to_dict=True):
