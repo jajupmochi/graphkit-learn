@@ -196,46 +196,16 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 	def __optimize_edit_cost_vector(self):
 		"""Learn edit cost vector.	
 		"""
-		if self.__init_method == 'random': # random
-			# Get list of node labels.
-			nls = self._dataset.get_all_node_labels()
-			# Generate random costs.
-			nb_nl = int((len(nls) * (len(nls) - 1)) / 2 + 2 * len(nls))
-			rand_costs = random.sample(range(1, 10 * nb_nl + 1), nb_nl)
-			self.__node_label_costs = np.zeros((len(nls) + 1, len(nls) + 1))
-			# Initialize node label cost matrix, each row/column corresponds to a label, the first label is the dummy label. These is the same setting as in GEDData.
-			i = 0
-			# Costs of insertions.
-			for row in range(1, len(nls) + 1):
-				self.__node_label_costs[row, 0] = rand_costs[i]
-				i += 1
-			# Costs of deletions.
-			for col in range(1, len(nls) + 1):
-				self.__node_label_costs[0, col] = rand_costs[i]
-				i += 1
-			# Costs of substitutions.				
-			for row in range(1, len(nls) + 1):
-				for col in range(row + 1, len(nls) + 1):
-					self.__node_label_costs[row, col] = rand_costs[i]
-					self.__node_label_costs[col, row] = rand_costs[i]
-					i += 1
-					
-# 			self.__node_label_costs = {}
-# 			for i, (nl1, nl2) in enumerate(itertools.combinations(nls, 2)):
-# 				self.__node_label_costs[(nl1, nl2)] = rand_costs[i]
-# 			# Add costs for deletion.
-# 			for j, nl in enumerate(nls):
-# 				self.__node_label_costs[(nl1, SpecialLabel.DUMMY)] = rand_costs[i + j]
-# 			# Add costs for insertion.
-# 			for k, nl in enumerate(nls):
-# 				self.__node_label_costs[(SpecialLabel.DUMMY, nl1)] = rand_costs[i + j + k]
-# 			# Add self costs.
-# 			for nl in nls:
-# 				self.__node_label_costs[(nl, nl)] = 0
-# 			self.__node_label_costs[(SpecialLabel.DUMMY, SpecialLabel.DUMMY)] = 0
+		 # Initialize label costs randomly.
+		if self.__init_method == 'random':
+			# Initialize label costs.
+			self.__initialize_label_costs()
 				
 			# Optimize edit cost matrices.
 			self.__optimize_ecm_by_kernel_distances()
+		# Initialize all label costs with the same value.
+		elif self.__init_method == 'uniform': # random
+			pass
 	
 		elif self.__fit_method == 'random': # random
 			if self.__ged_options['edit_cost'] == 'LETTER':
@@ -297,6 +267,77 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 			pass
 		
 		
+	def __initialize_label_costs(self):
+		self.__initialize_node_label_costs()
+		self.__initialize_edge_label_costs()
+				
+				
+	def __initialize_node_label_costs(self):
+		# Get list of node labels.
+		nls = self._dataset.get_all_node_labels()
+		# Generate random costs.
+		nb_nl = int((len(nls) * (len(nls) - 1)) / 2 + 2 * len(nls))
+		rand_costs = random.sample(range(1, 10 * nb_nl + 1), nb_nl)
+		rand_costs /= np.max(rand_costs) # @todo: maybe not needed.
+		self.__node_label_costs = np.zeros((len(nls) + 1, len(nls) + 1))
+		# Initialize node label cost matrix, each row/column corresponds to a label, the first label is the dummy label. This is the same setting as in GEDData.
+		i = 0
+		# Costs of insertions.
+		for row in range(1, len(nls) + 1):
+			self.__node_label_costs[row, 0] = rand_costs[i]
+			i += 1
+		# Costs of deletions.
+		for col in range(1, len(nls) + 1):
+			self.__node_label_costs[0, col] = rand_costs[i]
+			i += 1
+		# Costs of substitutions.				
+		for row in range(1, len(nls) + 1):
+			for col in range(row + 1, len(nls) + 1):
+				self.__node_label_costs[row, col] = rand_costs[i]
+				self.__node_label_costs[col, row] = rand_costs[i]
+				i += 1
+				
+# 			self.__node_label_costs = {}
+# 			for i, (nl1, nl2) in enumerate(itertools.combinations(nls, 2)):
+# 				self.__node_label_costs[(nl1, nl2)] = rand_costs[i]
+# 			# Add costs for deletion.
+# 			for j, nl in enumerate(nls):
+# 				self.__node_label_costs[(nl1, SpecialLabel.DUMMY)] = rand_costs[i + j]
+# 			# Add costs for insertion.
+# 			for k, nl in enumerate(nls):
+# 				self.__node_label_costs[(SpecialLabel.DUMMY, nl1)] = rand_costs[i + j + k]
+# 			# Add self costs.
+# 			for nl in nls:
+# 				self.__node_label_costs[(nl, nl)] = 0
+# 			self.__node_label_costs[(SpecialLabel.DUMMY, SpecialLabel.DUMMY)] = 0
+
+
+	def __initialize_edge_label_costs(self):
+		# Get list of edge labels.
+		els = self._dataset.get_all_edge_labels()
+		# Generate random costs.
+		nb_el = int((len(els) * (len(els) - 1)) / 2 + 2 * len(els))
+		rand_costs = random.sample(range(1, 10 * nb_el + 1), nb_el)
+		rand_costs /= np.max(rand_costs) # @todo: maybe not needed.
+		self.__edge_label_costs = np.zeros((len(els) + 1, len(els) + 1))
+		# Initialize edge label cost matrix, each row/column corresponds to a label, the first label is the dummy label. This is the same setting as in GEDData.
+		i = 0
+		# Costs of insertions.
+		for row in range(1, len(els) + 1):
+			self.__edge_label_costs[row, 0] = rand_costs[i]
+			i += 1
+		# Costs of deletions.
+		for col in range(1, len(els) + 1):
+			self.__edge_label_costs[0, col] = rand_costs[i]
+			i += 1
+		# Costs of substitutions.				
+		for row in range(1, len(els) + 1):
+			for col in range(row + 1, len(els) + 1):
+				self.__edge_label_costs[row, col] = rand_costs[i]
+				self.__edge_label_costs[col, row] = rand_costs[i]
+				i += 1
+		
+		
 	def __optimize_ecm_by_kernel_distances(self):		
 		# compute distances in feature space.
 		dis_k_mat, _, _, _ = self._graph_kernel.compute_distance_matrix()
@@ -320,6 +361,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		options['node_attrs'] = self._dataset.node_attrs
 		options['edge_attrs'] = self._dataset.edge_attrs
 		options['node_label_costs'] = self.__node_label_costs
+		options['edge_label_costs'] = self.__edge_label_costs
 		ged_vec_init, ged_mat, n_edit_operations = compute_geds_cml(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
 		time_list = [time.time() - time0]

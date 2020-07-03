@@ -24,6 +24,7 @@ class GEDData(object):
 		self._node_costs = None
 		self._edge_costs = None
 		self._node_label_costs = None
+		self._edge_label_costs = None
 		self._node_labels = []
 		self._edge_labels = []
 		self._init_type = Options.InitType.EAGER_WITHOUT_SHUFFLED_COPIES
@@ -114,15 +115,22 @@ class GEDData(object):
 	 * and 0 otherwise.
 	 */
 		"""
-		if self._eager_init(): # @todo: check if correct
-			return self._node_costs[label1, label2]
-		if label1 == label2:
-			return 0
-		if label1 == SpecialLabel.DUMMY:
-			return self._edit_cost.edge_ins_cost_fun(label2) # self._edge_labels[label2 - 1])
-		if label2 == SpecialLabel.DUMMY:
-			return self._edit_cost.edge_del_cost_fun(label1) # self._edge_labels[label1 - 1])
-		return self._edit_cost.edge_rel_cost_fun(label1, label2) # self._edge_labels[label1 - 1], self._edge_labels[label2 - 1])
+		if self._edge_label_costs is None:
+			if self._eager_init(): # @todo: check if correct
+				return self._node_costs[label1, label2]
+			if label1 == label2:
+				return 0
+			if label1 == SpecialLabel.DUMMY:
+				return self._edit_cost.edge_ins_cost_fun(label2) # self._edge_labels[label2 - 1])
+			if label2 == SpecialLabel.DUMMY:
+				return self._edit_cost.edge_del_cost_fun(label1) # self._edge_labels[label1 - 1])
+			return self._edit_cost.edge_rel_cost_fun(label1, label2) # self._edge_labels[label1 - 1], self._edge_labels[label2 - 1])
+		
+		# use pre-computed edge label costs.
+		else:
+			id1 = 0 if label1 == SpecialLabel.DUMMY else self._edge_label_to_id(label1) # @todo: this is slow.
+			id2 = 0 if label2 == SpecialLabel.DUMMY else self._edge_label_to_id(label2)
+			return self._edge_label_costs[id1, id2]
 	
 	
 	def compute_induced_cost(self, g, h, node_map):

@@ -8,6 +8,7 @@ Created on Mon Jun 22 15:37:36 2020
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+
 class LSAPESolver(object):
 	
 	

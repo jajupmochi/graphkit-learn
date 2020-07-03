@@ -545,6 +545,16 @@ class Dataset(object):
 				if nl not in node_labels:
 					node_labels.append(nl)
 		return node_labels
+	
+	
+	def get_all_edge_labels(self):
+		edge_labels = []
+		for g in self.__graphs:
+			for e in g.edges():
+				el = tuple(g.edges[e].items())
+				if el not in edge_labels:
+					edge_labels.append(el)
+		return edge_labels
 		
 	
 	def __get_dataset_size(self):
