@@ -49,12 +49,19 @@ def compute_ged(g1, g2, options):
 
 
 def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True):
+
 	# initialize ged env.
 	ged_env = GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constants=options['edit_cost_constants'])
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
-	listID = ged_env.get_all_graph_ids()	
+	listID = ged_env.get_all_graph_ids()
+	
+	node_labels = ged_env.get_all_node_labels()
+	edge_labels =  ged_env.get_all_edge_labels()
+	node_label_costs = label_costs_to_matrix(options['node_label_costs'], len(node_labels)) if 'node_label_costs' in options else None
+	edge_label_costs = label_costs_to_matrix(options['edge_label_costs'], len(edge_labels)) if 'edge_label_costs' in options else None
+	ged_env.set_label_costs(node_label_costs, edge_label_costs)
 	ged_env.init(init_type=options['init_option'])
 	if parallel:
 		options['threads'] = 1
@@ -62,9 +69,11 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	ged_env.init_method()
 
 	# compute ged.
+	# options used to compute numbers of edit operations.
 	neo_options = {'edit_cost': options['edit_cost'],
-				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
-				'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
+				'is_cml': True,
+				'node_labels': node_labels,
+				'edge_labels': edge_labels}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
 		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
@@ -120,8 +129,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j], pi_forward, pi_backward, 	**neo_options)
 				n_edit_operations.append(n_eo_tmp)
 
-	return ged_vec, ged_mat, n_edit_operations	
-
+	return ged_vec, ged_mat, n_edit_operations
 
 
 def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
@@ -235,21 +243,164 @@ def _compute_ged(env, gid1, gid2, g1, g2):
 	return dis, pi_forward, pi_backward
 
 
-def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, **kwargs):
-	if edit_cost == 'LETTER' or edit_cost == 'LETTER2':
-		return get_nb_edit_operations_letter(g1, g2, forward_map, backward_map)
-	elif edit_cost == 'NON_SYMBOLIC':
-		node_attrs = kwargs.get('node_attrs', [])
-		edge_attrs = kwargs.get('edge_attrs', [])
-		return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map, 
-											node_attrs=node_attrs, edge_attrs=edge_attrs)
-	elif edit_cost == 'CONSTANT':
-		node_labels = kwargs.get('node_labels', [])
-		edge_labels = kwargs.get('edge_labels', [])
-		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map, 
-										 node_labels=node_labels, edge_labels=edge_labels)
-	else: 
-		return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)
+def label_costs_to_matrix(costs, nb_labels):
+	"""Reform a label cost vector to a matrix.
+
+	Parameters
+	----------
+	costs : numpy.array
+		The vector containing costs between labels, in the order of node insertion costs, node deletion costs, node substitition costs, edge insertion costs, edge deletion costs, edge substitition costs.
+	nb_labels : integer
+		Number of labels.
+
+	Returns
+	-------
+	cost_matrix : numpy.array. 
+		The reformed label cost matrix of size (nb_labels, nb_labels). Each row/column of cost_matrix corresponds to a label, and the first label is the dummy label. This is the same setting as in GEDData.
+	"""
+	# Initialize label cost matrix.
+	cost_matrix = np.zeros((nb_labels + 1, nb_labels + 1))
+	i = 0
+	# Costs of insertions.
+	for col in range(1, nb_labels + 1):
+		cost_matrix[0, col] = costs[i]
+		i += 1
+	# Costs of deletions.
+	for row in range(1, nb_labels + 1):
+		cost_matrix[row, 0] = costs[i]
+		i += 1
+	# Costs of substitutions.				
+	for row in range(1, nb_labels + 1):
+		for col in range(row + 1, nb_labels + 1):
+			cost_matrix[row, col] = costs[i]
+			cost_matrix[col, row] = costs[i]
+			i += 1
+			
+	return cost_matrix
+
+
+def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, is_cml=False, **kwargs):
+	if is_cml:
+		if edit_cost == 'CONSTANT':
+			node_labels = kwargs.get('node_labels', [])
+			edge_labels = kwargs.get('edge_labels', [])
+			return get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
+											  node_labels=node_labels, edge_labels=edge_labels)
+		else: 
+			raise Exception('Edit cost "', edit_cost, '" is not supported.')
+	else:
+		if edit_cost == 'LETTER' or edit_cost == 'LETTER2':
+			return get_nb_edit_operations_letter(g1, g2, forward_map, backward_map)
+		elif edit_cost == 'NON_SYMBOLIC':
+			node_attrs = kwargs.get('node_attrs', [])
+			edge_attrs = kwargs.get('edge_attrs', [])
+			return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map, 
+												node_attrs=node_attrs, edge_attrs=edge_attrs)
+		elif edit_cost == 'CONSTANT':
+			node_labels = kwargs.get('node_labels', [])
+			edge_labels = kwargs.get('edge_labels', [])
+			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map, 
+											 node_labels=node_labels, edge_labels=edge_labels)
+		else: 
+			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)	
+		
+		
+def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map, 
+										node_labels=[], edge_labels=[]):
+	"""Compute times that edit operations are used in an edit path for symbolic-labeled graphs, where the costs are different for each pair of nodes.
+	
+	Returns
+	-------
+	list
+		A vector of numbers of times that costs bewteen labels are used in an edit path, formed in the order of node insertion costs, node deletion costs, node substitition costs, edge insertion costs, edge deletion costs, edge substitition costs. The dummy label is the first label, and the self label costs are not included.
+	"""
+	# Initialize.
+	nb_ops_node = np.zeros((1 + len(node_labels), 1 + len(node_labels)))
+	nb_ops_edge = np.zeros((1 + len(edge_labels), 1 + len(edge_labels)))
+	
+	# For nodes.
+	nodes1 = [n for n in g1.nodes()]
+	for i, map_i in enumerate(forward_map):
+		label1 = tuple(g1.nodes[nodes1[i]].items()) # @todo: order and faster
+		idx_label1 = node_labels.index(label1) # @todo: faster
+		if map_i == np.inf: # deletions.
+			nb_ops_node[idx_label1 + 1, 0] += 1
+		else: # substitutions.
+			label2 = tuple(g2.nodes[map_i].items())
+			if label1 != label2:
+				idx_label2 = node_labels.index(label2) # @todo: faster
+				nb_ops_node[idx_label1 + 1, idx_label2 + 1] += 1
+	# insertions.
+	nodes2 = [n for n in g2.nodes()]
+	for i, map_i in enumerate(backward_map):
+		if map_i == np.inf:
+			label = tuple(g2.nodes[nodes2[i]].items())
+			idx_label = node_labels.index(label) # @todo: faster
+			nb_ops_node[0, idx_label + 1] += 1
+			
+	# For edges.
+	edges1 = [e for e in g1.edges()]
+	edges2_marked = []
+	for nf1, nt1 in edges1:
+		label1 = tuple(g1.edges[(nf1, nt1)].items())
+		idx_label1 = edge_labels.index(label1) # @todo: faster
+		idxf1 = nodes1.index(nf1) # @todo: faster
+		idxt1 = nodes1.index(nt1) # @todo: faster
+		# At least one of the nodes is removed, thus the edge is removed.
+		if forward_map[idxf1] == np.inf or forward_map[idxt1] == np.inf:
+			nb_ops_edge[idx_label1 + 1, 0] += 1
+		# corresponding edge is in g2.
+		else:
+			nf2, nt2 = forward_map[idxf1], forward_map[idxt1]
+			if (nf2, nt2) in g2.edges():
+				edges2_marked.append((nf2, nt2))
+				# If edge labels are different.
+				label2 = tuple(g2.edges[(nf2, nt2)].items())
+				if label1 != label2:
+					idx_label2 = edge_labels.index(label2) # @todo: faster
+					nb_ops_edge[idx_label1 + 1, idx_label2 + 1] += 1		
+			# Switch nf2 and nt2, for directed graphs.
+			elif (nt2, nf2) in g2.edges():
+				edges2_marked.append((nt2, nf2))
+				# If edge labels are different.
+				label2 = tuple(g2.edges[(nt2, nf2)].items())
+				if label1 != label2:
+					idx_label2 = edge_labels.index(label2) # @todo: faster
+					nb_ops_edge[idx_label1 + 1, idx_label2 + 1] += 1
+			# Corresponding nodes are in g2, however the edge is removed.
+			else:
+				nb_ops_edge[idx_label1 + 1, 0] += 1
+	# insertions.
+	for nt, nf in g2.edges():
+		if (nt, nf) not in edges2_marked and (nf, nt) not in edges2_marked: # @todo: for directed.
+			label = tuple(g2.edges[(nt, nf)].items())
+			idx_label = edge_labels.index(label) # @todo: faster
+			nb_ops_edge[0, idx_label + 1] += 1
+			
+	# Reform the numbers of edit oeprations into a vector.
+	nb_eo_vector = []
+	# node insertion.
+	for i in range(1, len(nb_ops_node)):
+		nb_eo_vector.append(nb_ops_node[0, i])
+	# node deletion.
+	for i in range(1, len(nb_ops_node)):
+		nb_eo_vector.append(nb_ops_node[i, 0])
+	# node substitution.
+	for i in range(1, len(nb_ops_node)):
+		for j in range(i + 1, len(nb_ops_node)):
+			nb_eo_vector.append(nb_ops_node[i, j])
+	# edge insertion.
+	for i in range(1, len(nb_ops_edge)):
+		nb_eo_vector.append(nb_ops_edge[0, i])
+	# edge deletion.
+	for i in range(1, len(nb_ops_edge)):
+		nb_eo_vector.append(nb_ops_edge[i, 0])
+	# edge substitution.
+	for i in range(1, len(nb_ops_edge)):
+		for j in range(i + 1, len(nb_ops_edge)):
+			nb_eo_vector.append(nb_ops_edge[i, j])
+	
+	return nb_eo_vector
 	
 
 def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,

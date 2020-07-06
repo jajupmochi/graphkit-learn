@@ -23,6 +23,8 @@ class GEDData(object):
 		self._edit_cost = None
 		self._node_costs = None
 		self._edge_costs = None
+		self._node_label_costs = None
+		self._edge_label_costs = None
 		self._node_labels = []
 		self._edge_labels = []
 		self._init_type = Options.InitType.EAGER_WITHOUT_SHUFFLED_COPIES
@@ -41,6 +43,17 @@ class GEDData(object):
 		return len(self._graphs)
 	
 	
+	def graph(self, graph_id):
+		"""
+	/*!
+	 * @brief Provides access to a graph.
+	 * @param[in] graph_id The ID of the graph.
+	 * @return Constant reference to the graph with ID @p graph_id.
+	 */
+		"""
+		return self._graphs[graph_id]
+	
+	
 	def shuffled_graph_copies_available(self):
 		"""
 	/*!
@@ -49,6 +62,16 @@ class GEDData(object):
 	 */
 		"""
 		return (self._init_type == Options.InitType.EAGER_WITH_SHUFFLED_COPIES or self._init_type == Options.InitType.LAZY_WITH_SHUFFLED_COPIES)
+	
+	
+	def num_graphs_without_shuffled_copies(self):
+		"""
+	/*!
+	 * @brief Returns the number of graphs in the instance without the shuffled copies.
+	 * @return Number of graphs without shuffled copies contained in the instance.
+	 */
+		"""
+		return self._num_graphs_without_shuffled_copies
 	
 	
 	def node_cost(self, label1, label2):
@@ -63,15 +86,21 @@ class GEDData(object):
 	 * and 0 otherwise.
 	 */
 		"""
-		if self._eager_init(): # @todo: check if correct
-			return self._node_costs[label1, label2]
-		if label1 == label2:
-			return 0
-		if label1 == SpecialLabel.DUMMY: # @todo: check dummy
-			return self._edit_cost.node_ins_cost_fun(label2) # self._node_labels[label2 - 1]) # @todo: check
-		if label2 == SpecialLabel.DUMMY: # @todo: check dummy
-			return self._edit_cost.node_del_cost_fun(label1) # self._node_labels[label1 - 1])
-		return self._edit_cost.node_rel_cost_fun(label1, label2) # self._node_labels[label1 - 1], self._node_labels[label2 - 1])
+		if self._node_label_costs is None:
+			if self._eager_init(): # @todo: check if correct
+				return self._node_costs[label1, label2]
+			if label1 == label2:
+				return 0
+			if label1 == SpecialLabel.DUMMY: # @todo: check dummy
+				return self._edit_cost.node_ins_cost_fun(label2) # self._node_labels[label2 - 1]) # @todo: check
+			if label2 == SpecialLabel.DUMMY: # @todo: check dummy
+				return self._edit_cost.node_del_cost_fun(label1) # self._node_labels[label1 - 1])
+			return self._edit_cost.node_rel_cost_fun(label1, label2) # self._node_labels[label1 - 1], self._node_labels[label2 - 1])
+		# use pre-computed node label costs.
+		else:
+			id1 = 0 if label1 == SpecialLabel.DUMMY else self._node_label_to_id(label1) # @todo: this is slow.
+			id2 = 0 if label2 == SpecialLabel.DUMMY else self._node_label_to_id(label2)
+			return self._node_label_costs[id1, id2]
 	
 	
 	def edge_cost(self, label1, label2):
@@ -86,15 +115,22 @@ class GEDData(object):
 	 * and 0 otherwise.
 	 */
 		"""
-		if self._eager_init(): # @todo: check if correct
-			return self._node_costs[label1, label2]
-		if label1 == label2:
-			return 0
-		if label1 == SpecialLabel.DUMMY:
-			return self._edit_cost.edge_ins_cost_fun(label2) # self._edge_labels[label2 - 1])
-		if label2 == SpecialLabel.DUMMY:
-			return self._edit_cost.edge_del_cost_fun(label1) # self._edge_labels[label1 - 1])
-		return self._edit_cost.edge_rel_cost_fun(label1, label2) # self._edge_labels[label1 - 1], self._edge_labels[label2 - 1])
+		if self._edge_label_costs is None:
+			if self._eager_init(): # @todo: check if correct
+				return self._node_costs[label1, label2]
+			if label1 == label2:
+				return 0
+			if label1 == SpecialLabel.DUMMY:
+				return self._edit_cost.edge_ins_cost_fun(label2) # self._edge_labels[label2 - 1])
+			if label2 == SpecialLabel.DUMMY:
+				return self._edit_cost.edge_del_cost_fun(label1) # self._edge_labels[label1 - 1])
+			return self._edit_cost.edge_rel_cost_fun(label1, label2) # self._edge_labels[label1 - 1], self._edge_labels[label2 - 1])
+		
+		# use pre-computed edge label costs.
+		else:
+			id1 = 0 if label1 == SpecialLabel.DUMMY else self._edge_label_to_id(label1) # @todo: this is slow.
+			id2 = 0 if label2 == SpecialLabel.DUMMY else self._edge_label_to_id(label2)
+			return self._edge_label_costs[id1, id2]
 	
 	
 	def compute_induced_cost(self, g, h, node_map):
@@ -175,6 +211,38 @@ class GEDData(object):
 				raise Exception('Wrong number of constants for selected edit costs Options::EditCosts::CONSTANT. Expected: 6 or 0; actual:', len(edit_cost_constants), '.')
 				
 		self._delete_edit_cost = True
+		
+		
+	def id_to_node_label(self, label_id):
+		if label_id > len(self._node_labels) or label_id == 0:
+			raise Exception('Invalid node label ID', str(label_id), '.')
+		return self._node_labels[label_id - 1]
+		
+		
+	def _node_label_to_id(self, node_label):
+		n_id = 0
+		for n_l in self._node_labels:
+			if n_l == node_label:
+				return n_id + 1
+			n_id += 1
+		self._node_labels.append(node_label)
+		return n_id + 1
+
+
+	def id_to_edge_label(self, label_id):
+		if label_id > len(self._edge_labels) or label_id == 0:
+			raise Exception('Invalid edge label ID', str(label_id), '.')
+		return self._edge_labels[label_id - 1]
+
+
+	def _edge_label_to_id(self, edge_label):
+		e_id = 0
+		for e_l in self._edge_labels:
+			if e_l == edge_label:
+				return e_id + 1
+			e_id += 1
+		self._edge_labels.append(edge_label)
+		return e_id + 1
 		
 		
 	def _eager_init(self):

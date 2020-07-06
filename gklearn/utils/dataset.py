@@ -535,6 +535,26 @@ class Dataset(object):
 		dataset.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
 		# @todo: clean_labels and add other class members?
 		return dataset
+	
+	
+	def get_all_node_labels(self):
+		node_labels = []
+		for g in self.__graphs:
+			for n in g.nodes():
+				nl = tuple(g.nodes[n].items())
+				if nl not in node_labels:
+					node_labels.append(nl)
+		return node_labels
+	
+	
+	def get_all_edge_labels(self):
+		edge_labels = []
+		for g in self.__graphs:
+			for e in g.edges():
+				el = tuple(g.edges[e].items())
+				if el not in edge_labels:
+					edge_labels.append(el)
+		return edge_labels
 		
 	
 	def __get_dataset_size(self):

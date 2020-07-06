@@ -8,6 +8,7 @@ Created on Mon Jun 22 15:37:36 2020
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+
 class LSAPESolver(object):
 	
 	
@@ -61,9 +62,9 @@ class LSAPESolver(object):
 		"""
 		self.clear_solution()
 		if self.__solve_optimally:
-			row_id, col_id = linear_sum_assignment(self.__cost_matrix) # @todo: only hungarianLSAPE ('ECBP') can be used.
-			self.__row_to_col_assignments[0] = col_id
-			self.__col_to_row_assignments[0] = np.argsort(col_id) # @todo: might be slow, can use row_id
+			row_ind, col_ind = linear_sum_assignment(self.__cost_matrix) # @todo: only hungarianLSAPE ('ECBP') can be used.
+			self.__row_to_col_assignments[0] = col_ind
+			self.__col_to_row_assignments[0] = np.argsort(col_ind) # @todo: might be slow, can use row_ind
 			self.__compute_cost_from_assignments()
 			if num_solutions > 1:
 				pass # @todo:

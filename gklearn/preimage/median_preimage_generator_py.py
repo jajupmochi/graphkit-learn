@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 16 16:04:46 2020
+Created on Thu Mar 26 18:27:22 2020
 
 @author: ljia
 """
@@ -11,19 +11,18 @@ import random
 import multiprocessing
 import networkx as nx
 import cvxpy as cp
-import itertools
 from gklearn.preimage import PreimageGenerator
 from gklearn.preimage.utils import compute_k_dis
 from gklearn.ged.util import compute_geds_cml
-from gklearn.ged.env import GEDEnv
 from gklearn.ged.median import MedianGraphEstimatorPy
 from gklearn.ged.median import constant_node_costs, mge_options_to_string
-from gklearn.utils import Timer, SpecialLabel
+from gklearn.ged.env import GEDEnv
+from gklearn.utils import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 
 
-class MedianPreimageGeneratorCML(PreimageGenerator):
-	"""Generator median preimages by cost matrices learning using the pure Python version of GEDEnv. Works only for symbolic labeled graphs.
+class MedianPreimageGeneratorPy(PreimageGenerator):
+	"""Generator median preimages using the pure Python version of GEDEnv.
 	"""
 	
 	def __init__(self, dataset=None):
@@ -32,8 +31,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__mge = None
 		self.__ged_options = {}
 		self.__mge_options = {}
-# 		self.__fit_method = 'k-graphs'
-		self.__init_method = 'random'
+		self.__fit_method = 'k-graphs'
 		self.__init_ecc = None
 		self.__parallel = True
 		self.__n_jobs = multiprocessing.cpu_count()
@@ -43,8 +41,8 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__max_itrs_without_update = 3
 		self.__epsilon_residual = 0.01
 		self.__epsilon_ec = 0.1
-		self.__allow_zeros = True
-# 		self.__triangle_rule = True
+		self.__allow_zeros = False
+		self.__triangle_rule = True
 		# values to compute.
 		self.__runtime_optimize_ec = None
 		self.__runtime_generate_preimage = None
@@ -60,8 +58,6 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__itrs = 0
 		self.__converged = False
 		self.__num_updates_ecc = 0
-		self.__node_label_costs = None
-		self.__edge_label_costs = None
 		# values that can be set or to be computed.
 		self.__edit_cost_constants = []
 		self.__gram_matrix_unnorm = None
@@ -74,8 +70,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self._verbose = kwargs.get('verbose', 2)
 		self.__ged_options = kwargs.get('ged_options', {})
 		self.__mge_options = kwargs.get('mge_options', {})
-# 		self.__fit_method = kwargs.get('fit_method', 'k-graphs')
-		self.__init_method = kwargs.get('init_method', 'random')
+		self.__fit_method = kwargs.get('fit_method', 'k-graphs')
 		self.__init_ecc = kwargs.get('init_ecc', None)
 		self.__edit_cost_constants = kwargs.get('edit_cost_constants', [])
 		self.__parallel = kwargs.get('parallel', True)
@@ -88,8 +83,8 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__epsilon_ec = kwargs.get('epsilon_ec', 0.1)
 		self.__gram_matrix_unnorm = kwargs.get('gram_matrix_unnorm', None)
 		self.__runtime_precompute_gm = kwargs.get('runtime_precompute_gm', None)
-		self.__allow_zeros = kwargs.get('allow_zeros', True)
-# 		self.__triangle_rule = kwargs.get('triangle_rule', True)
+		self.__allow_zeros = kwargs.get('allow_zeros', False)
+		self.__triangle_rule = kwargs.get('triangle_rule', True)
 		
 		
 	def run(self):
@@ -121,13 +116,13 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 			end_precompute_gm = time.time()
 			start -= self.__runtime_precompute_gm
 			
-# 		if self.__fit_method != 'k-graphs' and self.__fit_method != 'whole-dataset':
-# 			start = time.time()
-# 			self.__runtime_precompute_gm = 0
-# 			end_precompute_gm = start
+		if self.__fit_method != 'k-graphs' and self.__fit_method != 'whole-dataset':
+			start = time.time()
+			self.__runtime_precompute_gm = 0
+			end_precompute_gm = start
 		
 		# 2. optimize edit cost constants. 
-		self.__optimize_edit_cost_vector()
+		self.__optimize_edit_cost_constants()
 		end_optimize_ec = time.time()
 		self.__runtime_optimize_ec = end_optimize_ec - end_precompute_gm
 		
@@ -193,21 +188,10 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		return results
 
 		
-	def __optimize_edit_cost_vector(self):
-		"""Learn edit cost vector.	
+	def __optimize_edit_cost_constants(self):
+		"""fit edit cost constants.	
 		"""
-		 # Initialize label costs randomly.
-		if self.__init_method == 'random':
-			# Initialize label costs.
-			self.__initialize_label_costs()
-				
-			# Optimize edit cost matrices.
-			self.__optimize_ecm_by_kernel_distances()
-		# Initialize all label costs with the same value.
-		elif self.__init_method == 'uniform': # random
-			pass
-	
-		elif self.__fit_method == 'random': # random
+		if self.__fit_method == 'random': # random
 			if self.__ged_options['edit_cost'] == 'LETTER':
 				self.__edit_cost_constants = random.sample(range(1, 1000), 3)
 				self.__edit_cost_constants = [item * 0.001 for item in self.__edit_cost_constants]
@@ -252,7 +236,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 				else:
 					self.__init_ecc = [3, 3, 1, 3, 3, 1] 
 			# optimize on the k-graph subset.
-			self.__optimize_ecm_by_kernel_distances()
+			self.__optimize_ecc_by_kernel_distances()
 		elif self.__fit_method == 'whole-dataset':
 			if self.__init_ecc is None:
 				if self.__ged_options['edit_cost'] == 'LETTER':
@@ -267,32 +251,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 			pass
 		
 		
-	def __initialize_label_costs(self):
-		self.__initialize_node_label_costs()
-		self.__initialize_edge_label_costs()
-				
-				
-	def __initialize_node_label_costs(self):
-		# Get list of node labels.
-		nls = self._dataset.get_all_node_labels()
-		# Generate random costs.
-		nb_nl = int((len(nls) * (len(nls) - 1)) / 2 + 2 * len(nls))
-		rand_costs = random.sample(range(1, 10 * nb_nl + 1), nb_nl)
-		rand_costs /= np.max(rand_costs) # @todo: maybe not needed.
-		self.__node_label_costs = rand_costs
-
-
-	def __initialize_edge_label_costs(self):
-		# Get list of edge labels.
-		els = self._dataset.get_all_edge_labels()
-		# Generate random costs.
-		nb_el = int((len(els) * (len(els) - 1)) / 2 + 2 * len(els))
-		rand_costs = random.sample(range(1, 10 * nb_el + 1), nb_el)
-		rand_costs /= np.max(rand_costs) # @todo: maybe not needed.
-		self.__edge_label_costs = rand_costs
-		
-		
-	def __optimize_ecm_by_kernel_distances(self):		
+	def __optimize_ecc_by_kernel_distances(self):		
 		# compute distances in feature space.
 		dis_k_mat, _, _, _ = self._graph_kernel.compute_distance_matrix()
 		dis_k_vec = []
@@ -314,8 +273,6 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		options['edge_labels'] = self._dataset.edge_labels
 		options['node_attrs'] = self._dataset.node_attrs
 		options['edge_attrs'] = self._dataset.edge_attrs
-		options['node_label_costs'] = self.__node_label_costs
-		options['edge_label_costs'] = self.__edge_label_costs
 		ged_vec_init, ged_mat, n_edit_operations = compute_geds_cml(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
 		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
 		time_list = [time.time() - time0]
