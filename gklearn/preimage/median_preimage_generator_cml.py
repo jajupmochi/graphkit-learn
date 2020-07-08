@@ -10,15 +10,12 @@ import time
 import random
 import multiprocessing
 import networkx as nx
-import cvxpy as cp
-import itertools
 from gklearn.preimage import PreimageGenerator
 from gklearn.preimage.utils import compute_k_dis
-from gklearn.ged.util import compute_geds_cml
 from gklearn.ged.env import GEDEnv
+from gklearn.ged.learning import CostMatricesLearner
 from gklearn.ged.median import MedianGraphEstimatorPy
 from gklearn.ged.median import constant_node_costs, mge_options_to_string
-from gklearn.utils import Timer, SpecialLabel
 from gklearn.utils.utils import get_graph_kernel_by_name
 
 
@@ -28,7 +25,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 	
 	def __init__(self, dataset=None):
 		PreimageGenerator.__init__(self, dataset=dataset)
-		# arguments to set.
+		### arguments to set.
 		self.__mge = None
 		self.__ged_options = {}
 		self.__mge_options = {}
@@ -38,6 +35,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__parallel = True
 		self.__n_jobs = multiprocessing.cpu_count()
 		self.__ds_name = None
+		# for cml.
 		self.__time_limit_in_sec = 0
 		self.__max_itrs = 100
 		self.__max_itrs_without_update = 3
@@ -45,7 +43,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__epsilon_ec = 0.1
 		self.__allow_zeros = True
 # 		self.__triangle_rule = True
-		# values to compute.
+		### values to compute.
 		self.__runtime_optimize_ec = None
 		self.__runtime_generate_preimage = None
 		self.__runtime_total = None
@@ -57,12 +55,13 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		self.__k_dis_set_median = None
 		self.__k_dis_gen_median = None
 		self.__k_dis_dataset = None
-		self.__itrs = 0
-		self.__converged = False
-		self.__num_updates_ecc = 0
 		self.__node_label_costs = None
 		self.__edge_label_costs = None
-		# values that can be set or to be computed.
+		# for cml.
+		self.__itrs = 0
+		self.__converged = False
+		self.__num_updates_ecs = 0
+		### values that can be set or to be computed.
 		self.__edit_cost_constants = []
 		self.__gram_matrix_unnorm = None
 		self.__runtime_precompute_gm = None
@@ -154,7 +153,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 			print('================================================================================')
 			print('Finished generation of preimages.')
 			print('--------------------------------------------------------------------------------')
-			print('The optimized edit cost constants:', self.__edit_cost_constants)
+			print('The optimized edit costs:', self.__edit_cost_constants)
 			print('SOD of the set median:', self.__sod_set_median)
 			print('SOD of the generalized median:', self.__sod_gen_median)
 			print('Distance in kernel space for set median:', self.__k_dis_set_median)
@@ -165,7 +164,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 			print('Time to generate pre-images:', self.__runtime_generate_preimage)
 			print('Total time:', self.__runtime_total)
 			print('Total number of iterations for optimizing:', self.__itrs)
-			print('Total number of updating edit costs:', self.__num_updates_ecc)
+			print('Total number of updating edit costs:', self.__num_updates_ecs)
 			print('Is optimization of edit costs converged:', self.__converged)
 			print('================================================================================')
 			print()
@@ -185,7 +184,7 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		results['k_dis_dataset'] = self.__k_dis_dataset
 		results['itrs'] = self.__itrs
 		results['converged'] = self.__converged
-		results['num_updates_ecc'] = self.__num_updates_ecc
+		results['num_updates_ecc'] = self.__num_updates_ecs
 		results['mge'] = {}
 		results['mge']['num_decrease_order'] = self.__mge.get_num_times_order_decreased()
 		results['mge']['num_increase_order'] = self.__mge.get_num_times_order_increased()
@@ -302,598 +301,33 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 				dis_k_vec.append(dis_k_mat[i, j])
 		dis_k_vec = np.array(dis_k_vec)
 		
-		# init ged.
-		if self._verbose >= 2:
-			print('\ninitial:')
-		time0 = time.time()
-		graphs = [self.__clean_graph(g) for g in self._dataset.graphs]
-		self.__edit_cost_constants = self.__init_ecc
+		# Set GEDEnv options.
+# 		graphs = [self.__clean_graph(g) for g in self._dataset.graphs]
+# 		self.__edit_cost_constants = self.__init_ecc
 		options = self.__ged_options.copy()
-		options['edit_cost_constants'] = self.__edit_cost_constants # @todo
+		options['edit_cost_constants'] = self.__edit_cost_constants # @todo: not needed.
 		options['node_labels'] = self._dataset.node_labels
 		options['edge_labels'] = self._dataset.edge_labels
-		options['node_attrs'] = self._dataset.node_attrs
-		options['edge_attrs'] = self._dataset.edge_attrs
+# 		options['node_attrs'] = self._dataset.node_attrs
+# 		options['edge_attrs'] = self._dataset.edge_attrs
 		options['node_label_costs'] = self.__node_label_costs
 		options['edge_label_costs'] = self.__edge_label_costs
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds_cml(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
-		residual_list = [np.sqrt(np.sum(np.square(np.array(ged_vec_init) - dis_k_vec)))]	
-		time_list = [time.time() - time0]
-		edit_cost_list = [self.__init_ecc]  
-		nb_cost_mat = np.array(n_edit_operations)
-		nb_cost_mat_list = [nb_cost_mat]
-		if self._verbose >= 2:
-			print('Current edit cost constants:', self.__edit_cost_constants)
-			print('Residual list:', residual_list)
 		
-		# run iteration from initial edit costs.
-		self.__converged = False
-		itrs_without_update = 0
-		self.__itrs = 0
-		self.__num_updates_ecc = 0
-		timer = Timer(self.__time_limit_in_sec)
-		while not self.__termination_criterion_met(self.__converged, timer, self.__itrs, itrs_without_update):
-			if self._verbose >= 2:
-				print('\niteration', self.__itrs + 1)
-			time0 = time.time()
-			# "fit" geds to distances in feature space by tuning edit costs using theLeast Squares Method.
-# 			np.savez('results/xp_fit_method/fit_data_debug' + str(self.__itrs) + '.gm', 
-# 					 nb_cost_mat=nb_cost_mat, dis_k_vec=dis_k_vec, 
-# 					 n_edit_operations=n_edit_operations, ged_vec_init=ged_vec_init,
-# 					 ged_mat=ged_mat)
-			self.__edit_cost_constants, _ = self.__update_ecc(nb_cost_mat, dis_k_vec)
-			for i in range(len(self.__edit_cost_constants)):
-				if -1e-9 <= self.__edit_cost_constants[i] <= 1e-9:
-					self.__edit_cost_constants[i] = 0
-				if self.__edit_cost_constants[i] < 0:
-					raise ValueError('The edit cost is negative.')
-	#		for i in range(len(self.__edit_cost_constants)):
-	#			if self.__edit_cost_constants[i] < 0:
-	#				self.__edit_cost_constants[i] = 0
-	
-			# compute new GEDs and numbers of edit operations.
-			options = self.__ged_options.copy() # np.array([self.__edit_cost_constants[0], self.__edit_cost_constants[1], 0.75])
-			options['edit_cost_constants'] = self.__edit_cost_constants # @todo
-			options['node_labels'] = self._dataset.node_labels
-			options['edge_labels'] = self._dataset.edge_labels
-			options['node_attrs'] = self._dataset.node_attrs
-			options['edge_attrs'] = self._dataset.edge_attrs
-			ged_vec, ged_mat, n_edit_operations = compute_geds_cml(graphs, options=options, parallel=self.__parallel, verbose=(self._verbose > 1))
-			residual_list.append(np.sqrt(np.sum(np.square(np.array(ged_vec) - dis_k_vec))))
-			time_list.append(time.time() - time0)
-			edit_cost_list.append(self.__edit_cost_constants)
-			nb_cost_mat = np.array(n_edit_operations)
-			nb_cost_mat_list.append(nb_cost_mat)	
-				
-			# check convergency.
-			ec_changed = False
-			for i, cost in enumerate(self.__edit_cost_constants):
-				if cost == 0:
- 					if edit_cost_list[-2][i] > self.__epsilon_ec:
-						 ec_changed = True
-						 break
-				elif abs(cost - edit_cost_list[-2][i]) / cost > self.__epsilon_ec:
- 					ec_changed = True
- 					break
-# 				if abs(cost - edit_cost_list[-2][i]) > self.__epsilon_ec:
-#  					ec_changed = True
-#  					break
-			residual_changed = False
-			if residual_list[-1] == 0:
-				if residual_list[-2] > self.__epsilon_residual:
-					residual_changed = True
-			elif abs(residual_list[-1] - residual_list[-2]) / residual_list[-1] > self.__epsilon_residual:
-				residual_changed = True
-			self.__converged = not (ec_changed or residual_changed)
-			if self.__converged:
-				itrs_without_update += 1
-			else:
-				itrs_without_update = 0
-				self.__num_updates_ecc += 1
-				
-			# print current states.
-			if self._verbose >= 2:
-				print()
-				print('-------------------------------------------------------------------------')
-				print('States of iteration', self.__itrs + 1)
-				print('-------------------------------------------------------------------------')
-# 				print('Time spend:', self.__runtime_optimize_ec)
-				print('Total number of iterations for optimizing:', self.__itrs + 1)
-				print('Total number of updating edit costs:', self.__num_updates_ecc)
-				print('Was optimization of edit costs converged:', self.__converged)
-				print('Did edit costs change:', ec_changed)
-				print('Did residual change:', residual_changed)
-				print('Iterations without update:', itrs_without_update)
-				print('Current edit cost constants:', self.__edit_cost_constants)
-				print('Residual list:', residual_list)
-				print('-------------------------------------------------------------------------')
-			
-			self.__itrs += 1
-
-
-	def __termination_criterion_met(self, converged, timer, itr, itrs_without_update):
-		if timer.expired() or (itr >= self.__max_itrs if self.__max_itrs >= 0 else False):
-# 			if self.__state == AlgorithmState.TERMINATED:
-# 				self.__state = AlgorithmState.INITIALIZED
-			return True
-		return converged or (itrs_without_update > self.__max_itrs_without_update if self.__max_itrs_without_update >= 0 else False)
-
-
-	def __update_ecc(self, nb_cost_mat, dis_k_vec, rw_constraints='inequality'):
-	#	if self.__ds_name == 'Letter-high':
-		if self.__ged_options['edit_cost'] == 'LETTER':
-			raise Exception('Cannot compute for cost "LETTER".')
-			pass
-	#		# method 1: set alpha automatically, just tune c_vir and c_eir by 
-	#		# LMS using cvxpy.
-	#		alpha = 0.5
-	#		coeff = 100 # np.max(alpha * nb_cost_mat[:,4] / dis_k_vec)
-	##		if np.count_nonzero(nb_cost_mat[:,4]) == 0:
-	##			alpha = 0.75
-	##		else:
-	##			alpha = np.min([dis_k_vec / c_vs for c_vs in nb_cost_mat[:,4] if c_vs != 0])
-	##		alpha = alpha * 0.99
-	#		param_vir = alpha * (nb_cost_mat[:,0] + nb_cost_mat[:,1])
-	#		param_eir = (1 - alpha) * (nb_cost_mat[:,4] + nb_cost_mat[:,5])
-	#		nb_cost_mat_new = np.column_stack((param_vir, param_eir))
-	#		dis_new = coeff * dis_k_vec - alpha * nb_cost_mat[:,3]
-	#		
-	#		x = cp.Variable(nb_cost_mat_new.shape[1])
-	#		cost = cp.sum_squares(nb_cost_mat_new * x - dis_new)
-	#		constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])]]
-	#		prob = cp.Problem(cp.Minimize(cost), constraints)
-	#		prob.solve()
-	#		edit_costs_new = x.value
-	#		edit_costs_new = np.array([edit_costs_new[0], edit_costs_new[1], alpha])
-	#		residual = np.sqrt(prob.value)
+		# Learner cost matrices.
+		# Initialize cost learner.
+		cml = CostMatricesLearner(edit_cost='CONSTANT', triangle_rule=False, allow_zeros=True, parallel=self.__parallel, verbose=self._verbose) # @todo
+		cml.set_update_params(time_limit_in_sec=self.__time_limit_in_sec, max_itrs=self.__max_itrs, max_itrs_without_update=self.__max_itrs_without_update, epsilon_residual=self.__epsilon_residual, epsilon_ec=self.__epsilon_ec)
+		# Run cost learner.
+		cml.update(dis_k_vec, self._dataset.graphs, options)
 		
-	#		# method 2: tune c_vir, c_eir and alpha by nonlinear programming by 
-	#		# scipy.optimize.minimize.
-	#		w0 = nb_cost_mat[:,0] + nb_cost_mat[:,1]
-	#		w1 = nb_cost_mat[:,4] + nb_cost_mat[:,5]
-	#		w2 = nb_cost_mat[:,3]
-	#		w3 = dis_k_vec
-	#		func_min = lambda x: np.sum((w0 * x[0] * x[3] + w1 * x[1] * (1 - x[2]) \
-	#							 + w2 * x[2] - w3 * x[3]) ** 2)
-	#		bounds = ((0, None), (0., None), (0.5, 0.5), (0, None))
-	#		res = minimize(func_min, [0.9, 1.7, 0.75, 10], bounds=bounds)
-	#		edit_costs_new = res.x[0:3]
-	#		residual = res.fun
-		
-		# method 3: tune c_vir, c_eir and alpha by nonlinear programming using cvxpy.
-		
-		
-	#		# method 4: tune c_vir, c_eir and alpha by QP function
-	#		# scipy.optimize.least_squares. An initial guess is required.
-	#		w0 = nb_cost_mat[:,0] + nb_cost_mat[:,1]
-	#		w1 = nb_cost_mat[:,4] + nb_cost_mat[:,5]
-	#		w2 = nb_cost_mat[:,3]
-	#		w3 = dis_k_vec
-	#		func = lambda x: (w0 * x[0] * x[3] + w1 * x[1] * (1 - x[2]) \
-	#							 + w2 * x[2] - w3 * x[3]) ** 2
-	#		res = optimize.root(func, [0.9, 1.7, 0.75, 100])
-	#		edit_costs_new = res.x
-	#		residual = None
-		elif self.__ged_options['edit_cost'] == 'LETTER2':
-	#			# 1. if c_vi != c_vr, c_ei != c_er.
-	#			nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-	#			x = cp.Variable(nb_cost_mat_new.shape[1])
-	#			cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-	##			# 1.1 no constraints.
-	##			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])]]
-	#			# 1.2 c_vs <= c_vi + c_vr.
-	#			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-	#						   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]			
-	##			# 2. if c_vi == c_vr, c_ei == c_er.
-	##			nb_cost_mat_new = nb_cost_mat[:,[0,3,4]]
-	##			nb_cost_mat_new[:,0] += nb_cost_mat[:,1]
-	##			nb_cost_mat_new[:,2] += nb_cost_mat[:,5]
-	##			x = cp.Variable(nb_cost_mat_new.shape[1])
-	##			cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-	##			# 2.1 no constraints.
-	##			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])]]
-	###			# 2.2 c_vs <= c_vi + c_vr.
-	###			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-	###						   np.array([2.0, -1.0, 0.0]).T@x >= 0.0]	 
-	#			
-	#			prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-	#			prob.solve()
-	#			edit_costs_new = [x.value[0], x.value[0], x.value[1], x.value[2], x.value[2]]
-	#			edit_costs_new = np.array(edit_costs_new)
-	#			residual = np.sqrt(prob.value)
-			if not self.__triangle_rule and self.__allow_zeros:
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-							   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and self.__allow_zeros:
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-							   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01,
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif not self.__triangle_rule and not self.__allow_zeros:
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				prob.solve()
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-	#			elif method == 'inequality_modified':
-	#				# c_vs <= c_vi + c_vr.
-	#				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-	#				x = cp.Variable(nb_cost_mat_new.shape[1])
-	#				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-	#				constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-	#							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-	#				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-	#				prob.solve()
-	#				# use same costs for insertion and removal rather than the fitted costs.
-	#				edit_costs_new = [x.value[0], x.value[0], x.value[1], x.value[2], x.value[2]]
-	#				edit_costs_new = np.array(edit_costs_new)
-	#				residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and not self.__allow_zeros:
-				# c_vs <= c_vi + c_vr.
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)				
-			elif rw_constraints == '2constraints': # @todo: rearrange it later.
-				# c_vs <= c_vi + c_vr and c_vi == c_vr, c_ei == c_er.
-				nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0,
-							   np.array([1.0, -1.0, 0.0, 0.0, 0.0]).T@x == 0.0,
-							   np.array([0.0, 0.0, 0.0, 1.0, -1.0]).T@x == 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				prob.solve()
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-
-		elif self.__ged_options['edit_cost'] == 'NON_SYMBOLIC':
-			is_n_attr = np.count_nonzero(nb_cost_mat[:,2])
-			is_e_attr = np.count_nonzero(nb_cost_mat[:,5])
-			
-			if self.__ds_name == 'SYNTHETICnew': # @todo: rearrenge this later.
-	#			nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
-				nb_cost_mat_new = nb_cost_mat[:,[2,3,4]]
-				x = cp.Variable(nb_cost_mat_new.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-	#			constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-	#						   np.array([0.0, 0.0, 0.0, 1.0, -1.0]).T@x == 0.0]
-	#			constraints = [x >= [0.0001 for i in range(nb_cost_mat_new.shape[1])]]
-				constraints = [x >= [0.0001 for i in range(nb_cost_mat_new.shape[1])],
-					   np.array([0.0, 1.0, -1.0]).T@x == 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				prob.solve()
-	#			print(x.value)
-				edit_costs_new = np.concatenate((np.array([0.0, 0.0]), x.value, 
-												 np.array([0.0])))
-				residual = np.sqrt(prob.value)
-				
-			elif not self.__triangle_rule and self.__allow_zeros:
-				if is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = x.value
-					residual = np.sqrt(prob.value)
-				elif is_n_attr and not is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
-					residual = np.sqrt(prob.value)
-				elif not is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
-					residual = np.sqrt(prob.value)
-				else:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
-													 x.value[2:], np.array([0.0])))
-					residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and self.__allow_zeros:
-				if is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-								   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-								   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = x.value
-					residual = np.sqrt(prob.value)
-				elif is_n_attr and not is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 0.0, 1.0]).T@x >= 0.01,
-								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
-					residual = np.sqrt(prob.value)
-				elif not is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.0 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 1.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-								   np.array([0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
-					residual = np.sqrt(prob.value)
-				else:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
-													 x.value[2:], np.array([0.0])))
-					residual = np.sqrt(prob.value)
-			elif not self.__triangle_rule and not self.__allow_zeros:
-				if is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = x.value
-					residual = np.sqrt(prob.value)
-				elif is_n_attr and not is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
-					residual = np.sqrt(prob.value)
-				elif not is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
-					residual = np.sqrt(prob.value)
-				else:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
-													 x.value[2:], np.array([0.0])))
-					residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and not self.__allow_zeros:
-				# c_vs <= c_vi + c_vr.
-				if is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-								   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = x.value
-					residual = np.sqrt(prob.value)
-				elif is_n_attr and not is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,2,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value, np.array([0.0])))
-					residual = np.sqrt(prob.value)
-				elif not is_n_attr and is_e_attr:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4,5]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])],
-								   np.array([0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), x.value[2:]))
-					residual = np.sqrt(prob.value)
-				else:
-					nb_cost_mat_new = nb_cost_mat[:,[0,1,3,4]]
-					x = cp.Variable(nb_cost_mat_new.shape[1])
-					cost_fun = cp.sum_squares(nb_cost_mat_new @ x - dis_k_vec)
-					constraints = [x >= [0.01 for i in range(nb_cost_mat_new.shape[1])]]
-					prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-					self.__execute_cvx(prob)
-					edit_costs_new = np.concatenate((x.value[0:2], np.array([0.0]), 
-													 x.value[2:], np.array([0.0])))
-					residual = np.sqrt(prob.value)
-
-		elif self.__ged_options['edit_cost'] == 'CONSTANT': # @todo: node/edge may not labeled.
-			if not self.__triangle_rule and self.__allow_zeros:
-				x = cp.Variable(nb_cost_mat.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
-				constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
-							   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and self.__allow_zeros:
-				x = cp.Variable(nb_cost_mat.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
-				constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
-							   np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 1.0, 0.0, 0.0]).T@x >= 0.01,
-							   np.array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0]).T@x >= 0.01,
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif not self.__triangle_rule and not self.__allow_zeros:
-				x = cp.Variable(nb_cost_mat.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])]]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-			elif self.__triangle_rule and not self.__allow_zeros:
-				x = cp.Variable(nb_cost_mat.shape[1])
-				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
-				constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
-							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
-				edit_costs_new = x.value
-				residual = np.sqrt(prob.value)
-		else:
-			raise Exception('The edit cost "', self.__ged_options['edit_cost'], '" is not supported for update progress.')
-	#	# method 1: simple least square method.
-	#	edit_costs_new, residual, _, _ = np.linalg.lstsq(nb_cost_mat, dis_k_vec,
-	#													 rcond=None)
-		
-	#	# method 2: least square method with x_i >= 0.
-	#	edit_costs_new, residual = optimize.nnls(nb_cost_mat, dis_k_vec)
-		
-		# method 3: solve as a quadratic program with constraints.
-	#	P = np.dot(nb_cost_mat.T, nb_cost_mat)
-	#	q_T = -2 * np.dot(dis_k_vec.T, nb_cost_mat)
-	#	G = -1 * np.identity(nb_cost_mat.shape[1])
-	#	h = np.array([0 for i in range(nb_cost_mat.shape[1])])
-	#	A = np.array([1 for i in range(nb_cost_mat.shape[1])])
-	#	b = 1
-	#	x = cp.Variable(nb_cost_mat.shape[1])
-	#	prob = cp.Problem(cp.Minimize(cp.quad_form(x, P) + q_T@x),
-	#					  [G@x <= h])
-	#	prob.solve()
-	#	edit_costs_new = x.value
-	#	residual = prob.value - np.dot(dis_k_vec.T, dis_k_vec)
-		
-	#	G = -1 * np.identity(nb_cost_mat.shape[1])
-	#	h = np.array([0 for i in range(nb_cost_mat.shape[1])])
-			x = cp.Variable(nb_cost_mat.shape[1])
-			cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
-			constraints = [x >= [0.0 for i in range(nb_cost_mat.shape[1])],
-		#				   np.array([1.0, 1.0, -1.0, 0.0, 0.0]).T@x >= 0.0]
-						   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-						   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
-			prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-			self.__execute_cvx(prob)
-			edit_costs_new = x.value
-			residual = np.sqrt(prob.value)
-		
-		# method 4: 
-		
-		return edit_costs_new, residual
-	
-	
-	def __execute_cvx(self, prob):
-		try:
-			prob.solve(verbose=(self._verbose>=2))
-		except MemoryError as error0:
-			if self._verbose >= 2:
-				print('\nUsing solver "OSQP" caused a memory error.')
-				print('the original error message is\n', error0)
-				print('solver status: ', prob.status)
-				print('trying solver "CVXOPT" instead...\n')
-			try:
-				prob.solve(solver=cp.CVXOPT, verbose=(self._verbose>=2))
-			except Exception as error1:
-				if self._verbose >= 2:
-					print('\nAn error occured when using solver "CVXOPT".')
-					print('the original error message is\n', error1)
-					print('solver status: ', prob.status)
-					print('trying solver "MOSEK" instead. Notice this solver is commercial and a lisence is required.\n')
-				prob.solve(solver=cp.MOSEK, verbose=(self._verbose>=2))
-			else:
-				if self._verbose >= 2:
-					print('solver status: ', prob.status)					
-		else:
-			if self._verbose >= 2:
-				print('solver status: ', prob.status)
-		if self._verbose >= 2:				
-			print()
+		# Get results.
+		results = cml.get_results()
+		self.__converged = results['converged']
+		self.__itrs = results['itrs']
+		self.__num_updates_ecs = results['num_updates_ecs']
+		cost_list = results['cost_list']
+		self.__node_label_costs = cost_list[-1][0:len(self.__node_label_costs)]
+		self.__edge_label_costs = cost_list[-1][len(self.__node_label_costs):]
 
 	
 	def __gmg_bcu(self):
