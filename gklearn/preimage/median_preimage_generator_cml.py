@@ -14,9 +14,10 @@ from gklearn.preimage import PreimageGenerator
 from gklearn.preimage.utils import compute_k_dis
 from gklearn.ged.env import GEDEnv
 from gklearn.ged.learning import CostMatricesLearner
-from gklearn.ged.median import MedianGraphEstimatorPy
+from gklearn.ged.median import MedianGraphEstimatorCML
 from gklearn.ged.median import constant_node_costs, mge_options_to_string
 from gklearn.utils.utils import get_graph_kernel_by_name
+from gklearn.ged.util import label_costs_to_matrix
 
 
 class MedianPreimageGeneratorCML(PreimageGenerator):
@@ -347,12 +348,19 @@ class MedianPreimageGeneratorCML(PreimageGenerator):
 		for g in graphs:
 			ged_env.add_nx_graph(g, '')
 		graph_ids = ged_env.get_all_graph_ids()
+	
+		node_labels = ged_env.get_all_node_labels()
+		edge_labels =  ged_env.get_all_edge_labels()
+		node_label_costs = label_costs_to_matrix(self.__node_label_costs, len(node_labels))
+		edge_label_costs = label_costs_to_matrix(self.__edge_label_costs, len(edge_labels))
+		ged_env.set_label_costs(node_label_costs, edge_label_costs)
+	
 		set_median_id = ged_env.add_graph('set_median')
 		gen_median_id = ged_env.add_graph('gen_median')
 		ged_env.init(init_type=self.__ged_options['init_option'])
 		
 		# Set up the madian graph estimator.
-		self.__mge = MedianGraphEstimatorPy(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
+		self.__mge = MedianGraphEstimatorCML(ged_env, constant_node_costs(self.__ged_options['edit_cost']))
 		self.__mge.set_refine_method(self.__ged_options['method'], self.__ged_options)
 		options = self.__mge_options.copy()
 		if not 'seed' in options:
