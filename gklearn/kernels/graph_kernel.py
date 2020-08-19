@@ -10,6 +10,7 @@ import networkx as nx
 import multiprocessing
 import time
 
+
 class GraphKernel(object):
 	
 	def __init__(self):

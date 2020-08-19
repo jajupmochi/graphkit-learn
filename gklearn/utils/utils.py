@@ -222,6 +222,70 @@ def direct_product(G1, G2, node_label, edge_label):
 	return gt
 
 
+def direct_product_graph(G1, G2, node_labels, edge_labels):
+	"""Return the direct/tensor product of directed graphs G1 and G2.
+
+	Parameters
+	----------
+	G1, G2 : NetworkX graph
+		The original graphs.
+	node_labels : list
+		A list of node attributes used as labels.
+	edge_labels : list
+		A list of edge attributes used as labels.
+		
+	Return
+	------
+	gt : NetworkX graph
+		The direct product graph of G1 and G2.
+
+	Notes
+	-----
+	This method differs from networkx.tensor_product in that this method only adds nodes and edges in G1 and G2 that have the same labels to the direct product graph.
+
+	References
+	----------
+	.. [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
+	"""
+	# arrange all graphs in a list
+	from itertools import product
+	# G = G.to_directed()
+	gt = nx.DiGraph()
+	# add nodes
+	for u, v in product(G1, G2):
+		label1 = tuple(G1.nodes[u][nl] for nl in node_labels)
+		label2 = tuple(G2.nodes[v][nl] for nl in node_labels)
+		if label1 == label2:
+			gt.add_node((u, v), node_label=label1)
+
+	# add edges, faster for sparse graphs (no so many edges), which is the most case for now.
+	for (u1, v1), (u2, v2) in product(G1.edges, G2.edges):
+		if (u1, u2) in gt and (v1, v2) in gt:
+			label1 = tuple(G1.edges[u1, v1][el] for el in edge_labels)
+			label2 = tuple(G2.edges[u2, v2][el] for el in edge_labels)
+			if label1 == label2:
+				gt.add_edge((u1, u2), (v1, v2), edge_label=label1)
+
+
+	# # add edges, faster for dense graphs (a lot of edges, complete graph would be super).
+	# for u, v in product(gt, gt):
+	#	 if (u[0], v[0]) in G1.edges and (
+	#			 u[1], v[1]
+	#	 ) in G2.edges and G1.edges[u[0],
+	#								v[0]][edge_label] == G2.edges[u[1],
+	#															  v[1]][edge_label]:
+	#		 gt.add_edge((u[0], u[1]), (v[0], v[1]))
+	#		 gt.edges[(u[0], u[1]), (v[0], v[1])].update({
+	#			 edge_label:
+	#			 G1.edges[u[0], v[0]][edge_label]
+	#		 })
+
+	# relabel nodes using consecutive integers for convenience of kernel calculation.
+	# gt = nx.convert_node_labels_to_integers(
+	#	 gt, first_label=0, label_attribute='label_orignal')
+	return gt
+
+
 def graph_deepcopy(G):
 	"""Deep copy a graph, including deep copy of all nodes, edges and 
 	attributes of the graph, nodes and edges.

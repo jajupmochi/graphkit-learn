@@ -52,94 +52,104 @@ def chooseDataset(ds_name):
 	return dataset
 
 
-# @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
-# @pytest.mark.parametrize('weight,compute_method', [(0.01, 'geo'), (1, 'exp')])
-# #@pytest.mark.parametrize('parallel', ['imap_unordered', None])
-# def test_commonwalkkernel(ds_name, weight, compute_method):
-#	 """Test common walk kernel.
-#	 """
-#	 from gklearn.kernels.commonWalkKernel import commonwalkkernel
+@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('weight,compute_method', [(0.01, 'geo'), (1, 'exp')])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_CommonWalk(ds_name, parallel, weight, compute_method):
+	"""Test common walk kernel.
+	"""
+	from gklearn.kernels import CommonWalk
+	import networkx as nx
 	
-#	 Gn, y = chooseDataset(ds_name)
+	dataset = chooseDataset(ds_name)
+	dataset.load_graphs([g for g in dataset.graphs if nx.number_of_nodes(g) > 1])
+	
+	try:
+		graph_kernel = CommonWalk(node_labels=dataset.node_labels,
+					edge_labels=dataset.edge_labels,
+					ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					weight=weight,
+					compute_method=compute_method)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
-#	 try:
-#		 Kmatrix, run_time, idx = commonwalkkernel(Gn, 
-#											  node_label='atom', 
-#											  edge_label='bond_type',
-#											  weight=weight,
-#											  compute_method=compute_method,
-# #											 parallel=parallel,
-#											  n_jobs=multiprocessing.cpu_count(), 
-#											  verbose=True)
-#	 except Exception as exception:
-#		 assert False, exception
+	except Exception as exception:
+		assert False, exception
 		
 		
-# @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
-# @pytest.mark.parametrize('remove_totters', [True, False])
-# #@pytest.mark.parametrize('parallel', ['imap_unordered', None])
-# def test_marginalizedkernel(ds_name, remove_totters):
-#	 """Test marginalized kernel.
-#	 """
-#	 from gklearn.kernels.marginalizedKernel import marginalizedkernel
+@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('remove_totters', [False]) #[True, False])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_Marginalized(ds_name, parallel, remove_totters):
+	"""Test marginalized kernel.
+	"""
+	from gklearn.kernels import Marginalized
 	
-#	 Gn, y = chooseDataset(ds_name)
+	dataset = chooseDataset(ds_name)
+	
+	try:
+		graph_kernel = Marginalized(node_labels=dataset.node_labels,
+					edge_labels=dataset.edge_labels,
+					ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					p_quit=0.5,
+					n_iteration=2,
+					remove_totters=remove_totters)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
-#	 try:
-#		 Kmatrix, run_time = marginalizedkernel(Gn, 
-#												node_label='atom', 
-#												edge_label='bond_type',
-#												p_quit=0.5,
-#												n_iteration=2,
-#												remove_totters=remove_totters,
-# #											   parallel=parallel,
-#												n_jobs=multiprocessing.cpu_count(), 
-#												verbose=True)
-#	 except Exception as exception:
-#		 assert False, exception
+	except Exception as exception:
+		assert False, exception
 		
 		
 # @pytest.mark.parametrize(
-#		 'compute_method,ds_name,sub_kernel',
-#		 [
+#		'compute_method,ds_name,sub_kernel',
+#		[
 # #			('sylvester', 'Alkane', None),
 # #			('conjugate', 'Alkane', None),
 # #			('conjugate', 'AIDS', None),
 # #			('fp', 'Alkane', None),
 # #			('fp', 'AIDS', None),
-#			 ('spectral', 'Alkane', 'exp'),
-#			 ('spectral', 'Alkane', 'geo'),
-#		 ]
+#			('spectral', 'Alkane', 'exp'),
+#			('spectral', 'Alkane', 'geo'),
+#		]
 # )
 # #@pytest.mark.parametrize('parallel', ['imap_unordered', None])
 # def test_randomwalkkernel(ds_name, compute_method, sub_kernel):
-#	 """Test random walk kernel kernel.
-#	 """
-#	 from gklearn.kernels.randomWalkKernel import randomwalkkernel
-#	 from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-#	 import functools
+#	"""Test random walk kernel kernel.
+#	"""
+#	from gklearn.kernels.randomWalkKernel import randomwalkkernel
+#	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+#	import functools
 	
-#	 Gn, y = chooseDataset(ds_name)
+#	Gn, y = chooseDataset(ds_name)
 
-#	 mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-#	 sub_kernels = [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]
-#	 try:
-#		 Kmatrix, run_time, idx = randomwalkkernel(Gn,
-#												   compute_method=compute_method,
-#												   weight=1e-3,
-#												   p=None,
-#												   q=None,
-#												   edge_weight=None,
-#												   node_kernels=sub_kernels,
-#												   edge_kernels=sub_kernels,
-#												   node_label='atom', 
-#												   edge_label='bond_type',
-#												   sub_kernel=sub_kernel,
-# #												  parallel=parallel,
-#												  n_jobs=multiprocessing.cpu_count(), 
-#												  verbose=True)
-#	 except Exception as exception:
-#		 assert False, exception
+#	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+#	sub_kernels = [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]
+#	try:
+#		Kmatrix, run_time, idx = randomwalkkernel(Gn,
+#												  compute_method=compute_method,
+#												  weight=1e-3,
+#												  p=None,
+#												  q=None,
+#												  edge_weight=None,
+#												  node_kernels=sub_kernels,
+#												  edge_kernels=sub_kernels,
+#												  node_label='atom', 
+#												  edge_label='bond_type',
+#												  sub_kernel=sub_kernel,
+# #												 parallel=parallel,
+#												 n_jobs=multiprocessing.cpu_count(), 
+#												 verbose=True)
+#	except Exception as exception:
+#		assert False, exception
 
 		
 @pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
@@ -157,9 +167,9 @@ def test_ShortestPath(ds_name, parallel):
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 	try:
 		graph_kernel = ShortestPath(node_labels=dataset.node_labels,
-					 node_attrs=dataset.node_attrs,
-					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					 node_kernels=sub_kernels)
+					node_attrs=dataset.node_attrs,
+					ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					node_kernels=sub_kernels)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
@@ -187,12 +197,12 @@ def test_StructuralSP(ds_name, parallel):
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 	try:
 		graph_kernel = StructuralSP(node_labels=dataset.node_labels,
-					  edge_labels=dataset.edge_labels, 
-					  node_attrs=dataset.node_attrs,
-					  edge_attrs=dataset.edge_attrs,
-					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					  node_kernels=sub_kernels,
-					  edge_kernels=sub_kernels)
+					 edge_labels=dataset.edge_labels, 
+					 node_attrs=dataset.node_attrs,
+					 edge_attrs=dataset.edge_attrs,
+					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 node_kernels=sub_kernels,
+					 edge_kernels=sub_kernels)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
@@ -218,9 +228,9 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 	
 	try:
 		graph_kernel = PathUpToH(node_labels=dataset.node_labels,
-					  edge_labels=dataset.edge_labels,
-					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					  depth=2, k_func=k_func, compute_method=compute_method)
+					 edge_labels=dataset.edge_labels,
+					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 depth=2, k_func=k_func, compute_method=compute_method)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
@@ -245,9 +255,9 @@ def test_Treelet(ds_name, parallel):
 	pkernel = functools.partial(polynomialkernel, d=2, c=1e5)	
 	try:
 		graph_kernel = Treelet(node_labels=dataset.node_labels,
-					  edge_labels=dataset.edge_labels,
-					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					  sub_kernel=pkernel)
+					 edge_labels=dataset.edge_labels,
+					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 sub_kernel=pkernel)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
@@ -271,9 +281,9 @@ def test_WLSubtree(ds_name, parallel):
 
 	try:
 		graph_kernel = WLSubtree(node_labels=dataset.node_labels,
-					  edge_labels=dataset.edge_labels,
-					  ds_infos=dataset.get_dataset_infos(keys=['directed']),
-					  height=2)
+					 edge_labels=dataset.edge_labels,
+					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 height=2)
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
