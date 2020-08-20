@@ -54,7 +54,7 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
 
 def parallel_gm(func, Kmatrix, Gn, init_worker=None, glbv=None, 
                 method='imap_unordered', n_jobs=None, chunksize=None, 
-                verbose=True):
+                verbose=True): # @todo: Gn seems not necessary.
     from itertools import combinations_with_replacement
     def func_assign(result, var_to_assign):
         var_to_assign[result[0]][result[1]] = result[2]

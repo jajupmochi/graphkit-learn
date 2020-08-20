@@ -10,6 +10,8 @@ __date__ = "November 2018"
 from gklearn.kernels.graph_kernel import GraphKernel
 from gklearn.kernels.common_walk import CommonWalk
 from gklearn.kernels.marginalized import Marginalized
+from gklearn.kernels.random_walk import RandomWalk
+from gklearn.kernels.sylvester_equation import SylvesterEquation
 from gklearn.kernels.shortest_path import ShortestPath
 from gklearn.kernels.structural_sp import StructuralSP
 from gklearn.kernels.path_up_to_h import PathUpToH

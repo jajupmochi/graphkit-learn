@@ -268,7 +268,7 @@ class CommonWalk(GraphKernel):
 	def __check_graphs(self, Gn):
 		for g in Gn:
 			if nx.number_of_nodes(g) == 1:
-				raise Exception('Graphs must contain more than 1 node to construct adjacency matrices.')
+				raise Exception('Graphs must contain more than 1 nodes to construct adjacency matrices.')
 				
 		
 	def __add_dummy_labels(self, Gn):
