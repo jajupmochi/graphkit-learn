@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 21 10:34:26 2020
+Created on Tue Sep 22 11:33:28 2020
 
 @author: ljia
 """
-Graph_Kernel_List = ['PathUpToH', 'WLSubtree', 'SylvesterEquation', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'CommonWalk'] 
+Graph_Kernel_List = ['PathUpToH', 'WLSubtree', 'SylvesterEquation', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'StructuralSP', 'CommonWalk'] 
 # Graph_Kernel_List = ['CommonWalk', 'Marginalized', 'SylvesterEquation', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'ShortestPath', 'StructuralSP', 'PathUpToH', 'Treelet', 'WLSubtree']
-
-def generate_graphs():
-	from gklearn.utils.graph_synthesizer import GraphSynthesizer
-	gsyzer = GraphSynthesizer()
-	graphs = gsyzer.unified_graphs(num_graphs=1000, num_nodes=20, num_edges=40, num_node_labels=0, num_edge_labels=0, seed=None, directed=False)
-	return graphs
 
 
 def compute_graph_kernel(graphs, kernel_name):
@@ -97,42 +91,3 @@ def compute_graph_kernel(graphs, kernel_name):
 	results = estimator(graphs, **params)
 	
 	return results[0], results[1]
-
-
-def xp_synthesied_graphs_dataset_size():
-	
-	# Generate graphs.
-	graphs = generate_graphs()
-	
-	# Run and save.
-	import pickle
-	import os
-	save_dir = 'outputs/synthesized_graphs_N/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
-
-	run_times = {}
-	
-	for kernel_name in Graph_Kernel_List:
-		print()
-		print('Kernel:', kernel_name)
-		
-		run_times[kernel_name] = []
-		for num_graphs in [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
-			print()
-			print('Number of graphs:', num_graphs)
-			
-			sub_graphs = [g.copy() for g in graphs[0:num_graphs]]
-			gram_matrix, run_time = compute_graph_kernel(sub_graphs, kernel_name)
-			run_times[kernel_name].append(run_time)
-			
-			pickle.dump(run_times, open(save_dir + 'run_time.' + kernel_name + '.' + str(num_graphs) + '.pkl', 'wb'))
-		
-	# Save all.	
-	pickle.dump(run_times, open(save_dir + 'run_times.pkl', 'wb'))	
-	
-	return
-
-
-if __name__ == '__main__':
-	xp_synthesied_graphs_dataset_size()
