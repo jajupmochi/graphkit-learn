@@ -5,8 +5,20 @@ Created on Tue Sep 22 11:33:28 2020
 
 @author: ljia
 """
-Graph_Kernel_List = ['PathUpToH', 'WLSubtree', 'SylvesterEquation', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'StructuralSP', 'CommonWalk'] 
+Graph_Kernel_List = ['PathUpToH', 'WLSubtree', 'SylvesterEquation', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'StructuralSP', 'CommonWalk']
 # Graph_Kernel_List = ['CommonWalk', 'Marginalized', 'SylvesterEquation', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'ShortestPath', 'StructuralSP', 'PathUpToH', 'Treelet', 'WLSubtree']
+
+
+Graph_Kernel_List_VSym = ['PathUpToH', 'WLSubtree', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'StructuralSP', 'CommonWalk'] 
+
+
+Graph_Kernel_List_ESym = ['PathUpToH', 'Marginalized', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'StructuralSP', 'CommonWalk']
+
+
+Graph_Kernel_List_VCon = ['ShortestPath', 'ConjugateGradient', 'FixedPoint', 'StructuralSP']
+
+
+Graph_Kernel_List_ECon = ['ConjugateGradient', 'FixedPoint', 'StructuralSP']
 
 
 def compute_graph_kernel(graphs, kernel_name):
@@ -86,6 +98,7 @@ def compute_graph_kernel(graphs, kernel_name):
 		estimator = weisfeilerlehmankernel
 		params = {'base_kernel': 'subtree', 'height': 5}
 		
+# 	params['parallel'] = None
 	params['n_jobs'] = multiprocessing.cpu_count()
 	params['verbose'] = True
 	results = estimator(graphs, **params)
