@@ -31,7 +31,7 @@ def xp_synthesied_graphs_num_node_label_alphabet():
 		print('Kernel:', kernel_name)
 		
 		run_times[kernel_name] = []
-		for num_nl_alp in [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]: # [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40]:
+		for num_nl_alp in [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]:
 			print()
 			print('Number of node label alphabet:', num_nl_alp)
 			
