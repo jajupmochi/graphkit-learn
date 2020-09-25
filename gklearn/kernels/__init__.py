@@ -18,3 +18,13 @@ from gklearn.kernels.structural_sp import StructuralSP
 from gklearn.kernels.path_up_to_h import PathUpToH
 from gklearn.kernels.treelet import Treelet
 from gklearn.kernels.weisfeiler_lehman import WeisfeilerLehman, WLSubtree
+
+# old version.
+from gklearn.kernels.commonWalkKernel import commonwalkkernel
+from gklearn.kernels.marginalizedKernel import marginalizedkernel
+from gklearn.kernels.randomWalkKernel import randomwalkkernel
+from gklearn.kernels.spKernel import spkernel
+from gklearn.kernels.structuralspKernel import structuralspkernel
+from gklearn.kernels.untilHPathKernel import untilhpathkernel
+from gklearn.kernels.treeletKernel import treeletkernel
+from gklearn.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
