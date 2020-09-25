@@ -51,7 +51,7 @@ class Marginalized(GraphKernel):
 			else:
 				iterator = self._graphs
 			# @todo: this may not work.
-			self._graphs = [untotterTransformation(G, self.__node_label, self.__edge_label) for G in iterator]
+			self._graphs = [untotterTransformation(G, self.__node_labels, self.__edge_labels) for G in iterator]
 		
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
@@ -108,13 +108,13 @@ class Marginalized(GraphKernel):
 		self.__add_dummy_labels(g_list + [g1])
 		
 		if self.__remove_totters:
-			g1 = untotterTransformation(g1, self.__node_label, self.__edge_label) # @todo: this may not work.
+			g1 = untotterTransformation(g1, self.__node_labels, self.__edge_labels) # @todo: this may not work.
 			if self._verbose >= 2:
 				iterator = tqdm(g_list, desc='removing tottering', file=sys.stdout)
 			else:
 				iterator = g_list
 			# @todo: this may not work.
-			g_list = [untotterTransformation(G, self.__node_label, self.__edge_label) for G in iterator]
+			g_list = [untotterTransformation(G, self.__node_labels, self.__edge_labels) for G in iterator]
 				
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
@@ -133,7 +133,7 @@ class Marginalized(GraphKernel):
 		self.__add_dummy_labels(g_list + [g1])
 		
 		if self.__remove_totters:
-			g1 = untotterTransformation(g1, self.__node_label, self.__edge_label) # @todo: this may not work.
+			g1 = untotterTransformation(g1, self.__node_labels, self.__edge_labels) # @todo: this may not work.
 			pool = Pool(self._n_jobs)
 			itr = range(0, len(g_list))
 			if len(g_list) < 100 * self._n_jobs:
@@ -177,8 +177,8 @@ class Marginalized(GraphKernel):
 	def _compute_single_kernel_series(self, g1, g2):
 		self.__add_dummy_labels([g1] + [g2])
 		if self.__remove_totters:
-			g1 = untotterTransformation(g1, self.__node_label, self.__edge_label) # @todo: this may not work.
-			g2 = untotterTransformation(g2, self.__node_label, self.__edge_label)
+			g1 = untotterTransformation(g1, self.__node_labels, self.__edge_labels) # @todo: this may not work.
+			g2 = untotterTransformation(g2, self.__node_labels, self.__edge_labels)
 		kernel = self.__kernel_do(g1, g2)
 		return kernel			
 	
@@ -324,7 +324,7 @@ class Marginalized(GraphKernel):
 
 	
 	def _wrapper_untotter(self, i):
-		return i, untotterTransformation(self._graphs[i], self.__node_label, self.__edge_label) # @todo: this may not work.
+		return i, untotterTransformation(self._graphs[i], self.__node_labels, self.__edge_labels) # @todo: this may not work.
 	
 	
 	def __add_dummy_labels(self, Gn):

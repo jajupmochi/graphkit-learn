@@ -637,6 +637,10 @@ class GEDEnv(object):
 		return [i for i in self.__internal_to_original_node_ids[graph_id].values()]		
 	
 	
+	def get_node_cost(self, node_label_1, node_label_2):
+		return self.__ged_data.node_cost(node_label_1, node_label_2)
+	
+	
 	def get_node_rel_cost(self, node_label_1, node_label_2):
 		"""
 	/*!
@@ -650,7 +654,7 @@ class GEDEnv(object):
 			node_label_1 = tuple(sorted(node_label_1.items(), key=lambda kv: kv[0]))
 		if isinstance(node_label_2, dict):
 			node_label_2 = tuple(sorted(node_label_2.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.node_rel_cost_fun(node_label_1, node_label_2)
+		return self.__ged_data._edit_cost.node_rel_cost_fun(node_label_1, node_label_2) # @todo: may need to use node_cost() instead (or change node_cost() and modify ged_method for pre-defined cost matrices.)
 		
 		
 	def get_node_del_cost(self, node_label):
@@ -677,6 +681,10 @@ class GEDEnv(object):
 		if isinstance(node_label, dict):
 			node_label = tuple(sorted(node_label.items(), key=lambda kv: kv[0]))
 		return self.__ged_data._edit_cost.node_ins_cost_fun(node_label)
+	
+	
+	def get_edge_cost(self, edge_label_1, edge_label_2):
+		return self.__ged_data.edge_cost(edge_label_1, edge_label_2)
 		
 		
 	def get_edge_rel_cost(self, edge_label_1, edge_label_2):

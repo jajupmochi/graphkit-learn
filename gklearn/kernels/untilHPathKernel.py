@@ -649,7 +649,7 @@ def paths2labelseqs(plist, G, ds_attrs, node_label, edge_label):
             #     path_strs.append(tuple(strlist))
         else:
             path_strs = [
-                tuple([G.node[node][node_label] for node in path])
+                tuple([G.nodes[node][node_label] for node in path])
                 for path in plist
             ]
         return path_strs
