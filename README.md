@@ -62,20 +62,20 @@ The docs of the library can be found [here](https://graphkit-learn.readthedocs.i
 
 ## Main contents
 
-### List of graph kernels
+### 1 List of graph kernels
 
 * Based on walks
-  * The common walk kernel [1]
+  * [The common walk kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/common_walk.py) [1]
     * Exponential
     * Geometric
   * [The marginalized kenrel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/marginalized.py)
     * With tottering [2]
     * Without tottering [7]
-  * The generalized random walk kernel [3]
-    * Sylvester equation
+  * [The generalized random walk kernel](gklearn/kernels/random_walk.py) [3]
+    * [Sylvester equation](gklearn/kernels/sylvester_equation.py)
     * Conjugate gradient
     * Fixed-point iterations
-    * Spectral decomposition
+    * [Spectral decomposition](gklearn/kernels/spectral_decomposition.py)
 * Based on paths
   * [The shortest path kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/shortest_path.py) [4]
   * [The structural shortest path kernel](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/kernels/structural_sp.py) [5]
@@ -89,17 +89,17 @@ The docs of the library can be found [here](https://graphkit-learn.readthedocs.i
 
 A demo of computing graph kernels can be found on [Google Colab](https://colab.research.google.com/drive/17Q2QCl9CAtDweGF8LiWnWoN2laeJqT0u?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/compute_graph_kernel.py) folder.
 
-### Graph Edit Distances
+### 2 Graph Edit Distances
 
-### Graph preimage methods
+### 3 Graph preimage methods
 
 A demo of generating graph preimages can be found on [Google Colab](https://colab.research.google.com/drive/1PIDvHOcmiLEQ5Np3bgBDdu0kLOquOMQK?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/median_preimege_generator.py) folder.
 
-### Interface to `GEDLIB`
+### 4 Interface to `GEDLIB`
 
 [`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. [A Python interface](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib) for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
 
-### Computation optimization methods
+### 5 Computation optimization methods
 
 * Python’s `multiprocessing.Pool` module is applied to perform **parallelization** on the computations of all kernels as well as the model selection.
 * **The Fast Computation of Shortest Path Kernel (FCSP) method** [8] is implemented in *the random walk kernel*, *the shortest path kernel*, as well as *the structural shortest path kernel* where FCSP is applied on both vertex and edge kernels.
