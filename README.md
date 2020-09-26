@@ -65,27 +65,27 @@ The docs of the library can be found [here](https://graphkit-learn.readthedocs.i
 ### 1 List of graph kernels
 
 * Based on walks
-  * [The common walk kernel](gklearn/kernels/common_walk.py) [1]
+  * [The common walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/common_walk.py) [1]
     * Exponential
     * Geometric
-  * [The marginalized kenrel](gklearn/kernels/marginalized.py)
+  * [The marginalized kenrel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/marginalized.py)
     * With tottering [2]
     * Without tottering [7]
-  * [The generalized random walk kernel](gklearn/kernels/random_walk.py) [3]
-    * [Sylvester equation](gklearn/kernels/sylvester_equation.py)
+  * [The generalized random walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/random_walk.py) [3]
+    * [Sylvester equation](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/sylvester_equation.py)
     * Conjugate gradient
     * Fixed-point iterations
-    * [Spectral decomposition](gklearn/kernels/spectral_decomposition.py)
+    * [Spectral decomposition](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/spectral_decomposition.py)
 * Based on paths
-  * [The shortest path kernel](gklearn/kernels/shortest_path.py) [4]
-  * [The structural shortest path kernel](gklearn/kernels/structural_sp.py) [5]
-  * [The path kernel up to length h](gklearn/kernels/path_up_to_h.py) [6]
+  * [The shortest path kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/shortest_path.py) [4]
+  * [The structural shortest path kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/structural_sp.py) [5]
+  * [The path kernel up to length h](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/path_up_to_h.py) [6]
     * The Tanimoto kernel
     * The MinMax kernel
 * Non-linear kernels
-  * [The treelet kernel](gklearn/kernels/treelet.py) [10]
-  * [Weisfeiler-Lehman kernel](gklearn/kernels/weisfeiler_lehman.py) [11]
-    * [Subtree](gklearn/kernels/weisfeiler_lehman.py#L479)
+  * [The treelet kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/treelet.py) [10]
+  * [Weisfeiler-Lehman kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/weisfeiler_lehman.py) [11]
+    * [Subtree](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/weisfeiler_lehman.py#L479)
 
 A demo of computing graph kernels can be found on [Google Colab](https://colab.research.google.com/drive/17Q2QCl9CAtDweGF8LiWnWoN2laeJqT0u?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/compute_graph_kernel.py) folder.
 
@@ -97,7 +97,7 @@ A demo of generating graph preimages can be found on [Google Colab](https://cola
 
 ### 4 Interface to `GEDLIB`
 
-[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. [A Python interface](gklearn/gedlib) for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
+[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. [A Python interface](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib) for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
 
 ### 5 Computation optimization methods
 
