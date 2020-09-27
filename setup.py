@@ -8,22 +8,25 @@ with open('requirements_pypi.txt') as fp:
 
 setuptools.setup(
 	name="graphkit-learn",
-	version="0.2b3",
+	version="0.2b4",
 	author="Linlin Jia",
 	author_email="linlin.jia@insa-rouen.fr",
 	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
+	project_urls={
+		'Documentation': 'https://graphkit-learn.readthedocs.io',
+		'Source': 'https://github.com/jajupmochi/graphkit-learn',
+		'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
+		},
 	url="https://github.com/jajupmochi/graphkit-learn",
 	packages=setuptools.find_packages(),
 	classifiers=[
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 		"Operating System :: OS Independent",
+		'Intended Audience :: Science/Research',
+		'Intended Audience :: Developers',
 	],
 	install_requires=install_requires,
-	extras_require={
-		'control>=0.8.2': ['matplotlib>=3.1.0'], # for generalized random walk kernels only.
-		'control<0.8.2': ['matplotlib<3.1.0']
-		},
 )

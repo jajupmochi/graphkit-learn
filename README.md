@@ -9,7 +9,7 @@ A Python package for graph kernels, graph edit distances and graph pre-image pro
 
 ## Requirements
 
-* python>=3.5
+* python>=3.6
 * numpy>=1.16.2
 * scipy>=1.1.0
 * matplotlib>=3.1.0
