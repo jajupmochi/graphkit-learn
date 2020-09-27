@@ -8,7 +8,7 @@ with open('requirements_pypi.txt') as fp:
 
 setuptools.setup(
     name="graphkit-learn",
-    version="0.2b2",
+    version="0.2b3",
     author="Linlin Jia",
     author_email="linlin.jia@insa-rouen.fr",
     description="A Python library for graph kernels, graph edit distances, and graph pre-images",
@@ -22,4 +22,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=install_requires,
+	extras_require={
+        'control>=0.8.2': ['matplotlib>=3.1.0'], # for generalized random walk kernels only.
+		'control<0.8.2': ['matplotlib<3.1.0']
+		},
 )
