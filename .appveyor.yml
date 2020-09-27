@@ -23,4 +23,4 @@ build: off
 
 test_script:
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "%PYTHON%\\python.exe -m pytest -v gklearn/tests/"
+  - "%PYTHON%\\python.exe -m pytest -v gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py"
