@@ -1,4 +1,6 @@
 """ Obtain all kinds of attributes of a graph dataset.
+
+This file is for old version of graphkit-learn.
 """
 
 
@@ -336,3 +338,82 @@ def get_dataset_attributes(Gn,
     from collections import OrderedDict
     return OrderedDict(
         sorted(attrs.items(), key=lambda i: attr_names.index(i[0])))
+
+
+def load_predefined_dataset(ds_name):
+	import os
+	from gklearn.utils.graphfiles import loadDataset
+	
+	current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
+	if ds_name == 'Acyclic':
+		ds_file = current_path + '../../datasets/Acyclic/dataset_bps.ds'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'AIDS':
+		ds_file = current_path + '../../datasets/AIDS/AIDS_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Alkane':
+		ds_file = current_path + '../../datasets/Alkane/dataset.ds'
+		fn_targets = current_path + '../../datasets/Alkane/dataset_boiling_point_names.txt'
+		graphs, targets = loadDataset(ds_file, filename_y=fn_targets)
+	elif ds_name == 'COIL-DEL':
+		ds_file = current_path + '../../datasets/COIL-DEL/COIL-DEL_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'COIL-RAG':
+		ds_file = current_path + '../../datasets/COIL-RAG/COIL-RAG_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'COLORS-3':
+		ds_file = current_path + '../../datasets/COLORS-3/COLORS-3_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Cuneiform':
+		ds_file = current_path + '../../datasets/Cuneiform/Cuneiform_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'DD':
+		ds_file = current_path + '../../datasets/DD/DD_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'ENZYMES':
+		ds_file = current_path + '../../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Fingerprint':
+		ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'FRANKENSTEIN':
+		ds_file = current_path + '../../datasets/FRANKENSTEIN/FRANKENSTEIN_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Letter-high': # node non-symb
+		ds_file = current_path + '../../datasets/Letter-high/Letter-high_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Letter-low': # node non-symb
+		ds_file = current_path + '../../datasets/Letter-low/Letter-low_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Letter-med': # node non-symb
+		ds_file = current_path + '../../datasets/Letter-med/Letter-med_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'MAO':
+		ds_file = current_path + '../../datasets/MAO/dataset.ds'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Monoterpenoides':
+		ds_file = current_path + '../../datasets/Monoterpenoides/dataset_10+.ds'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'MUTAG':
+		ds_file = current_path + '../../datasets/MUTAG/MUTAG_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'NCI1':
+		ds_file = current_path + '../../datasets/NCI1/NCI1_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'NCI109':
+		ds_file = current_path + '../../datasets/NCI109/NCI109_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'PAH':
+		ds_file = current_path + '../../datasets/PAH/dataset.ds'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'SYNTHETIC':
+		pass
+	elif ds_name == 'SYNTHETICnew':
+		ds_file = current_path + '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
+		graphs, targets = loadDataset(ds_file)
+	elif ds_name == 'Synthie':
+		pass
+	else:
+		raise Exception('The dataset name "', ds_name, '" is not pre-defined.')
+		
+	return graphs, targets

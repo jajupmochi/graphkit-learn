@@ -5,6 +5,9 @@ Created on Tue Sep 22 11:33:28 2020
 
 @author: ljia
 """
+import multiprocessing
+
+
 Graph_Kernel_List = ['PathUpToH', 'WLSubtree', 'SylvesterEquation', 'Marginalized', 'ShortestPath', 'Treelet', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'StructuralSP', 'CommonWalk']
 # Graph_Kernel_List = ['CommonWalk', 'Marginalized', 'SylvesterEquation', 'ConjugateGradient', 'FixedPoint', 'SpectralDecomposition', 'ShortestPath', 'StructuralSP', 'PathUpToH', 'Treelet', 'WLSubtree']
 
@@ -21,8 +24,10 @@ Graph_Kernel_List_VCon = ['ShortestPath', 'ConjugateGradient', 'FixedPoint', 'St
 Graph_Kernel_List_ECon = ['ConjugateGradient', 'FixedPoint', 'StructuralSP']
 
 
-def compute_graph_kernel(graphs, kernel_name):
-	import multiprocessing
+Dataset_List = ['Alkane', 'Acyclic', 'MAO', 'PAH', 'MUTAG', 'Letter-med', 'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD']
+
+
+def compute_graph_kernel(graphs, kernel_name, n_jobs=multiprocessing.cpu_count()):
 	
 	if kernel_name == 'CommonWalk':
 		from gklearn.kernels.commonWalkKernel import commonwalkkernel
@@ -99,7 +104,7 @@ def compute_graph_kernel(graphs, kernel_name):
 		params = {'base_kernel': 'subtree', 'height': 5}
 		
 # 	params['parallel'] = None
-	params['n_jobs'] = multiprocessing.cpu_count()
+	params['n_jobs'] = n_jobs
 	params['verbose'] = True
 	results = estimator(graphs, **params)
 	
