@@ -93,6 +93,9 @@ class Dataset(object):
 		elif ds_name == 'DD':
 			ds_file = current_path + '../../datasets/DD/DD_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'ENZYMES':
+			ds_file = current_path + '../../datasets/ENZYMES_txt/ENZYMES_A_sparse.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
 		elif ds_name == 'Fingerprint':
 			ds_file = current_path + '../../datasets/Fingerprint/Fingerprint_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
@@ -117,6 +120,12 @@ class Dataset(object):
 		elif ds_name == 'MUTAG':
 			ds_file = current_path + '../../datasets/MUTAG/MUTAG_A.txt'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'NCI1':
+			ds_file = current_path + '../../datasets/NCI1/NCI1_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
+		elif ds_name == 'NCI109':
+			ds_file = current_path + '../../datasets/NCI109/NCI109_A.txt'
+			self.__graphs, self.__targets, label_names = load_dataset(ds_file)	
 		elif ds_name == 'PAH':
 			ds_file = current_path + '../../datasets/PAH/dataset.ds'
 			self.__graphs, self.__targets, label_names = load_dataset(ds_file)
