@@ -30,6 +30,7 @@ def model_selection_for_precomputed_kernel(datafile,
                                            datafile_y=None,
                                            extra_params=None,
                                            ds_name='ds-unknown',
+										   output_dir='outputs/',
                                            n_jobs=1,
                                            read_gm_from_file=False,
                                            verbose=True):
@@ -56,7 +57,7 @@ def model_selection_for_precomputed_kernel(datafile,
     model_type : string
         Type of the problem, can be 'regression' or 'classification'.
     NUM_TRIALS : integer
-        Number of random trials of outer cv loop. The default is 30.
+        Number of random trials of the outer CV loop. The default is 30.
     datafile_y : string
         Path of file storing y data. This parameter is optional depending on 
         the given dataset file.
@@ -89,9 +90,9 @@ def model_selection_for_precomputed_kernel(datafile,
     """
     tqdm.monitor_interval = 0
 
-    results_dir = '../notebooks/results/' + estimator.__name__
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
+    output_dir += estimator.__name__
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     # a string to save all the results.
     str_fw = '###################### log time: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '. ######################\n\n'
     str_fw += '# This file contains results of ' + estimator.__name__ + ' on dataset ' + ds_name + ',\n# including gram matrices, serial numbers for gram matrix figures and performance.\n\n'
@@ -209,7 +210,7 @@ def model_selection_for_precomputed_kernel(datafile,
 #                            threshold=np.inf,
 #                            floatmode='unique') + '\n\n'
 
-                    fig_file_name = results_dir + '/GM[ds]' + ds_name
+                    fig_file_name = output_dir + '/GM[ds]' + ds_name
                     if params_out != {}:
                         fig_file_name += '[params]' + str(idx)
                     plt.imshow(Kmatrix)
@@ -244,7 +245,7 @@ def model_selection_for_precomputed_kernel(datafile,
             str_fw += '\nall gram matrices are ignored, no results obtained.\n\n'
         else:
             # save gram matrices to file.
-#            np.savez(results_dir + '/' + ds_name + '.gm', 
+#            np.savez(output_dir + '/' + ds_name + '.gm', 
 #                     gms=gram_matrices, params=param_list_pre_revised, y=y, 
 #                     gmtime=gram_matrix_time)
             if verbose:
@@ -450,7 +451,7 @@ def model_selection_for_precomputed_kernel(datafile,
             print()
             print('2. Reading gram matrices from file...')
         str_fw += '\nII. Gram matrices.\n\nGram matrices are read from file, see last log for detail.\n'
-        gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
+        gmfile = np.load(output_dir + '/' + ds_name + '.gm.npz')
         gram_matrices = gmfile['gms'] # a list to store gram matrices for all param_grid_precomputed
         gram_matrix_time = gmfile['gmtime'] # time used to compute the gram matrices
         param_list_pre_revised = gmfile['params'] # list to store param grids precomputed ignoring the useless ones
@@ -603,8 +604,8 @@ def model_selection_for_precomputed_kernel(datafile,
         str_fw += 'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s\n\n'.format(tt_poster)
 
         # open file to save all results for this dataset.
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
             
     # print out results as table.
     str_fw += printResultsInTable(param_list, param_list_pre_revised, average_val_scores,
@@ -613,11 +614,11 @@ def model_selection_for_precomputed_kernel(datafile,
               model_type, verbose)
             
     # open file to save all results for this dataset.
-    if not os.path.exists(results_dir + '/' + ds_name + '.output.txt'):
-        with open(results_dir + '/' + ds_name + '.output.txt', 'w') as f:
+    if not os.path.exists(output_dir + '/' + ds_name + '.output.txt'):
+        with open(output_dir + '/' + ds_name + '.output.txt', 'w') as f:
             f.write(str_fw)
     else:
-        with open(results_dir + '/' + ds_name + '.output.txt', 'r+') as f:
+        with open(output_dir + '/' + ds_name + '.output.txt', 'r+') as f:
             content = f.read()
             f.seek(0, 0)
             f.write(str_fw + '\n\n\n' + content)
@@ -797,7 +798,7 @@ def parallel_trial_do(param_list_pre_revised, param_list, y, model_type, trial):
 
 
 def compute_gram_matrices(dataset, y, estimator, param_list_precomputed, 
-                          results_dir, ds_name,
+                          output_dir, ds_name,
                           n_jobs=1, str_fw='', verbose=True):
     gram_matrices = [
         ]  # a list to store gram matrices for all param_grid_precomputed
@@ -867,7 +868,7 @@ def compute_gram_matrices(dataset, y, estimator, param_list_precomputed,
 #                            threshold=np.inf,
 #                            floatmode='unique') + '\n\n'
 
-                fig_file_name = results_dir + '/GM[ds]' + ds_name
+                fig_file_name = output_dir + '/GM[ds]' + ds_name
                 if params_out != {}:
                     fig_file_name += '[params]' + str(idx)
                 plt.imshow(Kmatrix)
@@ -897,8 +898,8 @@ def compute_gram_matrices(dataset, y, estimator, param_list_precomputed,
     return gram_matrices, gram_matrix_time, param_list_pre_revised, y, str_fw
 
 
-def read_gram_matrices_from_file(results_dir, ds_name):
-    gmfile = np.load(results_dir + '/' + ds_name + '.gm.npz')
+def read_gram_matrices_from_file(output_dir, ds_name):
+    gmfile = np.load(output_dir + '/' + ds_name + '.gm.npz')
     gram_matrices = gmfile['gms'] # a list to store gram matrices for all param_grid_precomputed
     param_list_pre_revised = gmfile['params'] # list to store param grids precomputed ignoring the useless ones
     y = gmfile['y'].tolist()
