@@ -27,6 +27,7 @@ def treeletkernel(*args,
 				  edge_label='bond_type', 
 				  parallel='imap_unordered',
 				  n_jobs=None, 
+				  chunksize=None,
 				  verbose=True):
 	"""Calculate treelet graph kernels between graphs.
 
@@ -92,10 +93,11 @@ def treeletkernel(*args,
 		# time, but this may cost a lot of memory for large dataset.
 		pool = Pool(n_jobs)
 		itr = zip(Gn, range(0, len(Gn)))
-		if len(Gn) < 100 * n_jobs:
-			chunksize = int(len(Gn) / n_jobs) + 1
-		else:
-			chunksize = 100
+		if chunksize is None:
+			if len(Gn) < 100 * n_jobs:
+				chunksize = int(len(Gn) / n_jobs) + 1
+			else:
+				chunksize = 100
 		canonkeys = [[] for _ in range(len(Gn))]
 		get_partial = partial(wrapper_get_canonkeys, node_label, edge_label, 
 								labeled, ds_attrs['is_directed'])
@@ -115,7 +117,7 @@ def treeletkernel(*args,
 			G_canonkeys = canonkeys_toshare
 		do_partial = partial(wrapper_treeletkernel_do, sub_kernel)
 		parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-					glbv=(canonkeys,), n_jobs=n_jobs, verbose=verbose)
+					glbv=(canonkeys,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
 		
 	# ---- do not use parallelization. ----
 	elif parallel == None:

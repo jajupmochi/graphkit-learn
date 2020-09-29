@@ -24,7 +24,7 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
                 n_jobs = multiprocessing.cpu_count()
             with Pool(processes=n_jobs, initializer=init_worker, 
                       initargs=glbv) as pool:                
-                if chunksize == None:
+                if chunksize is None:
                     if len_itr < 100 * n_jobs:
                         chunksize = int(len_itr / n_jobs) + 1
                     else:
@@ -39,7 +39,7 @@ def parallel_me(func, func_assign, var_to_assign, itr, len_itr=None, init_worker
             if n_jobs == None:
                 n_jobs = multiprocessing.cpu_count()
             with Pool(processes=n_jobs) as pool:
-                if chunksize == None:
+                if chunksize is None:
                     if len_itr < 100 * n_jobs:
                         chunksize = int(len_itr / n_jobs) + 1
                     else:
