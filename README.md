@@ -60,7 +60,7 @@ Check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/not
 
 The docs of the library can be found [here](https://graphkit-learn.readthedocs.io/en/master/?badge=master).
 
-## Main contents
+## Main contents
 
 ### 1 List of graph kernels
 

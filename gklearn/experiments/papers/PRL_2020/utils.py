@@ -27,7 +27,7 @@ Graph_Kernel_List_ECon = ['ConjugateGradient', 'FixedPoint', 'StructuralSP']
 Dataset_List = ['Alkane', 'Acyclic', 'MAO', 'PAH', 'MUTAG', 'Letter-med', 'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD']
 
 
-def compute_graph_kernel(graphs, kernel_name, n_jobs=multiprocessing.cpu_count()):
+def compute_graph_kernel(graphs, kernel_name, n_jobs=multiprocessing.cpu_count(), chunksize=None):
 	
 	if kernel_name == 'CommonWalk':
 		from gklearn.kernels.commonWalkKernel import commonwalkkernel
@@ -105,6 +105,7 @@ def compute_graph_kernel(graphs, kernel_name, n_jobs=multiprocessing.cpu_count()
 		
 # 	params['parallel'] = None
 	params['n_jobs'] = n_jobs
+	params['chunksize'] = chunksize
 	params['verbose'] = True
 	results = estimator(graphs, **params)
 	
