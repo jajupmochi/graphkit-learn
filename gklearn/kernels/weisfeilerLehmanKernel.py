@@ -256,7 +256,7 @@ def _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, chunksiz
 			all_num_of_each_label.append(dict(Counter(labels_comp)))
 
 		# calculate subtree kernel with h iterations and add it to the final kernel
-		compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, False)
+		compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, chunksize, False)
 
 	return Kmatrix
 
