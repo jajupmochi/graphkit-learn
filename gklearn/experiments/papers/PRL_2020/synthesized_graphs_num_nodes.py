@@ -40,9 +40,9 @@ def xp_synthesied_graphs_num_nodes():
 			graphs = generate_graphs(num_nodes)
 
 			# Compute Gram matrix.
+			run_time = 'error'
 			try:
 				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name, n_jobs=1)
-				run_times[kernel_name].append(run_time)
 			except Exception as exp:
 				run_times[kernel_name].append('error')
 				print('An exception occured when running this experiment:')
@@ -50,6 +50,7 @@ def xp_synthesied_graphs_num_nodes():
 				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 				logging.exception('')
 				print(repr(exp))
+			run_times[kernel_name].append(run_time)
 			
 			pickle.dump(run_time, open(save_dir + 'run_time.' + kernel_name + '.' + str(num_nodes) + '.pkl', 'wb'))
 		

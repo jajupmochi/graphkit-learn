@@ -30,6 +30,7 @@ def weisfeilerlehmankernel(*args,
 						   base_kernel='subtree',
 						   parallel=None,
 						   n_jobs=None, 
+						   chunksize=None,
 						   verbose=True):
 	"""Calculate Weisfeiler-Lehman kernels between graphs.
 	
@@ -91,7 +92,7 @@ def weisfeilerlehmankernel(*args,
 
 	# for WL subtree kernel
 	if base_kernel == 'subtree':		   
-		Kmatrix = _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, verbose)
+		Kmatrix = _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, chunksize, verbose)
 
 	# for WL shortest path kernel
 	elif base_kernel == 'sp':
@@ -113,7 +114,7 @@ def weisfeilerlehmankernel(*args,
 	return Kmatrix, run_time
 
 
-def _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, verbose):
+def _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, chunksize, verbose):
 	"""Calculate Weisfeiler-Lehman kernels between graphs.
 
 	Parameters
@@ -146,7 +147,7 @@ def _wl_kernel_do(Gn, node_label, edge_label, height, parallel, n_jobs, verbose)
 		all_num_of_each_label.append(dict(Counter(labels_ori)))
 
 	# calculate subtree kernel with the 0th iteration and add it to the final kernel
-	compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, False)
+	compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, chunksize, False)
 
 	# iterate each height
 	for h in range(1, height + 1):
@@ -304,7 +305,7 @@ def wrapper_wl_iteration(node_label, itr_item):
 	return i, all_multisets
 
 
-def compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, verbose):
+def compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, chunksize, verbose):
 	"""Compute kernel matrix using the base kernel.
 	"""
 	if parallel == 'imap_unordered':
@@ -314,7 +315,7 @@ def compute_kernel_matrix(Kmatrix, all_num_of_each_label, Gn, parallel, n_jobs, 
 			G_alllabels = alllabels_toshare
 		do_partial = partial(wrapper_compute_subtree_kernel, Kmatrix)
 		parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-					glbv=(all_num_of_each_label,), n_jobs=n_jobs, verbose=verbose)
+					glbv=(all_num_of_each_label,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
 	elif parallel == None:
 		for i in range(len(Kmatrix)):
 			for j in range(i, len(Kmatrix)):

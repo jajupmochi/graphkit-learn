@@ -373,8 +373,18 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 					   for key in all_paths]
 			kernel = np.sum(np.minimum(vector1, vector2)) / \
 				np.sum(np.maximum(vector1, vector2))
+				
+		elif self.__k_func is None: # no sub-kernel used; compare paths directly.
+			path_count1 = Counter(paths1)
+			path_count2 = Counter(paths2)
+			vector1 = [(path_count1[key] if (key in path_count1.keys()) else 0)
+					   for key in all_paths]
+			vector2 = [(path_count2[key] if (key in path_count2.keys()) else 0)
+					   for key in all_paths]
+			kernel = np.dot(vector1, vector2)
+			
 		else:
-			raise Exception('The given "k_func" cannot be recognized. Possible choices include: "tanimoto", "MinMax".')
+			raise Exception('The given "k_func" cannot be recognized. Possible choices include: "tanimoto", "MinMax" and None.')
 	
 		return kernel
 	

@@ -10,19 +10,12 @@ from gklearn.utils.graphdataset import load_predefined_dataset
 import logging
 
 
-# def get_graphs(ds_name):
-# 	from gklearn.utils.graph_synthesizer import GraphSynthesizer
-# 	gsyzer = GraphSynthesizer()
-# 	graphs = gsyzer.unified_graphs(num_graphs=100, num_nodes=num_nodes, num_edges=int(num_nodes*2), num_node_labels=0, num_edge_labels=0, seed=None, directed=False)
-# 	return graphs
-
-
-def xp_runtimes_of_all_7cores():
+def xp_runtimes_of_all_28cores():
 		
 	# Run and save.
 	import pickle
 	import os
-	save_dir = 'outputs/runtimes_of_all_7cores/'
+	save_dir = 'outputs/runtimes_of_all_28cores/'
 	if not os.path.exists(save_dir):
 		os.makedirs(save_dir)
 
@@ -41,16 +34,16 @@ def xp_runtimes_of_all_7cores():
 			graphs, _ = load_predefined_dataset(ds_name)
 
 			# Compute Gram matrix.
+			run_time = 'error'
 			try:
 				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name, n_jobs=28)
-				run_times[kernel_name].append(run_time)
 			except Exception as exp:
-				run_times[kernel_name].append('error')
 				print('An exception occured when running this experiment:')
 				LOG_FILENAME = save_dir + 'error.txt'
 				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 				logging.exception('')
 				print(repr(exp))
+			run_times[kernel_name].append(run_time)
 			
 			pickle.dump(run_time, open(save_dir + 'run_time.' + kernel_name + '.' + ds_name + '.pkl', 'wb'))
 		
@@ -61,4 +54,4 @@ def xp_runtimes_of_all_7cores():
 
 
 if __name__ == '__main__':
-	xp_runtimes_of_all_7cores()
+	xp_runtimes_of_all_28cores()

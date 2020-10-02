@@ -60,7 +60,7 @@ Check [`notebooks`](https://github.com/jajupmochi/graphkit-learn/tree/master/not
 
 The docs of the library can be found [here](https://graphkit-learn.readthedocs.io/en/master/?badge=master).
 
-## Main contents
+## Main contents
 
 ### 1 List of graph kernels
 
@@ -131,6 +131,20 @@ A comparison of performances of graph kernels on benchmark datasets can be found
 
 Fork the library and open a pull request! Make your own contribute to the community!
 
+## Authors
+
+* [Linlin Jia](https://jajupmochi.github.io/), LITIS, INSA Rouen Normandie
+* [Benoit Gaüzère](http://pagesperso.litislab.fr/~bgauzere/#contact_en), LITIS, INSA Rouen Normandie
+* [Paul Honeine](http://honeine.fr/paul/Welcome.html), LITIS, Université de Rouen Normandie
+
+## Citation
+
+Still waiting...
+
+## Acknowledgments
+
+This research was supported by CSC (China Scholarship Council) and the French national research agency (ANR) under the grant APi (ANR-18-CE23-0014). The authors would like to thank the CRIANN (Le Centre Régional Informatique et d’Applications Numériques de Normandie) for providing computational resources.
+
 ## References
 [1] Thomas Gärtner, Peter Flach, and Stefan Wrobel. On graph kernels: Hardness results and efficient alternatives. Learning Theory and Kernel Machines, pages 129–143, 2003.
 
@@ -153,17 +167,3 @@ Fork the library and open a pull request! Make your own contribute to the commun
 [10] Gaüzere, B., Brun, L., Villemin, D., 2012. Two new graphs kernels in chemoinformatics. Pattern Recognition Letters 33, 2038–2047.
 
 [11] Shervashidze, N., Schweitzer, P., Leeuwen, E.J.v., Mehlhorn, K., Borgwardt, K.M., 2011. Weisfeiler-lehman graph kernels. Journal of Machine Learning Research 12, 2539–2561.
-
-## Authors
-
-* [Linlin Jia](https://jajupmochi.github.io/), LITIS, INSA Rouen Normandie
-* [Benoit Gaüzère](http://pagesperso.litislab.fr/~bgauzere/#contact_en), LITIS, INSA Rouen Normandie
-* [Paul Honeine](http://honeine.fr/paul/Welcome.html), LITIS, Université de Rouen Normandie
-
-## Citation
-
-Still waiting...
-
-## Acknowledgments
-
-This research was supported by CSC (China Scholarship Council) and the French national research agency (ANR) under the grant APi (ANR-18-CE23-0014). The authors would like to thank the CRIANN (Le Centre Régional Informatique et d’Applications Numériques de Normandie) for providing computational resources.
