@@ -8,7 +8,7 @@ with open('requirements_pypi.txt') as fp:
 
 setuptools.setup(
 	name="graphkit-learn",
-	version="0.2b4",
+	version="0.2.0",
 	author="Linlin Jia",
 	author_email="linlin.jia@insa-rouen.fr",
 	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
