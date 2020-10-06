@@ -16,7 +16,7 @@ def generate_graphs(num_nl_alp):
 	return graphs
 
 
-def xp_synthesied_graphs_num_node_label_alphabet():
+def xp_synthesized_graphs_num_node_label_alphabet():
 		
 	# Run and save.
 	import pickle
@@ -61,4 +61,4 @@ def xp_synthesied_graphs_num_node_label_alphabet():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_num_node_label_alphabet()
+	xp_synthesized_graphs_num_node_label_alphabet()
