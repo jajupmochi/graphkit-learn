@@ -16,7 +16,7 @@ def generate_graphs(num_nodes):
 	return graphs
 
 
-def xp_synthesied_graphs_num_nodes():
+def xp_synthesized_graphs_num_nodes():
 		
 	# Run and save.
 	import pickle
@@ -61,4 +61,4 @@ def xp_synthesied_graphs_num_nodes():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_num_nodes()
+	xp_synthesized_graphs_num_nodes()
