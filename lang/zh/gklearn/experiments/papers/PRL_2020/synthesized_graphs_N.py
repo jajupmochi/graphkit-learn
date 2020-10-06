@@ -16,7 +16,7 @@ def generate_graphs():
 	return graphs
 
 
-def xp_synthesied_graphs_dataset_size():
+def xp_synthesized_graphs_dataset_size():
 	
 	# Generate graphs.
 	graphs = generate_graphs()
@@ -61,4 +61,4 @@ def xp_synthesied_graphs_dataset_size():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_dataset_size()
+	xp_synthesized_graphs_dataset_size()
