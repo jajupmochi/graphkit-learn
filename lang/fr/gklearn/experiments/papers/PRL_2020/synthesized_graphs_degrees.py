@@ -16,7 +16,7 @@ def generate_graphs(degree):
 	return graphs
 
 
-def xp_synthesied_graphs_degrees():
+def xp_synthesized_graphs_degrees():
 		
 	# Run and save.
 	import pickle
@@ -60,4 +60,4 @@ def xp_synthesied_graphs_degrees():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_degrees()
+	xp_synthesized_graphs_degrees()
