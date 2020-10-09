@@ -62,7 +62,7 @@ def compute_graph_kernel(graphs, kernel_name, n_jobs=multiprocessing.cpu_count()
 		import functools
 		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 		sub_kernel = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-		params = {'compute_method': 'fp', 'weight': 1e-3, 'node_kernels': sub_kernel, 'edge_kernels': sub_kernel}
+		params = {'compute_method': 'fp', 'weight': 1e-4, 'node_kernels': sub_kernel, 'edge_kernels': sub_kernel}
 		
 	elif kernel_name == 'SpectralDecomposition':
 		from gklearn.kernels.randomWalkKernel import randomwalkkernel
