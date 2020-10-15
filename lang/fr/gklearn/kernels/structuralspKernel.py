@@ -37,15 +37,15 @@ def structuralspkernel(*args,
 					   n_jobs=None,
 					   chunksize=None,
 					   verbose=True):
-	"""Calculate mean average structural shortest path kernels between graphs.
+	"""Compute mean average structural shortest path kernels between graphs.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	node_label : string
 		Node attribute used as label. The default node label is atom.
@@ -215,7 +215,7 @@ def structuralspkernel(*args,
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(Gn)), 2)
 		if verbose:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 		if compute_method == 'trie':
@@ -241,7 +241,7 @@ def structuralspkernel(*args,
 #			  combinations_with_replacement(splist, 2),
 #			  combinations_with_replacement(range(0, len(Gn)), 2))
 #	for i, j, kernel in tqdm(
-#			pool.map(do_partial, itr), desc='calculating kernels',
+#			pool.map(do_partial, itr), desc='Computing kernels',
 #			file=sys.stdout):
 #		Kmatrix[i][j] = kernel
 #		Kmatrix[j][i] = kernel
@@ -263,7 +263,7 @@ def structuralspkernel(*args,
 #	with closing(Pool(n_jobs)) as pool:
 #		for i, j, kernel in tqdm(
 #				pool.imap_unordered(do_partial, itr, 1000),
-#				desc='calculating kernels',
+#				desc='Computing kernels',
 #				file=sys.stdout):
 #			Kmatrix[i][j] = kernel
 #			Kmatrix[j][i] = kernel
@@ -335,7 +335,7 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
 				if len(p1) == len(p2):
 					kernel += 1
 	try:
-		kernel = kernel / (len(spl1) * len(spl2))  # calculate mean average
+		kernel = kernel / (len(spl1) * len(spl2))  # Compute mean average
 	except ZeroDivisionError:
 		print(spl1, spl2)
 		print(g1.nodes(data=True))
@@ -429,7 +429,7 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #	# compute graph kernels
 #	traverseBothTrie(trie1[0].root, trie2[0], kernel)
 #
-#	kernel = kernel[0] / (trie1[1] * trie2[1])  # calculate mean average
+#	kernel = kernel[0] / (trie1[1] * trie2[1])  # Compute mean average
 
 #	# traverse all paths in graph1. Deep-first search is applied.
 #	def traverseBothTrie(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
@@ -485,7 +485,7 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 		else:
 			traverseBothTrieu(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)				
 
-	kernel = kernel[0] / (trie1[1] * trie2[1])  # calculate mean average
+	kernel = kernel[0] / (trie1[1] * trie2[1])  # Compute mean average
 
 	return kernel
 
@@ -781,9 +781,9 @@ def get_shortest_paths(G, weight, directed):
 	Parameters
 	----------
 	G : NetworkX graphs
-		The graphs whose paths are calculated.
+		The graphs whose paths are computed.
 	weight : string/None
-		edge attribute used as weight to calculate the shortest path.
+		edge attribute used as weight to compute the shortest path.
 	directed: boolean
 		Whether graph is directed.
 
@@ -822,9 +822,9 @@ def get_sps_as_trie(G, weight, directed):
 	Parameters
 	----------
 	G : NetworkX graphs
-		The graphs whose paths are calculated.
+		The graphs whose paths are computed.
 	weight : string/None
-		edge attribute used as weight to calculate the shortest path.
+		edge attribute used as weight to compute the shortest path.
 	directed: boolean
 		Whether graph is directed.
 
