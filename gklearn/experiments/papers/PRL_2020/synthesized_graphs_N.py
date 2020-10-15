@@ -16,7 +16,7 @@ def generate_graphs():
 	return graphs
 
 
-def xp_synthesied_graphs_dataset_size():
+def xp_synthesized_graphs_dataset_size():
 	
 	# Generate graphs.
 	graphs = generate_graphs()
@@ -43,7 +43,7 @@ def xp_synthesied_graphs_dataset_size():
 			
 			run_time = 'error'
 			try:
-				gram_matrix, run_time = compute_graph_kernel(sub_graphs, kernel_name, n_jobs=1)
+				gram_matrix, run_time = compute_graph_kernel(sub_graphs, kernel_name)
 			except Exception as exp:
 				print('An exception occured when running this experiment:')
 				LOG_FILENAME = save_dir + 'error.txt'
@@ -61,4 +61,4 @@ def xp_synthesied_graphs_dataset_size():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_dataset_size()
+	xp_synthesized_graphs_dataset_size()

@@ -21,14 +21,14 @@ def xp_runtimes_of_all_28cores():
 
 	run_times = {}
 	
-	for kernel_name in Graph_Kernel_List:
+	for ds_name in Dataset_List:
 		print()
-		print('Kernel:', kernel_name)
+		print('Dataset:', ds_name)
 		
-		run_times[kernel_name] = []
-		for ds_name in Dataset_List:
+		run_times[ds_name] = []
+		for kernel_name in Graph_Kernel_List:
 			print()
-			print('Dataset:', ds_name)
+			print('Kernel:', kernel_name)
 			
 			# get graphs.
 			graphs, _ = load_predefined_dataset(ds_name)
@@ -43,7 +43,7 @@ def xp_runtimes_of_all_28cores():
 				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 				logging.exception('')
 				print(repr(exp))
-			run_times[kernel_name].append(run_time)
+			run_times[ds_name].append(run_time)
 			
 			pickle.dump(run_time, open(save_dir + 'run_time.' + kernel_name + '.' + ds_name + '.pkl', 'wb'))
 		

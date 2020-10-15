@@ -16,7 +16,7 @@ def generate_graphs(degree):
 	return graphs
 
 
-def xp_synthesied_graphs_degrees():
+def xp_synthesized_graphs_degrees():
 		
 	# Run and save.
 	import pickle
@@ -42,7 +42,7 @@ def xp_synthesied_graphs_degrees():
 			# Compute Gram matrix.
 			run_time = 'error'
 			try:
-				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name, n_jobs=1)
+				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name)
 			except Exception as exp:
 				print('An exception occured when running this experiment:')
 				LOG_FILENAME = save_dir + 'error.txt'
@@ -60,4 +60,4 @@ def xp_synthesied_graphs_degrees():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_degrees()
+	xp_synthesized_graphs_degrees()

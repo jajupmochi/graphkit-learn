@@ -7,15 +7,14 @@ A two-layer nested cross-validation (CV) is applied to select and evaluate model
 
 The machine used to execute the experiments is a cluster with 28 CPU cores of Intel(R) Xeon(R) E5-2680 v4 @ 2.40GHz, 252GB memory, and 64-bit operating system CentOS Linux release 7.3.1611. All results were run with Python 3.5.2.
 
-The figure below exhibits accuracies achieved by graph kernels implemented in `graphkit-learn` library. Each row corresponds to a dataset and each column to a graph kernel. Accuracies are in percentage for classification and in terms of errors of boiling points for regression (Alkane and
-Acyclic datasets). Red color indicates a worse result and green a better one. Gray cells with the “inf” marker indicate that the computation of the graph kernel on the dataset is neglected due to much higher consumption of computational resources than other kernels.
+The figure below exhibits accuracies achieved by graph kernels implemented in `graphkit-learn` library, in terms of regression error (the upper table) and classification rate (the lower table). Red color indicates the worse results and dark green the best ones. Gray cells with the “inf” marker indicate that the computation of the graph kernel on the dataset is omitted due to much higher consumption of computational resources than other kernels.
 
 .. image:: figures/all_test_accuracy.svg
    :width: 600
    :alt: accuracies
 
 The figure below displays computational time consumed to compute Gram matrices of each graph
-kernels (in :math:`log10` of seconds) on each dataset. Colors have the same meaning as in the figure above.
+kernels (in :math:`log10` of seconds) on each dataset. Color legends have the same meaning as in the figure above.
 
 .. image:: figures/all_ave_gm_times.svg
    :width: 600

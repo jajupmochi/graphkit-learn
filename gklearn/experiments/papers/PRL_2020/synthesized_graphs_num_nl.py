@@ -16,7 +16,7 @@ def generate_graphs(num_nl_alp):
 	return graphs
 
 
-def xp_synthesied_graphs_num_node_label_alphabet():
+def xp_synthesized_graphs_num_node_label_alphabet():
 		
 	# Run and save.
 	import pickle
@@ -42,7 +42,7 @@ def xp_synthesied_graphs_num_node_label_alphabet():
 			# Compute Gram matrix.
 			run_time = 'error'
 			try:
-				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name, n_jobs=1)
+				gram_matrix, run_time = compute_graph_kernel(graphs, kernel_name)
 			except Exception as exp:
 				run_times[kernel_name].append('error')
 				print('An exception occured when running this experiment:')
@@ -61,4 +61,4 @@ def xp_synthesied_graphs_num_node_label_alphabet():
 
 
 if __name__ == '__main__':
-	xp_synthesied_graphs_num_node_label_alphabet()
+	xp_synthesized_graphs_num_node_label_alphabet()

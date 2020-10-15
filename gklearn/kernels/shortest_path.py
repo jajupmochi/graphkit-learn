@@ -47,7 +47,7 @@ class ShortestPath(GraphKernel):
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 		for i, j in iterator:
@@ -102,7 +102,7 @@ class ShortestPath(GraphKernel):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = range(len(g_list))
 		for i in iterator:
@@ -145,7 +145,7 @@ class ShortestPath(GraphKernel):
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 		return kernel_list
 	

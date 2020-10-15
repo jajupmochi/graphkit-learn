@@ -18,7 +18,7 @@ from tqdm import tqdm
 # import networkx as nx
 import numpy as np
 from gklearn.utils.parallel import parallel_gm, parallel_me
-from gklearn.utils.utils import get_shortest_paths
+from gklearn.utils.utils import get_shortest_paths, compute_vertex_kernels
 from gklearn.kernels import GraphKernel
 
 
@@ -57,7 +57,7 @@ class StructuralSP(GraphKernel):
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 		if self.__compute_method == 'trie':
@@ -135,7 +135,7 @@ class StructuralSP(GraphKernel):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = range(len(g_list))
 		if self.__compute_method == 'trie':
@@ -193,7 +193,7 @@ class StructuralSP(GraphKernel):
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(sp1, splist, g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(sp1, splist, g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 		return kernel_list
 	
@@ -273,7 +273,7 @@ class StructuralSP(GraphKernel):
 					if len(p1) == len(p2):
 						kernel += 1
 		try:
-			kernel = kernel / (len(spl1) * len(spl2))  # calculate mean average
+			kernel = kernel / (len(spl1) * len(spl2))  # Compute mean average
 		except ZeroDivisionError:
 			print(spl1, spl2)
 			print(g1.nodes(data=True))
@@ -318,40 +318,7 @@ class StructuralSP(GraphKernel):
 	
 	
 	def __get_all_node_kernels(self, g1, g2):
-		# compute shortest path matrices, method borrowed from FCSP.
-		vk_dict = {}  # shortest path matrices dict
-		if len(self.__node_labels) > 0:
-			# node symb and non-synb labeled
-			if len(self.__node_attrs) > 0:
-				kn = self.__node_kernels['mix']
-				for n1, n2 in product(g1.nodes(data=True), g2.nodes(data=True)):
-					n1_labels = [n1[1][nl] for nl in self.__node_labels]
-					n2_labels = [n2[1][nl] for nl in self.__node_labels]
-					n1_attrs = [n1[1][na] for na in self.__node_attrs]
-					n2_attrs = [n2[1][na] for na in self.__node_attrs]
-					vk_dict[(n1[0], n2[0])] = kn(n1_labels, n2_labels, n1_attrs, n2_attrs)
-			# node symb labeled
-			else:
-				kn = self.__node_kernels['symb']
-				for n1 in g1.nodes(data=True):
-					for n2 in g2.nodes(data=True):
-						n1_labels = [n1[1][nl] for nl in self.__node_labels]
-						n2_labels = [n2[1][nl] for nl in self.__node_labels]
-						vk_dict[(n1[0], n2[0])] = kn(n1_labels, n2_labels)
-		else:
-			# node non-synb labeled
-			if len(self.__node_attrs) > 0:
-				kn = self.__node_kernels['nsymb']
-				for n1 in g1.nodes(data=True):
-					for n2 in g2.nodes(data=True):
-						n1_attrs = [n1[1][na] for na in self.__node_attrs]
-						n2_attrs = [n2[1][na] for na in self.__node_attrs]
-						vk_dict[(n1[0], n2[0])] = kn(n1_attrs, n2_attrs)
-			# node unlabeled
-			else:
-				pass
-			
-		return vk_dict
+		return compute_vertex_kernels(g1, g2, self._node_kernels, node_labels=self._node_labels, node_attrs=self._node_attrs)
 	
 	
 	def __get_all_edge_kernels(self, g1, g2):

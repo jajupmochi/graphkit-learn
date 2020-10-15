@@ -20,17 +20,17 @@ def xp_runtimes_diff_chunksizes():
 		os.makedirs(save_dir)
 
 	run_times = {}
-	
-	for kernel_name in Graph_Kernel_List:
+
+	for ds_name in Dataset_List:
 		print()
-		print('Kernel:', kernel_name)
-		
-		run_times[kernel_name] = []
-		for ds_name in Dataset_List:
-			print()
-			print('Dataset:', ds_name)
+		print('Dataset:', ds_name)
 			
-			run_times[kernel_name].append([])
+		run_times[ds_name] = []
+		for kernel_name in Graph_Kernel_List:
+			print()
+			print('Kernel:', kernel_name)
+			
+			run_times[ds_name].append([])
 			for chunksize in [1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000]:
 				print()
 				print('Chunksize:', chunksize)
@@ -48,7 +48,7 @@ def xp_runtimes_diff_chunksizes():
 					logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 					logging.exception('')
 					print(repr(exp))			
-				run_times[kernel_name][-1].append(run_time)	
+				run_times[ds_name][-1].append(run_time)	
 				
 				pickle.dump(run_time, open(save_dir + 'run_time.' + kernel_name + '.' + ds_name + '.' + str(chunksize) + '.pkl', 'wb'))
 		

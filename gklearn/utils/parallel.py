@@ -63,4 +63,4 @@ def parallel_gm(func, Kmatrix, Gn, init_worker=None, glbv=None,
     len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
     parallel_me(func, func_assign, Kmatrix, itr, len_itr=len_itr,
         init_worker=init_worker, glbv=glbv, method=method, n_jobs=n_jobs, 
-        chunksize=chunksize, itr_desc='calculating kernels', verbose=verbose)
+        chunksize=chunksize, itr_desc='Computing kernels', verbose=verbose)

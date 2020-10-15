@@ -37,15 +37,15 @@ def randomwalkkernel(*args,
 					 n_jobs=None,
 					 chunksize=None,
 					 verbose=True):
-	"""Calculate random walk graph kernels.
+	"""Compute random walk graph kernels.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	compute_method : string
 		Method used to compute kernel. The Following choices are 
@@ -125,7 +125,7 @@ def randomwalkkernel(*args,
 	Gn = [g.copy() for g in Gn]
 
 	eweight = None
-	if edge_weight == None:
+	if edge_weight is None:
 		if verbose:
 			print('\n None edge weight specified. Set all weight to 1.\n')
 	else:
@@ -212,12 +212,12 @@ def randomwalkkernel(*args,
 
 ###############################################################################
 def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, chunksize, verbose=True):
-	"""Calculate walk graph kernels up to n between 2 graphs using Sylvester method.
+	"""Compute walk graph kernels up to n between 2 graphs using Sylvester method.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graph
-		Graphs between which the kernel is calculated.
+		Graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -230,7 +230,7 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, chunksize, verbose=True
 	"""
 	Kmatrix = np.zeros((len(Gn), len(Gn)))
 
-	if q == None:
+	if q is None:
 		# don't normalize adjacency matrices if q is a uniform vector. Note
 		# A_wave_list actually contains the transposes of the adjacency matrices.
 		A_wave_list = [
@@ -245,7 +245,7 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, chunksize, verbose=True
 #			norm = A_tilde.sum(axis=0)
 #			norm[norm == 0] = 1
 #			A_wave_list.append(A_tilde / norm)
-		if p == None: # p is uniform distribution as default.
+		if p is None: # p is uniform distribution as default.
 			def init_worker(Awl_toshare):
 				global G_Awl
 				G_Awl = Awl_toshare
@@ -255,7 +255,7 @@ def _sylvester_equation(Gn, lmda, p, q, eweight, n_jobs, chunksize, verbose=True
 			
 #			pbar = tqdm(
 #				total=(1 + len(Gn)) * len(Gn) / 2,
-#				desc='calculating kernels',
+#				desc='Computing kernels',
 #				file=sys.stdout)
 #			for i in range(0, len(Gn)):
 #				for j in range(i, len(Gn)):
@@ -300,12 +300,12 @@ def _se_do(A_wave1, A_wave2, lmda):
 ###############################################################################
 def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels, 
 						node_label, edge_label, eweight, n_jobs, chunksize, verbose=True):
-	"""Calculate walk graph kernels up to n between 2 graphs using conjugate method.
+	"""Compute walk graph kernels up to n between 2 graphs using conjugate method.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graph
-		Graphs between which the kernel is calculated.
+		Graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -321,14 +321,14 @@ def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #	if not ds_attrs['node_labeled'] and ds_attrs['node_attr_dim'] < 1 and \
 #		not ds_attrs['edge_labeled'] and ds_attrs['edge_attr_dim'] < 1:
 #		# this is faster from unlabeled graphs. @todo: why?
-#		if q == None:
+#		if q is None:
 #			# don't normalize adjacency matrices if q is a uniform vector. Note
 #			# A_wave_list actually contains the transposes of the adjacency matrices.
 #			A_wave_list = [
 #				nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
 #					tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout)
 #			]
-#			if p == None: # p is uniform distribution as default.
+#			if p is None: # p is uniform distribution as default.
 #				def init_worker(Awl_toshare):
 #					global G_Awl
 #					G_Awl = Awl_toshare
@@ -336,23 +336,23 @@ def _conjugate_gradient(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #				parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
 #							glbv=(A_wave_list,), n_jobs=n_jobs)
 #	else:  
-	# reindex nodes using consecutive integers for convenience of kernel calculation.
+	# reindex nodes using consecutive integers for convenience of kernel computation.
 	Gn = [nx.convert_node_labels_to_integers(
 			g, first_label=0, label_attribute='label_orignal') for g in (tqdm(
 				Gn, desc='reindex vertices', file=sys.stdout) if verbose else Gn)]
 	
-	if p == None and q == None: # p and q are uniform distributions as default.
+	if p is None and q is None: # p and q are uniform distributions as default.
 		def init_worker(gn_toshare):
 			global G_gn
 			G_gn = gn_toshare
-		do_partial = partial(wrapper_cg_labled_do, ds_attrs, node_kernels, 
+		do_partial = partial(wrapper_cg_labeled_do, ds_attrs, node_kernels, 
 							 node_label, edge_kernels, edge_label, lmda)   
 		parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
 					glbv=(Gn,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)  
 			
 #			pbar = tqdm(
 #				total=(1 + len(Gn)) * len(Gn) / 2,
-#				desc='calculating kernels',
+#				desc='Computing kernels',
 #				file=sys.stdout)
 #			for i in range(0, len(Gn)):
 #				for j in range(i, len(Gn)):
@@ -382,24 +382,24 @@ def _cg_unlabled_do(A_wave1, A_wave2, lmda):
 	return np.dot(q_times, x)
 
 
-def wrapper_cg_labled_do(ds_attrs, node_kernels, node_label, edge_kernels, 
+def wrapper_cg_labeled_do(ds_attrs, node_kernels, node_label, edge_kernels, 
 						 edge_label, lmda, itr):
 	i = itr[0]
 	j = itr[1]
-	return i, j, _cg_labled_do(G_gn[i], G_gn[j], ds_attrs, node_kernels, 
+	return i, j, _cg_labeled_do(G_gn[i], G_gn[j], ds_attrs, node_kernels, 
 							   node_label, edge_kernels, edge_label, lmda)
 
 
-def _cg_labled_do(g1, g2, ds_attrs, node_kernels, node_label, 
+def _cg_labeled_do(g1, g2, ds_attrs, node_kernels, node_label, 
 				  edge_kernels, edge_label, lmda):
-	# Frist, compute kernels between all pairs of nodes, method borrowed
+	# Frist, compute kernels between all pairs of nodes using the method borrowed
 	# from FCSP. It is faster than directly computing all edge kernels 
 	# when $d_1d_2>2$, where $d_1$ and $d_2$ are vertex degrees of the
 	# graphs compared, which is the most case we went though. For very 
 	# sparse graphs, this would be slow.
 	vk_dict = computeVK(g1, g2, ds_attrs, node_kernels, node_label)
 						   
-	# Compute weight matrix of the direct product graph.   
+	# Compute the weight matrix of the direct product graph.   
 	w_times, w_dim = computeW(g1, g2, vk_dict, ds_attrs,
 							  edge_kernels, edge_label)															
 	# use uniform distribution if there is no prior knowledge.
@@ -415,12 +415,12 @@ def _cg_labled_do(g1, g2, ds_attrs, node_kernels, node_label,
 ###############################################################################
 def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels, 
 						 node_label, edge_label, eweight, n_jobs, chunksize, verbose=True):
-	"""Calculate walk graph kernels up to n between 2 graphs using Fixed-Point method.
+	"""Compute walk graph kernels up to n between 2 graphs using Fixed-Point method.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graph
-		Graphs between which the kernel is calculated.
+		Graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -438,17 +438,17 @@ def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #	if not ds_attrs['node_labeled'] and ds_attrs['node_attr_dim'] < 1 and \
 #		not ds_attrs['edge_labeled'] and ds_attrs['edge_attr_dim'] > 1:
 #		# this is faster from unlabeled graphs. @todo: why?
-#		if q == None:
+#		if q is None:
 #			# don't normalize adjacency matrices if q is a uniform vector. Note
 #			# A_wave_list actually contains the transposes of the adjacency matrices.
 #			A_wave_list = [
 #				nx.adjacency_matrix(G, eweight).todense().transpose() for G in 
 #					tqdm(Gn, desc='compute adjacency matrices', file=sys.stdout)
 #			]
-#			if p == None: # p is uniform distribution as default.
+#			if p is None: # p is uniform distribution as default.
 #				pbar = tqdm(
 #					total=(1 + len(Gn)) * len(Gn) / 2,
-#					desc='calculating kernels',
+#					desc='Computing kernels',
 #					file=sys.stdout)
 #				for i in range(0, len(Gn)):
 #					for j in range(i, len(Gn)):				   
@@ -464,33 +464,33 @@ def _fixed_point(Gn, lmda, p, q, ds_attrs, node_kernels, edge_kernels,
 #						Kmatrix[j][i] = Kmatrix[i][j]
 #						pbar.update(1)
 #	else:  
-	# reindex nodes using consecutive integers for convenience of kernel calculation.
+	# reindex nodes using consecutive integers for the convenience of kernel computation.
 	Gn = [nx.convert_node_labels_to_integers(
 			g, first_label=0, label_attribute='label_orignal') for g in (tqdm(
 				Gn, desc='reindex vertices', file=sys.stdout) if verbose else Gn)]
 	
-	if p == None and q == None: # p and q are uniform distributions as default.
+	if p is None and q is None: # p and q are uniform distributions as default.
 		def init_worker(gn_toshare):
 			global G_gn
 			G_gn = gn_toshare
-		do_partial = partial(wrapper_fp_labled_do, ds_attrs, node_kernels, 
+		do_partial = partial(wrapper_fp_labeled_do, ds_attrs, node_kernels, 
 							 node_label, edge_kernels, edge_label, lmda)   
 		parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
 					glbv=(Gn,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
 	return Kmatrix
 
 
-def wrapper_fp_labled_do(ds_attrs, node_kernels, node_label, edge_kernels, 
+def wrapper_fp_labeled_do(ds_attrs, node_kernels, node_label, edge_kernels, 
 						 edge_label, lmda, itr):
 	i = itr[0]
 	j = itr[1]
-	return i, j, _fp_labled_do(G_gn[i], G_gn[j], ds_attrs, node_kernels, 
+	return i, j, _fp_labeled_do(G_gn[i], G_gn[j], ds_attrs, node_kernels, 
 							   node_label, edge_kernels, edge_label, lmda)
 
 
-def _fp_labled_do(g1, g2, ds_attrs, node_kernels, node_label, 
+def _fp_labeled_do(g1, g2, ds_attrs, node_kernels, node_label, 
 				  edge_kernels, edge_label, lmda):
-	# Frist, compute kernels between all pairs of nodes, method borrowed
+	# Frist, compute kernels between all pairs of nodes using the method borrowed
 	# from FCSP. It is faster than directly computing all edge kernels 
 	# when $d_1d_2>2$, where $d_1$ and $d_2$ are vertex degrees of the
 	# graphs compared, which is the most case we went though. For very 
@@ -519,13 +519,13 @@ def func_fp(x, p_times, lmda, w_times):
 
 ###############################################################################
 def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, chunksize, verbose=True):
-	"""Calculate walk graph kernels up to n between 2 unlabeled graphs using 
+	"""Compute walk graph kernels up to n between 2 unlabeled graphs using 
 	spectral decomposition method. Labels will be ignored.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graph
-		Graphs between which the kernel is calculated.
+		Graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -538,7 +538,7 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, chunk
 	"""
 	Kmatrix = np.zeros((len(Gn), len(Gn)))
 
-	if q == None:
+	if q is None:
 		# precompute the spectral decomposition of each graph.
 		P_list = []
 		D_list = []
@@ -552,7 +552,7 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, chunk
 			P_list.append(ev)
 #		P_inv_list = [p.T for p in P_list] # @todo: also works for directed graphs?
 
-		if p == None: # p is uniform distribution as default.			
+		if p is None: # p is uniform distribution as default.			
 			q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in Gn]
 #			q_T_list = [q.T for q in q_list]
 			def init_worker(q_T_toshare, P_toshare, D_toshare):
@@ -568,7 +568,7 @@ def _spectral_decomposition(Gn, weight, p, q, sub_kernel, eweight, n_jobs, chunk
 			
 #			pbar = tqdm(
 #				total=(1 + len(Gn)) * len(Gn) / 2,
-#				desc='calculating kernels',
+#				desc='Computing kernels',
 #				file=sys.stdout)
 #			for i in range(0, len(Gn)):
 #				for j in range(i, len(Gn)):
@@ -605,12 +605,12 @@ def _sd_do(q_T1, q_T2, P1, P2, D1, D2, weight, sub_kernel):
 
 ###############################################################################
 def _randomwalkkernel_kron(G1, G2, node_label, edge_label):
-	"""Calculate walk graph kernels up to n between 2 graphs using nearest Kronecker product approximation method.
+	"""Compute walk graph kernels up to n between 2 graphs using nearest Kronecker product approximation method.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graph
-		Graphs between which the kernel is calculated.
+		Graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -692,8 +692,8 @@ def computeVK(g1, g2, ds_attrs, node_kernels, node_label):
 
 
 def computeW(g1, g2, vk_dict, ds_attrs, edge_kernels, edge_label):
-	'''Compute weight matrix of the direct product graph.
-	'''
+	"""Compute the weight matrix of the direct product graph.
+	"""
 	w_dim = nx.number_of_nodes(g1) * nx.number_of_nodes(g2)
 	w_times = np.zeros((w_dim, w_dim))
 	if vk_dict: # node labeled

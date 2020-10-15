@@ -30,15 +30,15 @@ def commonwalkkernel(*args,
 					 n_jobs=None,
 					 chunksize=None,
 					 verbose=True):
-	"""Calculate common walk graph kernels between graphs.
+	"""Compute common walk graph kernels between graphs.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 	node_label : string
 		Node attribute used as symbolic label. The default node label is 'atom'.
 	edge_label : string
@@ -133,7 +133,7 @@ def commonwalkkernel(*args,
 #
 #	for i, j, kernel in tqdm(
 #			pool.imap_unordered(do_partial, itr, chunksize),
-#			desc='calculating kernels',
+#			desc='computing kernels',
 #			file=sys.stdout):
 #		Kmatrix[i][j] = kernel
 #		Kmatrix[j][i] = kernel
@@ -145,14 +145,14 @@ def commonwalkkernel(*args,
 #	# direct product graph method - exponential
 #	itr = combinations_with_replacement(range(0, len(Gn)), 2)
 #	if compute_method == 'exp':
-#		for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#		for i, j in tqdm(itr, desc='Computing kernels', file=sys.stdout):
 #			Kmatrix[i][j] = _commonwalkkernel_exp(Gn[i], Gn[j], node_label,
 #													  edge_label, weight)
 #			Kmatrix[j][i] = Kmatrix[i][j]
 #
 #	# direct product graph method - geometric
 #	elif compute_method == 'geo':
-#		for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#		for i, j in tqdm(itr, desc='Computing kernels', file=sys.stdout):
 #			Kmatrix[i][j] = _commonwalkkernel_geo(Gn[i], Gn[j], node_label,
 #													  edge_label, weight)
 #			Kmatrix[j][i] = Kmatrix[i][j]
@@ -161,7 +161,7 @@ def commonwalkkernel(*args,
 #	# search all paths use brute force.
 #	elif compute_method == 'brute':
 #		n = int(n)
-#		# get all paths of all graphs before calculating kernels to save time, but this may cost a lot of memory for large dataset.
+#		# get all paths of all graphs before computing kernels to save time, but this may cost a lot of memory for large dataset.
 #		all_walks = [
 #			find_all_walks_until_length(Gn[i], n, node_label, edge_label)
 #				for i in range(0, len(Gn))
@@ -185,13 +185,13 @@ def commonwalkkernel(*args,
 
 
 def _commonwalkkernel_exp(g1, g2, node_label, edge_label, beta):
-	"""Calculate walk graph kernels up to n between 2 graphs using exponential 
+	"""Compute walk graph kernels up to n between 2 graphs using exponential 
 	series.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	node_label : string
 		Node attribute used as label.
 	edge_label : string
@@ -259,13 +259,13 @@ def wrapper_cw_exp(node_label, edge_label, beta, itr):
 
 
 def _commonwalkkernel_geo(g1, g2, node_label, edge_label, gamma):
-	"""Calculate common walk graph kernels up to n between 2 graphs using 
+	"""Compute common walk graph kernels up to n between 2 graphs using 
 	geometric series.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	node_label : string
 		Node attribute used as label.
 	edge_label : string
@@ -304,7 +304,7 @@ def _commonwalkkernel_brute(walks1,
 							node_label='atom',
 							edge_label='bond_type',
 							labeled=True):
-	"""Calculate walk graph kernels up to n between 2 graphs.
+	"""Compute walk graph kernels up to n between 2 graphs.
 
 	Parameters
 	----------

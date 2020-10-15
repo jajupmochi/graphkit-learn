@@ -14,14 +14,14 @@ import sys
 from tqdm import tqdm
 import numpy as np
 import networkx as nx
-from scipy import optimize
+from scipy.sparse import identity
+from scipy.sparse.linalg import cg
 from gklearn.utils.parallel import parallel_gm, parallel_me
 from gklearn.kernels import RandomWalkMeta
 from gklearn.utils.utils import compute_vertex_kernels
 
 
-
-class FixedPoint(RandomWalkMeta):
+class ConjugateGradient(RandomWalkMeta):
 	
 	
 	def __init__(self, **kwargs):
@@ -211,8 +211,9 @@ class FixedPoint(RandomWalkMeta):
 		w_times, w_dim = self._compute_weight_matrix(g1, g2, vk_dict)															
 		# use uniform distribution if there is no prior knowledge.
 		p_times_uni = 1 / w_dim
-		p_times = np.full((w_dim, 1), p_times_uni)
-		x = optimize.fixed_point(self._func_fp, p_times, args=(p_times, lmda, w_times), xtol=1e-06, maxiter=1000)
+		A = identity(w_times.shape[0]) - w_times * lmda
+		b = np.full((w_dim, 1), p_times_uni)
+		x, _ = cg(A, b)
 		# use uniform distribution if there is no prior knowledge.
 		q_times = np.full((1, w_dim), p_times_uni)
 		return np.dot(q_times, x)

@@ -13,6 +13,7 @@ import os
 
 class Dataset(object):
 	
+	
 	def __init__(self, filename=None, filename_targets=None, **kwargs):
 		if filename is None:
 			self.__graphs = None
@@ -180,13 +181,13 @@ class Dataset(object):
 #		return 0
 			
 			
-	def get_dataset_infos(self, keys=None):
+	def get_dataset_infos(self, keys=None, params=None):
 		"""Computes and returns the structure and property information of the graph dataset.
 	
 		Parameters
 		----------
-		keys : list
-			List of strings which indicate which informations will be returned. The
+		keys : list, optional
+			A list of strings which indicate which informations will be returned. The
 			possible choices includes:
 	
 			'substructures': sub-structures graphs contains, including 'linear', 'non 
@@ -241,7 +242,15 @@ class Dataset(object):
 	
 			'class_number': number of classes. Only available for classification problems.
 			
+			'all_degree_entropy': the entropy of degree distribution of each graph.
+				
+			'ave_degree_entropy': the average entropy of degree distribution of all graphs.
+			
 			All informations above will be returned if `keys` is not given.
+			
+		params: dict of dict, optional
+			A dictinary which contains extra parameters for each possible 
+			element in ``keys``.
 	
 		Return
 		------
@@ -276,6 +285,8 @@ class Dataset(object):
 				'node_attr_dim',
 				'edge_attr_dim',
 				'class_number',
+				'all_degree_entropy',
+				'ave_degree_entropy'
 			]
 	
 		# dataset size
@@ -419,6 +430,22 @@ class Dataset(object):
 			if self.__edge_attr_dim is None:
 				self.__edge_attr_dim = self.__get_edge_attr_dim()
 			infos['edge_attr_dim'] = self.__edge_attr_dim
+			
+		# entropy of degree distribution.
+		
+		if 'all_degree_entropy' in keys:
+			if params is not None and ('all_degree_entropy' in params) and ('base' in params['all_degree_entropy']):
+				base = params['all_degree_entropy']['base']
+			else:
+				base = None
+			infos['all_degree_entropy'] = self.__compute_all_degree_entropy(base=base)
+			
+		if 'ave_degree_entropy' in keys:
+			if params is not None and ('ave_degree_entropy' in params) and ('base' in params['ave_degree_entropy']):
+				base = params['ave_degree_entropy']['base']
+			else:
+				base = None
+			infos['ave_degree_entropy'] = np.mean(self.__compute_all_degree_entropy(base=base))
 			
 		return infos
 			
@@ -653,8 +680,7 @@ class Dataset(object):
 		
 	
 	def __get_all_fill_factors(self):
-		"""
-		Get fill factor, the number of non-zero entries in the adjacency matrix.
+		"""Get fill factor, the number of non-zero entries in the adjacency matrix.
 
 		Returns
 		-------
@@ -721,7 +747,30 @@ class Dataset(object):
 		
 	def __get_edge_attr_dim(self):
 		return len(self.__edge_attrs)
+
 	
+	def __compute_all_degree_entropy(self, base=None):
+		"""Compute the entropy of degree distribution of each graph.
+
+		Parameters
+		----------
+		base : float, optional
+			The logarithmic base to use. The default is ``e`` (natural logarithm).
+
+		Returns
+		-------
+		degree_entropy : float
+			The calculated entropy.
+		"""
+		from gklearn.utils.stats import entropy
+		
+		degree_entropy = []
+		for g in self.__graphs:
+			degrees = list(dict(g.degree()).values())
+			en = entropy(degrees, base=base)
+			degree_entropy.append(en)
+		return degree_entropy
+			
 	
 	@property
 	def graphs(self):
