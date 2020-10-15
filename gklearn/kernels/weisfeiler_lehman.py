@@ -125,12 +125,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def __subtree_kernel_do(self, Gn):
-		"""Calculate Weisfeiler-Lehman kernels between graphs.
+		"""Compute Weisfeiler-Lehman kernels between graphs.
 	
 		Parameters
 		----------
 		Gn : List of NetworkX graph
-			List of graphs between which the kernels are calculated.	   
+			List of graphs between which the kernels are computed.	   
 	
 		Return
 		------
@@ -152,7 +152,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			# number of occurence of each label in G
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 	
-		# calculate subtree kernel with the 0th iteration and add it to the final kernel.
+		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
 		self.__compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
 	
 		# iterate each height
@@ -198,7 +198,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	#			all_labels_ori.update(labels_comp)
 				all_num_of_each_label.append(dict(Counter(labels_comp)))
 	
-			# calculate subtree kernel with h iterations and add it to the final kernel
+			# Compute subtree kernel with h iterations and add it to the final kernel
 			self.__compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
 	
 		return gram_matrix
@@ -244,12 +244,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				
 	
 	def _wl_spkernel_do(Gn, node_label, edge_label, height):
-		"""Calculate Weisfeiler-Lehman shortest path kernels between graphs.
+		"""Compute Weisfeiler-Lehman shortest path kernels between graphs.
 		
 		Parameters
 		----------
 		Gn : List of NetworkX graph
-			List of graphs between which the kernels are calculated.	   
+			List of graphs between which the kernels are computed.	   
 		node_label : string
 			node attribute used as label.	  
 		edge_label : string
@@ -312,7 +312,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				for node in G.nodes(data = True):
 					node[1][node_label] = set_compressed[set_multisets[node[0]]]
 					
-			# calculate subtree kernel with h iterations and add it to the final kernel
+			# Compute subtree kernel with h iterations and add it to the final kernel
 			for i in range(0, len(Gn)):
 				for j in range(i, len(Gn)):
 					for e1 in Gn[i].edges(data = True):
@@ -326,12 +326,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def _wl_edgekernel_do(Gn, node_label, edge_label, height):
-		"""Calculate Weisfeiler-Lehman edge kernels between graphs.
+		"""Compute Weisfeiler-Lehman edge kernels between graphs.
 		
 		Parameters
 		----------
 		Gn : List of NetworkX graph
-			List of graphs between which the kernels are calculated.	   
+			List of graphs between which the kernels are computed.	   
 		node_label : string
 			node attribute used as label.	  
 		edge_label : string
@@ -390,7 +390,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				for node in G.nodes(data = True):
 					node[1][node_label] = set_compressed[set_multisets[node[0]]]
 					
-			# calculate subtree kernel with h iterations and add it to the final kernel
+			# Compute subtree kernel with h iterations and add it to the final kernel
 			for i in range(0, len(Gn)):
 				for j in range(i, len(Gn)):
 					for e1 in Gn[i].edges(data = True):
@@ -403,12 +403,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def _wl_userkernel_do(Gn, node_label, edge_label, height, base_kernel):
-		"""Calculate Weisfeiler-Lehman kernels based on user-defined kernel between graphs.
+		"""Compute Weisfeiler-Lehman kernels based on user-defined kernel between graphs.
 		
 		Parameters
 		----------
 		Gn : List of NetworkX graph
-			List of graphs between which the kernels are calculated.	   
+			List of graphs between which the kernels are computed.	   
 		node_label : string
 			node attribute used as label.	  
 		edge_label : string
@@ -463,7 +463,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				for node in G.nodes(data = True):
 					node[1][node_label] = set_compressed[set_multisets[node[0]]]
 					
-			# calculate kernel with h iterations and add it to the final kernel
+			# Compute kernel with h iterations and add it to the final kernel
 			gram_matrix += base_kernel(Gn, node_label, edge_label)
 			
 		return gram_matrix

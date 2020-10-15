@@ -29,15 +29,15 @@ def treeletkernel(*args,
 				  n_jobs=None, 
 				  chunksize=None,
 				  verbose=True):
-	"""Calculate treelet graph kernels between graphs.
+	"""Compute treelet graph kernels between graphs.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	sub_kernel : function
 		The sub-kernel between 2 real number vectors. Each vector counts the
@@ -89,7 +89,7 @@ def treeletkernel(*args,
 	
 	# ---- use pool.imap_unordered to parallel and track progress. ----
 	if parallel == 'imap_unordered':
-		# get all canonical keys of all graphs before calculating kernels to save 
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
 		pool = Pool(n_jobs)
 		itr = zip(Gn, range(0, len(Gn)))
@@ -120,8 +120,8 @@ def treeletkernel(*args,
 					glbv=(canonkeys,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
 		
 	# ---- do not use parallelization. ----
-	elif parallel == None:
-		# get all canonical keys of all graphs before calculating kernels to save 
+	elif parallel is None:
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
 		canonkeys = []
 		for g in (tqdm(Gn, desc='getting canonkeys', file=sys.stdout) if verbose else Gn):
@@ -148,7 +148,7 @@ def treeletkernel(*args,
 
 
 def _treeletkernel_do(canonkey1, canonkey2, sub_kernel):
-	"""Calculate treelet graph kernel between 2 graphs.
+	"""Compute treelet graph kernel between 2 graphs.
 	
 	Parameters
 	----------
@@ -210,7 +210,7 @@ def get_canonkeys(G, node_label, edge_label, labeled, is_directed):
 
 	# n-star patterns
 	patterns['3star'] = [[node] + [neighbor for neighbor in G[node]] for node in G.nodes() if G.degree(node) == 3]
-	patterns['4star'] = [[node] + [neighbor for neighbor in G[node]] for node in G.nodes() if G.degree(node) == 4]
+	patterns['4star'] = [[node] + [neighbor for neighbor in G[node]] for node in G.nodes() if G.degree(node) == 4] # @todo: check self loop.
 	patterns['5star'] = [[node] + [neighbor for neighbor in G[node]] for node in G.nodes() if G.degree(node) == 5]		
 	# n-star patterns
 	canonkey['6'] = len(patterns['3star'])

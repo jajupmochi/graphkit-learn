@@ -39,15 +39,15 @@ def marginalizedkernel(*args,
 					   n_jobs=None,
 					   chunksize=None,
 					   verbose=True):
-	"""Calculate marginalized graph kernels between graphs.
+	"""Compute marginalized graph kernels between graphs.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	node_label : string
 		Node attribute used as symbolic label. The default node label is 'atom'.
@@ -59,7 +59,7 @@ def marginalizedkernel(*args,
 		The termination probability in the random walks generating step.
 
 	n_iteration : integer
-		Time of iterations to calculate R_inf.
+		Time of iterations to compute R_inf.
 
 	remove_totters : boolean
 		Whether to remove totterings by method introduced in [2]. The default 
@@ -83,11 +83,11 @@ def marginalizedkernel(*args,
 		Gn,
 		attr_names=['node_labeled', 'edge_labeled', 'is_directed'],
 		node_label=node_label, edge_label=edge_label)
-	if not ds_attrs['node_labeled'] or node_label == None:
+	if not ds_attrs['node_labeled'] or node_label is None:
 		node_label = 'atom'
 		for G in Gn:
 			nx.set_node_attributes(G, '0', 'atom')
-	if not ds_attrs['edge_labeled'] or edge_label == None:
+	if not ds_attrs['edge_labeled'] or edge_label is None:
 		edge_label = 'bond_type'
 		for G in Gn:
 			nx.set_edge_attributes(G, '0', 'bond_type')
@@ -133,7 +133,7 @@ def marginalizedkernel(*args,
 #	# ---- direct running, normally use single CPU core. ----
 ##	pbar = tqdm(
 ##		total=(1 + len(Gn)) * len(Gn) / 2,
-##		desc='calculating kernels',
+##		desc='Computing kernels',
 ##		file=sys.stdout)
 #	for i in range(0, len(Gn)):
 #		for j in range(i, len(Gn)):
@@ -152,12 +152,12 @@ def marginalizedkernel(*args,
 
 
 def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
-	"""Calculate marginalized graph kernel between 2 graphs.
+	"""Compute marginalized graph kernel between 2 graphs.
 
 	Parameters
 	----------
 	G1, G2 : NetworkX graphs
-		2 graphs between which the kernel is calculated.
+		2 graphs between which the kernel is computed.
 	node_label : string
 		node attribute used as label.
 	edge_label : string
@@ -165,7 +165,7 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
 	p_quit : integer
 		the termination probability in the random walks generating step.
 	n_iteration : integer
-		time of iterations to calculate R_inf.
+		time of iterations to compute R_inf.
 
 	Return
 	------
@@ -188,12 +188,12 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
 #	# matrix to save all the R_inf for all pairs of nodes
 #	R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
 #
-#	# calculate R_inf with a simple interative method
+#	# Compute R_inf with a simple interative method
 #	for i in range(1, n_iteration):
 #		R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
 #		R_inf_new.fill(r1)
 #
-#		# calculate R_inf for each pair of nodes
+#		# Compute R_inf for each pair of nodes
 #		for node1 in g1.nodes(data=True):
 #			neighbor_n1 = g1[node1[0]]
 #			# the transition probability distribution in the random walks
@@ -219,7 +219,7 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
 #									neighbor2]  # ref [1] equation (8)
 #		R_inf[:] = R_inf_new
 #
-#	# add elements of R_inf up and calculate kernel
+#	# add elements of R_inf up and compute kernel.
 #	for node1 in g1.nodes(data=True):
 #		for node2 in g2.nodes(data=True):
 #			s = p_init_G1 * p_init_G2 * deltakernel(
@@ -267,11 +267,11 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
 										neighbor_n1[neighbor1][edge_label],
 										neighbor_n2[neighbor2][edge_label])
 
-	# calculate R_inf with a simple interative method
+	# Compute R_inf with a simple interative method
 	for i in range(2, n_iteration + 1):
 		R_inf_old = R_inf.copy()
 
-		# calculate R_inf for each pair of nodes
+		# Compute R_inf for each pair of nodes
 		for node1 in g1.nodes():
 			neighbor_n1 = g1[node1]
 			# the transition probability distribution in the random walks
@@ -288,7 +288,7 @@ def _marginalizedkernel_do(g1, g2, node_label, edge_label, p_quit, n_iteration):
 									(t_dict[(node1, node2, neighbor1, neighbor2)] * \
 									R_inf_old[(neighbor1, neighbor2)])  # ref [1] equation (8)
 
-	# add elements of R_inf up and calculate kernel
+	# add elements of R_inf up and compute kernel.
 	for (n1, n2), value in R_inf.items():
 		s = p_init_G1 * p_init_G2 * deltakernel(
 				g1.nodes[n1][node_label], g2.nodes[n2][node_label])
