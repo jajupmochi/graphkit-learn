@@ -104,7 +104,7 @@ class GraphKernel(object):
 		
 		if self._parallel == 'imap_unordered':
 			gram_matrix = self._compute_gm_imap_unordered()
-		elif self._parallel == None:
+		elif self._parallel is None:
 			gram_matrix = self._compute_gm_series()
 		else:
 			raise Exception('Parallel mode is not set correctly.')
@@ -130,7 +130,7 @@ class GraphKernel(object):
 		
 		if self._parallel == 'imap_unordered':
 			kernel_list = self._compute_kernel_list_imap_unordered(g1, g_list)
-		elif self._parallel == None:
+		elif self._parallel is None:
 			kernel_list = self._compute_kernel_list_series(g1, g_list)
 		else:
 			raise Exception('Parallel mode is not set correctly.')
