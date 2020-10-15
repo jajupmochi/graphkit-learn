@@ -29,15 +29,15 @@ def spkernel(*args,
 			 n_jobs=None,
 			 chunksize=None,
 			 verbose=True):
-	"""Calculate shortest-path kernels between graphs.
+	"""Compute shortest-path kernels between graphs.
 
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	node_label : string
 		Node attribute used as label. The default node label is atom.
@@ -179,7 +179,7 @@ def spkernel(*args,
 	# do_partial = partial(spkernel_do, Gn, ds_attrs, node_label, node_kernels)
 	# itr = combinations_with_replacement(range(0, len(Gn)), 2)
 	# for i, j, kernel in tqdm(
-	#		 pool.map(do_partial, itr), desc='calculating kernels',
+	#		 pool.map(do_partial, itr), desc='Computing kernels',
 	#		 file=sys.stdout):
 	#	 Kmatrix[i][j] = kernel
 	#	 Kmatrix[j][i] = kernel
@@ -202,7 +202,7 @@ def spkernel(*args,
 #	# ---- direct running, normally use single CPU core. ----
 #	from itertools import combinations_with_replacement
 #	itr = combinations_with_replacement(range(0, len(Gn)), 2)
-#	for i, j in tqdm(itr, desc='calculating kernels', file=sys.stdout):
+#	for i, j in tqdm(itr, desc='Computing kernels', file=sys.stdout):
 #		kernel = spkernel_do(Gn[i], Gn[j], ds_attrs, node_label, node_kernels)
 #		Kmatrix[i][j] = kernel
 #		Kmatrix[j][i] = kernel
