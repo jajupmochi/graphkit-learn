@@ -34,15 +34,15 @@ def untilhpathkernel(*args,
 					 n_jobs=None,
 					 chunksize=None,
 					 verbose=True):
-	"""Calculate path graph kernels up to depth/hight h between graphs.
+	"""Compute path graph kernels up to depth/hight h between graphs.
 	
 	Parameters
 	----------
 	Gn : List of NetworkX graph
-		List of graphs between which the kernels are calculated.
+		List of graphs between which the kernels are computed.
 	
 	G1, G2 : NetworkX graphs
-		Two graphs between which the kernel is calculated.
+		Two graphs between which the kernel is computed.
 
 	node_label : string
 		Node attribute used as label. The default node label is atom.
@@ -91,7 +91,7 @@ def untilhpathkernel(*args,
 		attr_names=['node_labeled', 'node_attr_dim', 'edge_labeled', 
 					'edge_attr_dim', 'is_directed'],
 		node_label=node_label, edge_label=edge_label)
-	if k_func != None:
+	if k_func is not None:
 		if not ds_attrs['node_labeled']:
 			for G in Gn:
 				nx.set_node_attributes(G, '0', 'atom')
@@ -103,7 +103,7 @@ def untilhpathkernel(*args,
 
 	if parallel == 'imap_unordered':
 		# ---- use pool.imap_unordered to parallel and track progress. ----
-		# get all paths of all graphs before calculating kernels to save time,
+		# get all paths of all graphs before computing kernels to save time,
 		# but this may cost a lot of memory for large datasets.
 		pool = Pool(n_jobs)
 		itr = zip(Gn, range(0, len(Gn)))
@@ -113,10 +113,10 @@ def untilhpathkernel(*args,
 			else:
 				chunksize = 100
 		all_paths = [[] for _ in range(len(Gn))]
-		if compute_method == 'trie' and k_func != None:
+		if compute_method == 'trie' and k_func is not None:
 			getps_partial = partial(wrapper_find_all_path_as_trie, depth, 
 									ds_attrs, node_label, edge_label)
-		elif compute_method != 'trie' and k_func != None:  
+		elif compute_method != 'trie' and k_func is not None:  
 			getps_partial = partial(wrapper_find_all_paths_until_length, depth, 
 									ds_attrs, node_label, edge_label, True)  
 		else: 
@@ -133,9 +133,9 @@ def untilhpathkernel(*args,
 		pool.join()
 	
 #	for g in Gn:
-#		if compute_method == 'trie' and k_func != None:
+#		if compute_method == 'trie' and k_func is not None:
 #			find_all_path_as_trie(g, depth, ds_attrs, node_label, edge_label)
-#		elif compute_method != 'trie' and k_func != None:  
+#		elif compute_method != 'trie' and k_func is not None:  
 #			find_all_paths_until_length(g, depth, ds_attrs, node_label, edge_label)
 #		else: 
 #			find_all_paths_until_length(g, depth, ds_attrs, node_label, edge_label, False)
@@ -155,14 +155,14 @@ def untilhpathkernel(*args,
 ##		all_paths[i] = ps
 ##	print(time.time() - ttt)
 	 
-		if compute_method == 'trie' and k_func != None:
+		if compute_method == 'trie' and k_func is not None:
 			def init_worker(trie_toshare):
 				global G_trie
 				G_trie = trie_toshare
 			do_partial = partial(wrapper_uhpath_do_trie, k_func)
 			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
 						glbv=(all_paths,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose) 
-		elif compute_method != 'trie' and k_func != None:
+		elif compute_method != 'trie' and k_func is not None:
 			def init_worker(plist_toshare):
 				global G_plist
 				G_plist = plist_toshare
@@ -177,7 +177,7 @@ def untilhpathkernel(*args,
 			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
 						glbv=(all_paths,), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose) 
 	
-	elif parallel == None:
+	elif parallel is None:
 #		from pympler import asizeof
 		# ---- direct running, normally use single CPU core. ----
 #		print(asizeof.asized(all_paths, detail=1).format())
@@ -195,7 +195,7 @@ def untilhpathkernel(*args,
 #			print(sizeof_allpaths)
 			pbar = tqdm(
 				total=((len(Gn) + 1) * len(Gn) / 2),
-				desc='calculating kernels',
+				desc='Computing kernels',
 				file=sys.stdout)
 			for i in range(0, len(Gn)):
 				for j in range(i, len(Gn)):
@@ -217,7 +217,7 @@ def untilhpathkernel(*args,
 #			print(sizeof_allpaths)
 			pbar = tqdm(
 				total=((len(Gn) + 1) * len(Gn) / 2),
-				desc='calculating kernels',
+				desc='Computing kernels',
 				file=sys.stdout)
 			for i in range(0, len(Gn)):
 				for j in range(i, len(Gn)):
@@ -236,7 +236,7 @@ def untilhpathkernel(*args,
 
 
 def _untilhpathkernel_do_trie(trie1, trie2, k_func):
-	"""Calculate path graph kernels up to depth d between 2 graphs using trie.
+	"""Compute path graph kernels up to depth d between 2 graphs using trie.
 
 	Parameters
 	----------
@@ -351,7 +351,7 @@ def wrapper_uhpath_do_trie(k_func, itr):
 		
 
 def _untilhpathkernel_do_naive(paths1, paths2, k_func):
-	"""Calculate path graph kernels up to depth d between 2 graphs naively.
+	"""Compute path graph kernels up to depth d between 2 graphs naively.
 
 	Parameters
 	----------
@@ -400,7 +400,7 @@ def wrapper_uhpath_do_naive(k_func, itr):
 
 
 def _untilhpathkernel_do_kernelless(paths1, paths2, k_func):
-	"""Calculate path graph kernels up to depth d between 2 graphs naively.
+	"""Compute path graph kernels up to depth d between 2 graphs naively.
 
 	Parameters
 	----------
