@@ -59,7 +59,7 @@ class Marginalized(GraphKernel):
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 		for i, j in iterator:
@@ -119,7 +119,7 @@ class Marginalized(GraphKernel):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = range(len(g_list))
 		for i in iterator:
@@ -165,7 +165,7 @@ class Marginalized(GraphKernel):
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', 
-			n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 		return kernel_list
 	
@@ -184,12 +184,12 @@ class Marginalized(GraphKernel):
 	
 	
 	def __kernel_do(self, g1, g2):
-		"""Calculate marginalized graph kernel between 2 graphs.
+		"""Compute marginalized graph kernel between 2 graphs.
 		
 		Parameters
 		----------
 		g1, g2 : NetworkX graphs
-			2 graphs between which the kernel is calculated.
+			2 graphs between which the kernel is computed.
 			
 		Return
 		------
@@ -212,12 +212,12 @@ class Marginalized(GraphKernel):
 	#	# matrix to save all the R_inf for all pairs of nodes
 	#	R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
 	#
-	#	# calculate R_inf with a simple interative method
+	#	# Compute R_inf with a simple interative method
 	#	for i in range(1, n_iteration):
 	#		R_inf_new = np.zeros([num_nodes_G1, num_nodes_G2])
 	#		R_inf_new.fill(r1)
 	#
-	#		# calculate R_inf for each pair of nodes
+	#		# Compute R_inf for each pair of nodes
 	#		for node1 in g1.nodes(data=True):
 	#			neighbor_n1 = g1[node1[0]]
 	#			# the transition probability distribution in the random walks
@@ -243,7 +243,7 @@ class Marginalized(GraphKernel):
 	#									neighbor2]  # ref [1] equation (8)
 	#		R_inf[:] = R_inf_new
 	#
-	#	# add elements of R_inf up and calculate kernel
+	#	# add elements of R_inf up and compute kernel
 	#	for node1 in g1.nodes(data=True):
 	#		for node2 in g2.nodes(data=True):
 	#			s = p_init_G1 * p_init_G2 * deltakernel(
@@ -288,11 +288,11 @@ class Marginalized(GraphKernel):
 										deltakernel(tuple(g1.nodes[neighbor1][nl] for nl in self.__node_labels), tuple(g2.nodes[neighbor2][nl] for nl in self.__node_labels)) * \
 										deltakernel(tuple(neighbor_n1[neighbor1][el] for el in self.__edge_labels), tuple(neighbor_n2[neighbor2][el] for el in self.__edge_labels))
 	
-		# calculate R_inf with a simple interative method
+		# Compute R_inf with a simple interative method
 		for i in range(2, self.__n_iteration + 1):
 			R_inf_old = R_inf.copy()
 	
-			# calculate R_inf for each pair of nodes
+			# Compute R_inf for each pair of nodes
 			for node1 in g1.nodes():
 				neighbor_n1 = g1[node1]
 				# the transition probability distribution in the random walks
@@ -309,7 +309,7 @@ class Marginalized(GraphKernel):
 										(t_dict[(node1, node2, neighbor1, neighbor2)] * \
 										R_inf_old[(neighbor1, neighbor2)])  # ref [1] equation (8)
 	
-		# add elements of R_inf up and calculate kernel
+		# add elements of R_inf up and compute kernel.
 		for (n1, n2), value in R_inf.items():
 			s = p_init_G1 * p_init_G2 * deltakernel(tuple(g1.nodes[n1][nl] for nl in self.__node_labels), tuple(g2.nodes[n2][nl] for nl in self.__node_labels))
 			kernel += s * value  # ref [1] equation (6)
