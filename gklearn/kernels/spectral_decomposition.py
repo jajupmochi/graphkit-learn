@@ -16,19 +16,19 @@ import numpy as np
 import networkx as nx
 from scipy.sparse import kron
 from gklearn.utils.parallel import parallel_gm, parallel_me
-from gklearn.kernels import RandomWalk
+from gklearn.kernels import RandomWalkMeta
 
 
-class SpectralDecomposition(RandomWalk):
+class SpectralDecomposition(RandomWalkMeta):
 	
 	
 	def __init__(self, **kwargs):
-		RandomWalk.__init__(self, **kwargs)
+		super().__init__(**kwargs)
 		self._sub_kernel = kwargs.get('sub_kernel', None)
 		
 
 	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs)
+		self._check_edge_weight(self._graphs, self._verbose)
 		self._check_graphs(self._graphs)
 		if self._verbose >= 2:
 			import warnings
@@ -37,7 +37,7 @@ class SpectralDecomposition(RandomWalk):
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
 		
-		if self._q == None:
+		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
@@ -54,14 +54,14 @@ class SpectralDecomposition(RandomWalk):
 				P_list.append(ev)
 #		P_inv_list = [p.T for p in P_list] # @todo: also works for directed graphs?
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in self._graphs]
 #			q_T_list = [q.T for q in q_list]
 
 				from itertools import combinations_with_replacement
 				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 				if self._verbose >= 2:
-					iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+					iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 				else:
 					iterator = itr
 					
@@ -79,7 +79,7 @@ class SpectralDecomposition(RandomWalk):
 			
 			
 	def _compute_gm_imap_unordered(self):
-		self._check_edge_weight(self._graphs)
+		self._check_edge_weight(self._graphs, self._verbose)
 		self._check_graphs(self._graphs)
 		if self._verbose >= 2:
 			import warnings
@@ -88,7 +88,7 @@ class SpectralDecomposition(RandomWalk):
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
 		
-		if self._q == None:
+		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
@@ -104,7 +104,7 @@ class SpectralDecomposition(RandomWalk):
 				D_list.append(ew)
 				P_list.append(ev) # @todo: parallel?
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in self._graphs] # @todo: parallel?
 				
 				def init_worker(q_T_list_toshare, P_list_toshare, D_list_toshare):
@@ -126,7 +126,7 @@ class SpectralDecomposition(RandomWalk):
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1])
+		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
@@ -135,16 +135,16 @@ class SpectralDecomposition(RandomWalk):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		
-		if self._q == None:
+		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			D1, P1 = np.linalg.eig(A1)
 			P_list = []
 			D_list = []
 			if self._verbose >= 2:
-				iterator = tqdm(range(len(g_list)), desc='spectral decompose', file=sys.stdout)
+				iterator = tqdm(g_list, desc='spectral decompose', file=sys.stdout)
 			else:
-				iterator = range(len(g_list))
+				iterator = g_list
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -153,11 +153,11 @@ class SpectralDecomposition(RandomWalk):
 				D_list.append(ew)
 				P_list.append(ev)
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in g_list]
 				if self._verbose >= 2:
-					iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+					iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 				else:
 					iterator = range(len(g_list))
 					
@@ -174,7 +174,7 @@ class SpectralDecomposition(RandomWalk):
 	
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1])
+		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
@@ -183,7 +183,7 @@ class SpectralDecomposition(RandomWalk):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		
-		if self._q == None:
+		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			D1, P1 = np.linalg.eig(A1)
@@ -201,7 +201,7 @@ class SpectralDecomposition(RandomWalk):
 				D_list.append(ew)
 				P_list.append(ev) # @todo: parallel?
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in g_list] # @todo: parallel?
 				
@@ -221,7 +221,7 @@ class SpectralDecomposition(RandomWalk):
 				itr = range(len(g_list))
 				len_itr = len(g_list)
 				parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-					init_worker=init_worker, glbv=(q_T1, P1, D1, q_T_list, P_list, D_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+					init_worker=init_worker, glbv=(q_T1, P1, D1, q_T_list, P_list, D_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 			else: # @todo
 				pass
@@ -236,20 +236,20 @@ class SpectralDecomposition(RandomWalk):
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):
-		self._check_edge_weight([g1] + [g2])
+		self._check_edge_weight([g1] + [g2], self._verbose)
 		self._check_graphs([g1] + [g2])
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 		
-		if self._q == None:
+		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			D1, P1 = np.linalg.eig(A1)
 			A2 = nx.adjacency_matrix(g2, self._edge_weight).todense().transpose()
 			D2, P2 = np.linalg.eig(A2)
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T2 = 1 / nx.number_of_nodes(g2)
 				kernel = self.__kernel_do(q_T1, q_T2, P1, P2, D1, D2, self._weight, self._sub_kernel)
