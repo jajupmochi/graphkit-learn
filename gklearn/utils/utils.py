@@ -565,6 +565,86 @@ def compute_distance_matrix(gram_matrix):
 	return dis_mat, dis_max, dis_min, dis_mean
 
 
+# @todo: use it in ShortestPath.
+def compute_vertex_kernels(g1, g2, node_kernels, node_labels=[], node_attrs=[]):
+	"""Compute kernels between each pair of vertices in two graphs.
+
+	Parameters
+	----------
+	g1, g2 : NetworkX graph
+		The kernels bewteen pairs of vertices in these two graphs are computed.
+	node_kernels : dict
+		A dictionary of kernel functions for nodes, including 3 items: 'symb' 
+		for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
+		for both labels. The first 2 functions take two node labels as 
+		parameters, and the 'mix' function takes 4 parameters, a symbolic and a
+		non-symbolic label for each the two nodes. Each label is in form of 2-D
+		dimension array (n_samples, n_features). Each function returns a number
+		as the kernel value. Ignored when nodes are unlabeled. This argument
+		is designated to conjugate gradient method and fixed-point iterations.
+	node_labels : list, optional
+		The list of the name strings of the node labels. The default is [].
+	node_attrs : list, optional
+		The list of the name strings of the node attributes. The default is [].
+
+	Returns
+	-------
+	vk_dict : dict
+		Vertex kernels keyed by vertices.
+		
+	Notes
+	-----
+	This function is used by ``gklearn.kernels.FixedPoint'' and 
+	``gklearn.kernels.StructuralSP''. The method is borrowed from FCSP [1].
+
+	References
+	----------
+	.. [1] Lifan Xu, Wei Wang, M Alvarez, John Cavazos, and Dongping Zhang. 
+	Parallelization of shortest path graph kernels on multi-core cpus and gpus. 
+	Proceedings of the Programmability Issues for Heterogeneous Multicores 
+	(MultiProg), Vienna, Austria, 2014.	
+	"""
+	vk_dict = {}  # shortest path matrices dict
+	if len(node_labels) > 0:
+		# node symb and non-synb labeled
+		if len(node_attrs) > 0:
+			kn = node_kernels['mix']
+			for n1 in g1.nodes(data=True):
+				for n2 in g2.nodes(data=True):
+					n1_labels = [n1[1][nl] for nl in node_labels]
+					n2_labels = [n2[1][nl] for nl in node_labels]
+					n1_attrs = [n1[1][na] for na in node_attrs]
+					n2_attrs = [n2[1][na] for na in node_attrs]
+					vk_dict[(n1[0], n2[0])] = kn(n1_labels, n2_labels, n1_attrs, n2_attrs)
+		# node symb labeled
+		else:
+			kn = node_kernels['symb']
+			for n1 in g1.nodes(data=True):
+				for n2 in g2.nodes(data=True):
+					n1_labels = [n1[1][nl] for nl in node_labels]
+					n2_labels = [n2[1][nl] for nl in node_labels]
+					vk_dict[(n1[0], n2[0])] = kn(n1_labels, n2_labels)
+	else:
+		# node non-synb labeled
+		if len(node_attrs) > 0:
+			kn = node_kernels['nsymb']
+			for n1 in g1.nodes(data=True):
+				for n2 in g2.nodes(data=True):
+					n1_attrs = [n1[1][na] for na in node_attrs]
+					n2_attrs = [n2[1][na] for na in node_attrs]
+					vk_dict[(n1[0], n2[0])] = kn(n1_attrs, n2_attrs)
+		# node unlabeled
+		else:
+			pass # @todo: add edge weights.
+# 			for e1 in g1.edges(data=True):
+# 				for e2 in g2.edges(data=True):
+# 					if e1[2]['cost'] == e2[2]['cost']:
+# 						kernel += 1
+# 			return kernel
+
+	return vk_dict
+
+
 def dummy_node():
 	"""
 	/*!
