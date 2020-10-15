@@ -24,7 +24,7 @@ from gklearn.kernels import GraphKernel
 from gklearn.utils import Trie
 
 
-class PathUpToH(GraphKernel): # @todo: add function for k_func == None
+class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 	
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
@@ -43,7 +43,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 		itr_kernel = combinations_with_replacement(range(0, len(self._graphs)), 2)	
 		if self._verbose >= 2:
 			iterator_ps = tqdm(range(0, len(self._graphs)), desc='getting paths', file=sys.stdout)
-			iterator_kernel = tqdm(itr_kernel, desc='calculating kernels', file=sys.stdout)
+			iterator_kernel = tqdm(itr_kernel, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator_ps = range(0, len(self._graphs))
 			iterator_kernel = itr_kernel
@@ -69,7 +69,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 	def _compute_gm_imap_unordered(self):
 		self.__add_dummy_labels(self._graphs)
 		
-		# get all paths of all graphs before calculating kernels to save time,
+		# get all paths of all graphs before computing kernels to save time,
 		# but this may cost a lot of memory for large datasets.
 		pool = Pool(self._n_jobs)
 		itr = zip(self._graphs, range(0, len(self._graphs)))
@@ -123,7 +123,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 		
 		if self._verbose >= 2:
 			iterator_ps = tqdm(g_list, desc='getting paths', file=sys.stdout)
-			iterator_kernel = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator_kernel = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator_ps = g_list
 			iterator_kernel = range(len(g_list))
@@ -149,7 +149,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		self.__add_dummy_labels(g_list + [g1])
 		
-		# get all paths of all graphs before calculating kernels to save time,
+		# get all paths of all graphs before computing kernels to save time,
 		# but this may cost a lot of memory for large datasets.
 		pool = Pool(self._n_jobs)
 		itr = zip(g_list, range(0, len(g_list)))
@@ -190,7 +190,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(paths_g1, paths_g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(paths_g1, paths_g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			 			
 		return kernel_list
 	
@@ -218,7 +218,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 
 	
 	def __kernel_do_trie(self, trie1, trie2):
-		"""Calculate path graph kernels up to depth d between 2 graphs using trie.
+		"""Compute path graph kernels up to depth d between 2 graphs using trie.
 	
 		Parameters
 		----------
@@ -335,7 +335,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func == None
 	
 	
 	def __kernel_do_naive(self, paths1, paths2):
-		"""Calculate path graph kernels up to depth d between 2 graphs naively.
+		"""Compute path graph kernels up to depth d between 2 graphs naively.
 	
 		Parameters
 		----------
