@@ -73,3 +73,6 @@ gklearn/kernels/.tags
 
 # docker travis debug.
 ci.sh
+
+# outputs.
+outputs/
