@@ -1,5 +1,5 @@
 # -*-coding:utf-8 -*-
-"""gklearn - kernels module
+"""gklearn - graph kernels module
 """
 
 # info
@@ -10,9 +10,12 @@ __date__ = "November 2018"
 from gklearn.kernels.graph_kernel import GraphKernel
 from gklearn.kernels.common_walk import CommonWalk
 from gklearn.kernels.marginalized import Marginalized
-from gklearn.kernels.random_walk import RandomWalk
+from gklearn.kernels.random_walk_meta import RandomWalkMeta
 from gklearn.kernels.sylvester_equation import SylvesterEquation
+from gklearn.kernels.conjugate_gradient import ConjugateGradient
+from gklearn.kernels.fixed_point import FixedPoint
 from gklearn.kernels.spectral_decomposition import SpectralDecomposition
+from gklearn.kernels.random_walk import RandomWalk
 from gklearn.kernels.shortest_path import ShortestPath
 from gklearn.kernels.structural_sp import StructuralSP
 from gklearn.kernels.path_up_to_h import PathUpToH
