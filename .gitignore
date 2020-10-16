@@ -76,3 +76,6 @@ ci.sh
 
 # outputs.
 outputs/
+
+# pyCharm.
+.idea/
