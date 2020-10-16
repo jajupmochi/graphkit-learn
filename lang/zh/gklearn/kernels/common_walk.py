@@ -46,7 +46,7 @@ class CommonWalk(GraphKernel):
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 			
@@ -102,7 +102,7 @@ class CommonWalk(GraphKernel):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = range(len(g_list))
 			
@@ -148,7 +148,7 @@ class CommonWalk(GraphKernel):
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=_init_worker_list, glbv=(g1, g_list), method='imap_unordered', 
-			n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 		return kernel_list
 	
@@ -179,13 +179,13 @@ class CommonWalk(GraphKernel):
 	
 	
 	def __kernel_do_exp(self, g1, g2, beta):
-		"""Calculate common walk graph kernel between 2 graphs using exponential 
+		"""Compute common walk graph kernel between 2 graphs using exponential 
 		series.
 	
 		Parameters
 		----------
 		g1, g2 : NetworkX graphs
-			Graphs between which the kernels are calculated.
+			Graphs between which the kernels are computed.
 		beta : integer
 			Weight.
 	
@@ -231,13 +231,13 @@ class CommonWalk(GraphKernel):
 	
 	
 	def __kernel_do_geo(self, g1, g2, gamma):
-		"""Calculate common walk graph kernel between 2 graphs using geometric 
+		"""Compute common walk graph kernel between 2 graphs using geometric 
 		series.
 	
 		Parameters
 		----------
 		g1, g2 : NetworkX graphs
-			Graphs between which the kernels are calculated.
+			Graphs between which the kernels are computed.
 		gamma : integer
 			Weight.
 	
