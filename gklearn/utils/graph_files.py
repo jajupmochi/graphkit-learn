@@ -692,7 +692,7 @@ def load_from_ds(filename, filename_targets):
 			# remove the '#'s in file names
 			g, l_names = load_file_fun(dirname_dataset + '/' + tmp[0].replace('#', '', 1))
 			data.append(g)
-			__append_label_names(label_names, l_names)
+			_append_label_names(label_names, l_names)
 			y.append(float(tmp[1]))
 	else:  # targets in a seperate file
 		for i in range(0, len(content)):
@@ -700,7 +700,7 @@ def load_from_ds(filename, filename_targets):
 			# remove the '#'s in file names
 			g, l_names = load_file_fun(dirname_dataset + '/' + tmp.replace('#', '', 1))
 			data.append(g)
-			__append_label_names(label_names, l_names)
+			_append_label_names(label_names, l_names)
 		
 		with open(filename_targets) as fnt:
 			content_y = fnt.read().splitlines()
@@ -745,13 +745,13 @@ def load_from_xml(filename, dir_dataset=None):
 		mol_class = graph.attrib['class']
 		g, l_names = load_gxl(dir_dataset + '/' + mol_filename)
 		data.append(g)
-		__append_label_names(label_names, l_names)
+		_append_label_names(label_names, l_names)
 		y.append(mol_class)
 		
 	return data, y, label_names
 
 
-def __append_label_names(label_names, new_names):
+def _append_label_names(label_names, new_names):
 	for key, val in label_names.items():
 		label_names[key] += [name for name in new_names[key] if name not in val]
 		

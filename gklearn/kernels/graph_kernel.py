@@ -37,7 +37,7 @@ class GraphKernel(object):
 				raise Exception('The graph list given is empty. No computation was performed.')
 			else:
 				self._graphs = [g.copy() for g in graphs[0]]
-				self._gram_matrix = self.__compute_gram_matrix()
+				self._gram_matrix = self._compute_gram_matrix()
 				self._gram_matrix_unnorm = np.copy(self._gram_matrix)
 				if self._normalize:
 					self._gram_matrix = self.normalize_gm(self._gram_matrix)
@@ -45,17 +45,17 @@ class GraphKernel(object):
 			
 		elif len(graphs) == 2:
 			if self.is_graph(graphs[0]) and self.is_graph(graphs[1]):
-				kernel = self.__compute_single_kernel(graphs[0].copy(), graphs[1].copy())
+				kernel = self._compute_single_kernel(graphs[0].copy(), graphs[1].copy())
 				return kernel, self._run_time
 			elif self.is_graph(graphs[0]) and isinstance(graphs[1], list):
 				g1 = graphs[0].copy()
 				g_list = [g.copy() for g in graphs[1]]
-				kernel_list = self.__compute_kernel_list(g1, g_list)
+				kernel_list = self._compute_kernel_list(g1, g_list)
 				return kernel_list, self._run_time
 			elif isinstance(graphs[0], list) and self.is_graph(graphs[1]):
 				g1 = graphs[1].copy()
 				g_list = [g.copy() for g in graphs[0]]
-				kernel_list = self.__compute_kernel_list(g1, g_list)
+				kernel_list = self._compute_kernel_list(g1, g_list)
 				return kernel_list, self._run_time
 			else:
 				raise Exception('Cannot detect graphs.')
@@ -99,7 +99,7 @@ class GraphKernel(object):
 		return dis_mat, dis_max, dis_min, dis_mean
 			
 			
-	def __compute_gram_matrix(self):
+	def _compute_gram_matrix(self):
 		start_time = time.time()
 		
 		if self._parallel == 'imap_unordered':
@@ -125,7 +125,7 @@ class GraphKernel(object):
 		pass
 	
 	
-	def __compute_kernel_list(self, g1, g_list):
+	def _compute_kernel_list(self, g1, g_list):
 		start_time = time.time()
 		
 		if self._parallel == 'imap_unordered':
@@ -151,7 +151,7 @@ class GraphKernel(object):
 		pass
 	
 	
-	def __compute_single_kernel(self, g1, g2):
+	def _compute_single_kernel(self, g1, g2):
 		start_time = time.time()
 		
 		kernel = self._compute_single_kernel_series(g1, g2)

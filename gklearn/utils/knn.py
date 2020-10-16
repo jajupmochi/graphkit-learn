@@ -73,7 +73,7 @@ def knn_cv(dataset, kernel_options, trainset=None, n_neighbors=1, n_splits=50, t
 	y_all = dataset.targets
 	
 	# compute kernel distances.
-	dis_mat = __compute_kernel_distances(dataset, kernel_options, trainset=trainset)
+	dis_mat = _compute_kernel_distances(dataset, kernel_options, trainset=trainset)
 		
 	
 	rs = ShuffleSplit(n_splits=n_splits, test_size=test_size, random_state=0)
@@ -121,7 +121,7 @@ def knn_cv(dataset, kernel_options, trainset=None, n_neighbors=1, n_splits=50, t
 	return results
 		
 		
-def __compute_kernel_distances(dataset, kernel_options, trainset=None):
+def _compute_kernel_distances(dataset, kernel_options, trainset=None):
 	graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
 				  node_labels=dataset.node_labels,
 				  edge_labels=dataset.edge_labels, 

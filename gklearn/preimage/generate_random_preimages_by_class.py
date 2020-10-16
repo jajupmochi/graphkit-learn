@@ -31,7 +31,7 @@ def generate_random_preimages_by_class(ds_name, rpg_options, kernel_options, sav
 	if save_results:
 		# create result files.
 		print('creating output files...')
-		fn_output_detail, fn_output_summary = __init_output_file_preimage(ds_name, kernel_options['name'], dir_save)
+		fn_output_detail, fn_output_summary = _init_output_file_preimage(ds_name, kernel_options['name'], dir_save)
 		
 
 	dis_k_dataset_list = []
@@ -166,7 +166,7 @@ def generate_random_preimages_by_class(ds_name, rpg_options, kernel_options, sav
 	print('\ncomplete.\n')	
 
 	
-def __init_output_file_preimage(ds_name, gkernel, dir_output):
+def _init_output_file_preimage(ds_name, gkernel, dir_output):
 	if not os.path.exists(dir_output):
 		os.makedirs(dir_output)
 	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.csv'
