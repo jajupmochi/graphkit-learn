@@ -109,45 +109,183 @@ def test_Marginalized(ds_name, parallel, remove_totters):
 		assert False, exception
 		
 		
+@pytest.mark.parametrize('ds_name', ['Acyclic'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_SylvesterEquation(ds_name, parallel):
+	"""Test sylvester equation kernel.
+	"""
+	from gklearn.kernels import SylvesterEquation
+	
+	dataset = chooseDataset(ds_name)
+
+	try:
+		graph_kernel = SylvesterEquation(
+							ds_infos=dataset.get_dataset_infos(keys=['directed']),
+							weight=1e-3,
+							p=None,
+							q=None,
+							edge_weight=None)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	
+	except Exception as exception:
+		assert False, exception
+		
+		
+@pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_ConjugateGradient(ds_name, parallel):
+	"""Test conjugate gradient kernel.
+	"""
+	from gklearn.kernels import ConjugateGradient
+	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+	import functools
+	
+	dataset = chooseDataset(ds_name)
+	
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+
+	try:
+		graph_kernel = ConjugateGradient(
+							node_labels=dataset.node_labels,
+							node_attrs=dataset.node_attrs,
+							edge_labels=dataset.edge_labels,
+							edge_attrs=dataset.edge_attrs,
+							ds_infos=dataset.get_dataset_infos(keys=['directed']),
+							weight=1e-3,
+							p=None,
+							q=None,
+							edge_weight=None,
+							node_kernels=sub_kernels,
+							edge_kernels=sub_kernels)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	
+	except Exception as exception:
+		assert False, exception
+		
+		
+@pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_FixedPoint(ds_name, parallel):
+	"""Test fixed point kernel.
+	"""
+	from gklearn.kernels import FixedPoint
+	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+	import functools
+	
+	dataset = chooseDataset(ds_name)
+	
+	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
+	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+
+	try:
+		graph_kernel = FixedPoint(
+							node_labels=dataset.node_labels,
+							node_attrs=dataset.node_attrs,
+							edge_labels=dataset.edge_labels,
+							edge_attrs=dataset.edge_attrs,
+							ds_infos=dataset.get_dataset_infos(keys=['directed']),
+							weight=1e-3,
+							p=None,
+							q=None,
+							edge_weight=None,
+							node_kernels=sub_kernels,
+							edge_kernels=sub_kernels)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	
+	except Exception as exception:
+		assert False, exception
+		
+		
+@pytest.mark.parametrize('ds_name', ['Acyclic'])
+@pytest.mark.parametrize('sub_kernel', ['exp', 'geo'])
+@pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_SpectralDecomposition(ds_name, sub_kernel, parallel):
+	"""Test spectral decomposition kernel.
+	"""
+	from gklearn.kernels import SpectralDecomposition
+	
+	dataset = chooseDataset(ds_name)
+
+	try:
+		graph_kernel = SpectralDecomposition(
+							ds_infos=dataset.get_dataset_infos(keys=['directed']),
+							weight=1e-3,
+							p=None,
+							q=None,
+							edge_weight=None,
+							sub_kernel=sub_kernel)
+		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+	
+	except Exception as exception:
+		assert False, exception
+		
+		
 # @pytest.mark.parametrize(
 #		'compute_method,ds_name,sub_kernel',
 #		[
-# #			('sylvester', 'Alkane', None),
-# #			('conjugate', 'Alkane', None),
-# #			('conjugate', 'AIDS', None),
-# #			('fp', 'Alkane', None),
-# #			('fp', 'AIDS', None),
+#			('sylvester', 'Alkane', None),
+#			('conjugate', 'Alkane', None),
+#			('conjugate', 'AIDS', None),
+#			('fp', 'Alkane', None),
+#			('fp', 'AIDS', None),
 #			('spectral', 'Alkane', 'exp'),
 #			('spectral', 'Alkane', 'geo'),
 #		]
 # )
-# #@pytest.mark.parametrize('parallel', ['imap_unordered', None])
-# def test_randomwalkkernel(ds_name, compute_method, sub_kernel):
-#	"""Test random walk kernel kernel.
+# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
+# def test_RandomWalk(ds_name, compute_method, sub_kernel, parallel):
+#	"""Test random walk kernel.
 #	"""
-#	from gklearn.kernels.randomWalkKernel import randomwalkkernel
+#	from gklearn.kernels import RandomWalk
 #	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 #	import functools
-	
-#	Gn, y = chooseDataset(ds_name)
+#	
+#	dataset = chooseDataset(ds_name)
 
 #	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-#	sub_kernels = [{'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}]
-#	try:
-#		Kmatrix, run_time, idx = randomwalkkernel(Gn,
-#												  compute_method=compute_method,
-#												  weight=1e-3,
-#												  p=None,
-#												  q=None,
-#												  edge_weight=None,
-#												  node_kernels=sub_kernels,
-#												  edge_kernels=sub_kernels,
-#												  node_label='atom', 
-#												  edge_label='bond_type',
-#												  sub_kernel=sub_kernel,
-# #												 parallel=parallel,
-#												 n_jobs=multiprocessing.cpu_count(), 
-#												 verbose=True)
+#	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+# #	try:
+#	graph_kernel = RandomWalk(node_labels=dataset.node_labels,
+#						node_attrs=dataset.node_attrs,
+#						edge_labels=dataset.edge_labels,
+#						edge_attrs=dataset.edge_attrs,
+#						ds_infos=dataset.get_dataset_infos(keys=['directed']),
+#						compute_method=compute_method,
+#						weight=1e-3,
+#						p=None,
+#						q=None,
+#						edge_weight=None,
+#						node_kernels=sub_kernels,
+#						edge_kernels=sub_kernels,
+#						sub_kernel=sub_kernel)
+#	gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+#		parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+#	kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+#		parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+#	kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+#		parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 #	except Exception as exception:
 #		assert False, exception
 
@@ -296,4 +434,9 @@ def test_WLSubtree(ds_name, parallel):
 
 if __name__ == "__main__":
 #	test_spkernel('Alkane', 'imap_unordered')
-	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+# 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+	test_WLSubtree('Acyclic', 'imap_unordered')
+#	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
+#	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
+#	test_RandomWalk('Acyclic', 'fp', None, None)
+#	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')

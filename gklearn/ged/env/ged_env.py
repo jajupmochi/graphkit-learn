@@ -15,17 +15,17 @@ class GEDEnv(object):
 
 	
 	def __init__(self):
-		self.__initialized = False
-		self.__new_graph_ids = []
-		self.__ged_data = GEDData()
+		self._initialized = False
+		self._new_graph_ids = []
+		self._ged_data = GEDData()
 		# Variables needed for approximating ged_instance_.
-		self.__lower_bounds = {}
-		self.__upper_bounds = {}
-		self.__runtimes = {}
-		self.__node_maps = {}
-		self.__original_to_internal_node_ids = []
-		self.__internal_to_original_node_ids = []
-		self.__ged_method = None
+		self._lower_bounds = {}
+		self._upper_bounds = {}
+		self._runtimes = {}
+		self._node_maps = {}
+		self._original_to_internal_node_ids = []
+		self._internal_to_original_node_ids = []
+		self._ged_method = None
 	
 		
 	def set_edit_cost(self, edit_cost, edit_cost_constants=[]):
@@ -36,7 +36,7 @@ class GEDEnv(object):
 	 * @param[in] edit_cost_constants Constants passed to the constructor of the edit cost class selected by @p edit_costs.
 	 */
 		"""
-		self.__ged_data._set_edit_cost(edit_cost, edit_cost_constants)
+		self._ged_data._set_edit_cost(edit_cost, edit_cost_constants)
 		
 		
 	def add_graph(self, graph_name='', graph_class=''):
@@ -49,17 +49,17 @@ class GEDEnv(object):
 	 */
 		"""
 		# @todo: graphs are not uninitialized.
-		self.__initialized = False
-		graph_id = self.__ged_data._num_graphs_without_shuffled_copies
-		self.__ged_data._num_graphs_without_shuffled_copies += 1
-		self.__new_graph_ids.append(graph_id)
-		self.__ged_data._graphs.append(nx.Graph())
-		self.__ged_data._graph_names.append(graph_name)
-		self.__ged_data._graph_classes.append(graph_class)
-		self.__original_to_internal_node_ids.append({})
-		self.__internal_to_original_node_ids.append({})
-		self.__ged_data._strings_to_internal_node_ids.append({})
-		self.__ged_data._internal_node_ids_to_strings.append({})
+		self._initialized = False
+		graph_id = self._ged_data._num_graphs_without_shuffled_copies
+		self._ged_data._num_graphs_without_shuffled_copies += 1
+		self._new_graph_ids.append(graph_id)
+		self._ged_data._graphs.append(nx.Graph())
+		self._ged_data._graph_names.append(graph_name)
+		self._ged_data._graph_classes.append(graph_class)
+		self._original_to_internal_node_ids.append({})
+		self._internal_to_original_node_ids.append({})
+		self._ged_data._strings_to_internal_node_ids.append({})
+		self._ged_data._internal_node_ids_to_strings.append({})
 		return graph_id
 	
 	
@@ -70,14 +70,14 @@ class GEDEnv(object):
 	 * @param[in] graph_id ID of graph that has to be cleared.
 	 */
 		"""
-		if graph_id > self.__ged_data.num_graphs_without_shuffled_copies():
+		if graph_id > self._ged_data.num_graphs_without_shuffled_copies():
 			raise Exception('The graph', self.get_graph_name(graph_id), 'has not been added to the environment.')
-		self.__ged_data._graphs[graph_id].clear()
-		self.__original_to_internal_node_ids[graph_id].clear()
-		self.__internal_to_original_node_ids[graph_id].clear()
-		self.__ged_data._strings_to_internal_node_ids[graph_id].clear()
-		self.__ged_data._internal_node_ids_to_strings[graph_id].clear()
-		self.__initialized = False
+		self._ged_data._graphs[graph_id].clear()
+		self._original_to_internal_node_ids[graph_id].clear()
+		self._internal_to_original_node_ids[graph_id].clear()
+		self._ged_data._strings_to_internal_node_ids[graph_id].clear()
+		self._ged_data._internal_node_ids_to_strings[graph_id].clear()
+		self._initialized = False
 	
 	
 	def add_node(self, graph_id, node_id, node_label):
@@ -90,15 +90,15 @@ class GEDEnv(object):
 	 */
 		"""
 		# @todo: check ids.
-		self.__initialized = False
-		internal_node_id = nx.number_of_nodes(self.__ged_data._graphs[graph_id])
-		self.__ged_data._graphs[graph_id].add_node(internal_node_id, label=node_label)
-		self.__original_to_internal_node_ids[graph_id][node_id] = internal_node_id
-		self.__internal_to_original_node_ids[graph_id][internal_node_id] = node_id
-		self.__ged_data._strings_to_internal_node_ids[graph_id][str(node_id)] = internal_node_id
-		self.__ged_data._internal_node_ids_to_strings[graph_id][internal_node_id] = str(node_id)
-		self.__ged_data._node_label_to_id(node_label)
-		label_id = self.__ged_data._node_label_to_id(node_label)
+		self._initialized = False
+		internal_node_id = nx.number_of_nodes(self._ged_data._graphs[graph_id])
+		self._ged_data._graphs[graph_id].add_node(internal_node_id, label=node_label)
+		self._original_to_internal_node_ids[graph_id][node_id] = internal_node_id
+		self._internal_to_original_node_ids[graph_id][internal_node_id] = node_id
+		self._ged_data._strings_to_internal_node_ids[graph_id][str(node_id)] = internal_node_id
+		self._ged_data._internal_node_ids_to_strings[graph_id][internal_node_id] = str(node_id)
+		self._ged_data._node_label_to_id(node_label)
+		label_id = self._ged_data._node_label_to_id(node_label)
 		# @todo: ged_data_.graphs_[graph_id].set_label
 		
 		
@@ -114,10 +114,10 @@ class GEDEnv(object):
 	 */
 		"""
 		# @todo: check everything.
-		self.__initialized = False
+		self._initialized = False
 		# @todo: check ignore_duplicates.
-		self.__ged_data._graphs[graph_id].add_edge(self.__original_to_internal_node_ids[graph_id][nd_from], self.__original_to_internal_node_ids[graph_id][nd_to], label=edge_label)
-		label_id = self.__ged_data._edge_label_to_id(edge_label)
+		self._ged_data._graphs[graph_id].add_edge(self._original_to_internal_node_ids[graph_id][nd_from], self._original_to_internal_node_ids[graph_id][nd_to], label=edge_label)
+		label_id = self._ged_data._edge_label_to_id(edge_label)
 		# @todo: ged_data_.graphs_[graph_id].set_label
 		
 	
@@ -182,30 +182,30 @@ class GEDEnv(object):
 			init_type = OptionsStringMap.InitType[init_type]
 			
 		# Throw an exception if no edit costs have been selected.
-		if self.__ged_data._edit_cost is None:
+		if self._ged_data._edit_cost is None:
 			raise Exception('No edit costs have been selected. Call set_edit_cost() before calling init().')
 			
 		# Return if the environment is initialized.
-		if self.__initialized:
+		if self._initialized:
 			return
 		
 		# Set initialization type.
-		self.__ged_data._init_type = init_type
+		self._ged_data._init_type = init_type
 		
 		# @todo: Construct shuffled graph copies if necessary.
 		
 		# Re-initialize adjacency matrices (also previously initialized graphs must be re-initialized because of possible re-allocation).
 		# @todo: setup_adjacency_matrix, don't know if neccessary.
-		self.__ged_data._max_num_nodes = np.max([nx.number_of_nodes(g) for g in self.__ged_data._graphs])
-		self.__ged_data._max_num_edges = np.max([nx.number_of_edges(g) for g in self.__ged_data._graphs])
+		self._ged_data._max_num_nodes = np.max([nx.number_of_nodes(g) for g in self._ged_data._graphs])
+		self._ged_data._max_num_edges = np.max([nx.number_of_edges(g) for g in self._ged_data._graphs])
 			
 		# Initialize cost matrices if necessary.
-		if self.__ged_data._eager_init():
+		if self._ged_data._eager_init():
 			pass # @todo: init_cost_matrices_: 1. Update node cost matrix if new node labels have been added to the environment; 2. Update edge cost matrix if new edge labels have been added to the environment.
 			
 		# Mark environment as initialized.
-		self.__initialized = True
-		self.__new_graph_ids.clear()
+		self._initialized = True
+		self._new_graph_ids.clear()
 		
 		
 	def is_initialized(self):
@@ -215,7 +215,7 @@ class GEDEnv(object):
 	 * @return True if the environment is initialized.
 	 */
 		"""
-		return self.__initialized
+		return self._initialized
 	
 	
 	def get_init_type(self):
@@ -225,16 +225,16 @@ class GEDEnv(object):
 	 * @return Initialization type.
 	 */
 		"""
-		return self.__ged_data._init_type
+		return self._ged_data._init_type
 	
 	
 	def set_label_costs(self, node_label_costs=None, edge_label_costs=None):
 		"""Set the costs between labels. 
 		"""
 		if node_label_costs is not None:
-			self.__ged_data._node_label_costs = node_label_costs
+			self._ged_data._node_label_costs = node_label_costs
 		if edge_label_costs is not None:
-			self.__ged_data._edge_label_costs = edge_label_costs
+			self._ged_data._edge_label_costs = edge_label_costs
 		
 		
 	def set_method(self, method, options=''):
@@ -245,67 +245,67 @@ class GEDEnv(object):
 	 * @param[in] options An options string of the form @"[--@<option@> @<arg@>] [...]@" passed to the selected method.
 	 */
 		"""
-		del self.__ged_method
+		del self._ged_method
 		
 		if isinstance(method, str):
 			method = OptionsStringMap.GEDMethod[method]
 
 		if method == Options.GEDMethod.BRANCH:
-			self.__ged_method = Branch(self.__ged_data)
+			self._ged_method = Branch(self._ged_data)
 		elif method == Options.GEDMethod.BRANCH_FAST:
-			self.__ged_method = BranchFast(self.__ged_data)
+			self._ged_method = BranchFast(self._ged_data)
 		elif method == Options.GEDMethod.BRANCH_FAST:
-			self.__ged_method = BranchFast(self.__ged_data)	
+			self._ged_method = BranchFast(self._ged_data)	
 		elif method == Options.GEDMethod.BRANCH_TIGHT:
-			self.__ged_method = BranchTight(self.__ged_data)	
+			self._ged_method = BranchTight(self._ged_data)	
 		elif method == Options.GEDMethod.BRANCH_UNIFORM:
-			self.__ged_method = BranchUniform(self.__ged_data)	
+			self._ged_method = BranchUniform(self._ged_data)	
 		elif method == Options.GEDMethod.BRANCH_COMPACT:
-			self.__ged_method = BranchCompact(self.__ged_data)	
+			self._ged_method = BranchCompact(self._ged_data)	
 		elif method == Options.GEDMethod.PARTITION:
-			self.__ged_method = Partition(self.__ged_data)	
+			self._ged_method = Partition(self._ged_data)	
 		elif method == Options.GEDMethod.HYBRID:
-			self.__ged_method = Hybrid(self.__ged_data)	
+			self._ged_method = Hybrid(self._ged_data)	
 		elif method == Options.GEDMethod.RING:
-			self.__ged_method = Ring(self.__ged_data)	
+			self._ged_method = Ring(self._ged_data)	
 		elif method == Options.GEDMethod.ANCHOR_AWARE_GED:
-			self.__ged_method = AnchorAwareGED(self.__ged_data)	
+			self._ged_method = AnchorAwareGED(self._ged_data)	
 		elif method == Options.GEDMethod.WALKS:
-			self.__ged_method = Walks(self.__ged_data)	
+			self._ged_method = Walks(self._ged_data)	
 		elif method == Options.GEDMethod.IPFP:
-			self.__ged_method = IPFP(self.__ged_data)	
+			self._ged_method = IPFP(self._ged_data)	
 		elif method == Options.GEDMethod.BIPARTITE:
 			from gklearn.ged.methods import Bipartite
-			self.__ged_method = Bipartite(self.__ged_data)	
+			self._ged_method = Bipartite(self._ged_data)	
 		elif method == Options.GEDMethod.SUBGRAPH:
-			self.__ged_method = Subgraph(self.__ged_data)	
+			self._ged_method = Subgraph(self._ged_data)	
 		elif method == Options.GEDMethod.NODE:
-			self.__ged_method = Node(self.__ged_data)	
+			self._ged_method = Node(self._ged_data)	
 		elif method == Options.GEDMethod.RING_ML:
-			self.__ged_method = RingML(self.__ged_data)	
+			self._ged_method = RingML(self._ged_data)	
 		elif method == Options.GEDMethod.BIPARTITE_ML:
-			self.__ged_method = BipartiteML(self.__ged_data)	
+			self._ged_method = BipartiteML(self._ged_data)	
 		elif method == Options.GEDMethod.REFINE:
-			self.__ged_method = Refine(self.__ged_data)	
+			self._ged_method = Refine(self._ged_data)	
 		elif method == Options.GEDMethod.BP_BEAM:
-			self.__ged_method = BPBeam(self.__ged_data)	
+			self._ged_method = BPBeam(self._ged_data)	
 		elif method == Options.GEDMethod.SIMULATED_ANNEALING:
-			self.__ged_method = SimulatedAnnealing(self.__ged_data)	
+			self._ged_method = SimulatedAnnealing(self._ged_data)	
 		elif method == Options.GEDMethod.HED:
-			self.__ged_method = HED(self.__ged_data)	
+			self._ged_method = HED(self._ged_data)	
 		elif method == Options.GEDMethod.STAR:
-			self.__ged_method = STAR(self.__ged_data)	
+			self._ged_method = STAR(self._ged_data)	
 		# #ifdef GUROBI
 		elif method == Options.GEDMethod.F1:
-			self.__ged_method = F1(self.__ged_data)	
+			self._ged_method = F1(self._ged_data)	
 		elif method == Options.GEDMethod.F2:
-			self.__ged_method = F2(self.__ged_data)	
+			self._ged_method = F2(self._ged_data)	
 		elif method == Options.GEDMethod.COMPACT_MIP:
-			self.__ged_method = CompactMIP(self.__ged_data)	
+			self._ged_method = CompactMIP(self._ged_data)	
 		elif method == Options.GEDMethod.BLP_NO_EDGE_LABELS:
-			self.__ged_method = BLPNoEdgeLabels(self.__ged_data)	
+			self._ged_method = BLPNoEdgeLabels(self._ged_data)	
 
-		self.__ged_method.set_options(options)
+		self._ged_method.set_options(options)
 		
 		
 	def run_method(self, g_id, h_id):
@@ -316,34 +316,34 @@ class GEDEnv(object):
 	 * @param[in] h_id ID of an input graph that has been added to the environment.
 	 */
 		"""
-		if g_id >= self.__ged_data.num_graphs():
+		if g_id >= self._ged_data.num_graphs():
 			raise Exception('The graph with ID', str(g_id), 'has not been added to the environment.')
-		if h_id >= self.__ged_data.num_graphs():
+		if h_id >= self._ged_data.num_graphs():
 			raise Exception('The graph with ID', str(h_id), 'has not been added to the environment.')
-		if not self.__initialized:
+		if not self._initialized:
 			raise Exception('The environment is uninitialized. Call init() after adding all graphs to the environment.')
-		if self.__ged_method is None:
+		if self._ged_method is None:
 			raise Exception('No method has been set. Call set_method() before calling run().')
 		
 		# Call selected GEDMethod and store results.
-		if self.__ged_data.shuffled_graph_copies_available() and (g_id == h_id):
-			self.__ged_method.run(g_id, self.__ged_data.id_shuffled_graph_copy(h_id)) # @todo: why shuffle?
+		if self._ged_data.shuffled_graph_copies_available() and (g_id == h_id):
+			self._ged_method.run(g_id, self._ged_data.id_shuffled_graph_copy(h_id)) # @todo: why shuffle?
 		else:
-			self.__ged_method.run(g_id, h_id)
-		self.__lower_bounds[(g_id, h_id)] = self.__ged_method.get_lower_bound()
-		self.__upper_bounds[(g_id, h_id)] = self.__ged_method.get_upper_bound()
-		self.__runtimes[(g_id, h_id)] = self.__ged_method.get_runtime()
-		self.__node_maps[(g_id, h_id)] = self.__ged_method.get_node_map()
+			self._ged_method.run(g_id, h_id)
+		self._lower_bounds[(g_id, h_id)] = self._ged_method.get_lower_bound()
+		self._upper_bounds[(g_id, h_id)] = self._ged_method.get_upper_bound()
+		self._runtimes[(g_id, h_id)] = self._ged_method.get_runtime()
+		self._node_maps[(g_id, h_id)] = self._ged_method.get_node_map()
 		
 		
 	def init_method(self):
 		"""Initializes the method specified by call to set_method().
 		"""
-		if not self.__initialized:
+		if not self._initialized:
 			raise Exception('The environment is uninitialized. Call init() before calling init_method().')
-		if self.__ged_method is None:
+		if self._ged_method is None:
 			raise Exception('No method has been set. Call set_method() before calling init_method().')
-		self.__ged_method.init()
+		self._ged_method.init()
 		
 		
 	def get_num_node_labels(self):
@@ -354,7 +354,7 @@ class GEDEnv(object):
 	 * @note If @p 1 is returned, the nodes are unlabeled.
 	 */
 		"""
-		return len(self.__ged_data._node_labels)
+		return len(self._ged_data._node_labels)
 	
 	
 	def get_all_node_labels(self):
@@ -365,7 +365,7 @@ class GEDEnv(object):
 	 * @note If @p 1 is returned, the nodes are unlabeled.
 	 */
 		"""
-		return self.__ged_data._node_labels
+		return self._ged_data._node_labels
 	
 	
 	def get_node_label(self, label_id, to_dict=True):
@@ -379,8 +379,8 @@ class GEDEnv(object):
 		if label_id < 1 or label_id > self.get_num_node_labels():
 			raise Exception('The environment does not contain a node label with ID', str(label_id), '.')
 		if to_dict:
-			return dict(self.__ged_data._node_labels[label_id - 1])
-		return self.__ged_data._node_labels[label_id - 1]
+			return dict(self._ged_data._node_labels[label_id - 1])
+		return self._ged_data._node_labels[label_id - 1]
 		
 		
 	def get_num_edge_labels(self):
@@ -391,7 +391,7 @@ class GEDEnv(object):
 	 * @note If @p 1 is returned, the edges are unlabeled.
 	 */
 		"""
-		return len(self.__ged_data._edge_labels)
+		return len(self._ged_data._edge_labels)
 	
 	
 	def get_all_edge_labels(self):
@@ -402,7 +402,7 @@ class GEDEnv(object):
 	 * @note If @p 1 is returned, the edges are unlabeled.
 	 */
 		"""
-		return self.__ged_data._edge_labels
+		return self._ged_data._edge_labels
 	
 		
 	def get_edge_label(self, label_id, to_dict=True):
@@ -416,8 +416,8 @@ class GEDEnv(object):
 		if label_id < 1 or label_id > self.get_num_edge_labels():
 			raise Exception('The environment does not contain an edge label with ID', str(label_id), '.')
 		if to_dict:
-			return dict(self.__ged_data._edge_labels[label_id - 1])
-		return self.__ged_data._edge_labels[label_id - 1]
+			return dict(self._ged_data._edge_labels[label_id - 1])
+		return self._ged_data._edge_labels[label_id - 1]
 	
 		
 	def get_upper_bound(self, g_id, h_id):
@@ -429,9 +429,9 @@ class GEDEnv(object):
 	 * @return Upper bound computed by the last call to run_method() with arguments @p g_id and @p h_id.
 	 */
 		"""
-		if (g_id, h_id) not in self.__upper_bounds:
+		if (g_id, h_id) not in self._upper_bounds:
 			raise Exception('Call run(' + str(g_id) + ',' + str(h_id) + ') before calling get_upper_bound(' + str(g_id) + ',' + str(h_id) + ').')
-		return self.__upper_bounds[(g_id, h_id)]
+		return self._upper_bounds[(g_id, h_id)]
 		
 		
 	def get_lower_bound(self, g_id, h_id):
@@ -443,9 +443,9 @@ class GEDEnv(object):
 	 * @return Lower bound computed by the last call to run_method() with arguments @p g_id and @p h_id.
 	 */
 		"""
-		if (g_id, h_id) not in self.__lower_bounds:
+		if (g_id, h_id) not in self._lower_bounds:
 			raise Exception('Call run(' + str(g_id) + ',' + str(h_id) + ') before calling get_lower_bound(' + str(g_id) + ',' + str(h_id) + ').')
-		return self.__lower_bounds[(g_id, h_id)]
+		return self._lower_bounds[(g_id, h_id)]
 		
 		
 	def get_runtime(self, g_id, h_id):
@@ -457,9 +457,9 @@ class GEDEnv(object):
 	 * @return Runtime of last call to run_method() with arguments @p g_id and @p h_id.
 	 */
 		"""
-		if (g_id, h_id) not in self.__runtimes:
+		if (g_id, h_id) not in self._runtimes:
 			raise Exception('Call run(' + str(g_id) + ',' + str(h_id) + ') before calling get_runtime(' + str(g_id) + ',' + str(h_id) + ').')
-		return self.__runtimes[(g_id, h_id)]
+		return self._runtimes[(g_id, h_id)]
 	
 
 	def get_init_time(self):
@@ -469,7 +469,7 @@ class GEDEnv(object):
 	 * @return Runtime of the last call to init_method().
 	 */
 		"""		
-		return self.__ged_method.get_init_time()
+		return self._ged_method.get_init_time()
 
 
 	def get_node_map(self, g_id, h_id):
@@ -481,9 +481,9 @@ class GEDEnv(object):
 	 * @return Node map computed by the last call to run_method() with arguments @p g_id and @p h_id.
 	 */
 		"""
-		if (g_id, h_id) not in self.__node_maps:
+		if (g_id, h_id) not in self._node_maps:
 			raise Exception('Call run(' + str(g_id) + ',' + str(h_id) + ') before calling get_node_map(' + str(g_id) + ',' + str(h_id) + ').')
-		return self.__node_maps[(g_id, h_id)]
+		return self._node_maps[(g_id, h_id)]
 	
 
 	def get_forward_map(self, g_id, h_id) :
@@ -531,7 +531,7 @@ class GEDEnv(object):
 	 * @param[in,out] node_map Node map whose induced edit cost is to be computed.
 	 */
 		"""
-		self.__ged_data.compute_induced_cost(self.__ged_data._graphs[g_id], self.__ged_data._graphs[h_id], node_map)
+		self._ged_data.compute_induced_cost(self._ged_data._graphs[g_id], self._ged_data._graphs[h_id], node_map)
 	
 	
 	def get_nx_graph(self, graph_id):
@@ -569,7 +569,7 @@ class GEDEnv(object):
 			.. seealso:: get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_original_node_ids(), get_graph_edges(), get_graph_adjacence_matrix()
 			.. note:: These functions allow to collect all the graph's informations.
 		"""
-		graph = self.__ged_data.graph(graph_id)
+		graph = self._ged_data.graph(graph_id)
 		node_labels = []
 		for n in graph.nodes():
 			node_labels.append(graph.nodes[n]['label'])
@@ -590,7 +590,7 @@ class GEDEnv(object):
 			.. seealso::get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_original_node_ids(), get_graph_node_labels(), get_graph_adjacence_matrix()
 			.. note:: These functions allow to collect all the graph's informations.
 		"""
-		graph = self.__ged_data.graph(graph_id)		
+		graph = self._ged_data.graph(graph_id)		
 		if to_dict:
 			edges = {}		
 			for n1, n2, attr in graph.edges(data=True):
@@ -608,7 +608,7 @@ class GEDEnv(object):
 	 * @return Name of the input graph.
 	 */
 		"""
-		return self.__ged_data._graph_names[graph_id]
+		return self._ged_data._graph_names[graph_id]
 	
 	
 	def get_graph_num_nodes(self, graph_id):
@@ -619,7 +619,7 @@ class GEDEnv(object):
 	 * @return Number of nodes in the graph.
 	 */
 		"""
-		return nx.number_of_nodes(self.__ged_data.graph(graph_id))
+		return nx.number_of_nodes(self._ged_data.graph(graph_id))
 	
 	
 	def get_original_node_ids(self, graph_id):
@@ -634,11 +634,11 @@ class GEDEnv(object):
 			.. seealso::get_graph_internal_id(), get_graph_num_nodes(), get_graph_num_edges(), get_graph_node_labels(), get_graph_edges(), get_graph_adjacence_matrix()
 			.. note:: These functions allow to collect all the graph's informations.
 		"""
-		return [i for i in self.__internal_to_original_node_ids[graph_id].values()]		
+		return [i for i in self._internal_to_original_node_ids[graph_id].values()]		
 	
 	
 	def get_node_cost(self, node_label_1, node_label_2):
-		return self.__ged_data.node_cost(node_label_1, node_label_2)
+		return self._ged_data.node_cost(node_label_1, node_label_2)
 	
 	
 	def get_node_rel_cost(self, node_label_1, node_label_2):
@@ -654,7 +654,7 @@ class GEDEnv(object):
 			node_label_1 = tuple(sorted(node_label_1.items(), key=lambda kv: kv[0]))
 		if isinstance(node_label_2, dict):
 			node_label_2 = tuple(sorted(node_label_2.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.node_rel_cost_fun(node_label_1, node_label_2) # @todo: may need to use node_cost() instead (or change node_cost() and modify ged_method for pre-defined cost matrices.)
+		return self._ged_data._edit_cost.node_rel_cost_fun(node_label_1, node_label_2) # @todo: may need to use node_cost() instead (or change node_cost() and modify ged_method for pre-defined cost matrices.)
 		
 		
 	def get_node_del_cost(self, node_label):
@@ -667,7 +667,7 @@ class GEDEnv(object):
 		"""
 		if isinstance(node_label, dict):
 			node_label = tuple(sorted(node_label.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.node_del_cost_fun(node_label)
+		return self._ged_data._edit_cost.node_del_cost_fun(node_label)
 		
 		
 	def get_node_ins_cost(self, node_label):
@@ -680,11 +680,11 @@ class GEDEnv(object):
 		"""
 		if isinstance(node_label, dict):
 			node_label = tuple(sorted(node_label.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.node_ins_cost_fun(node_label)
+		return self._ged_data._edit_cost.node_ins_cost_fun(node_label)
 	
 	
 	def get_edge_cost(self, edge_label_1, edge_label_2):
-		return self.__ged_data.edge_cost(edge_label_1, edge_label_2)
+		return self._ged_data.edge_cost(edge_label_1, edge_label_2)
 		
 		
 	def get_edge_rel_cost(self, edge_label_1, edge_label_2):
@@ -700,7 +700,7 @@ class GEDEnv(object):
 			edge_label_1 = tuple(sorted(edge_label_1.items(), key=lambda kv: kv[0]))
 		if isinstance(edge_label_2, dict):
 			edge_label_2 = tuple(sorted(edge_label_2.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.edge_rel_cost_fun(edge_label_1, edge_label_2)
+		return self._ged_data._edit_cost.edge_rel_cost_fun(edge_label_1, edge_label_2)
 		
 		
 	def get_edge_del_cost(self, edge_label):
@@ -713,7 +713,7 @@ class GEDEnv(object):
 		"""
 		if isinstance(edge_label, dict):
 			edge_label = tuple(sorted(edge_label.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.edge_del_cost_fun(edge_label)
+		return self._ged_data._edit_cost.edge_del_cost_fun(edge_label)
 		
 		
 	def get_edge_ins_cost(self, edge_label):
@@ -726,8 +726,8 @@ class GEDEnv(object):
 		"""
 		if isinstance(edge_label, dict):
 			edge_label = tuple(sorted(edge_label.items(), key=lambda kv: kv[0]))
-		return self.__ged_data._edit_cost.edge_ins_cost_fun(edge_label)
+		return self._ged_data._edit_cost.edge_ins_cost_fun(edge_label)
 		
 		
 	def get_all_graph_ids(self):
-		return [i for i in range(0, self.__ged_data._num_graphs_without_shuffled_copies)]
+		return [i for i in range(0, self._ged_data._num_graphs_without_shuffled_copies)]

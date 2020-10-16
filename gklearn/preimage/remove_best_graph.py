@@ -35,13 +35,13 @@ def remove_best_graph(ds_name, mpg_options, kernel_options, ged_options, mge_opt
 	if save_results:
 		# create result files.
 		print('creating output files...')
-		fn_output_detail, fn_output_summary = __init_output_file(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
+		fn_output_detail, fn_output_summary = _init_output_file(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
 	else:
 		fn_output_detail, fn_output_summary = None, None
 		
 	# 2. compute/load Gram matrix a priori.
 	print('2. computing/loading Gram matrix...')
-	gram_matrix_unnorm_list, time_precompute_gm_list = __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets)
+	gram_matrix_unnorm_list, time_precompute_gm_list = _get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets)
 		
 	sod_sm_list = []
 	sod_gm_list = []
@@ -82,7 +82,7 @@ def remove_best_graph(ds_name, mpg_options, kernel_options, ged_options, mge_opt
 		# 3. get the best graph and remove it from median set.
 		print('3. getting and removing the best graph...')
 		gram_matrix_unnorm = gram_matrix_unnorm_list[idx - idx_offset]
-		best_index, best_dis, best_graph = __get_best_graph([g.copy() for g in dataset.graphs], normalize_gram_matrix(gram_matrix_unnorm.copy()))
+		best_index, best_dis, best_graph = _get_best_graph([g.copy() for g in dataset.graphs], normalize_gram_matrix(gram_matrix_unnorm.copy()))
 		median_set_new = [dataset.graphs[i] for i in range(len(dataset.graphs)) if i != best_index]
 		num_graphs -= 1
 		if num_graphs == 1:
@@ -294,7 +294,7 @@ def remove_best_graph(ds_name, mpg_options, kernel_options, ged_options, mge_opt
 	print('\ncomplete.\n')	
 
 
-def __get_best_graph(Gn, gram_matrix):
+def _get_best_graph(Gn, gram_matrix):
 	k_dis_list = []
 	for idx in range(len(Gn)):
 		k_dis_list.append(compute_k_dis(idx, range(0, len(Gn)), [1 / len(Gn)] * len(Gn), gram_matrix, withterm3=False))
@@ -313,7 +313,7 @@ def get_relations(sign):
 		return 'worse'
 
 
-def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets):
+def _get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets):
 	if load_gm == 'auto':
 		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
 		gmfile_exist = os.path.isfile(os.path.abspath(gm_fname))
@@ -325,7 +325,7 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets):
 			gram_matrix_unnorm_list = []
 			time_precompute_gm_list = []
 			for dataset in datasets:
-				gram_matrix_unnorm, time_precompute_gm = __compute_gram_matrix_unnorm(dataset, kernel_options)
+				gram_matrix_unnorm, time_precompute_gm = _compute_gram_matrix_unnorm(dataset, kernel_options)
 				gram_matrix_unnorm_list.append(gram_matrix_unnorm)
 				time_precompute_gm_list.append(time_precompute_gm)
 			np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=time_precompute_gm_list)
@@ -333,7 +333,7 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets):
 		gram_matrix_unnorm_list = []
 		time_precompute_gm_list = []
 		for dataset in datasets:
-			gram_matrix_unnorm, time_precompute_gm = __compute_gram_matrix_unnorm(dataset, kernel_options)
+			gram_matrix_unnorm, time_precompute_gm = _compute_gram_matrix_unnorm(dataset, kernel_options)
 			gram_matrix_unnorm_list.append(gram_matrix_unnorm)
 			time_precompute_gm_list.append(time_precompute_gm)
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=time_precompute_gm_list)
@@ -346,7 +346,7 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, datasets):
 	return gram_matrix_unnorm_list, time_precompute_gm_list
 
 
-def __get_graph_kernel(dataset, kernel_options):
+def _get_graph_kernel(dataset, kernel_options):
 	from gklearn.utils.utils import get_graph_kernel_by_name
 	graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
 				  node_labels=dataset.node_labels,
@@ -358,7 +358,7 @@ def __get_graph_kernel(dataset, kernel_options):
 	return graph_kernel
 		
 		
-def __compute_gram_matrix_unnorm(dataset, kernel_options):
+def _compute_gram_matrix_unnorm(dataset, kernel_options):
 	from gklearn.utils.utils import get_graph_kernel_by_name
 	graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
 				  node_labels=dataset.node_labels,
@@ -374,7 +374,7 @@ def __compute_gram_matrix_unnorm(dataset, kernel_options):
 	return gram_matrix_unnorm, run_time
 		
 		
-def __init_output_file(ds_name, gkernel, fit_method, dir_output):
+def _init_output_file(ds_name, gkernel, fit_method, dir_output):
 	if not os.path.exists(dir_output):
 		os.makedirs(dir_output)
 	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.csv'

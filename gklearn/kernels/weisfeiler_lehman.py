@@ -25,11 +25,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
-		self.__node_labels = kwargs.get('node_labels', [])
-		self.__edge_labels = kwargs.get('edge_labels', [])
-		self.__height = int(kwargs.get('height', 0))
-		self.__base_kernel = kwargs.get('base_kernel', 'subtree')
-		self.__ds_infos = kwargs.get('ds_infos', {})
+		self._node_labels = kwargs.get('node_labels', [])
+		self._edge_labels = kwargs.get('edge_labels', [])
+		self._height = int(kwargs.get('height', 0))
+		self._base_kernel = kwargs.get('base_kernel', 'subtree')
+		self._ds_infos = kwargs.get('ds_infos', {})
 
 
 	def _compute_gm_series(self):
@@ -37,23 +37,23 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			import warnings
 			warnings.warn('A part of the computation is parallelized.')
 			
-		self.__add_dummy_node_labels(self._graphs)
+		self._add_dummy_node_labels(self._graphs)
 		
 		# for WL subtree kernel
-		if self.__base_kernel == 'subtree':		   
-			gram_matrix = self.__subtree_kernel_do(self._graphs)
+		if self._base_kernel == 'subtree':		   
+			gram_matrix = self._subtree_kernel_do(self._graphs)
 	
 		# for WL shortest path kernel
-		elif self.__base_kernel == 'sp':
-			gram_matrix = self.__sp_kernel_do(self._graphs)
+		elif self._base_kernel == 'sp':
+			gram_matrix = self._sp_kernel_do(self._graphs)
 	
 		# for WL edge kernel
-		elif self.__base_kernel == 'edge':
-			gram_matrix = self.__edge_kernel_do(self._graphs)
+		elif self._base_kernel == 'edge':
+			gram_matrix = self._edge_kernel_do(self._graphs)
 	
 		# for user defined base kernel
 		else:
-			gram_matrix = self.__user_kernel_do(self._graphs)
+			gram_matrix = self._user_kernel_do(self._graphs)
 				
 		return gram_matrix
 			
@@ -70,23 +70,23 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			import warnings
 			warnings.warn('A part of the computation is parallelized.')
 			
-		self.__add_dummy_node_labels(g_list + [g1])
+		self._add_dummy_node_labels(g_list + [g1])
 				
 		# for WL subtree kernel
-		if self.__base_kernel == 'subtree':		   
-			gram_matrix = self.__subtree_kernel_do(g_list + [g1])
+		if self._base_kernel == 'subtree':		   
+			gram_matrix = self._subtree_kernel_do(g_list + [g1])
 	
 		# for WL shortest path kernel
-		elif self.__base_kernel == 'sp':
-			gram_matrix = self.__sp_kernel_do(g_list + [g1])
+		elif self._base_kernel == 'sp':
+			gram_matrix = self._sp_kernel_do(g_list + [g1])
 	
 		# for WL edge kernel
-		elif self.__base_kernel == 'edge':
-			gram_matrix = self.__edge_kernel_do(g_list + [g1])
+		elif self._base_kernel == 'edge':
+			gram_matrix = self._edge_kernel_do(g_list + [g1])
 	
 		# for user defined base kernel
 		else:
-			gram_matrix = self.__user_kernel_do(g_list + [g1])
+			gram_matrix = self._user_kernel_do(g_list + [g1])
 				
 		return list(gram_matrix[-1][0:-1])
 	
@@ -103,28 +103,28 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):  # @todo: this should be better.
-		self.__add_dummy_node_labels([g1] + [g2])
+		self._add_dummy_node_labels([g1] + [g2])
 
 		# for WL subtree kernel
-		if self.__base_kernel == 'subtree':		   
-			gram_matrix = self.__subtree_kernel_do([g1] + [g2])
+		if self._base_kernel == 'subtree':		   
+			gram_matrix = self._subtree_kernel_do([g1] + [g2])
 	
 		# for WL shortest path kernel
-		elif self.__base_kernel == 'sp':
-			gram_matrix = self.__sp_kernel_do([g1] + [g2])
+		elif self._base_kernel == 'sp':
+			gram_matrix = self._sp_kernel_do([g1] + [g2])
 	
 		# for WL edge kernel
-		elif self.__base_kernel == 'edge':
-			gram_matrix = self.__edge_kernel_do([g1] + [g2])
+		elif self._base_kernel == 'edge':
+			gram_matrix = self._edge_kernel_do([g1] + [g2])
 	
 		# for user defined base kernel
 		else:
-			gram_matrix = self.__user_kernel_do([g1] + [g2])
+			gram_matrix = self._user_kernel_do([g1] + [g2])
 				
 		return gram_matrix[0][1]
 	
 	
-	def __subtree_kernel_do(self, Gn):
+	def _subtree_kernel_do(self, Gn):
 		"""Compute Weisfeiler-Lehman kernels between graphs.
 	
 		Parameters
@@ -146,17 +146,17 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 		for G in Gn:
 			# set all labels into a tuple.
 			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
-				G.nodes[nd]['label_tuple'] = tuple(attrs[name] for name in self.__node_labels)
+				G.nodes[nd]['label_tuple'] = tuple(attrs[name] for name in self._node_labels)
 			# get the set of original labels
 			labels_ori = list(nx.get_node_attributes(G, 'label_tuple').values())
 			# number of occurence of each label in G
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 	
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		self.__compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
+		self._compute_gram_itr(gram_matrix, all_num_of_each_label, Gn)
 	
 		# iterate each height
-		for h in range(1, self.__height + 1):
+		for h in range(1, self._height + 1):
 			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
 			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
 	#		all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
@@ -199,12 +199,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				all_num_of_each_label.append(dict(Counter(labels_comp)))
 	
 			# Compute subtree kernel with h iterations and add it to the final kernel
-			self.__compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label, Gn)
 	
 		return gram_matrix
 
 	
-	def __compute_gram_matrix(self, gram_matrix, all_num_of_each_label, Gn):
+	def _compute_gram_itr(self, gram_matrix, all_num_of_each_label, Gn):
 		"""Compute Gram matrix using the base kernel.
 		"""
 		if self._parallel == 'imap_unordered':
@@ -218,12 +218,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 		elif self._parallel is None:
 			for i in range(len(gram_matrix)):
 				for j in range(i, len(gram_matrix)):
-					gram_matrix[i][j] = self.__compute_subtree_kernel(all_num_of_each_label[i],
+					gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],
 						   all_num_of_each_label[j], gram_matrix[i][j])
 					gram_matrix[j][i] = gram_matrix[i][j]
 					
 					
-	def __compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2, kernel):
+	def _compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2, kernel):
 		"""Compute the subtree kernel.
 		"""
 		labels = set(list(num_of_each_label1.keys()) + list(num_of_each_label2.keys()))
@@ -240,7 +240,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 	def _wrapper_compute_subtree_kernel(self, gram_matrix, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__compute_subtree_kernel(G_alllabels[i], G_alllabels[j], gram_matrix[i][j])
+		return i, j, self._compute_subtree_kernel(G_alllabels[i], G_alllabels[j], gram_matrix[i][j])
 				
 	
 	def _wl_spkernel_do(Gn, node_label, edge_label, height):
@@ -469,11 +469,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 		return gram_matrix
 	
 	
-	def __add_dummy_node_labels(self, Gn):
-		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+	def _add_dummy_node_labels(self, Gn):
+		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__node_labels = [SpecialLabel.DUMMY]
+			self._node_labels = [SpecialLabel.DUMMY]
 			
 			
 class WLSubtree(WeisfeilerLehman):

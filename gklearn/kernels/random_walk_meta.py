@@ -76,11 +76,11 @@ class RandomWalkMeta(GraphKernel):
 				
 		
 	def _add_dummy_labels(self, Gn):
-		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__node_labels = [SpecialLabel.DUMMY]
-		if len(self.__edge_labels) == 0 or (len(self.__edge_labels) == 1 and self.__edge_labels[0] == SpecialLabel.DUMMY):
+			self._node_labels = [SpecialLabel.DUMMY]
+		if len(self._edge_labels) == 0 or (len(self._edge_labels) == 1 and self._edge_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_edge_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__edge_labels = [SpecialLabel.DUMMY]
+			self._edge_labels = [SpecialLabel.DUMMY]

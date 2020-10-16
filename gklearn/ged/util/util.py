@@ -70,10 +70,16 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 
 	# compute ged.
 	# options used to compute numbers of edit operations.
-	neo_options = {'edit_cost': options['edit_cost'],
-				'is_cml': True,
-				'node_labels': node_labels,
-				'edge_labels': edge_labels}
+	if node_label_costs is None and edge_label_costs is None:
+		neo_options = {'edit_cost': options['edit_cost'],
+				 'is_cml': False,
+				 'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
+				 'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
+	else:
+		neo_options = {'edit_cost': options['edit_cost'],
+				 'is_cml': True,
+				 'node_labels': node_labels,
+				 'edge_labels': edge_labels}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
 		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)

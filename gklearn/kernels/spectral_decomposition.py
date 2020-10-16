@@ -66,7 +66,7 @@ class SpectralDecomposition(RandomWalkMeta):
 					iterator = itr
 					
 				for i, j in iterator:
-					kernel = self.__kernel_do(q_T_list[i], q_T_list[j], P_list[i], P_list[j], D_list[i], D_list[j], self._weight, self._sub_kernel)
+					kernel = self._kernel_do(q_T_list[i], q_T_list[j], P_list[i], P_list[j], D_list[i], D_list[j], self._weight, self._sub_kernel)
 					gram_matrix[i][j] = kernel
 					gram_matrix[j][i] = kernel
 			
@@ -162,7 +162,7 @@ class SpectralDecomposition(RandomWalkMeta):
 					iterator = range(len(g_list))
 					
 				for i in iterator:
-					kernel = self.__kernel_do(q_T1, q_T_list[i], P1, P_list[i], D1, D_list[i], self._weight, self._sub_kernel)
+					kernel = self._kernel_do(q_T1, q_T_list[i], P1, P_list[i], D1, D_list[i], self._weight, self._sub_kernel)
 					kernel_list[i] = kernel
 					
 			else: # @todo
@@ -190,9 +190,9 @@ class SpectralDecomposition(RandomWalkMeta):
 			P_list = []
 			D_list = []
 			if self._verbose >= 2:
-				iterator = tqdm(range(len(g_list)), desc='spectral decompose', file=sys.stdout)
+				iterator = tqdm(g_list, desc='spectral decompose', file=sys.stdout)
 			else:
-				iterator = range(len(g_list))
+				iterator = g_list
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -252,7 +252,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T2 = 1 / nx.number_of_nodes(g2)
-				kernel = self.__kernel_do(q_T1, q_T2, P1, P2, D1, D2, self._weight, self._sub_kernel)
+				kernel = self._kernel_do(q_T1, q_T2, P1, P2, D1, D2, self._weight, self._sub_kernel)
 			else: # @todo
 				pass
 		else: # @todo
@@ -261,7 +261,7 @@ class SpectralDecomposition(RandomWalkMeta):
 		return kernel		
 	
 	
-	def __kernel_do(self, q_T1, q_T2, P1, P2, D1, D2, weight, sub_kernel):
+	def _kernel_do(self, q_T1, q_T2, P1, P2, D1, D2, weight, sub_kernel):
 		# use uniform distribution if there is no prior knowledge.
 		kl = kron(np.dot(q_T1, P1), np.dot(q_T2, P2)).todense()
 		# @todo: this is not needed when p = q (kr = kl.T) for undirected graphs.
@@ -280,4 +280,4 @@ class SpectralDecomposition(RandomWalkMeta):
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do(G_q_T_list[i], G_q_T_list[j], G_P_list[i], G_P_list[j], G_D_list[i], G_D_list[j], self._weight, self._sub_kernel)
+		return i, j, self._kernel_do(G_q_T_list[i], G_q_T_list[j], G_P_list[i], G_P_list[j], G_D_list[i], G_D_list[j], self._weight, self._sub_kernel)
