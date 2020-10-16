@@ -183,7 +183,7 @@ class MedianPreimageGenerator(PreimageGenerator):
 		results['mge']['num_decrease_order'] = self._mge.get_num_times_order_decreased()
 		results['mge']['num_increase_order'] = self._mge.get_num_times_order_increased()
 		results['mge']['num_converged_descents'] = self._mge.get_num_converged_descents()
-		results['ged_matrix_set_median'] = self._mge.ged_matrix_set_median_tmp
+# 		results['ged_matrix_set_median'] = self._mge.ged_matrix_set_median_tmp
 		return results
 
 		
