@@ -153,7 +153,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 	
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		self._compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
+		self._compute_gram_itr(gram_matrix, all_num_of_each_label, Gn)
 	
 		# iterate each height
 		for h in range(1, self._height + 1):
@@ -199,12 +199,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: total parallelization and sp, edge
 				all_num_of_each_label.append(dict(Counter(labels_comp)))
 	
 			# Compute subtree kernel with h iterations and add it to the final kernel
-			self._compute_gram_matrix(gram_matrix, all_num_of_each_label, Gn)
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label, Gn)
 	
 		return gram_matrix
 
 	
-	def _compute_gram_matrix(self, gram_matrix, all_num_of_each_label, Gn):
+	def _compute_gram_itr(self, gram_matrix, all_num_of_each_label, Gn):
 		"""Compute Gram matrix using the base kernel.
 		"""
 		if self._parallel == 'imap_unordered':

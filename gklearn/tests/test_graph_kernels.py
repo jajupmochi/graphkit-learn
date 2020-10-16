@@ -434,7 +434,8 @@ def test_WLSubtree(ds_name, parallel):
 
 if __name__ == "__main__":
 #	test_spkernel('Alkane', 'imap_unordered')
-	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+# 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+	test_WLSubtree('Acyclic', 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)
