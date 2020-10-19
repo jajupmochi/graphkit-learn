@@ -158,7 +158,7 @@ def cross_validate(graphs, targets, kernel_name, output_dir='outputs/', ds_name=
 		sub_kernel = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 		param_grid_precomputed = {'compute_method': ['fp'], 
                           'node_kernels': [sub_kernel], 'edge_kernels': [sub_kernel],
-                          'weight': np.logspace(-3, -10, num=8, base=10)}
+                          'weight': np.logspace(-4, -10, num=7, base=10)}
 		
 	elif kernel_name == 'SpectralDecomposition':
 		from gklearn.kernels.randomWalkKernel import randomwalkkernel
@@ -196,14 +196,17 @@ def cross_validate(graphs, targets, kernel_name, output_dir='outputs/', ds_name=
 	elif kernel_name == 'Treelet':
 		from gklearn.kernels.treeletKernel import treeletkernel
 		estimator = treeletkernel
-		from gklearn.utils.kernels import polynomialkernel
+		from gklearn.utils.kernels import gaussiankernel, polynomialkernel
 		import functools
 		gkernels = [functools.partial(gaussiankernel, gamma=1 / ga) 
 		#            for ga in np.linspace(1, 10, 10)]
-		            for ga in np.logspace(0, 10, num=11, base=10)]
-		pkernels = [functools.partial(polynomialkernel, d=d, c=c) for d in range(1, 11)
-		             for c in np.logspace(0, 10, num=11, base=10)]
+			  for ga in np.logspace(0, 10, num=11, base=10)]
+		pkernels = [functools.partial(polynomialkernel, d=d, c=c) for d in range(1, 11) 
+			  for c in np.logspace(0, 10, num=11, base=10)]
+# 		pkernels = [functools.partial(polynomialkernel, d=1, c=1)]
+
 		param_grid_precomputed = {'sub_kernel': pkernels + gkernels}
+# 							'parallel': [None]}
 		
 	elif kernel_name == 'WLSubtree':
 		from gklearn.kernels.weisfeilerLehmanKernel import weisfeilerlehmankernel
