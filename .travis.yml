@@ -4,7 +4,6 @@ python:
 - '3.6'
 - '3.7'
 - '3.8'
-- '3.9'
 
 before_install:
 - python --version
@@ -13,6 +12,7 @@ before_install:
 - pip install codecov
 - pip install coverage
 - pip install pytest-cov
+- sudo apt-get -y install gfortran
 
 install:
 - pip install -r requirements.txt
