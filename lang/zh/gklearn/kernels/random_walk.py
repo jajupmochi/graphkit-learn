@@ -10,85 +10,47 @@ Created on Wed Aug 19 16:55:17 2020
 	[1] S Vichy N Vishwanathan, Nicol N Schraudolph, Risi Kondor, and Karsten M Borgwardt. Graph kernels. Journal of Machine Learning Research, 11(Apr):1201–1242, 2010.
 """
 
-import sys
-from tqdm import tqdm
-import numpy as np
-import networkx as nx
-from gklearn.utils import SpecialLabel
-from gklearn.utils.parallel import parallel_gm, parallel_me
-from gklearn.utils.utils import direct_product_graph
-from gklearn.kernels import GraphKernel
+from gklearn.kernels import SylvesterEquation, ConjugateGradient, FixedPoint, SpectralDecomposition
 
 
-class RandomWalk(GraphKernel):
+class RandomWalk(SylvesterEquation, ConjugateGradient, FixedPoint, SpectralDecomposition):
 	
 	
 	def __init__(self, **kwargs):
-		GraphKernel.__init__(self)		
 		self._compute_method = kwargs.get('compute_method', None)
-		self._weight = kwargs.get('weight', 1)
-		self._p = kwargs.get('p', None)
-		self._q = kwargs.get('q', None)
-		self._edge_weight = kwargs.get('edge_weight', None)
-		self._ds_infos = kwargs.get('ds_infos', {})
+		self._compute_method = self._compute_method.lower()
 		
-		self._compute_method = self.__compute_method.lower()
+		if self._compute_method == 'sylvester':
+			self._parent = SylvesterEquation
+		elif self._compute_method == 'conjugate':
+			self._parent = ConjugateGradient
+		elif self._compute_method == 'fp':
+			self._parent = FixedPoint
+		elif self._compute_method == 'spectral':
+			self._parent = SpectralDecomposition
+		elif self._compute_method == 'kon':
+			raise Exception('This computing method is not completed yet.')
+		else:
+			raise Exception('This computing method does not exist. The possible choices inlcude: "sylvester", "conjugate", "fp", "spectral".')
+
+		self._parent.__init__(self, **kwargs)
 		
 		
 	def _compute_gm_series(self):
-		pass
+		return self._parent._compute_gm_series(self)
 
 
 	def _compute_gm_imap_unordered(self):
-		pass
+		return self._parent._compute_gm_imap_unordered(self)
 	
 		
 	def _compute_kernel_list_series(self, g1, g_list):
-		pass
+		return self._parent._compute_kernel_list_series(self, g1, g_list)
 
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		pass
+		return self._parent._compute_kernel_list_imap_unordered(self, g1, g_list)
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):
-		pass
-	
-	
-	def _check_graphs(self, Gn):
-		# remove graphs with no edges, as no walk can be found in their structures, 
-		# so the weight matrix between such a graph and itself might be zero.
-		for g in Gn:
-			if nx.number_of_edges(g) == 0:
-				raise Exception('Graphs must contain edges to construct weight matrices.')
-				
-	
-	def _check_edge_weight(self, G0, verbose):
-		eweight = None
-		if self._edge_weight == None:
-			if verbose >= 2:
-				print('\n None edge weight is specified. Set all weight to 1.\n')
-		else:
-			try:
-				some_weight = list(nx.get_edge_attributes(G0, self._edge_weight).values())[0]
-				if isinstance(some_weight, float) or isinstance(some_weight, int):
-					eweight = self._edge_weight
-				else:
-					if verbose >= 2:
-						print('\n Edge weight with name %s is not float or integer. Set all weight to 1.\n' % self._edge_weight)
-			except:
-				if verbose >= 2:
-					print('\n Edge weight with name "%s" is not found in the edge attributes. Set all weight to 1.\n' % self._edge_weight)
-		
-		self._edge_weight = eweight
-				
-		
-	def _add_dummy_labels(self, Gn):
-		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
-			for i in range(len(Gn)):
-				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__node_labels = [SpecialLabel.DUMMY]
-		if len(self.__edge_labels) == 0 or (len(self.__edge_labels) == 1 and self.__edge_labels[0] == SpecialLabel.DUMMY):
-			for i in range(len(Gn)):
-				nx.set_edge_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__edge_labels = [SpecialLabel.DUMMY]
+		return self._parent._compute_single_kernel_series(self, g1, g2)
