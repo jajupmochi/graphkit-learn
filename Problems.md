@@ -21,3 +21,8 @@ export LD_LIBRARY_PATH=/opt/intel/lib/intel64:/opt/intel/mkl/lib/intel64:$LD_LIB
 
 export LD_PRELOAD=/opt/intel/mkl/lib/intel64/libmkl_def.so:/opt/intel/mkl/lib/intel64/libmkl_avx2.so:/opt/intel/mkl/lib/intel64/libmkl_core.so:/opt/intel/mkl/lib/intel64/libmkl_intel_lp64.so:/opt/intel/mkl/lib/intel64/libmkl_intel_thread.so:/opt/intel/lib/intel64_lin/libiomp5.so
 ```
+
+### Module `slycot` install error.
+
+A fortran compiler (e.g., `gfortran`) and BLAS/LAPACK (e.g. `liblapack-dev`) needs to be pre-installed. Try to include them in the library or remove these dependences. See [slycot's file](https://github.com/python-control/Slycot/blob/master/.travis.yml) for detail.
+
