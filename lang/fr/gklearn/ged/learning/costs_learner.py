@@ -126,8 +126,8 @@ class CostsLearner(object):
 
 	def termination_criterion_met(self, converged, timer, itr, itrs_without_update):
 		if timer.expired() or (itr >= self._max_itrs if self._max_itrs >= 0 else False):
-# 			if self.__state == AlgorithmState.TERMINATED:
-# 				self.__state = AlgorithmState.INITIALIZED
+# 			if self._state == AlgorithmState.TERMINATED:
+# 				self._state = AlgorithmState.INITIALIZED
 			return True
 		return converged or (itrs_without_update > self._max_itrs_without_update if self._max_itrs_without_update >= 0 else False)
 	
