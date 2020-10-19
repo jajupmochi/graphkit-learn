@@ -33,35 +33,35 @@ def kernel_knn_cv(ds_name, train_examples, knn_options, mpg_options, kernel_opti
 	if save_results:
 		# create result files.
 		print('creating output files...')
-		fn_output_detail, fn_output_summary = __init_output_file_knn(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
+		fn_output_detail, fn_output_summary = _init_output_file_knn(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
 	else:
 		fn_output_detail, fn_output_summary = None, None
 		
 	# 2. compute/load Gram matrix a priori.
 	print('2. computing/loading Gram matrix...')
-	gram_matrix_unnorm, time_precompute_gm = __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all)
+	gram_matrix_unnorm, time_precompute_gm = _get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all)
 	
 	# 3. perform k-nn CV.
 	print('3. performing k-nn CV...')
 	if train_examples == 'k-graphs' or train_examples == 'expert' or train_examples == 'random':
-		__kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kernel_options, mge_options, ged_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
+		_kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kernel_options, mge_options, ged_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
 	
 	elif train_examples == 'best-dataset':
-		__kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
+		_kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
 		
 	elif train_examples == 'trainset':
-		__kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
+		_kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary)
 
 	print('\ncomplete.\n')	
 	
 	
-def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kernel_options, mge_options, ged_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
+def _kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kernel_options, mge_options, ged_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
 	Gn = dataset_all.graphs
 	y_all = dataset_all.targets
 	n_neighbors, n_splits, test_size = knn_options['n_neighbors'], knn_options['n_splits'], knn_options['test_size']
 
 	# get shuffles. 
-	train_indices, test_indices, train_nums, y_app = __get_shuffles(y_all, n_splits, test_size)
+	train_indices, test_indices, train_nums, y_app = _get_shuffles(y_all, n_splits, test_size)
 	
 	accuracies = [[], [], []]
 	for trial in range(len(train_indices)):
@@ -89,11 +89,11 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 			mge_options['update_order'] = True
 			mpg_options['gram_matrix_unnorm'] = gm_unnorm_trial[i_start:i_end,i_start:i_end].copy()
 			mpg_options['runtime_precompute_gm'] = 0
-			set_median, gen_median_uo = __generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options)
+			set_median, gen_median_uo = _generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options)
 			mge_options['update_order'] = False
 			mpg_options['gram_matrix_unnorm'] = gm_unnorm_trial[i_start:i_end,i_start:i_end].copy()
 			mpg_options['runtime_precompute_gm'] = 0
-			_, gen_median = __generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options)
+			_, gen_median = _generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options)
 			medians[0].append(set_median)
 			medians[1].append(gen_median)
 			medians[2].append(gen_median_uo)
@@ -104,10 +104,10 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 			# compute dis_mat between medians.
 			dataset = dataset_all.copy()
 			dataset.load_graphs([g.copy() for g in G_app], targets=None)
-			gm_app_unnorm, _ = __compute_gram_matrix_unnorm(dataset, kernel_options.copy())
+			gm_app_unnorm, _ = _compute_gram_matrix_unnorm(dataset, kernel_options.copy())
 			
 			# compute the entire Gram matrix.
-			graph_kernel = __get_graph_kernel(dataset.copy(), kernel_options.copy())
+			graph_kernel = _get_graph_kernel(dataset.copy(), kernel_options.copy())
 			kernels_to_medians = []
 			for g in G_app:
 				kernels_to_median, _ = graph_kernel.compute(g, G_test, **kernel_options.copy()) 
@@ -161,13 +161,13 @@ def __kernel_knn_cv_median(dataset_all, ds_name, knn_options, mpg_options, kerne
 		f_summary.close()
 		
 		
-def __kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
+def _kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
 	Gn = dataset_all.graphs
 	y_all = dataset_all.targets
 	n_neighbors, n_splits, test_size = knn_options['n_neighbors'], knn_options['n_splits'], knn_options['test_size']
 
 	# get shuffles. 
-	train_indices, test_indices, train_nums, y_app = __get_shuffles(y_all, n_splits, test_size)
+	train_indices, test_indices, train_nums, y_app = _get_shuffles(y_all, n_splits, test_size)
 	
 	accuracies = []
 	for trial in range(len(train_indices)):
@@ -204,10 +204,10 @@ def __kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, g
 		# compute dis_mat between medians.
 		dataset = dataset_all.copy()
 		dataset.load_graphs([g.copy() for g in best_graphs], targets=None)
-		gm_app_unnorm, _ = __compute_gram_matrix_unnorm(dataset, kernel_options.copy())
+		gm_app_unnorm, _ = _compute_gram_matrix_unnorm(dataset, kernel_options.copy())
 		
 		# compute the entire Gram matrix.
-		graph_kernel = __get_graph_kernel(dataset.copy(), kernel_options.copy())
+		graph_kernel = _get_graph_kernel(dataset.copy(), kernel_options.copy())
 		kernels_to_best_graphs = []
 		for g in best_graphs:
 			kernels_to_best_graph, _ = graph_kernel.compute(g, G_test, **kernel_options.copy()) 
@@ -259,7 +259,7 @@ def __kernel_knn_cv_best_ds(dataset_all, ds_name, knn_options, kernel_options, g
 		f_summary.close()
 	
 	
-def __kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
+def _kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, gram_matrix_unnorm, time_precompute_gm, train_examples, save_results, dir_save, fn_output_detail, fn_output_summary):
 	y_all = dataset_all.targets
 	n_neighbors, n_splits, test_size = knn_options['n_neighbors'], knn_options['n_splits'], knn_options['test_size']
 	
@@ -268,7 +268,7 @@ def __kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, 
 	dis_mat, _, _, _ = compute_distance_matrix(gram_matrix)
 
 	# get shuffles. 
-	train_indices, test_indices, _, _ = __get_shuffles(y_all, n_splits, test_size)
+	train_indices, test_indices, _, _ = _get_shuffles(y_all, n_splits, test_size)
 			 
 	accuracies = []
 	for trial in range(len(train_indices)):
@@ -317,7 +317,7 @@ def __kernel_knn_cv_trainset(dataset_all, ds_name, knn_options, kernel_options, 
 		f_summary.close()
 	
 	
-def __get_shuffles(y_all, n_splits, test_size):
+def _get_shuffles(y_all, n_splits, test_size):
 	rs = ShuffleSplit(n_splits=n_splits, test_size=test_size, random_state=0)
 	train_indices = [[] for _ in range(n_splits)] 
 	test_indices = [[] for _ in range(n_splits)]
@@ -335,7 +335,7 @@ def __get_shuffles(y_all, n_splits, test_size):
 	return train_indices, test_indices, train_nums, keys
 	
 	
-def __generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options):
+def _generate_median_preimages(dataset, mpg_options, kernel_options, ged_options, mge_options):
 	mpg = MedianPreimageGenerator()
 	mpg.dataset = dataset.copy()
 	mpg.set_options(**mpg_options.copy())
@@ -346,7 +346,7 @@ def __generate_median_preimages(dataset, mpg_options, kernel_options, ged_option
 	return mpg.set_median, mpg.gen_median
 
 
-def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all):
+def _get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all):
 	if load_gm == 'auto':
 		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
 		gmfile_exist = os.path.isfile(os.path.abspath(gm_fname))
@@ -355,10 +355,10 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all):
 			gram_matrix_unnorm = gmfile['gram_matrix_unnorm']
 			time_precompute_gm = float(gmfile['run_time'])
 		else:
-			gram_matrix_unnorm, time_precompute_gm = __compute_gram_matrix_unnorm(dataset_all, kernel_options)
+			gram_matrix_unnorm, time_precompute_gm = _compute_gram_matrix_unnorm(dataset_all, kernel_options)
 			np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm=gram_matrix_unnorm, run_time=time_precompute_gm)
 	elif not load_gm:
-		gram_matrix_unnorm, time_precompute_gm = __compute_gram_matrix_unnorm(dataset_all, kernel_options)
+		gram_matrix_unnorm, time_precompute_gm = _compute_gram_matrix_unnorm(dataset_all, kernel_options)
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm=gram_matrix_unnorm, run_time=time_precompute_gm)
 	else:
 		gm_fname = dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm.npz'
@@ -369,7 +369,7 @@ def __get_gram_matrix(load_gm, dir_save, ds_name, kernel_options, dataset_all):
 	return gram_matrix_unnorm, time_precompute_gm
 
 
-def __get_graph_kernel(dataset, kernel_options):
+def _get_graph_kernel(dataset, kernel_options):
 	from gklearn.utils.utils import get_graph_kernel_by_name
 	graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
 				  node_labels=dataset.node_labels,
@@ -381,7 +381,7 @@ def __get_graph_kernel(dataset, kernel_options):
 	return graph_kernel
 		
 		
-def __compute_gram_matrix_unnorm(dataset, kernel_options):
+def _compute_gram_matrix_unnorm(dataset, kernel_options):
 	from gklearn.utils.utils import get_graph_kernel_by_name
 	graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
 				  node_labels=dataset.node_labels,
@@ -397,7 +397,7 @@ def __compute_gram_matrix_unnorm(dataset, kernel_options):
 	return gram_matrix_unnorm, run_time
 		
 		
-def __init_output_file_knn(ds_name, gkernel, fit_method, dir_output):
+def _init_output_file_knn(ds_name, gkernel, fit_method, dir_output):
 	if not os.path.exists(dir_output):
 		os.makedirs(dir_output)
 	fn_output_detail = 'results_detail_knn.' + ds_name + '.' + gkernel + '.csv'
