@@ -12,9 +12,9 @@ from gklearn.utils import dummy_node, undefined_node
 class NodeMap(object):
 	
 	def __init__(self, num_nodes_g, num_nodes_h):
-		self.__forward_map = [undefined_node()] * num_nodes_g
-		self.__backward_map = [undefined_node()] * num_nodes_h
-		self.__induced_cost = np.inf
+		self._forward_map = [undefined_node()] * num_nodes_g
+		self._backward_map = [undefined_node()] * num_nodes_h
+		self._induced_cost = np.inf
 		
 		
 	def clear(self):
@@ -23,29 +23,29 @@ class NodeMap(object):
 	 * @brief Clears the node map.
 	 */
 		"""
-		self.__forward_map = [undefined_node() for i in range(len(self.__forward_map))]
-		self.__backward_map = [undefined_node() for i in range(len(self.__backward_map))]
+		self._forward_map = [undefined_node() for i in range(len(self._forward_map))]
+		self._backward_map = [undefined_node() for i in range(len(self._backward_map))]
 		
 		
 	def num_source_nodes(self):
-		return len(self.__forward_map)
+		return len(self._forward_map)
 	
 	
 	def num_target_nodes(self):
-		return len(self.__backward_map)
+		return len(self._backward_map)
 	
 	
 	def image(self, node):
-		if node < len(self.__forward_map):
-			return self.__forward_map[node]
+		if node < len(self._forward_map):
+			return self._forward_map[node]
 		else:
 			raise Exception('The node with ID ', str(node), ' is not contained in the source nodes of the node map.')
 		return undefined_node()
 	
 	
 	def pre_image(self, node):
-		if node < len(self.__backward_map):
-			return self.__backward_map[node]
+		if node < len(self._backward_map):
+			return self._backward_map[node]
 		else:
 			raise Exception('The node with ID ', str(node), ' is not contained in the target nodes of the node map.')
 		return undefined_node()
@@ -53,50 +53,50 @@ class NodeMap(object):
 	
 	def as_relation(self, relation):
 		relation.clear()
-		for i in range(0, len(self.__forward_map)):
-			k = self.__forward_map[i]
+		for i in range(0, len(self._forward_map)):
+			k = self._forward_map[i]
 			if k != undefined_node():
 				relation.append(tuple((i, k)))
-		for k in range(0, len(self.__backward_map)):
-			i = self.__backward_map[k]
+		for k in range(0, len(self._backward_map)):
+			i = self._backward_map[k]
 			if i == dummy_node():
 				relation.append(tuple((i, k)))
 	
 	
 	def add_assignment(self, i, k):
 		if i != dummy_node():
-			if i < len(self.__forward_map):
-				self.__forward_map[i] = k
+			if i < len(self._forward_map):
+				self._forward_map[i] = k
 			else:
 				raise Exception('The node with ID ', str(i), ' is not contained in the source nodes of the node map.')
 		if k != dummy_node():
-			if k < len(self.__backward_map):
-				self.__backward_map[k] = i
+			if k < len(self._backward_map):
+				self._backward_map[k] = i
 			else:
 				raise Exception('The node with ID ', str(k), ' is not contained in the target nodes of the node map.')
 	
 	
 	def set_induced_cost(self, induced_cost):
-		self.__induced_cost = induced_cost
+		self._induced_cost = induced_cost
 		
 		
 	def induced_cost(self):
-		return self.__induced_cost
+		return self._induced_cost
 	
 	
 	@property
 	def forward_map(self):
-		return self.__forward_map
+		return self._forward_map
 
 	@forward_map.setter
 	def forward_map(self, value):
-		self.__forward_map = value	
+		self._forward_map = value	
 		
 		
 	@property
 	def backward_map(self):
-		return self.__backward_map
+		return self._backward_map
 
 	@backward_map.setter
 	def backward_map(self, value):
-		self.__backward_map = value	
+		self._backward_map = value	
