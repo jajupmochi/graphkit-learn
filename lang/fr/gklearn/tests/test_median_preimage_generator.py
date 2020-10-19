@@ -72,3 +72,7 @@ def test_median_preimage_generator():
 			generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged_options, mge_options, save_results=save_results, save_medians=True, plot_medians=True, load_gm='auto', dir_save=dir_save, irrelevant_labels=irrelevant_labels, edge_required=edge_required, cut_range=range(0, 4))
 		except Exception as exception:
 			assert False, exception
+			
+	
+if __name__ == '__main__':
+	test_median_preimage_generator()
