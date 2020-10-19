@@ -11,6 +11,7 @@ before_install:
   - pip install codecov
   - pip install coverage
   - pip install pytest-cov
+  - sudo apt-get -y install gfortran
 install:
   - pip install -r requirements.txt
   - pip install wheel
