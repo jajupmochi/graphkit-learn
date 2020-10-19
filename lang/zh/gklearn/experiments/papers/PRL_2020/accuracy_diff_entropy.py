@@ -34,6 +34,11 @@ def generate_graphs():
 	graphs11 = [nx.configuration_model(degrees11, create_using=nx.Graph) for i in range(half_num_graphs)]
 	graphs12 = [nx.configuration_model(degrees12, create_using=nx.Graph) for i in range(half_num_graphs)]
 	
+	for g in graphs11:
+		g.remove_edges_from(nx.selfloop_edges(g))
+	for g in graphs12:
+		g.remove_edges_from(nx.selfloop_edges(g))
+	
 	# method 2: can easily generate isomorphic graphs.
 # 	graphs11 = [nx.random_regular_graph(2, num_nodes, seed=None) for i in range(half_num_graphs)]
 # 	graphs12 = [nx.random_regular_graph(10, num_nodes, seed=None) for i in range(half_num_graphs)]
@@ -51,6 +56,11 @@ def generate_graphs():
 	# method 1: the entorpy of the two classes is not the same.
 	graphs21 = [nx.configuration_model(degrees21, create_using=nx.Graph) for i in range(half_num_graphs)]
 	graphs22 = [nx.configuration_model(degrees22, create_using=nx.Graph) for i in range(half_num_graphs)]	
+
+	for g in graphs21:
+		g.remove_edges_from(nx.selfloop_edges(g))
+	for g in graphs22:
+		g.remove_edges_from(nx.selfloop_edges(g))
 	
 # 	# method 2: tooo slow, and may fail.
 # 	graphs21 = [nx.random_degree_sequence_graph(degrees21, seed=None, tries=100) for i in range(half_num_graphs)]
