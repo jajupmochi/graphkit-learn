@@ -23,8 +23,8 @@ class Timer(object):
 		time_limit_in_sec : string
 			The time limit in seconds.
 		"""		
-		self.__time_limit_in_sec = time_limit_in_sec
-		self.__start_time = time.time()
+		self._time_limit_in_sec = time_limit_in_sec
+		self._start_time = time.time()
 	
 	
 	def expired(self):
@@ -34,7 +34,7 @@ class Timer(object):
 		------
 		Boolean true if the time limit has expired and false otherwise.
 """
-		if self.__time_limit_in_sec > 0:
-			runtime = time.time() - self.__start_time
-			return runtime >= self.__time_limit_in_sec
+		if self._time_limit_in_sec > 0:
+			runtime = time.time() - self._start_time
+			return runtime >= self._time_limit_in_sec
 		return False
