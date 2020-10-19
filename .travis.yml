@@ -12,7 +12,7 @@ before_install:
 - pip install codecov
 - pip install coverage
 - pip install pytest-cov
-- sudo apt-get -y install gfortran
+- sudo apt-get -y install gfortran liblapack-dev
 
 install:
 - pip install -r requirements.txt
