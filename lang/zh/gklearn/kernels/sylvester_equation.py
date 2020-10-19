@@ -16,18 +16,18 @@ import numpy as np
 import networkx as nx
 from control import dlyap
 from gklearn.utils.parallel import parallel_gm, parallel_me
-from gklearn.kernels import RandomWalk
+from gklearn.kernels import RandomWalkMeta
 
 
-class SylvesterEquation(RandomWalk):
+class SylvesterEquation(RandomWalkMeta):
 	
 	
 	def __init__(self, **kwargs):
-		RandomWalk.__init__(self, **kwargs)
+		super().__init__(**kwargs)
 		
 
 	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs)
+		self._check_edge_weight(self._graphs, self._verbose)
 		self._check_graphs(self._graphs)
 		if self._verbose >= 2:
 			import warnings
@@ -38,7 +38,7 @@ class SylvesterEquation(RandomWalk):
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
 		
-		if self._q == None:
+		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			if self._verbose >= 2:
@@ -54,16 +54,16 @@ class SylvesterEquation(RandomWalk):
 	#			norm[norm == 0] = 1
 	#			A_wave_list.append(A_tilde / norm)
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				from itertools import combinations_with_replacement
 				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 				if self._verbose >= 2:
-					iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+					iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 				else:
 					iterator = itr
 					
 				for i, j in iterator:
-					kernel = self.__kernel_do(A_wave_list[i], A_wave_list[j], lmda)
+					kernel = self._kernel_do(A_wave_list[i], A_wave_list[j], lmda)
 					gram_matrix[i][j] = kernel
 					gram_matrix[j][i] = kernel
 			
@@ -76,7 +76,7 @@ class SylvesterEquation(RandomWalk):
 			
 			
 	def _compute_gm_imap_unordered(self):
-		self._check_edge_weight(self._graphs)
+		self._check_edge_weight(self._graphs, self._verbose)
 		self._check_graphs(self._graphs)
 		if self._verbose >= 2:
 			import warnings
@@ -85,7 +85,7 @@ class SylvesterEquation(RandomWalk):
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
 		
-		if self._q == None:
+		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			if self._verbose >= 2:
@@ -94,7 +94,7 @@ class SylvesterEquation(RandomWalk):
 				iterator = self._graphs
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator] # @todo: parallel?
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				def init_worker(A_wave_list_toshare):
 					global G_A_wave_list
 					G_A_wave_list = A_wave_list_toshare
@@ -113,7 +113,7 @@ class SylvesterEquation(RandomWalk):
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1])
+		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
@@ -124,24 +124,24 @@ class SylvesterEquation(RandomWalk):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		
-		if self._q == None:
+		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			A_wave_1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			if self._verbose >= 2:
-				iterator = tqdm(range(len(g_list)), desc='compute adjacency matrices', file=sys.stdout)
+				iterator = tqdm(g_list, desc='compute adjacency matrices', file=sys.stdout)
 			else:
-				iterator = range(len(g_list))
+				iterator = g_list
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator]
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				if self._verbose >= 2:
-					iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+					iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 				else:
 					iterator = range(len(g_list))
 					
 				for i in iterator:
-					kernel = self.__kernel_do(A_wave_1, A_wave_list[i], lmda)
+					kernel = self._kernel_do(A_wave_1, A_wave_list[i], lmda)
 					kernel_list[i] = kernel
 			
 			else: # @todo
@@ -153,7 +153,7 @@ class SylvesterEquation(RandomWalk):
 	
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1])
+		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
@@ -162,17 +162,17 @@ class SylvesterEquation(RandomWalk):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		
-		if self._q == None:
+		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			A_wave_1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			if self._verbose >= 2:
-				iterator = tqdm(range(len(g_list)), desc='compute adjacency matrices', file=sys.stdout)
+				iterator = tqdm(g_list, desc='compute adjacency matrices', file=sys.stdout)
 			else:
-				iterator = range(len(g_list))
+				iterator = g_list
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator] # @todo: parallel?
 
-			if self._p == None: # p is uniform distribution as default.
+			if self._p is None: # p is uniform distribution as default.
 				def init_worker(A_wave_1_toshare, A_wave_list_toshare):
 					global G_A_wave_1, G_A_wave_list
 					G_A_wave_1 = A_wave_1_toshare
@@ -186,7 +186,7 @@ class SylvesterEquation(RandomWalk):
 				len_itr = len(g_list)
 				parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 					init_worker=init_worker, glbv=(A_wave_1, A_wave_list), method='imap_unordered', 
-					n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+					n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 			else: # @todo
 				pass
@@ -201,7 +201,7 @@ class SylvesterEquation(RandomWalk):
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):
-		self._check_edge_weight([g1] + [g2])
+		self._check_edge_weight([g1] + [g2], self._verbose)
 		self._check_graphs([g1] + [g2])
 		if self._verbose >= 2:
 			import warnings
@@ -209,13 +209,13 @@ class SylvesterEquation(RandomWalk):
 			
 		lmda = self._weight
 		
-		if self._q == None:
+		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			A_wave_1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			A_wave_2 = nx.adjacency_matrix(g2, self._edge_weight).todense().transpose()
-			if self._p == None: # p is uniform distribution as default.
-				kernel = self.__kernel_do(A_wave_1, A_wave_2, lmda)
+			if self._p is None: # p is uniform distribution as default.
+				kernel = self._kernel_do(A_wave_1, A_wave_2, lmda)
 			else: # @todo
 				pass
 		else: # @todo
@@ -224,7 +224,7 @@ class SylvesterEquation(RandomWalk):
 		return kernel		
 	
 	
-	def __kernel_do(self, A_wave1, A_wave2, lmda):
+	def _kernel_do(self, A_wave1, A_wave2, lmda):
 		
 		S = lmda * A_wave2
 		T_t = A_wave1
@@ -242,4 +242,4 @@ class SylvesterEquation(RandomWalk):
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do(G_A_wave_list[i], G_A_wave_list[j], self._weight)
+		return i, j, self._kernel_do(G_A_wave_list[i], G_A_wave_list[j], self._weight)
