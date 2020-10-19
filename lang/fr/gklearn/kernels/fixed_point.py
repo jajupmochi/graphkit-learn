@@ -60,7 +60,7 @@ class FixedPoint(RandomWalkMeta):
 				iterator = itr
 				
 			for i, j in iterator:
-				kernel = self.__kernel_do(self._graphs[i], self._graphs[j], lmda)
+				kernel = self._kernel_do(self._graphs[i], self._graphs[j], lmda)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 
@@ -127,7 +127,7 @@ class FixedPoint(RandomWalkMeta):
 				iterator = range(len(g_list))
 				
 			for i in iterator:
-				kernel = self.__kernel_do(g1, g_list[i], lmda)
+				kernel = self._kernel_do(g1, g_list[i], lmda)
 				kernel_list[i] = kernel
 
 		else: # @todo
@@ -190,7 +190,7 @@ class FixedPoint(RandomWalkMeta):
 		g2 = nx.convert_node_labels_to_integers(g2, first_label=0, label_attribute='label_orignal')
 		
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
-			kernel = self.__kernel_do(g1, g2, lmda)
+			kernel = self._kernel_do(g1, g2, lmda)
 
 		else: # @todo
 			pass
@@ -198,7 +198,7 @@ class FixedPoint(RandomWalkMeta):
 		return kernel		
 	
 	
-	def __kernel_do(self, g1, g2, lmda):
+	def _kernel_do(self, g1, g2, lmda):
 		
 		# Frist, compute kernels between all pairs of nodes using the method borrowed
 		# from FCSP. It is faster than directly computing all edge kernels 
@@ -221,10 +221,10 @@ class FixedPoint(RandomWalkMeta):
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do(G_gn[i], G_gn[j], self._weight)
+		return i, j, self._kernel_do(G_gn[i], G_gn[j], self._weight)
 	
 	
-	def _func_fp(x, p_times, lmda, w_times):
+	def _func_fp(self, x, p_times, lmda, w_times):
 		haha = w_times * x
 		haha = lmda * haha
 		haha = p_times + haha
@@ -245,19 +245,19 @@ class FixedPoint(RandomWalkMeta):
 		# Define edge kernels.
 		def compute_ek_11(e1, e2, ke):
 			e1_labels = [e1[2][el] for el in self._edge_labels]
-			e2_labels = [e2[2][el] for el in self.__edge_labels]
+			e2_labels = [e2[2][el] for el in self._edge_labels]
 			e1_attrs = [e1[2][ea] for ea in self._edge_attrs]
 			e2_attrs = [e2[2][ea] for ea in self._edge_attrs]
 			return ke(e1_labels, e2_labels, e1_attrs, e2_attrs)
 		
 		def compute_ek_10(e1, e2, ke):
-			e1_labels = [e1[2][el] for el in self.__edge_labels]
-			e2_labels = [e2[2][el] for el in self.__edge_labels]
+			e1_labels = [e1[2][el] for el in self._edge_labels]
+			e2_labels = [e2[2][el] for el in self._edge_labels]
 			return ke(e1_labels, e2_labels)
 		
 		def compute_ek_01(e1, e2, ke):
-			e1_attrs = [e1[2][ea] for ea in self.__edge_attrs]
-			e2_attrs = [e2[2][ea] for ea in self.__edge_attrs]
+			e1_attrs = [e1[2][ea] for ea in self._edge_attrs]
+			e2_attrs = [e2[2][ea] for ea in self._edge_attrs]
 			return ke(e1_attrs, e2_attrs)
 		
 		def compute_ek_00(e1, e2, ke):
