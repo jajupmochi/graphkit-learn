@@ -49,7 +49,7 @@ class CostMatricesLearner(CostsLearner):
 							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
 							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
+				self._execute_cvx(prob)
 				edit_costs_new = x.value
 				residual = np.sqrt(prob.value)
 			elif not self._triangle_rule and not self._allow_zeros: # @todo
@@ -57,7 +57,7 @@ class CostMatricesLearner(CostsLearner):
 				cost_fun = cp.sum_squares(nb_cost_mat @ x - dis_k_vec)
 				constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])]]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
+				self._execute_cvx(prob)
 				edit_costs_new = x.value
 				residual = np.sqrt(prob.value)
 			elif self._triangle_rule and not self._allow_zeros: # @todo
@@ -67,7 +67,7 @@ class CostMatricesLearner(CostsLearner):
 							   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
 							   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
 				prob = cp.Problem(cp.Minimize(cost_fun), constraints)
-				self.__execute_cvx(prob)
+				self._execute_cvx(prob)
 				edit_costs_new = x.value
 				residual = np.sqrt(prob.value)
 		else:
@@ -113,7 +113,7 @@ class CostMatricesLearner(CostsLearner):
 			elif abs(cost - self._cost_list[-2][i]) / cost > self._epsilon_ec:
 				self._ec_changed = True
 				break
-# 				if abs(cost - edit_cost_list[-2][i]) > self.__epsilon_ec:
+# 				if abs(cost - edit_cost_list[-2][i]) > self._epsilon_ec:
 #  					ec_changed = True
 #  					break
 		self._residual_changed = False
@@ -135,7 +135,7 @@ class CostMatricesLearner(CostsLearner):
 		print('-------------------------------------------------------------------------')
 		print('States of iteration', self._itrs + 1)
 		print('-------------------------------------------------------------------------')
-# 				print('Time spend:', self.__runtime_optimize_ec)
+# 				print('Time spend:', self._runtime_optimize_ec)
 		print('Total number of iterations for optimizing:', self._itrs + 1)
 		print('Total number of updating edit costs:', self._num_updates_ecs)
 		print('Was optimization of edit costs converged:', self._converged)
