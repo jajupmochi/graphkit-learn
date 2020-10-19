@@ -73,3 +73,9 @@ gklearn/kernels/.tags
 
 # docker travis debug.
 ci.sh
+
+# outputs.
+outputs/
+
+# pyCharm.
+.idea/
