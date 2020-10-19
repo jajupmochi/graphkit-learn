@@ -19,27 +19,27 @@ class LSAPESolver(object):
 	 * @param[in] cost_matrix Pointer to the LSAPE problem instance that should be solved.
 	 */
 		"""
-		self.__cost_matrix = cost_matrix
-		self.__model = 'ECBP'
-		self.__greedy_method = 'BASIC'
-		self.__solve_optimally = True
-		self.__minimal_cost = 0
-		self.__row_to_col_assignments = []
-		self.__col_to_row_assignments = []
-		self.__dual_var_rows = [] # @todo
-		self.__dual_var_cols = [] # @todo
+		self._cost_matrix = cost_matrix
+		self._model = 'ECBP'
+		self._greedy_method = 'BASIC'
+		self._solve_optimally = True
+		self._minimal_cost = 0
+		self._row_to_col_assignments = []
+		self._col_to_row_assignments = []
+		self._dual_var_rows = [] # @todo
+		self._dual_var_cols = [] # @todo
 		
 	
 	def clear_solution(self):
 		"""Clears a previously computed solution.
 		"""
-		self.__minimal_cost = 0
-		self.__row_to_col_assignments.clear()
-		self.__col_to_row_assignments.clear()
-		self.__row_to_col_assignments.append([]) # @todo
-		self.__col_to_row_assignments.append([])
-		self.__dual_var_rows = [] # @todo
-		self.__dual_var_cols = [] # @todo
+		self._minimal_cost = 0
+		self._row_to_col_assignments.clear()
+		self._col_to_row_assignments.clear()
+		self._row_to_col_assignments.append([]) # @todo
+		self._col_to_row_assignments.append([])
+		self._dual_var_rows = [] # @todo
+		self._dual_var_cols = [] # @todo
 		
 		
 	def set_model(self, model):
@@ -49,8 +49,8 @@ class LSAPESolver(object):
 	 * @param[in] model The model that should be used.
 	 */
 		"""
-		self.__solve_optimally = True
-		self.__model = model
+		self._solve_optimally = True
+		self._model = model
 		
 	
 	def solve(self, num_solutions=1):
@@ -61,17 +61,17 @@ class LSAPESolver(object):
 	 */
 		"""
 		self.clear_solution()
-		if self.__solve_optimally:
-			row_ind, col_ind = linear_sum_assignment(self.__cost_matrix) # @todo: only hungarianLSAPE ('ECBP') can be used.
-			self.__row_to_col_assignments[0] = col_ind
-			self.__col_to_row_assignments[0] = np.argsort(col_ind) # @todo: might be slow, can use row_ind
-			self.__compute_cost_from_assignments()
+		if self._solve_optimally:
+			row_ind, col_ind = linear_sum_assignment(self._cost_matrix) # @todo: only hungarianLSAPE ('ECBP') can be used.
+			self._row_to_col_assignments[0] = col_ind
+			self._col_to_row_assignments[0] = np.argsort(col_ind) # @todo: might be slow, can use row_ind
+			self._compute_cost_from_assignments()
 			if num_solutions > 1:
 				pass # @todo:
 		else:
 			print('here is non op.')
 			pass # @todo: greedy.
-# 			self.__
+# 			self._
 
 	
 	def minimal_cost(self):
@@ -81,7 +81,7 @@ class LSAPESolver(object):
 	 * @return Cost of computed solutions.
 	 */
 		"""
-		return self.__minimal_cost
+		return self._minimal_cost
 	
 	
 	def get_assigned_col(self, row, solution_id=0):
@@ -93,7 +93,7 @@ class LSAPESolver(object):
 	 * @returns Column to which @p row is assigned to in solution with ID @p solution_id or ged::undefined() if @p row is not assigned to any column.
 	 */
 		"""
-		return self.__row_to_col_assignments[solution_id][row]
+		return self._row_to_col_assignments[solution_id][row]
 		
 		
 	def get_assigned_row(self, col, solution_id=0):
@@ -105,7 +105,7 @@ class LSAPESolver(object):
 	 * @returns Row to which @p col is assigned to in solution with ID @p solution_id or ged::undefined() if @p col is not assigned to any row.
 	 */
 		"""
-		return self.__col_to_row_assignments[solution_id][col]
+		return self._col_to_row_assignments[solution_id][col]
 		
 		
 	def num_solutions(self):
@@ -115,8 +115,8 @@ class LSAPESolver(object):
 	 * @returns Actual number of solutions computed by solve(). Might be smaller than @p num_solutions.
 	 */
 		"""
-		return len(self.__row_to_col_assignments)
+		return len(self._row_to_col_assignments)
 
 
-	def __compute_cost_from_assignments(self): # @todo
-		self.__minimal_cost = np.sum(self.__cost_matrix[range(0, len(self.__row_to_col_assignments[0])), self.__row_to_col_assignments[0]])
+	def _compute_cost_from_assignments(self): # @todo
+		self._minimal_cost = np.sum(self._cost_matrix[range(0, len(self._row_to_col_assignments[0])), self._row_to_col_assignments[0]])
