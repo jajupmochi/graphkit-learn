@@ -28,18 +28,18 @@ class Treelet(GraphKernel):
 	
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
-		self.__node_labels = kwargs.get('node_labels', [])
-		self.__edge_labels = kwargs.get('edge_labels', [])
-		self.__sub_kernel = kwargs.get('sub_kernel', None)
-		self.__ds_infos = kwargs.get('ds_infos', {})
-		if self.__sub_kernel is None:
+		self._node_labels = kwargs.get('node_labels', [])
+		self._edge_labels = kwargs.get('edge_labels', [])
+		self._sub_kernel = kwargs.get('sub_kernel', None)
+		self._ds_infos = kwargs.get('ds_infos', {})
+		if self._sub_kernel is None:
 			raise Exception('Sub kernel not set.')
 
 
 	def _compute_gm_series(self):
-		self.__add_dummy_labels(self._graphs)
+		self._add_dummy_labels(self._graphs)
 		
-		# get all canonical keys of all graphs before calculating kernels to save 
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
 		canonkeys = []
 		if self._verbose >= 2:
@@ -47,7 +47,7 @@ class Treelet(GraphKernel):
 		else:
 			iterator = self._graphs
 		for g in iterator:
-			canonkeys.append(self.__get_canonkeys(g))
+			canonkeys.append(self._get_canonkeys(g))
 		
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
@@ -55,11 +55,11 @@ class Treelet(GraphKernel):
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = itr
 		for i, j in iterator:
-			kernel = self.__kernel_do(canonkeys[i], canonkeys[j])
+			kernel = self._kernel_do(canonkeys[i], canonkeys[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel # @todo: no directed graph considered?
 				
@@ -67,9 +67,9 @@ class Treelet(GraphKernel):
 			
 			
 	def _compute_gm_imap_unordered(self):
-		self.__add_dummy_labels(self._graphs)
+		self._add_dummy_labels(self._graphs)
 		
-		# get all canonical keys of all graphs before calculating kernels to save 
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
 		pool = Pool(self._n_jobs)
 		itr = zip(self._graphs, range(0, len(self._graphs)))
@@ -103,38 +103,38 @@ class Treelet(GraphKernel):
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list):
-		self.__add_dummy_labels(g_list + [g1])
+		self._add_dummy_labels(g_list + [g1])
 		
-		# get all canonical keys of all graphs before calculating kernels to save 
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
-		canonkeys_1 = self.__get_canonkeys(g1)
+		canonkeys_1 = self._get_canonkeys(g1)
 		canonkeys_list = []
 		if self._verbose >= 2:
 			iterator = tqdm(g_list, desc='getting canonkeys', file=sys.stdout)
 		else:
 			iterator = g_list
 		for g in iterator:
-			canonkeys_list.append(self.__get_canonkeys(g))
+			canonkeys_list.append(self._get_canonkeys(g))
 				
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='calculating kernels', file=sys.stdout)
+			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
 		else:
 			iterator = range(len(g_list))
 		for i in iterator:
-			kernel = self.__kernel_do(canonkeys_1, canonkeys_list[i])
+			kernel = self._kernel_do(canonkeys_1, canonkeys_list[i])
 			kernel_list[i] = kernel
 				
 		return kernel_list
 	
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self.__add_dummy_labels(g_list + [g1])
+		self._add_dummy_labels(g_list + [g1])
 		
-		# get all canonical keys of all graphs before calculating kernels to save 
+		# get all canonical keys of all graphs before computing kernels to save 
 		# time, but this may cost a lot of memory for large dataset.
-		canonkeys_1 = self.__get_canonkeys(g1)
+		canonkeys_1 = self._get_canonkeys(g1)
 		canonkeys_list = [[] for _ in range(len(g_list))]
 		pool = Pool(self._n_jobs)
 		itr = zip(g_list, range(0, len(g_list)))
@@ -167,25 +167,25 @@ class Treelet(GraphKernel):
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=init_worker, glbv=(canonkeys_1, canonkeys_list), method='imap_unordered', 
-			n_jobs=self._n_jobs, itr_desc='calculating kernels', verbose=self._verbose)
+			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
 			
 		return kernel_list
 	
 	
 	def _wrapper_kernel_list_do(self, itr):
-		return itr, self.__kernel_do(G_ck_1, G_ck_list[itr])
+		return itr, self._kernel_do(G_ck_1, G_ck_list[itr])
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):
-		self.__add_dummy_labels([g1] + [g2])
-		canonkeys_1 = self.__get_canonkeys(g1)
-		canonkeys_2 = self.__get_canonkeys(g2)
-		kernel = self.__kernel_do(canonkeys_1, canonkeys_2)
+		self._add_dummy_labels([g1] + [g2])
+		canonkeys_1 = self._get_canonkeys(g1)
+		canonkeys_2 = self._get_canonkeys(g2)
+		kernel = self._kernel_do(canonkeys_1, canonkeys_2)
 		return kernel			
 	
 	
-	def __kernel_do(self, canonkey1, canonkey2):
-		"""Calculate treelet graph kernel between 2 graphs.
+	def _kernel_do(self, canonkey1, canonkey2):
+		"""Compute treelet graph kernel between 2 graphs.
 		
 		Parameters
 		----------
@@ -200,17 +200,17 @@ class Treelet(GraphKernel):
 		keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
 		vector1 = np.array([(canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys])
 		vector2 = np.array([(canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys]) 
-		kernel = self.__sub_kernel(vector1, vector2) 
+		kernel = self._sub_kernel(vector1, vector2) 
 		return kernel
 	
 	
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do(G_canonkeys[i], G_canonkeys[j])
+		return i, j, self._kernel_do(G_canonkeys[i], G_canonkeys[j])
 	
 	
-	def __get_canonkeys(self, G):
+	def _get_canonkeys(self, G):
 		"""Generate canonical keys of all treelets in a graph.
 		
 		Parameters
@@ -236,7 +236,7 @@ class Treelet(GraphKernel):
 		patterns['0'] = list(G.nodes())
 		canonkey['0'] = nx.number_of_nodes(G)
 		for i in range(1, 6): # for i in range(1, 6):
-			patterns[str(i)] = find_all_paths(G, i, self.__ds_infos['directed'])
+			patterns[str(i)] = find_all_paths(G, i, self._ds_infos['directed'])
 			canonkey[str(i)] = len(patterns[str(i)])
 	
 		# n-star patterns
@@ -330,11 +330,11 @@ class Treelet(GraphKernel):
 		### pattern obtained in the structural analysis section above, which is a 
 		### string corresponding to a unique treelet. A dictionary is built to keep
 		### track of the amount of every treelet.
-		if len(self.__node_labels) > 0 or len(self.__edge_labels) > 0:
+		if len(self._node_labels) > 0 or len(self._edge_labels) > 0:
 			canonkey_l = {} # canonical key, a dictionary which keeps track of amount of every treelet.
 	
 			# linear patterns
-			canonkey_t = Counter(get_mlti_dim_node_attrs(G, self.__node_labels))
+			canonkey_t = Counter(get_mlti_dim_node_attrs(G, self._node_labels))
 			for key in canonkey_t:
 				canonkey_l[('0', key)] = canonkey_t[key]
 	
@@ -343,9 +343,9 @@ class Treelet(GraphKernel):
 				for pattern in patterns[str(i)]:
 					canonlist = []
 					for idx, node in enumerate(pattern[:-1]):
-						canonlist.append(tuple(G.nodes[node][nl] for nl in self.__node_labels))
-						canonlist.append(tuple(G[node][pattern[idx+1]][el] for el in self.__edge_labels))
-					canonlist.append(tuple(G.nodes[pattern[-1]][nl] for nl in self.__node_labels))
+						canonlist.append(tuple(G.nodes[node][nl] for nl in self._node_labels))
+						canonlist.append(tuple(G[node][pattern[idx+1]][el] for el in self._edge_labels))
+					canonlist.append(tuple(G.nodes[pattern[-1]][nl] for nl in self._node_labels))
 					canonkey_t = canonlist if canonlist < canonlist[::-1] else canonlist[::-1]
 					treelet.append(tuple([str(i)] + canonkey_t))
 				canonkey_l.update(Counter(treelet))
@@ -356,13 +356,13 @@ class Treelet(GraphKernel):
 				for pattern in patterns[str(i) + 'star']:
 					canonlist = []
 					for leaf in pattern[1:]:
-						nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-						elabels = tuple(G[leaf][pattern[0]][el] for el in self.__edge_labels)
+						nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+						elabels = tuple(G[leaf][pattern[0]][el] for el in self._edge_labels)
 						canonlist.append(tuple((nlabels, elabels)))
 					canonlist.sort()
 					canonlist = list(chain.from_iterable(canonlist))
 					canonkey_t = tuple(['d' if i == 5 else str(i * 2)] + 
-									   [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] 
+									   [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] 
 									   + canonlist)
 					treelet.append(canonkey_t)
 				canonkey_l.update(Counter(treelet))
@@ -372,17 +372,17 @@ class Treelet(GraphKernel):
 			for pattern in patterns['7']:
 				canonlist = []
 				for leaf in pattern[1:3]:
-					nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-					elabels = tuple(G[leaf][pattern[0]][el] for el in self.__edge_labels)
+					nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+					elabels = tuple(G[leaf][pattern[0]][el] for el in self._edge_labels)
 					canonlist.append(tuple((nlabels, elabels)))
 				canonlist.sort()
 				canonlist = list(chain.from_iterable(canonlist))
 				canonkey_t = tuple(['7'] 
-					   + [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] + canonlist 
-					   + [tuple(G.nodes[pattern[3]][nl] for nl in self.__node_labels)] 
-					   + [tuple(G[pattern[3]][pattern[0]][el] for el in self.__edge_labels)]
-					   + [tuple(G.nodes[pattern[4]][nl] for nl in self.__node_labels)] 
-					   + [tuple(G[pattern[4]][pattern[3]][el] for el in self.__edge_labels)])
+					   + [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] + canonlist 
+					   + [tuple(G.nodes[pattern[3]][nl] for nl in self._node_labels)] 
+					   + [tuple(G[pattern[3]][pattern[0]][el] for el in self._edge_labels)]
+					   + [tuple(G.nodes[pattern[4]][nl] for nl in self._node_labels)] 
+					   + [tuple(G[pattern[4]][pattern[3]][el] for el in self._edge_labels)])
 				treelet.append(canonkey_t)
 			canonkey_l.update(Counter(treelet))
 	
@@ -391,38 +391,38 @@ class Treelet(GraphKernel):
 			for pattern in patterns['11']:
 				canonlist = []
 				for leaf in pattern[1:4]:
-					nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-					elabels = tuple(G[leaf][pattern[0]][el] for el in self.__edge_labels)
+					nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+					elabels = tuple(G[leaf][pattern[0]][el] for el in self._edge_labels)
 					canonlist.append(tuple((nlabels, elabels)))
 				canonlist.sort()
 				canonlist = list(chain.from_iterable(canonlist))
 				canonkey_t = tuple(['b'] 
-					   + [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] + canonlist 
-					   + [tuple(G.nodes[pattern[4]][nl] for nl in self.__node_labels)] 
-					   + [tuple(G[pattern[4]][pattern[0]][el] for el in self.__edge_labels)]
-					   + [tuple(G.nodes[pattern[5]][nl] for nl in self.__node_labels)] 
-					   + [tuple(G[pattern[5]][pattern[4]][el] for el in self.__edge_labels)])
+					   + [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] + canonlist 
+					   + [tuple(G.nodes[pattern[4]][nl] for nl in self._node_labels)] 
+					   + [tuple(G[pattern[4]][pattern[0]][el] for el in self._edge_labels)]
+					   + [tuple(G.nodes[pattern[5]][nl] for nl in self._node_labels)] 
+					   + [tuple(G[pattern[5]][pattern[4]][el] for el in self._edge_labels)])
 				treelet.append(canonkey_t)
 			canonkey_l.update(Counter(treelet))
 	
 			# pattern 10
 			treelet = []
 			for pattern in patterns['10']:
-				canonkey4 = [tuple(G.nodes[pattern[5]][nl] for nl in self.__node_labels),
-				 tuple(G[pattern[5]][pattern[4]][el] for el in self.__edge_labels)]
+				canonkey4 = [tuple(G.nodes[pattern[5]][nl] for nl in self._node_labels),
+				 tuple(G[pattern[5]][pattern[4]][el] for el in self._edge_labels)]
 				canonlist = []
 				for leaf in pattern[1:3]:
-					nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-					elabels = tuple(G[leaf][pattern[0]][el] for el in self.__edge_labels)
+					nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+					elabels = tuple(G[leaf][pattern[0]][el] for el in self._edge_labels)
 					canonlist.append(tuple((nlabels, elabels)))
 				canonlist.sort()
 				canonkey0 = list(chain.from_iterable(canonlist))
 				canonkey_t = tuple(['a']
-					    + [tuple(G.nodes[pattern[3]][nl] for nl in self.__node_labels)] 
-						+ [tuple(G.nodes[pattern[4]][nl] for nl in self.__node_labels)] 
-						+ [tuple(G[pattern[4]][pattern[3]][el] for el in self.__edge_labels)] 
-						+ [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] 
-						+ [tuple(G[pattern[0]][pattern[3]][el] for el in self.__edge_labels)] 
+					    + [tuple(G.nodes[pattern[3]][nl] for nl in self._node_labels)] 
+						+ [tuple(G.nodes[pattern[4]][nl] for nl in self._node_labels)] 
+						+ [tuple(G[pattern[4]][pattern[3]][el] for el in self._edge_labels)] 
+						+ [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] 
+						+ [tuple(G[pattern[0]][pattern[3]][el] for el in self._edge_labels)] 
 						+ canonkey4 + canonkey0)
 				treelet.append(canonkey_t)
 			canonkey_l.update(Counter(treelet))
@@ -432,15 +432,15 @@ class Treelet(GraphKernel):
 			for pattern in patterns['12']:
 				canonlist0 = []
 				for leaf in pattern[1:3]:
-					nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-					elabels = tuple(G[leaf][pattern[0]][el] for el in self.__edge_labels)
+					nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+					elabels = tuple(G[leaf][pattern[0]][el] for el in self._edge_labels)
 					canonlist0.append(tuple((nlabels, elabels)))
 				canonlist0.sort()
 				canonlist0 = list(chain.from_iterable(canonlist0))
 				canonlist3 = []
 				for leaf in pattern[4:6]:
-					nlabels = tuple(G.nodes[leaf][nl] for nl in self.__node_labels)
-					elabels = tuple(G[leaf][pattern[3]][el] for el in self.__edge_labels)
+					nlabels = tuple(G.nodes[leaf][nl] for nl in self._node_labels)
+					elabels = tuple(G[leaf][pattern[3]][el] for el in self._edge_labels)
 					canonlist3.append(tuple((nlabels, elabels)))
 				canonlist3.sort()
 				canonlist3 = list(chain.from_iterable(canonlist3))
@@ -448,14 +448,14 @@ class Treelet(GraphKernel):
 				# 2 possible key can be generated from 2 nodes with extended label 3, 
 				# select the one with lower lexicographic order.
 				canonkey_t1 = tuple(['c'] 
-						+ [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] + canonlist0 
-						+ [tuple(G.nodes[pattern[3]][nl] for nl in self.__node_labels)] 
-						+ [tuple(G[pattern[3]][pattern[0]][el] for el in self.__edge_labels)] 
+						+ [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] + canonlist0 
+						+ [tuple(G.nodes[pattern[3]][nl] for nl in self._node_labels)] 
+						+ [tuple(G[pattern[3]][pattern[0]][el] for el in self._edge_labels)] 
 						+ canonlist3)
 				canonkey_t2 = tuple(['c'] 
-						+ [tuple(G.nodes[pattern[3]][nl] for nl in self.__node_labels)] + canonlist3 
-						+ [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] 
-						+ [tuple(G[pattern[0]][pattern[3]][el] for el in self.__edge_labels)] 
+						+ [tuple(G.nodes[pattern[3]][nl] for nl in self._node_labels)] + canonlist3 
+						+ [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] 
+						+ [tuple(G[pattern[0]][pattern[3]][el] for el in self._edge_labels)] 
 						+ canonlist0)
 				treelet.append(canonkey_t1 if canonkey_t1 < canonkey_t2 else canonkey_t2)
 			canonkey_l.update(Counter(treelet))
@@ -463,24 +463,24 @@ class Treelet(GraphKernel):
 			# pattern 9
 			treelet = []
 			for pattern in patterns['9']:
-				canonkey2 = [tuple(G.nodes[pattern[4]][nl] for nl in self.__node_labels),
-				  tuple(G[pattern[4]][pattern[2]][el] for el in self.__edge_labels)]
-				canonkey3 = [tuple(G.nodes[pattern[5]][nl] for nl in self.__node_labels),
-				  tuple(G[pattern[5]][pattern[3]][el] for el in self.__edge_labels)]
-				prekey2 = [tuple(G.nodes[pattern[2]][nl] for nl in self.__node_labels),
-			      tuple(G[pattern[2]][pattern[0]][el] for el in self.__edge_labels)]
-				prekey3 = [tuple(G.nodes[pattern[3]][nl] for nl in self.__node_labels), 
-			      tuple(G[pattern[3]][pattern[0]][el] for el in self.__edge_labels)]
+				canonkey2 = [tuple(G.nodes[pattern[4]][nl] for nl in self._node_labels),
+				  tuple(G[pattern[4]][pattern[2]][el] for el in self._edge_labels)]
+				canonkey3 = [tuple(G.nodes[pattern[5]][nl] for nl in self._node_labels),
+				  tuple(G[pattern[5]][pattern[3]][el] for el in self._edge_labels)]
+				prekey2 = [tuple(G.nodes[pattern[2]][nl] for nl in self._node_labels),
+			      tuple(G[pattern[2]][pattern[0]][el] for el in self._edge_labels)]
+				prekey3 = [tuple(G.nodes[pattern[3]][nl] for nl in self._node_labels), 
+			      tuple(G[pattern[3]][pattern[0]][el] for el in self._edge_labels)]
 				if prekey2 + canonkey2 < prekey3 + canonkey3:
-					canonkey_t = [tuple(G.nodes[pattern[1]][nl] for nl in self.__node_labels)] \
-								 + [tuple(G[pattern[1]][pattern[0]][el] for el in self.__edge_labels)] \
+					canonkey_t = [tuple(G.nodes[pattern[1]][nl] for nl in self._node_labels)] \
+								 + [tuple(G[pattern[1]][pattern[0]][el] for el in self._edge_labels)] \
 								 + prekey2 + prekey3 + canonkey2 + canonkey3
 				else:
-					canonkey_t = [tuple(G.nodes[pattern[1]][nl] for nl in self.__node_labels)] \
-								 + [tuple(G[pattern[1]][pattern[0]][el] for el in self.__edge_labels)] \
+					canonkey_t = [tuple(G.nodes[pattern[1]][nl] for nl in self._node_labels)] \
+								 + [tuple(G[pattern[1]][pattern[0]][el] for el in self._edge_labels)] \
 								 + prekey3 + prekey2 + canonkey3 + canonkey2
 				treelet.append(tuple(['9']
-						  + [tuple(G.nodes[pattern[0]][nl] for nl in self.__node_labels)] 
+						  + [tuple(G.nodes[pattern[0]][nl] for nl in self._node_labels)] 
 						  + canonkey_t))
 			canonkey_l.update(Counter(treelet))
 	
@@ -492,15 +492,15 @@ class Treelet(GraphKernel):
 	def _wrapper_get_canonkeys(self, itr_item):
 		g = itr_item[0]
 		i = itr_item[1]
-		return i, self.__get_canonkeys(g)
+		return i, self._get_canonkeys(g)
 	
 	
-	def __add_dummy_labels(self, Gn):
-		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+	def _add_dummy_labels(self, Gn):
+		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__node_labels = [SpecialLabel.DUMMY]
-		if len(self.__edge_labels) == 0 or (len(self.__edge_labels) == 1 and self.__edge_labels[0] == SpecialLabel.DUMMY):
+			self._node_labels = [SpecialLabel.DUMMY]
+		if len(self._edge_labels) == 0 or (len(self._edge_labels) == 1 and self._edge_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_edge_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__edge_labels = [SpecialLabel.DUMMY]
+			self._edge_labels = [SpecialLabel.DUMMY]
