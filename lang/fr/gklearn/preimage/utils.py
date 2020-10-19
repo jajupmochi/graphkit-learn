@@ -45,7 +45,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	if save_results:
 		# create result files.
 		print('creating output files...')
-		fn_output_detail, fn_output_summary = __init_output_file_preimage(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
+		fn_output_detail, fn_output_summary = _init_output_file_preimage(ds_name, kernel_options['name'], mpg_options['fit_method'], dir_save)
 		
 	sod_sm_list = []
 	sod_gm_list = []
@@ -307,7 +307,7 @@ def generate_median_preimages_by_class(ds_name, mpg_options, kernel_options, ged
 	print('\ncomplete.\n')	
 
 	
-def __init_output_file_preimage(ds_name, gkernel, fit_method, dir_output):
+def _init_output_file_preimage(ds_name, gkernel, fit_method, dir_output):
 	if not os.path.exists(dir_output):
 		os.makedirs(dir_output)
 #	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.' + fit_method + '.csv'
