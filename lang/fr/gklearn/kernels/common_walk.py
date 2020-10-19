@@ -26,18 +26,18 @@ class CommonWalk(GraphKernel):
 	
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
-		self.__node_labels = kwargs.get('node_labels', [])
-		self.__edge_labels = kwargs.get('edge_labels', [])
-		self.__weight = kwargs.get('weight', 1)
-		self.__compute_method = kwargs.get('compute_method', None)
-		self.__ds_infos = kwargs.get('ds_infos', {})
-		self.__compute_method = self.__compute_method.lower()
+		self._node_labels = kwargs.get('node_labels', [])
+		self._edge_labels = kwargs.get('edge_labels', [])
+		self._weight = kwargs.get('weight', 1)
+		self._compute_method = kwargs.get('compute_method', None)
+		self._ds_infos = kwargs.get('ds_infos', {})
+		self._compute_method = self._compute_method.lower()
 
 
 	def _compute_gm_series(self):
-		self.__check_graphs(self._graphs)
-		self.__add_dummy_labels(self._graphs)
-		if not self.__ds_infos['directed']:  #  convert
+		self._check_graphs(self._graphs)
+		self._add_dummy_labels(self._graphs)
+		if not self._ds_infos['directed']:  #  convert
 			self._graphs = [G.to_directed() for G in self._graphs]
 				
 		# compute Gram matrix.
@@ -51,15 +51,15 @@ class CommonWalk(GraphKernel):
 			iterator = itr
 			
 		# direct product graph method - exponential
-		if self.__compute_method == 'exp':
+		if self._compute_method == 'exp':
 			for i, j in iterator:
-				kernel = self.__kernel_do_exp(self._graphs[i], self._graphs[j], self.__weight)
+				kernel = self._kernel_do_exp(self._graphs[i], self._graphs[j], self._weight)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 		# direct product graph method - geometric
-		elif self.__compute_method == 'geo':
+		elif self._compute_method == 'geo':
 			for i, j in iterator:
-				kernel = self.__kernel_do_geo(self._graphs[i], self._graphs[j], self.__weight)
+				kernel = self._kernel_do_geo(self._graphs[i], self._graphs[j], self._weight)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 				
@@ -67,9 +67,9 @@ class CommonWalk(GraphKernel):
 			
 			
 	def _compute_gm_imap_unordered(self):
-		self.__check_graphs(self._graphs)
-		self.__add_dummy_labels(self._graphs)
-		if not self.__ds_infos['directed']:  #  convert
+		self._check_graphs(self._graphs)
+		self._add_dummy_labels(self._graphs)
+		if not self._ds_infos['directed']:  #  convert
 			self._graphs = [G.to_directed() for G in self._graphs]
 		
 		# compute Gram matrix.
@@ -80,10 +80,10 @@ class CommonWalk(GraphKernel):
 # 			G_gn = gn_toshare
 			
 		# direct product graph method - exponential
-		if self.__compute_method == 'exp':
+		if self._compute_method == 'exp':
 			do_fun = self._wrapper_kernel_do_exp
 		# direct product graph method - geometric
-		elif self.__compute_method == 'geo':
+		elif self._compute_method == 'geo':
 			do_fun = self._wrapper_kernel_do_geo
 			
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=_init_worker_gm, 
@@ -93,9 +93,9 @@ class CommonWalk(GraphKernel):
 	
 	
 	def _compute_kernel_list_series(self, g1, g_list):
-		self.__check_graphs(g_list + [g1])
-		self.__add_dummy_labels(g_list + [g1])
-		if not self.__ds_infos['directed']:  #  convert
+		self._check_graphs(g_list + [g1])
+		self._add_dummy_labels(g_list + [g1])
+		if not self._ds_infos['directed']:  #  convert
 			g1 = g1.to_directed()
 			g_list = [G.to_directed() for G in g_list]
 				
@@ -107,23 +107,23 @@ class CommonWalk(GraphKernel):
 			iterator = range(len(g_list))
 			
 		# direct product graph method - exponential
-		if self.__compute_method == 'exp':
+		if self._compute_method == 'exp':
 			for i in iterator:
-				kernel = self.__kernel_do_exp(g1, g_list[i], self.__weight)
+				kernel = self._kernel_do_exp(g1, g_list[i], self._weight)
 				kernel_list[i] = kernel
 		# direct product graph method - geometric
-		elif self.__compute_method == 'geo':
+		elif self._compute_method == 'geo':
 			for i in iterator:
-				kernel = self.__kernel_do_geo(g1, g_list[i], self.__weight)
+				kernel = self._kernel_do_geo(g1, g_list[i], self._weight)
 				kernel_list[i] = kernel
 				
 		return kernel_list
 	
 	
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self.__check_graphs(g_list + [g1])
-		self.__add_dummy_labels(g_list + [g1])
-		if not self.__ds_infos['directed']:  #  convert
+		self._check_graphs(g_list + [g1])
+		self._add_dummy_labels(g_list + [g1])
+		if not self._ds_infos['directed']:  #  convert
 			g1 = g1.to_directed()
 			g_list = [G.to_directed() for G in g_list]
 		
@@ -136,10 +136,10 @@ class CommonWalk(GraphKernel):
 # 			G_g_list = g_list_toshare
 			
 		# direct product graph method - exponential
-		if self.__compute_method == 'exp':
+		if self._compute_method == 'exp':
 			do_fun = self._wrapper_kernel_list_do_exp
 		# direct product graph method - geometric
-		elif self.__compute_method == 'geo':
+		elif self._compute_method == 'geo':
 			do_fun = self._wrapper_kernel_list_do_geo
 			
 		def func_assign(result, var_to_assign):	
@@ -154,31 +154,31 @@ class CommonWalk(GraphKernel):
 	
 	
 	def _wrapper_kernel_list_do_exp(self, itr):
-		return itr, self.__kernel_do_exp(G_g1, G_g_list[itr], self.__weight)
+		return itr, self._kernel_do_exp(G_g1, G_g_list[itr], self._weight)
 
 
 	def _wrapper_kernel_list_do_geo(self, itr):
-		return itr, self.__kernel_do_geo(G_g1, G_g_list[itr], self.__weight)
+		return itr, self._kernel_do_geo(G_g1, G_g_list[itr], self._weight)
 	
 	
 	def _compute_single_kernel_series(self, g1, g2):
-		self.__check_graphs([g1] + [g2])
-		self.__add_dummy_labels([g1] + [g2])
-		if not self.__ds_infos['directed']:  #  convert
+		self._check_graphs([g1] + [g2])
+		self._add_dummy_labels([g1] + [g2])
+		if not self._ds_infos['directed']:  #  convert
 			g1 = g1.to_directed()
 			g2 = g2.to_directed()
 			
 		# direct product graph method - exponential
-		if self.__compute_method == 'exp':
-			kernel = self.__kernel_do_exp(g1, g2, self.__weight)		
+		if self._compute_method == 'exp':
+			kernel = self._kernel_do_exp(g1, g2, self._weight)		
 		# direct product graph method - geometric
-		elif self.__compute_method == 'geo':
-			kernel = self.__kernel_do_geo(g1, g2, self.__weight)		
+		elif self._compute_method == 'geo':
+			kernel = self._kernel_do_geo(g1, g2, self._weight)		
 
 		return kernel			
 	
 	
-	def __kernel_do_exp(self, g1, g2, beta):
+	def _kernel_do_exp(self, g1, g2, beta):
 		"""Compute common walk graph kernel between 2 graphs using exponential 
 		series.
 	
@@ -195,7 +195,7 @@ class CommonWalk(GraphKernel):
 			The common walk Kernel between 2 graphs.
 		"""
 		# get tensor product / direct product
-		gp = direct_product_graph(g1, g2, self.__node_labels, self.__edge_labels)
+		gp = direct_product_graph(g1, g2, self._node_labels, self._edge_labels)
 		# return 0 if the direct product graph have no more than 1 node.
 		if nx.number_of_nodes(gp) < 2:
 			return 0
@@ -227,10 +227,10 @@ class CommonWalk(GraphKernel):
 	def _wrapper_kernel_do_exp(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do_exp(G_gn[i], G_gn[j], self.__weight)
+		return i, j, self._kernel_do_exp(G_gn[i], G_gn[j], self._weight)
 	
 	
-	def __kernel_do_geo(self, g1, g2, gamma):
+	def _kernel_do_geo(self, g1, g2, gamma):
 		"""Compute common walk graph kernel between 2 graphs using geometric 
 		series.
 	
@@ -247,7 +247,7 @@ class CommonWalk(GraphKernel):
 			The common walk Kernel between 2 graphs.
 		"""
 		# get tensor product / direct product
-		gp = direct_product_graph(g1, g2, self.__node_labels, self.__edge_labels)
+		gp = direct_product_graph(g1, g2, self._node_labels, self._edge_labels)
 		# return 0 if the direct product graph have no more than 1 node.
 		if nx.number_of_nodes(gp) < 2:
 			return 0
@@ -262,24 +262,24 @@ class CommonWalk(GraphKernel):
 	def _wrapper_kernel_do_geo(self, itr):
 		i = itr[0]
 		j = itr[1]
-		return i, j, self.__kernel_do_geo(G_gn[i], G_gn[j], self.__weight)
+		return i, j, self._kernel_do_geo(G_gn[i], G_gn[j], self._weight)
 	
 	
-	def __check_graphs(self, Gn):
+	def _check_graphs(self, Gn):
 		for g in Gn:
 			if nx.number_of_nodes(g) == 1:
 				raise Exception('Graphs must contain more than 1 nodes to construct adjacency matrices.')
 				
 		
-	def __add_dummy_labels(self, Gn):
-		if len(self.__node_labels) == 0 or (len(self.__node_labels) == 1 and self.__node_labels[0] == SpecialLabel.DUMMY):
+	def _add_dummy_labels(self, Gn):
+		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__node_labels = [SpecialLabel.DUMMY]
-		if len(self.__edge_labels) == 0 or (len(self.__edge_labels) == 1 and self.__edge_labels[0] == SpecialLabel.DUMMY):
+			self._node_labels = [SpecialLabel.DUMMY]
+		if len(self._edge_labels) == 0 or (len(self._edge_labels) == 1 and self._edge_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_edge_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self.__edge_labels = [SpecialLabel.DUMMY]
+			self._edge_labels = [SpecialLabel.DUMMY]
 			
 			
 def _init_worker_gm(gn_toshare):
