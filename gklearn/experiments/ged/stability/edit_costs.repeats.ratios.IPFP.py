@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct  20 11:48:02 2020
+Created on Wed Oct  20 17:48:02 2020
 
 @author: ljia
 """	
-# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1].
+# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1]. The minimum solution from given numbers of repeats are computed.
 
 import os
 import multiprocessing
@@ -18,9 +18,12 @@ from utils import get_dataset
 import sys
 
 
-def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
-
-	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
+def xp_compute_ged_matrix(dataset, ds_name, repeats, ratio, trial):
+		
+	save_file_suffix = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
+	
+	"""**1.   Get dataset.**"""
+	dataset = get_dataset(ds_name)
 
 	"""**2.  Set parameters.**"""
 
@@ -28,11 +31,11 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 	ged_options = {'method': 'IPFP',  # use IPFP huristic.
 				   'initialization_method': 'RANDOM',  # or 'NODE', etc.
 				   # when bigger than 1, then the method is considered mIPFP.
-				   'initial_solutions': int(num_solutions * 4),
+				   'initial_solutions': 1,
 				   'edit_cost': 'CONSTANT',  # use CONSTANT cost.
 				   # the distance between non-symbolic node/edge labels is computed by euclidean distance.
 				   'attr_distance': 'euclidean',
-				   'ratio_runs_from_initial_solutions': 0.25,
+				   'ratio_runs_from_initial_solutions': 1,
 				   # parallel threads. Do not work if mpg_options['parallel'] = False.
 				   'threads': multiprocessing.cpu_count(),
 				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'
@@ -55,7 +58,7 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 	runtime = 0
 	try:
 		time0 = time.time()
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds(dataset.graphs, options=options, parallel=parallel, verbose=True)
+		ged_vec_init, ged_mat, n_edit_operations = compute_geds(dataset.graphs, options=options, repeats=repeats, parallel=parallel, verbose=True)
 		runtime = time.time() - time0
 	except Exception as exp:
 		print('An exception occured when running this experiment:')
@@ -70,39 +73,39 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 		pickle.dump(ged_mat, f)
 	with open(save_dir + 'runtime' + save_file_suffix + '.pkl', 'wb') as f:
 		pickle.dump(runtime, f)
-	
+
 	return ged_mat, runtime
+
 	
-	
-def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
+def save_trials_as_group(dataset, ds_name, repeats, ratio):
 	ged_mats = []
 	runtimes = []
 	for trial in range(1, 101):
 		print()
 		print('Trial:', trial)
-		ged_mat, runtime = xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial)
+		ged_mat, runtime = xp_compute_ged_matrix(dataset, ds_name, repeats, ratio, trial)
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 		
-	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio)
+	save_file_suffix = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio)
 	with open(save_dir + 'groups/ged_mats' + save_file_suffix + '.npy', 'wb') as f:
 		np.save(f, np.array(ged_mats))
 	with open(save_dir + 'groups/runtimes' + save_file_suffix + '.pkl', 'wb') as f:
 		pickle.dump(runtime, f)
-		
-		
+	
+	
 def results_for_a_dataset(ds_name):
 	"""**1.   Get dataset.**"""
 	dataset = get_dataset(ds_name)
 	
-	for num_solutions in [1, 20, 40, 60, 80, 100]:
+	for repeats in [1, 20, 40, 60, 80, 100]:
 		print()
-		print('# of solutions:', num_solutions)
+		print('Repeats:', repeats)
 		for ratio in [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]:
 			print()
 			print('Ratio:', ratio)
-			save_trials_as_group(dataset, ds_name, num_solutions, ratio)
-				
+			save_trials_as_group(dataset, ds_name, repeats, ratio)
+		
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
@@ -110,7 +113,7 @@ if __name__ == '__main__':
 	else:
 		ds_name_list = ['MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
 		
-	save_dir = 'outputs/edit_costs.num_sols.ratios.IPFP/'
+	save_dir = 'outputs/edit_costs.repeats.ratios.IPFP/'
 	if not os.path.exists(save_dir):
 		os.makedirs(save_dir)
 	if not os.path.exists(save_dir + 'groups/'):
