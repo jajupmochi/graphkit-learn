@@ -138,7 +138,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	return ged_vec, ged_mat, n_edit_operations
 
 
-def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
+def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbose=True):
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	# initialize ged env.
@@ -173,7 +173,7 @@ def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
 			G_graphs = graphs_toshare
 			G_ged_env = ged_env_toshare
 			G_listID = listID_toshare
-		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
+		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort, repeats)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
 		if verbose:
 			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
@@ -203,9 +203,9 @@ def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
 #		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
 				if nx.number_of_nodes(graphs[i]) <= nx.number_of_nodes(graphs[j]) or not sort:
-					dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j])
+					dis, pi_forward, pi_backward = _compute_ged(ged_env, listID[i], listID[j], graphs[i], graphs[j], repeats)
 				else:
-					dis, pi_backward, pi_forward = _compute_ged(ged_env, listID[j], listID[i], graphs[j], graphs[i])
+					dis, pi_backward, pi_forward = _compute_ged(ged_env, listID[j], listID[i], graphs[j], graphs[i], repeats)
 				ged_vec.append(dis)
 				ged_mat[i][j] = dis
 				ged_mat[j][i] = dis
@@ -215,38 +215,45 @@ def compute_geds(graphs, options={}, sort=True, parallel=False, verbose=True):
 	return ged_vec, ged_mat, n_edit_operations
 
 
-def _wrapper_compute_ged_parallel(options, sort, itr):
+def _wrapper_compute_ged_parallel(options, sort, repeats, itr):
 	i = itr[0]
 	j = itr[1]
-	dis, n_eo_tmp = _compute_ged_parallel(G_ged_env, G_listID[i], G_listID[j], G_graphs[i], G_graphs[j], options, sort)
+	dis, n_eo_tmp = _compute_ged_parallel(G_ged_env, G_listID[i], G_listID[j], G_graphs[i], G_graphs[j], options, sort, repeats)
 	return i, j, dis, n_eo_tmp
 
 
-def _compute_ged_parallel(env, gid1, gid2, g1, g2, options, sort):
+def _compute_ged_parallel(env, gid1, gid2, g1, g2, options, sort, repeats):
 	if nx.number_of_nodes(g1) <= nx.number_of_nodes(g2) or not sort:
-		dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2)
+		dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2, repeats)
 	else:
-		dis, pi_backward, pi_forward = _compute_ged(env, gid2, gid1, g2, g1)
+		dis, pi_backward, pi_forward = _compute_ged(env, gid2, gid1, g2, g1, repeats)
 	n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward, **options) # [0,0,0,0,0,0]
 	return dis, n_eo_tmp
 
 
-def _compute_ged(env, gid1, gid2, g1, g2):
-	env.run_method(gid1, gid2)
-	pi_forward = env.get_forward_map(gid1, gid2)
-	pi_backward = env.get_backward_map(gid1, gid2)
-	upper = env.get_upper_bound(gid1, gid2)	
-	dis = upper
-			
-	# make the map label correct (label remove map as np.inf)
-	nodes1 = [n for n in g1.nodes()]
-	nodes2 = [n for n in g2.nodes()]
-	nb1 = nx.number_of_nodes(g1)
-	nb2 = nx.number_of_nodes(g2)
-	pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
-	pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
+def _compute_ged(env, gid1, gid2, g1, g2, repeats):
+	dis_min = np.inf
+	for i in range(0, repeats):
+		env.run_method(gid1, gid2)
+		pi_forward = env.get_forward_map(gid1, gid2)
+		pi_backward = env.get_backward_map(gid1, gid2)
+		upper = env.get_upper_bound(gid1, gid2)	
+		dis = upper
+				
+		# make the map label correct (label remove map as np.inf)
+		nodes1 = [n for n in g1.nodes()]
+		nodes2 = [n for n in g2.nodes()]
+		nb1 = nx.number_of_nodes(g1)
+		nb2 = nx.number_of_nodes(g2)
+		pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
+		pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
+		
+		if dis < dis_min:
+			dis_min = dis
+			pi_forward_min = pi_forward
+			pi_backward_min = pi_backward
 
-	return dis, pi_forward, pi_backward
+	return dis_min, pi_forward_min, pi_backward_min
 
 
 def label_costs_to_matrix(costs, nb_labels):
