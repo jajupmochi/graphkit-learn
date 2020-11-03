@@ -218,8 +218,7 @@ def remove_best_graph(ds_name, mpg_options, kernel_options, ged_options, mge_opt
 			 
 		# save median graphs.
 		if save_medians:
-			if not os.path.exists(dir_save + 'medians/'):
-				os.makedirs(dir_save + 'medians/')
+			os.makedirs(dir_save + 'medians/', exist_ok=True)
 			print('Saving median graphs to files...')
 			fn_pre_sm = dir_save + 'medians/set_median.' + mpg_options['fit_method'] + '.nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(mpg.set_median, fn_pre_sm + '.gxl', method='default', 
@@ -375,8 +374,7 @@ def _compute_gram_matrix_unnorm(dataset, kernel_options):
 		
 		
 def _init_output_file(ds_name, gkernel, fit_method, dir_output):
-	if not os.path.exists(dir_output):
-		os.makedirs(dir_output)
+	os.makedirs(dir_output, exist_ok=True)
 	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.csv'
 	f_detail = open(dir_output + fn_output_detail, 'a')
 	csv.writer(f_detail).writerow(['dataset', 'graph kernel', 'edit cost', 

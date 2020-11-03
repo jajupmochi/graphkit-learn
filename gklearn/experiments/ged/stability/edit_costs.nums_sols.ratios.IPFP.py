@@ -84,11 +84,11 @@ def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 		
-	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio)
-	with open(save_dir + 'groups/ged_mats' + save_file_suffix + '.npy', 'wb') as f:
-		np.save(f, np.array(ged_mats))
-	with open(save_dir + 'groups/runtimes' + save_file_suffix + '.pkl', 'wb') as f:
-		pickle.dump(runtime, f)
+# 	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio)
+# 	with open(save_dir + 'groups/ged_mats' + save_file_suffix + '.npy', 'wb') as f:
+# 		np.save(f, np.array(ged_mats))
+# 	with open(save_dir + 'groups/runtimes' + save_file_suffix + '.pkl', 'wb') as f:
+# 		pickle.dump(runtime, f)
 		
 		
 def results_for_a_dataset(ds_name):
@@ -111,10 +111,8 @@ if __name__ == '__main__':
 		ds_name_list = ['MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
 		
 	save_dir = 'outputs/edit_costs.num_sols.ratios.IPFP/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
-	if not os.path.exists(save_dir + 'groups/'):
-		os.makedirs(save_dir + 'groups/')
+	os.makedirs(save_dir, exist_ok=True)
+	os.makedirs(save_dir + 'groups/', exist_ok=True)
 		
 	for ds_name in ds_name_list:
 		print()

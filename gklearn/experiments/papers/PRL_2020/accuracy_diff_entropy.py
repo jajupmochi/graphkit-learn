@@ -150,8 +150,7 @@ def xp_accuracy_diff_entropy():
 	import pickle
 	import os
 	save_dir = 'outputs/accuracy_diff_entropy/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
+	os.makedirs(save_dir, exist_ok=True)
 
 	accuracies = {}
 	confidences = {}

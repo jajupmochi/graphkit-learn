@@ -16,8 +16,7 @@ def xp_runtimes_of_all_28cores():
 	import pickle
 	import os
 	save_dir = 'outputs/runtimes_of_all_28cores/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
+	os.makedirs(save_dir, exist_ok=True)
 
 	run_times = {}
 	

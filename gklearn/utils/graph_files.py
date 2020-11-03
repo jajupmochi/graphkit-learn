@@ -70,13 +70,11 @@ def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', **kwargs):
 	dirname_ds = os.path.dirname(filename)
 	if dirname_ds != '':
 		dirname_ds += '/'
-		if not os.path.exists(dirname_ds) :
-			os.makedirs(dirname_ds)
+		os.makedirs(dirname_ds, exist_ok=True)
 				
 	if 'graph_dir' in kwargs:
 		graph_dir = kwargs['graph_dir'] + '/'
-		if not os.path.exists(graph_dir):
-			os.makedirs(graph_dir)
+		os.makedirs(graph_dir, exist_ok=True)
 		del kwargs['graph_dir']
 	else:
 		graph_dir = dirname_ds 
