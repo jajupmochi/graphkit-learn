@@ -12,15 +12,19 @@ import multiprocessing
 import pickle
 import logging
 from gklearn.ged.util import compute_geds
-import numpy as np
 import time
 from utils import get_dataset
 import sys
+from group_results import group_trials
 
 
 def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 
 	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
+	
+	# Return if the file exists.
+	if os.path.isfile(save_dir + 'ged_matrix' + save_file_suffix + '.pkl'):
+		return None, None
 
 	"""**2.  Set parameters.**"""
 
@@ -39,8 +43,8 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 				   }
 	
 	edit_cost_constants = [i * ratio for i in [1, 1, 1]] + [1, 1, 1]
-# 	edit_cost_constants = [item * 0.01 for item in edit_cost_constants]
-# 	pickle.dump(edit_cost_constants, open(save_dir + "edit_costs" + save_file_suffix + ".pkl", "wb"))
+#	edit_cost_constants = [item * 0.01 for item in edit_cost_constants]
+#	pickle.dump(edit_cost_constants, open(save_dir + "edit_costs" + save_file_suffix + ".pkl", "wb"))
 
 	options = ged_options.copy()
 	options['edit_cost_constants'] = edit_cost_constants
@@ -75,6 +79,12 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 	
 	
 def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
+	# Return if the group file exists.
+	name_middle = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.'
+	name_group = save_dir + 'groups/ged_mats' +  name_middle + 'npy'
+	if os.path.isfile(name_group):
+		return
+	
 	ged_mats = []
 	runtimes = []
 	for trial in range(1, 101):
@@ -84,24 +94,35 @@ def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 		
-# 	save_file_suffix = '.' + ds_name + '.num_sols_' + str(num_solutions) + '.ratio_' + "{:.2f}".format(ratio)
-# 	with open(save_dir + 'groups/ged_mats' + save_file_suffix + '.npy', 'wb') as f:
-# 		np.save(f, np.array(ged_mats))
-# 	with open(save_dir + 'groups/runtimes' + save_file_suffix + '.pkl', 'wb') as f:
-# 		pickle.dump(runtime, f)
+	# Group trials and Remove single files.
+	name_prefix = 'ged_matrix' + name_middle
+	group_trials(save_dir, name_prefix, True, True, False)
+	name_prefix = 'runtime' + name_middle
+	group_trials(save_dir, name_prefix, True, True, False)
 		
 		
 def results_for_a_dataset(ds_name):
 	"""**1.   Get dataset.**"""
 	dataset = get_dataset(ds_name)
 	
-	for num_solutions in [1, 20, 40, 60, 80, 100]:
+	for num_solutions in num_solutions_list:
 		print()
 		print('# of solutions:', num_solutions)
-		for ratio in [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]:
+		for ratio in ratio_list:
 			print()
 			print('Ratio:', ratio)
 			save_trials_as_group(dataset, ds_name, num_solutions, ratio)
+			
+			
+def get_param_lists(ds_name):
+	if ds_name == 'AIDS_symb':
+		num_solutions_list = [1, 20, 40, 60, 80, 100]
+		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
+	else:
+		num_solutions_list = [1, 20, 40, 60, 80, 100]
+		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
+		
+	return num_solutions_list, ratio_list
 				
 
 if __name__ == '__main__':
@@ -117,4 +138,5 @@ if __name__ == '__main__':
 	for ds_name in ds_name_list:
 		print()
 		print('Dataset:', ds_name)
+		num_solutions_list, ratio_list = get_param_lists(ds_name)
 		results_for_a_dataset(ds_name)

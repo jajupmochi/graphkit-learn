@@ -16,6 +16,7 @@ from tqdm import tqdm
 import sys
 
 
+# This function is used by other scripts. Modify it carefully.
 def group_trials(dir_folder, name_prefix, override, clear, backup):
 	
 	# Get group name.
@@ -47,8 +48,20 @@ def group_trials(dir_folder, name_prefix, override, clear, backup):
 			file_name = dir_folder + name_prefix + 'trial_' + str(trial) + '.pkl'
 			if os.path.isfile(file_name):
 				with open(file_name, 'rb') as f:
-					data = pickle.load(f)
+					try:
+						data = pickle.load(f)
+					except EOFError:
+						print('EOF Error occurred.')
+						return
 					data_group.append(data)
+
+# 					unpickler = pickle.Unpickler(f)
+# 					data = unpickler.load()
+# 					if not isinstance(data, np.array):
+# 						return
+# 					else:
+# 						data_group.append(data)
+
 			else: # Not all trials are completed.
 				return
 	
@@ -81,11 +94,9 @@ def group_trials(dir_folder, name_prefix, override, clear, backup):
 def group_all_in_folder(dir_folder, override=False, clear=True, backup=True):
 	
 	# Create folders.
-	if not os.path.exists(dir_folder + 'groups/'):
-		os.makedirs(dir_folder + 'groups/')
+	os.makedirs(dir_folder + 'groups/', exist_ok=True)
 	if backup:
-		if not os.path.exists(dir_folder + 'backups'):
-			os.makedirs(dir_folder + 'backups')
+		os.makedirs(dir_folder + 'backups', exist_ok=True)
 			
 	# Iterate all files.
 	cur_file_prefix = ''
@@ -105,4 +116,10 @@ if __name__ == '__main__':
  	group_all_in_folder(dir_folder)
 	
  	dir_folder = 'outputs/CRIANN/edit_costs.repeats.ratios.IPFP/'
+ 	group_all_in_folder(dir_folder)
+	 
+ 	dir_folder = 'outputs/CRIANN/edit_costs.max_num_sols.ratios.bipartite/'
+ 	group_all_in_folder(dir_folder)
+	 
+ 	dir_folder = 'outputs/CRIANN/edit_costs.repeats.ratios.bipartite/'
  	group_all_in_folder(dir_folder)

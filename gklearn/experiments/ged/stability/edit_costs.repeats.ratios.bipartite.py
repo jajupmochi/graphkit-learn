@@ -12,10 +12,10 @@ import multiprocessing
 import pickle
 import logging
 from gklearn.ged.util import compute_geds
-import numpy as np
 import time
 from utils import get_dataset
 import sys
+from group_results import group_trials
 
 
 def xp_compute_ged_matrix(dataset, ds_name, repeats, ratio, trial):
@@ -92,11 +92,12 @@ def save_trials_as_group(dataset, ds_name, repeats, ratio):
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 		
-# 	save_file_suffix = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio)
-# 	with open(save_dir + 'groups/ged_mats' + save_file_suffix + '.npy', 'wb') as f:
-# 		np.save(f, np.array(ged_mats))
-# 	with open(save_dir + 'groups/runtimes' + save_file_suffix + '.pkl', 'wb') as f:
-# 		pickle.dump(runtime, f)
+	# Group trials and Remove single files.
+	name_middle = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio) + '.'
+	name_prefix = 'ged_matrix' + name_middle
+	group_trials(save_dir, name_prefix, True, True, False)
+	name_prefix = 'runtime' + name_middle
+	group_trials(save_dir, name_prefix, True, True, False)
 	
 	
 def results_for_a_dataset(ds_name):
