@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov  2 16:17:01 2020
+Created on Wed Oct  20 11:48:02 2020
 
 @author: ljia
 """	
-# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1]. The minimum solution from given numbers of repeats are computed.
+# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1].
 
 import os
 import multiprocessing
@@ -13,15 +13,21 @@ import pickle
 import logging
 from gklearn.ged.util import compute_geds
 import time
-from utils import get_dataset
 import sys
 from group_results import group_trials
 
 
-def xp_compute_ged_matrix(dataset, ds_name, max_num_solutions, ratio, trial):
-		
-	save_file_suffix = '.' + ds_name + '.mnum_sols_' + str(max_num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
-	
+def generate_graphs():
+	from gklearn.utils.graph_synthesizer import GraphSynthesizer
+	gsyzer = GraphSynthesizer()
+	graphs = gsyzer.unified_graphs(num_graphs=100, num_nodes=20, num_edges=20, num_node_labels=0, num_edge_labels=0, seed=None, directed=False)
+	return graphs
+
+
+def xp_compute_ged_matrix(graphs, N, max_num_solutions, ratio, trial):
+
+	save_file_suffix = '.' + str(N) + '.mnum_sols_' + str(max_num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
+
 	# Return if the file exists.
 	if os.path.isfile(save_dir + 'ged_matrix' + save_file_suffix + '.pkl'):
 		return None, None
@@ -53,10 +59,10 @@ def xp_compute_ged_matrix(dataset, ds_name, max_num_solutions, ratio, trial):
 
 	options = ged_options.copy()
 	options['edit_cost_constants'] = edit_cost_constants
-	options['node_labels'] = dataset.node_labels
-	options['edge_labels'] = dataset.edge_labels
-	options['node_attrs'] = dataset.node_attrs
-	options['edge_attrs'] = dataset.edge_attrs
+	options['node_labels'] = []
+	options['edge_labels'] = []
+	options['node_attrs'] = []
+	options['edge_attrs'] = []
 	parallel = True # if num_solutions == 1 else False
 	
 	"""**5.   Compute GED matrix.**"""
@@ -64,7 +70,7 @@ def xp_compute_ged_matrix(dataset, ds_name, max_num_solutions, ratio, trial):
 	runtime = 0
 	try:
 		time0 = time.time()
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds(dataset.graphs, options=options, repeats=1, parallel=parallel, verbose=True)
+		ged_vec_init, ged_mat, n_edit_operations = compute_geds(graphs, options=options, repeats=1, parallel=parallel, verbose=True)
 		runtime = time.time() - time0
 	except Exception as exp:
 		print('An exception occured when running this experiment:')
@@ -83,9 +89,9 @@ def xp_compute_ged_matrix(dataset, ds_name, max_num_solutions, ratio, trial):
 	return ged_mat, runtime
 
 	
-def save_trials_as_group(dataset, ds_name, max_num_solutions, ratio):
+def save_trials_as_group(graphs, N, max_num_solutions, ratio):
 	# Return if the group file exists.
-	name_middle = '.' + ds_name + '.mnum_sols_' + str(max_num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.'
+	name_middle = '.' + str(N) + '.mnum_sols_' + str(max_num_solutions) + '.ratio_' + "{:.2f}".format(ratio) + '.'
 	name_group = save_dir + 'groups/ged_mats' +  name_middle + 'npy'
 	if os.path.isfile(name_group):
 		return
@@ -95,7 +101,7 @@ def save_trials_as_group(dataset, ds_name, max_num_solutions, ratio):
 	for trial in range(1, 101):
 		print()
 		print('Trial:', trial)
-		ged_mat, runtime = xp_compute_ged_matrix(dataset, ds_name, max_num_solutions, ratio, trial)
+		ged_mat, runtime = xp_compute_ged_matrix(graphs, N, max_num_solutions, ratio, trial)
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 		
@@ -106,42 +112,31 @@ def save_trials_as_group(dataset, ds_name, max_num_solutions, ratio):
 	group_trials(save_dir, name_prefix, True, True, False)
 
 
-def results_for_a_dataset(ds_name):
-	"""**1.   Get dataset.**"""
-	dataset = get_dataset(ds_name)
+def results_for_a_ratio(ratio):
 	
-	for max_num_solutions in mnum_solutions_list:
+	for N in N_list:
 		print()
-		print('Max # of solutions:', max_num_solutions)
-		for ratio in ratio_list:
+		print('# of graphs:', N)
+		for max_num_solutions in [1, 20, 40, 60, 80, 100]:
 			print()
-			print('Ratio:', ratio)
-			save_trials_as_group(dataset, ds_name, max_num_solutions, ratio)
-			
-			
-def get_param_lists(ds_name):
-	if ds_name == 'AIDS_symb':
-		mnum_solutions_list = [1, 20, 40, 60, 80, 100]
-		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
-	else:
-		mnum_solutions_list = [1, 20, 40, 60, 80, 100]
-		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
-		
-	return mnum_solutions_list, ratio_list
+			print('Max # of solutions:', max_num_solutions)
+			save_trials_as_group(graphs[:N], N, max_num_solutions, ratio)
 				
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
-		ds_name_list = sys.argv[1:]
+		N_list = [int(i) for i in sys.argv[1:]]
 	else:
-		ds_name_list = ['MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
+		N_list = [10, 50, 100]
 		
-	save_dir = 'outputs/edit_costs.max_num_sols.ratios.bipartite/'
+	# Generate graphs.
+	graphs = generate_graphs()
+		
+	save_dir = 'outputs/edit_costs.max_num_sols.N.bipartite/'
 	os.makedirs(save_dir, exist_ok=True)
 	os.makedirs(save_dir + 'groups/', exist_ok=True)
 		
-	for ds_name in ds_name_list:
+	for ratio in [10, 1, 0.1]:
 		print()
-		print('Dataset:', ds_name)
-		mnum_solutions_list, ratio_list = get_param_lists(ds_name)
-		results_for_a_dataset(ds_name)
+		print('Ratio:', ratio)
+		results_for_a_ratio(ratio)

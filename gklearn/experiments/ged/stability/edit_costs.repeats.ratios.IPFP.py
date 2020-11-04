@@ -19,11 +19,12 @@ from group_results import group_trials
 
 
 def xp_compute_ged_matrix(dataset, ds_name, repeats, ratio, trial):
-		
+
 	save_file_suffix = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio) + '.trial_' + str(trial)
 	
-	"""**1.   Get dataset.**"""
-	dataset = get_dataset(ds_name)
+	# Return if the file exists.
+	if os.path.isfile(save_dir + 'ged_matrix' + save_file_suffix + '.pkl'):
+		return None, None
 
 	"""**2.  Set parameters.**"""
 
@@ -78,6 +79,12 @@ def xp_compute_ged_matrix(dataset, ds_name, repeats, ratio, trial):
 
 	
 def save_trials_as_group(dataset, ds_name, repeats, ratio):
+	# Return if the group file exists.
+	name_middle = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio) + '.'
+	name_group = save_dir + 'groups/ged_mats' +  name_middle + 'npy'
+	if os.path.isfile(name_group):
+		return
+	
 	ged_mats = []
 	runtimes = []
 	for trial in range(1, 101):
@@ -88,25 +95,35 @@ def save_trials_as_group(dataset, ds_name, repeats, ratio):
 		runtimes.append(runtime)
 		
 	# Group trials and Remove single files.
-	name_middle = '.' + ds_name + '.repeats_' + str(repeats) + '.ratio_' + "{:.2f}".format(ratio) + '.'
 	name_prefix = 'ged_matrix' + name_middle
 	group_trials(save_dir, name_prefix, True, True, False)
 	name_prefix = 'runtime' + name_middle
 	group_trials(save_dir, name_prefix, True, True, False)
-	
-	
+
+
 def results_for_a_dataset(ds_name):
 	"""**1.   Get dataset.**"""
 	dataset = get_dataset(ds_name)
 	
-	for repeats in [1, 20, 40, 60, 80, 100]:
+	for repeats in repeats_list:
 		print()
 		print('Repeats:', repeats)
-		for ratio in [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]:
+		for ratio in ratio_list:
 			print()
 			print('Ratio:', ratio)
 			save_trials_as_group(dataset, ds_name, repeats, ratio)
+			
+			
+def get_param_lists(ds_name):
+	if ds_name == 'AIDS_symb':
+		repeats_list = [1, 20, 40, 60, 80, 100]
+		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
+	else:
+		repeats_list = [1, 20, 40, 60, 80, 100]
+		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9]
 		
+	return repeats_list, ratio_list
+				
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
@@ -121,4 +138,5 @@ if __name__ == '__main__':
 	for ds_name in ds_name_list:
 		print()
 		print('Dataset:', ds_name)
+		repeats_list, ratio_list = get_param_lists(ds_name)
 		results_for_a_dataset(ds_name)
