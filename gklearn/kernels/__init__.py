@@ -7,6 +7,8 @@ __version__ = "0.1"
 __author__ = "Linlin Jia"
 __date__ = "November 2018"
 
+from gklearn.kernels.metadata import GRAPH_KERNELS, list_of_graph_kernels
+
 from gklearn.kernels.graph_kernel import GraphKernel
 from gklearn.kernels.common_walk import CommonWalk
 from gklearn.kernels.marginalized import Marginalized
