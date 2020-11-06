@@ -56,7 +56,7 @@ def test_list_graph_kernels():
 	"""
 	"""
 	from gklearn.kernels import GRAPH_KERNELS, list_of_graph_kernels
-	assert list_of_graph_kernels() != [i for i in GRAPH_KERNELS]
+	assert list_of_graph_kernels() == [i for i in GRAPH_KERNELS]
 	
 
 
