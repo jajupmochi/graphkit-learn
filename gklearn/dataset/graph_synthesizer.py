@@ -13,13 +13,11 @@ import random
 class GraphSynthesizer(object):
 	
 	
-	import warnings
-	warnings.simplefilter('always', DeprecationWarning)
-	warnings.warn('This class has been moved to "gklearn.dataset" module. The class "gklearn.utils.graph_synthesizer.GraphSynthesizer" has not been maintained since Nov 12th, 2020 (version 0.2.1) and will be removed since version 0.2.2.', DeprecationWarning)
-	
-	
-	def __init__(self):
-		pass
+	def __init__(self, g_type=None, *args, **kwargs):
+		if g_type == 'unified':
+			self._graphs = self.unified_graphs(*args, *kwargs)
+		else:
+			self._graphs = None
 	
 	
 	def random_graph(self, num_nodes, num_edges, num_node_labels=0, num_edge_labels=0, seed=None, directed=False, max_num_edges=None, all_edges=None):
@@ -56,3 +54,8 @@ class GraphSynthesizer(object):
 			graphs.append(self.random_graph(num_nodes, num_edges, num_node_labels=num_node_labels, num_edge_labels=num_edge_labels, seed=seed, directed=directed, max_num_edges=max_num_edges, all_edges=all_edges))
 			
 		return graphs
+	
+	
+	@property
+	def graphs(self):
+		return self._graphs
