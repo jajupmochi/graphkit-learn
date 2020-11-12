@@ -25,8 +25,7 @@ def xp_synthesized_graphs_dataset_size():
 	import pickle
 	import os
 	save_dir = 'outputs/synthesized_graphs_N/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
+	os.makedirs(save_dir, exist_ok=True)
 
 	run_times = {}
 	

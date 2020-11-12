@@ -126,8 +126,7 @@ def generate_random_preimages_by_class(ds_name, rpg_options, kernel_options, sav
 			 
 		# save median graphs.
 		if save_preimages:
-			if not os.path.exists(dir_save + 'preimages/'):
-				os.makedirs(dir_save + 'preimages/')
+			os.makedirs(dir_save + 'preimages/', exist_ok=True)
 			print('Saving preimages to files...')
 			fn_best_dataset = dir_save + 'preimages/g_best_dataset.' + 'nbg' + str(num_graphs) + '.y' + str(target) + '.repeat' + str(1)
 			saveGXL(rpg.best_from_dataset, fn_best_dataset + '.gxl', method='default', 
@@ -167,8 +166,7 @@ def generate_random_preimages_by_class(ds_name, rpg_options, kernel_options, sav
 
 	
 def _init_output_file_preimage(ds_name, gkernel, dir_output):
-	if not os.path.exists(dir_output):
-		os.makedirs(dir_output)
+	os.makedirs(dir_output, exist_ok=True)
 	fn_output_detail = 'results_detail.' + ds_name + '.' + gkernel + '.csv'
 	f_detail = open(dir_output + fn_output_detail, 'a')
 	csv.writer(f_detail).writerow(['dataset', 'graph kernel', 'num graphs', 

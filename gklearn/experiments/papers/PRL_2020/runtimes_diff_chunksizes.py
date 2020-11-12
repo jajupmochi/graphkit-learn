@@ -16,8 +16,7 @@ def xp_runtimes_diff_chunksizes():
 	import pickle
 	import os
 	save_dir = 'outputs/runtimes_diff_chunksizes/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
+	os.makedirs(save_dir, exist_ok=True)
 
 	run_times = {}
 

@@ -154,6 +154,6 @@ def test_median_graph_estimator_symb():
 	return set_median, gen_median
 
 
-if __name__ == '__main__':
+if _name_ == '_main_':
  	# set_median, gen_median = test_median_graph_estimator()
  	set_median, gen_median = test_median_graph_estimator_symb()

@@ -91,8 +91,7 @@ def model_selection_for_precomputed_kernel(datafile,
 	tqdm.monitor_interval = 0
 
 	output_dir += estimator.__name__
-	if not os.path.exists(output_dir):
-		os.makedirs(output_dir)
+	os.makedirs(output_dir, exist_ok=True)
 	# a string to save all the results.
 	str_fw = '###################### log time: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '. ######################\n\n'
 	str_fw += '# This file contains results of ' + estimator.__name__ + ' on dataset ' + ds_name + ',\n# including gram matrices, serial numbers for gram matrix figures and performance.\n\n'
@@ -604,8 +603,7 @@ def model_selection_for_precomputed_kernel(datafile,
 		str_fw += 'training time with hyper-param choices who did not participate in calculation of gram matrices: {:.2f}s\n\n'.format(tt_poster)
 
 		# open file to save all results for this dataset.
-		if not os.path.exists(output_dir):
-			os.makedirs(output_dir)
+		os.makedirs(output_dir, exist_ok=True)
 			
 	# print out results as table.
 	str_fw += printResultsInTable(param_list, param_list_pre_revised, average_val_scores,

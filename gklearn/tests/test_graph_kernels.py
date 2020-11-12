@@ -52,6 +52,14 @@ def chooseDataset(ds_name):
 	return dataset
 
 
+def test_list_graph_kernels():
+	"""
+	"""
+	from gklearn.kernels import GRAPH_KERNELS, list_of_graph_kernels
+	assert list_of_graph_kernels() == [i for i in GRAPH_KERNELS]
+	
+
+
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
 @pytest.mark.parametrize('weight,compute_method', [(0.01, 'geo'), (1, 'exp')])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -433,9 +441,10 @@ def test_WLSubtree(ds_name, parallel):
 		
 
 if __name__ == "__main__":
+	test_list_graph_kernels()
 #	test_spkernel('Alkane', 'imap_unordered')
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
-	test_WLSubtree('Acyclic', 'imap_unordered')
+# 	test_WLSubtree('Acyclic', 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)

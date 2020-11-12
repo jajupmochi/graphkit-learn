@@ -22,8 +22,7 @@ def xp_synthesized_graphs_num_nodes():
 	import pickle
 	import os
 	save_dir = 'outputs/synthesized_graphs_num_nodes/'
-	if not os.path.exists(save_dir):
-		os.makedirs(save_dir)
+	os.makedirs(save_dir, exist_ok=True)
 
 	run_times = {}
 	

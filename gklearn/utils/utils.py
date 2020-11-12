@@ -458,8 +458,7 @@ def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, d
 	print()
 	print('4. saving results...')
 	if save_results:
-		if not os.path.exists(dir_save):
-			os.makedirs(dir_save)
+		os.makedirs(dir_save, exist_ok=True)
 		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)	
 
 	print('\ncomplete.')	

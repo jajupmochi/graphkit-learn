@@ -31,51 +31,51 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		constant_node_costs : Boolean
 			Set to True if the node relabeling costs are constant.
 		"""
-		self.__ged_env = ged_env
-		self.__init_method = 'BRANCH_FAST'
-		self.__init_options = ''
-		self.__descent_method = 'BRANCH_FAST'
-		self.__descent_options = ''
-		self.__refine_method = 'IPFP'
-		self.__refine_options = ''
-		self.__constant_node_costs = constant_node_costs
-		self.__labeled_nodes = (ged_env.get_num_node_labels() > 1)
-		self.__node_del_cost = ged_env.get_node_del_cost(ged_env.get_node_label(1))
-		self.__node_ins_cost = ged_env.get_node_ins_cost(ged_env.get_node_label(1))
-		self.__labeled_edges = (ged_env.get_num_edge_labels() > 1)
-		self.__edge_del_cost = ged_env.get_edge_del_cost(ged_env.get_edge_label(1))
-		self.__edge_ins_cost = ged_env.get_edge_ins_cost(ged_env.get_edge_label(1))
-		self.__init_type = 'RANDOM'
-		self.__num_random_inits = 10
-		self.__desired_num_random_inits = 10
-		self.__use_real_randomness = True
-		self.__seed = 0
-		self.__parallel = True
-		self.__update_order = True
-		self.__sort_graphs = True # sort graphs by size when computing GEDs.
-		self.__refine = True
-		self.__time_limit_in_sec = 0
-		self.__epsilon = 0.0001
-		self.__max_itrs = 100
-		self.__max_itrs_without_update = 3
-		self.__num_inits_increase_order = 10
-		self.__init_type_increase_order = 'K-MEANS++'
-		self.__max_itrs_increase_order = 10
-		self.__print_to_stdout = 2
-		self.__median_id = np.inf # @todo: check
-		self.__node_maps_from_median = {}
-		self.__sum_of_distances = 0
-		self.__best_init_sum_of_distances = np.inf
-		self.__converged_sum_of_distances = np.inf
-		self.__runtime = None
-		self.__runtime_initialized = None
-		self.__runtime_converged = None
-		self.__itrs = [] # @todo: check: {} ?
-		self.__num_decrease_order = 0
-		self.__num_increase_order = 0
-		self.__num_converged_descents = 0
-		self.__state = AlgorithmState.TERMINATED
-		self.__label_names = {}
+		self._ged_env = ged_env
+		self._init_method = 'BRANCH_FAST'
+		self._init_options = ''
+		self._descent_method = 'BRANCH_FAST'
+		self._descent_options = ''
+		self._refine_method = 'IPFP'
+		self._refine_options = ''
+		self._constant_node_costs = constant_node_costs
+		self._labeled_nodes = (ged_env.get_num_node_labels() > 1)
+		self._node_del_cost = ged_env.get_node_del_cost(ged_env.get_node_label(1))
+		self._node_ins_cost = ged_env.get_node_ins_cost(ged_env.get_node_label(1))
+		self._labeled_edges = (ged_env.get_num_edge_labels() > 1)
+		self._edge_del_cost = ged_env.get_edge_del_cost(ged_env.get_edge_label(1))
+		self._edge_ins_cost = ged_env.get_edge_ins_cost(ged_env.get_edge_label(1))
+		self._init_type = 'RANDOM'
+		self._num_random_inits = 10
+		self._desired_num_random_inits = 10
+		self._use_real_randomness = True
+		self._seed = 0
+		self._parallel = True
+		self._update_order = True
+		self._sort_graphs = True # sort graphs by size when computing GEDs.
+		self._refine = True
+		self._time_limit_in_sec = 0
+		self._epsilon = 0.0001
+		self._max_itrs = 100
+		self._max_itrs_without_update = 3
+		self._num_inits_increase_order = 10
+		self._init_type_increase_order = 'K-MEANS++'
+		self._max_itrs_increase_order = 10
+		self._print_to_stdout = 2
+		self._median_id = np.inf # @todo: check
+		self._node_maps_from_median = {}
+		self._sum_of_distances = 0
+		self._best_init_sum_of_distances = np.inf
+		self._converged_sum_of_distances = np.inf
+		self._runtime = None
+		self._runtime_initialized = None
+		self._runtime_converged = None
+		self._itrs = [] # @todo: check: {} ?
+		self._num_decrease_order = 0
+		self._num_increase_order = 0
+		self._num_converged_descents = 0
+		self._state = AlgorithmState.TERMINATED
+		self._label_names = {}
 		
 		if ged_env is None:
 			raise Exception('The GED environment pointer passed to the constructor of MedianGraphEstimator is null.')
@@ -91,142 +91,142 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		options : string
 			String that specifies with which options to run the estimator.
 		"""
-		self.__set_default_options()
+		self._set_default_options()
 		options_map = misc.options_string_to_options_map(options)
 		for opt_name, opt_val in options_map.items():
 			if opt_name == 'init-type':
-				self.__init_type = opt_val
+				self._init_type = opt_val
 				if opt_val != 'MEDOID' and opt_val != 'RANDOM' and opt_val != 'MIN' and opt_val != 'MAX' and opt_val != 'MEAN':
 					raise Exception('Invalid argument ' + opt_val + ' for option init-type. Usage: options = "[--init-type RANDOM|MEDOID|EMPTY|MIN|MAX|MEAN] [...]"')
 			elif opt_name == 'random-inits':
 				try:
-					self.__num_random_inits = int(opt_val)
-					self.__desired_num_random_inits = self.__num_random_inits
+					self._num_random_inits = int(opt_val)
+					self._desired_num_random_inits = self._num_random_inits
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option random-inits. Usage: options = "[--random-inits <convertible to int greater 0>]"')
 
-				if self.__num_random_inits <= 0:
+				if self._num_random_inits <= 0:
 					raise Exception('Invalid argument "' + opt_val + '" for option random-inits. Usage: options = "[--random-inits <convertible to int greater 0>]"')
 	
 			elif opt_name == 'randomness':
 				if opt_val == 'PSEUDO':
-					self.__use_real_randomness = False
+					self._use_real_randomness = False
 	
 				elif opt_val == 'REAL':
-					self.__use_real_randomness = True
+					self._use_real_randomness = True
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option randomness. Usage: options = "[--randomness REAL|PSEUDO] [...]"')
 	
 			elif opt_name == 'stdout':
 				if opt_val == '0':
-					self.__print_to_stdout = 0
+					self._print_to_stdout = 0
 	
 				elif opt_val == '1':
-					self.__print_to_stdout = 1
+					self._print_to_stdout = 1
 	
 				elif opt_val == '2':
-					self.__print_to_stdout = 2
+					self._print_to_stdout = 2
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option stdout. Usage: options = "[--stdout 0|1|2] [...]"')
 
 			elif opt_name == 'parallel':
 				if opt_val == 'TRUE':
-					self.__parallel = True
+					self._parallel = True
 	
 				elif opt_val == 'FALSE':
-					self.__parallel = False
+					self._parallel = False
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option parallel. Usage: options = "[--parallel TRUE|FALSE] [...]"')
 	
 			elif opt_name == 'update-order':
 				if opt_val == 'TRUE':
-					self.__update_order = True
+					self._update_order = True
 	
 				elif opt_val == 'FALSE':
-					self.__update_order = False
+					self._update_order = False
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option update-order. Usage: options = "[--update-order TRUE|FALSE] [...]"')
 					
 			elif opt_name == 'sort-graphs':
 				if opt_val == 'TRUE':
-					self.__sort_graphs = True
+					self._sort_graphs = True
 	
 				elif opt_val == 'FALSE':
-					self.__sort_graphs = False
+					self._sort_graphs = False
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option sort-graphs. Usage: options = "[--sort-graphs TRUE|FALSE] [...]"')
 					
 			elif opt_name == 'refine':
 				if opt_val == 'TRUE':
-					self.__refine = True
+					self._refine = True
 	
 				elif opt_val == 'FALSE':
-					self.__refine = False
+					self._refine = False
 	
 				else:
 					raise Exception('Invalid argument "' + opt_val  + '" for option refine. Usage: options = "[--refine TRUE|FALSE] [...]"')
 	
 			elif opt_name == 'time-limit':
 				try:
-					self.__time_limit_in_sec = float(opt_val)
+					self._time_limit_in_sec = float(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option time-limit.  Usage: options = "[--time-limit <convertible to double>] [...]')
 	
 			elif opt_name == 'max-itrs':
 				try:
-					self.__max_itrs = int(opt_val)
+					self._max_itrs = int(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option max-itrs. Usage: options = "[--max-itrs <convertible to int>] [...]')
 	
 			elif opt_name == 'max-itrs-without-update':
 				try:
-					self.__max_itrs_without_update = int(opt_val)
+					self._max_itrs_without_update = int(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option max-itrs-without-update. Usage: options = "[--max-itrs-without-update <convertible to int>] [...]')
 	
 			elif opt_name == 'seed':
 				try:
-					self.__seed = int(opt_val)
+					self._seed = int(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option seed. Usage: options = "[--seed <convertible to int greater equal 0>] [...]')
 	
 			elif opt_name == 'epsilon':
 				try:
-					self.__epsilon = float(opt_val)
+					self._epsilon = float(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option epsilon. Usage: options = "[--epsilon <convertible to double greater 0>] [...]')
 	
-				if self.__epsilon <= 0:
+				if self._epsilon <= 0:
 					raise Exception('Invalid argument "' + opt_val + '" for option epsilon. Usage: options = "[--epsilon <convertible to double greater 0>] [...]')
 	
 			elif opt_name == 'inits-increase-order':
 				try:
-					self.__num_inits_increase_order = int(opt_val)
+					self._num_inits_increase_order = int(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option inits-increase-order. Usage: options = "[--inits-increase-order <convertible to int greater 0>]"')
 	
-				if self.__num_inits_increase_order <= 0:
+				if self._num_inits_increase_order <= 0:
 					raise Exception('Invalid argument "' + opt_val + '" for option inits-increase-order. Usage: options = "[--inits-increase-order <convertible to int greater 0>]"')
 
 			elif opt_name == 'init-type-increase-order':
-				self.__init_type_increase_order = opt_val
+				self._init_type_increase_order = opt_val
 				if opt_val != 'CLUSTERS' and opt_val != 'K-MEANS++':
 					raise Exception('Invalid argument ' + opt_val + ' for option init-type-increase-order. Usage: options = "[--init-type-increase-order CLUSTERS|K-MEANS++] [...]"')
 	
 			elif opt_name == 'max-itrs-increase-order':
 				try:
-					self.__max_itrs_increase_order = int(opt_val)
+					self._max_itrs_increase_order = int(opt_val)
 	
 				except:
 					raise Exception('Invalid argument "' + opt_val + '" for option max-itrs-increase-order. Usage: options = "[--max-itrs-increase-order <convertible to int>] [...]')
@@ -253,8 +253,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		-----
 		Has no effect unless "--init-type MEDOID" is passed to set_options().
 		"""
-		self.__init_method = init_method;
-		self.__init_options = init_options;
+		self._init_method = init_method;
+		self._init_options = init_options;
 	
 	
 	def set_descent_method(self, descent_method, descent_options=''):
@@ -272,8 +272,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		-----
 		Has no effect unless "--init-type MEDOID" is passed to set_options().
 		"""
-		self.__descent_method = descent_method;
-		self.__descent_options = descent_options;
+		self._descent_method = descent_method;
+		self._descent_options = descent_options;
 
 	
 	def set_refine_method(self, refine_method, refine_options):
@@ -291,8 +291,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		-----
 		Has no effect if "--refine FALSE" is passed to set_options().
 		"""
-		self.__refine_method = refine_method
-		self.__refine_options = refine_options
+		self._refine_method = refine_method
+		self._refine_options = refine_options
 
 	
 	def run(self, graph_ids, set_median_id, gen_median_id):
@@ -315,7 +315,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			raise Exception('Empty vector of graph IDs, unable to compute median.')
 		all_graphs_empty = True
 		for graph_id in graph_ids:
-			if self.__ged_env.get_graph_num_nodes(graph_id) > 0:
+			if self._ged_env.get_graph_num_nodes(graph_id) > 0:
 				all_graphs_empty = False
 				break
 		if all_graphs_empty:
@@ -323,16 +323,16 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 		# Start timer and record start time.
 		start = time.time()
-		timer = Timer(self.__time_limit_in_sec)
-		self.__median_id = gen_median_id
-		self.__state = AlgorithmState.TERMINATED
+		timer = Timer(self._time_limit_in_sec)
+		self._median_id = gen_median_id
+		self._state = AlgorithmState.TERMINATED
 		
 		# Get NetworkX graph representations of the input graphs.
 		graphs = {}
 		for graph_id in graph_ids:
 			# @todo: get_nx_graph() function may need to be modified according to the coming code.
-			graphs[graph_id] = self.__ged_env.get_nx_graph(graph_id, True, True, False)
-#		print(self.__ged_env.get_graph_internal_id(0))
+			graphs[graph_id] = self._ged_env.get_nx_graph(graph_id, True, True, False)
+#		print(self._ged_env.get_graph_internal_id(0))
 #		print(graphs[0].graph)
 #		print(graphs[0].nodes(data=True))
 #		print(graphs[0].edges(data=True))
@@ -340,27 +340,27 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 		# Construct initial medians.
 		medians = []
-		self.__construct_initial_medians(graph_ids, timer, medians)
+		self._construct_initial_medians(graph_ids, timer, medians)
 		end_init = time.time()
-		self.__runtime_initialized = end_init - start
-#		print(medians[0].graph)
-#		print(medians[0].nodes(data=True))
-#		print(medians[0].edges(data=True))
-#		print(nx.adjacency_matrix(medians[0]))
+		self._runtime_initialized = end_init - start
+		print(medians[0].graph)
+		print(medians[0].nodes(data=True))
+		print(medians[0].edges(data=True))
+		print(nx.adjacency_matrix(medians[0]))
 		
 		# Reset information about iterations and number of times the median decreases and increases.
-		self.__itrs = [0] * len(medians)
-		self.__num_decrease_order = 0
-		self.__num_increase_order = 0
-		self.__num_converged_descents = 0
+		self._itrs = [0] * len(medians)
+		self._num_decrease_order = 0
+		self._num_increase_order = 0
+		self._num_converged_descents = 0
 		
 		# Initialize the best median.
 		best_sum_of_distances = np.inf
-		self.__best_init_sum_of_distances = np.inf
+		self._best_init_sum_of_distances = np.inf
 		node_maps_from_best_median = {}
 		
 		# Run block gradient descent from all initial medians.
-		self.__ged_env.set_method(self.__descent_method, self.__descent_options)
+		self._ged_env.set_method(self._descent_method, self._descent_options)
 		for median_pos in range(0, len(medians)):
 			
 			# Terminate if the timer has expired and at least one SOD has been computed.
@@ -368,7 +368,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				break
 			
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				print('\n===========================================================')
 				print('Block gradient descent for initial median', str(median_pos + 1), 'of', str(len(medians)), '.')
 				print('-----------------------------------------------------------')
@@ -377,27 +377,27 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			median = medians[median_pos]
 			
 			# Load initial median into the environment.
-			self.__ged_env.load_nx_graph(median, gen_median_id)
-			self.__ged_env.init(self.__ged_env.get_init_type())
+			self._ged_env.load_nx_graph(median, gen_median_id)
+			self._ged_env.init(self._ged_env.get_init_type())
 			
 			# Compute node maps and sum of distances for initial median.
-# 			xxx = self.__node_maps_from_median
-			self.__compute_init_node_maps(graph_ids, gen_median_id)
-# 			yyy = self.__node_maps_from_median
+			xxx = self._node_maps_from_median
+			self._compute_init_node_maps(graph_ids, gen_median_id)
+			yyy = self._node_maps_from_median
 			
-			self.__best_init_sum_of_distances = min(self.__best_init_sum_of_distances, self.__sum_of_distances)
-			self.__ged_env.load_nx_graph(median, set_median_id)
-# 			print(self.__best_init_sum_of_distances)
+			self._best_init_sum_of_distances = min(self._best_init_sum_of_distances, self._sum_of_distances)
+			self._ged_env.load_nx_graph(median, set_median_id)
+			print(self._best_init_sum_of_distances)
 				
 			# Run block gradient descent from initial median.
 			converged = False
 			itrs_without_update = 0
-			while not self.__termination_criterion_met(converged, timer, self.__itrs[median_pos], itrs_without_update):
+			while not self._termination_criterion_met(converged, timer, self._itrs[median_pos], itrs_without_update):
 				
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('\n===========================================================')
-					print('Iteration', str(self.__itrs[median_pos] + 1), 'for initial median', str(median_pos + 1), 'of', str(len(medians)), '.')
+					print('Iteration', str(self._itrs[median_pos] + 1), 'for initial median', str(median_pos + 1), 'of', str(len(medians)), '.')
 					print('-----------------------------------------------------------')
 					
 				# Initialize flags that tell us what happened in the iteration.
@@ -407,12 +407,12 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				increased_order = False
 				
 				# Update the median.
-				median_modified = self.__update_median(graphs, median)
-				if self.__update_order:
-					if not median_modified or self.__itrs[median_pos] == 0:
-						decreased_order = self.__decrease_order(graphs, median)
-						if not decreased_order or self.__itrs[median_pos] == 0:
-							increased_order = self.__increase_order(graphs, median)
+				median_modified = self._update_median(graphs, median)
+				if self._update_order:
+					if not median_modified or self._itrs[median_pos] == 0:
+						decreased_order = self._decrease_order(graphs, median)
+						if not decreased_order or self._itrs[median_pos] == 0:
+							increased_order = self._increase_order(graphs, median)
 						
 				# Update the number of iterations without update of the median.
 				if median_modified or decreased_order or increased_order:
@@ -421,51 +421,51 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 					itrs_without_update += 1
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('Loading median to environment: ... ', end='')
 					
 				# Load the median into the environment.
 				# @todo: should this function use the original node label?
-				self.__ged_env.load_nx_graph(median, gen_median_id)
-				self.__ged_env.init(self.__ged_env.get_init_type())
+				self._ged_env.load_nx_graph(median, gen_median_id)
+				self._ged_env.init(self._ged_env.get_init_type())
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('done.')					
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('Updating induced costs: ... ', end='')
 
 				# Compute induced costs of the old node maps w.r.t. the updated median.
 				for graph_id in graph_ids:
-# 					print(self.__node_maps_from_median[graph_id].induced_cost())
-# 					xxx = self.__node_maps_from_median[graph_id]					   
-					self.__ged_env.compute_induced_cost(gen_median_id, graph_id, self.__node_maps_from_median[graph_id])
+# 					print(self._node_maps_from_median[graph_id].induced_cost())
+# 					xxx = self._node_maps_from_median[graph_id]					   
+					self._ged_env.compute_induced_cost(gen_median_id, graph_id, self._node_maps_from_median[graph_id])
 # 					print('---------------------------------------')
-# 					print(self.__node_maps_from_median[graph_id].induced_cost())
+# 					print(self._node_maps_from_median[graph_id].induced_cost())
 					# @todo:!!!!!!!!!!!!!!!!!!!!!!!!!!!!This value is a slight different from the c++ program, which might be a bug! Use it very carefully!
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('done.')					
 					
 				# Update the node maps.
-				node_maps_modified = self.__update_node_maps()
+				node_maps_modified = self._update_node_maps()
 
 				# Update the order of the median if no improvement can be found with the current order.
 				
 				# Update the sum of distances.
-				old_sum_of_distances = self.__sum_of_distances
-				self.__sum_of_distances = 0
-				for graph_id, node_map in self.__node_maps_from_median.items():
-					self.__sum_of_distances += node_map.induced_cost()
-# 					print(self.__sum_of_distances)
+				old_sum_of_distances = self._sum_of_distances
+				self._sum_of_distances = 0
+				for graph_id, node_map in self._node_maps_from_median.items():
+					self._sum_of_distances += node_map.induced_cost()
+# 					print(self._sum_of_distances)
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('Old local SOD: ', old_sum_of_distances)
-					print('New local SOD: ', self.__sum_of_distances)
+					print('New local SOD: ', self._sum_of_distances)
 					print('Best converged SOD: ', best_sum_of_distances)
 					print('Modified median: ', median_modified)
 					print('Modified node maps: ', node_maps_modified)
@@ -475,121 +475,121 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 					
 				converged = not (median_modified or node_maps_modified or decreased_order or increased_order)
 				
-				self.__itrs[median_pos] += 1
+				self._itrs[median_pos] += 1
 				
 			# Update the best median.
-			if self.__sum_of_distances < best_sum_of_distances:
-				best_sum_of_distances = self.__sum_of_distances
-				node_maps_from_best_median = self.__node_maps_from_median.copy() # @todo: this is a shallow copy, not sure if it is enough.
+			if self._sum_of_distances < best_sum_of_distances:
+				best_sum_of_distances = self._sum_of_distances
+				node_maps_from_best_median = self._node_maps_from_median.copy() # @todo: this is a shallow copy, not sure if it is enough.
 				best_median = median
 				
 			# Update the number of converged descents.
 			if converged:
-				self.__num_converged_descents += 1
+				self._num_converged_descents += 1
 				
 		# Store the best encountered median.
-		self.__sum_of_distances = best_sum_of_distances
-		self.__node_maps_from_median = node_maps_from_best_median
-		self.__ged_env.load_nx_graph(best_median, gen_median_id)
-		self.__ged_env.init(self.__ged_env.get_init_type())
+		self._sum_of_distances = best_sum_of_distances
+		self._node_maps_from_median = node_maps_from_best_median
+		self._ged_env.load_nx_graph(best_median, gen_median_id)
+		self._ged_env.init(self._ged_env.get_init_type())
 		end_descent = time.time()
-		self.__runtime_converged = end_descent - start
+		self._runtime_converged = end_descent - start
 		
 		# Refine the sum of distances and the node maps for the converged median.
-		self.__converged_sum_of_distances = self.__sum_of_distances
-		if self.__refine:
-			self.__improve_sum_of_distances(timer)
+		self._converged_sum_of_distances = self._sum_of_distances
+		if self._refine:
+			self._improve_sum_of_distances(timer)
 		
 		# Record end time, set runtime and reset the number of initial medians.
 		end = time.time()
-		self.__runtime = end - start
-		self.__num_random_inits = self.__desired_num_random_inits
+		self._runtime = end - start
+		self._num_random_inits = self._desired_num_random_inits
 		
 		# Print global information.
-		if self.__print_to_stdout != 0:
+		if self._print_to_stdout != 0:
 			print('\n===========================================================')
 			print('Finished computation of generalized median graph.')
 			print('-----------------------------------------------------------')
-			print('Best SOD after initialization: ', self.__best_init_sum_of_distances)
-			print('Converged SOD: ', self.__converged_sum_of_distances)
-			if self.__refine:
-				print('Refined SOD: ', self.__sum_of_distances)
-			print('Overall runtime: ', self.__runtime)
-			print('Runtime of initialization: ', self.__runtime_initialized)
-			print('Runtime of block gradient descent: ', self.__runtime_converged - self.__runtime_initialized)
-			if self.__refine:
-				print('Runtime of refinement: ', self.__runtime - self.__runtime_converged)
+			print('Best SOD after initialization: ', self._best_init_sum_of_distances)
+			print('Converged SOD: ', self._converged_sum_of_distances)
+			if self._refine:
+				print('Refined SOD: ', self._sum_of_distances)
+			print('Overall runtime: ', self._runtime)
+			print('Runtime of initialization: ', self._runtime_initialized)
+			print('Runtime of block gradient descent: ', self._runtime_converged - self._runtime_initialized)
+			if self._refine:
+				print('Runtime of refinement: ', self._runtime - self._runtime_converged)
 			print('Number of initial medians: ', len(medians))
 			total_itr = 0
 			num_started_descents = 0
-			for itr in self.__itrs:
+			for itr in self._itrs:
 				total_itr += itr
 				if itr > 0:
 					num_started_descents += 1
 			print('Size of graph collection: ', len(graph_ids))
 			print('Number of started descents: ', num_started_descents)
-			print('Number of converged descents: ', self.__num_converged_descents)
+			print('Number of converged descents: ', self._num_converged_descents)
 			print('Overall number of iterations: ', total_itr)
-			print('Overall number of times the order decreased: ', self.__num_decrease_order)
-			print('Overall number of times the order increased: ', self.__num_increase_order)
+			print('Overall number of times the order decreased: ', self._num_decrease_order)
+			print('Overall number of times the order increased: ', self._num_increase_order)
 			print('===========================================================\n')
 			
 			
-	def __improve_sum_of_distances(self, timer): # @todo: go through and test
+	def _improve_sum_of_distances(self, timer): # @todo: go through and test
 		# Use method selected for refinement phase.
-		self.__ged_env.set_method(self.__refine_method, self.__refine_options)
+		self._ged_env.set_method(self._refine_method, self._refine_options)
 		
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
-			progress = tqdm(desc='Improving node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
+		if self._print_to_stdout == 2:
+			progress = tqdm(desc='Improving node maps', total=len(self._node_maps_from_median), file=sys.stdout)
 			print('\n===========================================================')
 			print('Improving node maps and SOD for converged median.')
 			print('-----------------------------------------------------------')
 			progress.update(1)
 			
 		# Improving the node maps.
-		nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__gen_median_id)
-		for graph_id, node_map in self.__node_maps_from_median.items():
+		nb_nodes_median = self._ged_env.get_graph_num_nodes(self._gen_median_id)
+		for graph_id, node_map in self._node_maps_from_median.items():
 			if time.expired():
-				if self.__state == AlgorithmState.TERMINATED:
-					self.__state = AlgorithmState.CONVERGED
+				if self._state == AlgorithmState.TERMINATED:
+					self._state = AlgorithmState.CONVERGED
 				break
 
-			nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
-			if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:			
-				self.__ged_env.run_method(self.__gen_median_id, graph_id)
-				if self.__ged_env.get_upper_bound(self.__gen_median_id, graph_id) < node_map.induced_cost():
-					self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__gen_median_id, graph_id)
+			nb_nodes_g = self._ged_env.get_graph_num_nodes(graph_id)
+			if nb_nodes_median <= nb_nodes_g or not self._sort_graphs:			
+				self._ged_env.run_method(self._gen_median_id, graph_id)
+				if self._ged_env.get_upper_bound(self._gen_median_id, graph_id) < node_map.induced_cost():
+					self._node_maps_from_median[graph_id] = self._ged_env.get_node_map(self._gen_median_id, graph_id)
 			else:
-				self.__ged_env.run_method(graph_id, self.__gen_median_id)
-				if self.__ged_env.get_upper_bound(graph_id, self.__gen_median_id) < node_map.induced_cost():
-						node_map_tmp = self.__ged_env.get_node_map(graph_id, self.__gen_median_id)
+				self._ged_env.run_method(graph_id, self._gen_median_id)
+				if self._ged_env.get_upper_bound(graph_id, self._gen_median_id) < node_map.induced_cost():
+						node_map_tmp = self._ged_env.get_node_map(graph_id, self._gen_median_id)
 						node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
-						self.__node_maps_from_median[graph_id] = node_map_tmp	
+						self._node_maps_from_median[graph_id] = node_map_tmp	
 			
-			self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()				
+			self._sum_of_distances += self._node_maps_from_median[graph_id].induced_cost()				
 
 			# Print information.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				progress.update(1)
 
-		self.__sum_of_distances = 0.0
-		for key, val in self.__node_maps_from_median.items():
-			self.__sum_of_distances += val.induced_cost()
+		self._sum_of_distances = 0.0
+		for key, val in self._node_maps_from_median.items():
+			self._sum_of_distances += val.induced_cost()
 			
 		# Print information.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('===========================================================\n')
 			
 	
-	def __median_available(self):
-		return self.__median_id != np.inf
+	def _median_available(self):
+		return self._median_id != np.inf
 	
 	
 	def get_state(self):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_state().')
-		return self.__state
+		return self._state
 		
 			
 	def get_sum_of_distances(self, state=''):
@@ -605,92 +605,92 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		float
 			The sum of distances (SOD) of the median when the estimator was in the state `state` during the last call to run(). If `state` is not given, the converged SOD (without refinement) or refined SOD (with refinement) is returned.
 		"""
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_sum_of_distances().')
 		if state == 'initialized':
-			return self.__best_init_sum_of_distances
+			return self._best_init_sum_of_distances
 		if state == 'converged':
-			return self.__converged_sum_of_distances
-		return self.__sum_of_distances
+			return self._converged_sum_of_distances
+		return self._sum_of_distances
 
 
 	def get_runtime(self, state):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_runtime().')
 		if state == AlgorithmState.INITIALIZED:
-			return self.__runtime_initialized
+			return self._runtime_initialized
 		if state == AlgorithmState.CONVERGED:
-			return self.__runtime_converged
-		return self.__runtime
+			return self._runtime_converged
+		return self._runtime
 	
 
 	def get_num_itrs(self):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_num_itrs().')
-		return self.__itrs
+		return self._itrs
 
 
 	def get_num_times_order_decreased(self):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_num_times_order_decreased().')
-		return self.__num_decrease_order		
+		return self._num_decrease_order		
 	
 	
 	def get_num_times_order_increased(self):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_num_times_order_increased().')
-		return self.__num_increase_order		
+		return self._num_increase_order		
 	
 	
 	def get_num_converged_descents(self):
-		if not self.__median_available():
+		if not self._median_available():
 			raise Exception('No median has been computed. Call run() before calling get_num_converged_descents().')
-		return self.__num_converged_descents
+		return self._num_converged_descents
 	
 	
 	def get_ged_env(self):
-		return self.__ged_env
+		return self._ged_env
 	
 	
-	def __set_default_options(self):
-		self.__init_type = 'RANDOM'
-		self.__num_random_inits = 10
-		self.__desired_num_random_inits = 10
-		self.__use_real_randomness = True
-		self.__seed = 0
-		self.__parallel = True
-		self.__update_order = True
-		self.__sort_graphs = True
-		self.__refine = True
-		self.__time_limit_in_sec = 0
-		self.__epsilon = 0.0001
-		self.__max_itrs = 100
-		self.__max_itrs_without_update = 3
-		self.__num_inits_increase_order = 10
-		self.__init_type_increase_order = 'K-MEANS++'
-		self.__max_itrs_increase_order = 10
-		self.__print_to_stdout = 2
-		self.__label_names = {}
+	def _set_default_options(self):
+		self._init_type = 'RANDOM'
+		self._num_random_inits = 10
+		self._desired_num_random_inits = 10
+		self._use_real_randomness = True
+		self._seed = 0
+		self._parallel = True
+		self._update_order = True
+		self._sort_graphs = True
+		self._refine = True
+		self._time_limit_in_sec = 0
+		self._epsilon = 0.0001
+		self._max_itrs = 100
+		self._max_itrs_without_update = 3
+		self._num_inits_increase_order = 10
+		self._init_type_increase_order = 'K-MEANS++'
+		self._max_itrs_increase_order = 10
+		self._print_to_stdout = 2
+		self._label_names = {}
 		
 		
-	def __construct_initial_medians(self, graph_ids, timer, initial_medians):
+	def _construct_initial_medians(self, graph_ids, timer, initial_medians):
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('\n===========================================================')
 			print('Constructing initial median(s).')
 			print('-----------------------------------------------------------')
 			
 		# Compute or sample the initial median(s).
 		initial_medians.clear()
-		if self.__init_type == 'MEDOID':
-			self.__compute_medoid(graph_ids, timer, initial_medians)
-		elif self.__init_type == 'MAX':
+		if self._init_type == 'MEDOID':
+			self._compute_medoid(graph_ids, timer, initial_medians)
+		elif self._init_type == 'MAX':
 			pass # @todo
 #			compute_max_order_graph_(graph_ids, initial_medians)
-		elif self.__init_type == 'MIN':
+		elif self._init_type == 'MIN':
 			pass # @todo
 #			compute_min_order_graph_(graph_ids, initial_medians)
-		elif self.__init_type == 'MEAN':
+		elif self._init_type == 'MEAN':
 			pass # @todo
 #			compute_mean_order_graph_(graph_ids, initial_medians)
 		else:
@@ -698,17 +698,17 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 #			sample_initial_medians_(graph_ids, initial_medians)
 
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('===========================================================')
 			
 			
-	def __compute_medoid(self, graph_ids, timer, initial_medians):
+	def _compute_medoid(self, graph_ids, timer, initial_medians):
 		# Use method selected for initialization phase.
-		self.__ged_env.set_method(self.__init_method, self.__init_options)
+		self._ged_env.set_method(self._init_method, self._init_options)
 					
 		# Compute the medoid.
-		if self.__parallel:
-			# @todo: notice when parallel self.__ged_env is not modified.
+		if self._parallel:
+			# @todo: notice when parallel self._ged_env is not modified.
 			sum_of_distances_list = [np.inf] * len(graph_ids)
 			len_itr = len(graph_ids)
 			itr = zip(graph_ids, range(0, len(graph_ids)))
@@ -720,9 +720,9 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			do_fun = partial(_compute_medoid_parallel, graph_ids, self.__sort_graphs)
-			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
-			if self.__print_to_stdout == 2:
+			do_fun = partial(_compute_medoid_parallel, graph_ids, self._sort_graphs)
+			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self._ged_env,))
+			if self._print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
 							desc='Computing medoid', file=sys.stdout)
 			else:
@@ -735,50 +735,55 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			medoid_id = np.argmin(sum_of_distances_list)
 			best_sum_of_distances = sum_of_distances_list[medoid_id]
 			
-			initial_medians.append(self.__ged_env.get_nx_graph(medoid_id, True, True, False)) # @todo
+			initial_medians.append(self._ged_env.get_nx_graph(medoid_id, True, True, False)) # @todo
 
 		else:
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			self.ged_matrix_set_median_tmp = np.ones((len(graph_ids), len(graph_ids))) * np.inf
+			if self._print_to_stdout == 2:
 				progress = tqdm(desc='Computing medoid', total=len(graph_ids), file=sys.stdout)
 		
 			medoid_id = graph_ids[0]
 			best_sum_of_distances = np.inf
 			for g_id in graph_ids:
 				if timer.expired():
-					self.__state = AlgorithmState.CALLED
+					self._state = AlgorithmState.CALLED
 					break
-				nb_nodes_g = self.__ged_env.get_graph_num_nodes(g_id)
+				nb_nodes_g = self._ged_env.get_graph_num_nodes(g_id)
 				sum_of_distances = 0
-				for h_id in graph_ids:					
-					nb_nodes_h = self.__ged_env.get_graph_num_nodes(h_id)
-					if nb_nodes_g <= nb_nodes_h or not self.__sort_graphs:
-						self.__ged_env.run_method(g_id, h_id)
-						sum_of_distances += self.__ged_env.get_upper_bound(g_id, h_id)
+				for h_id in graph_ids: # @todo: can this be faster?				
+					nb_nodes_h = self._ged_env.get_graph_num_nodes(h_id)
+					if nb_nodes_g <= nb_nodes_h or not self._sort_graphs:
+						self._ged_env.run_method(g_id, h_id)
+						sum_of_distances += self._ged_env.get_upper_bound(g_id, h_id)
+						self.ged_matrix_set_median_tmp[g_id, h_id] = self._ged_env.get_upper_bound(g_id, h_id)
 					else:
-						self.__ged_env.run_method(h_id, g_id)
-						sum_of_distances += self.__ged_env.get_upper_bound(h_id, g_id)	
+						# @todo: is this correct?
+						self._ged_env.run_method(h_id, g_id)
+						sum_of_distances += self._ged_env.get_upper_bound(h_id, g_id)
+						self.ged_matrix_set_median_tmp[g_id, h_id] = self._ged_env.get_upper_bound(h_id, g_id)
+					print(sum_of_distances)
 				if sum_of_distances < best_sum_of_distances:
 					best_sum_of_distances = sum_of_distances
 					medoid_id = g_id
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					progress.update(1)
 					
-			initial_medians.append(self.__ged_env.get_nx_graph(medoid_id, True, True, False)) # @todo
+			initial_medians.append(self._ged_env.get_nx_graph(medoid_id, True, True, False)) # @todo
 			
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				print('\n')
 			
 			
-	def __compute_init_node_maps(self, graph_ids, gen_median_id):
+	def _compute_init_node_maps(self, graph_ids, gen_median_id):
 		# Compute node maps and sum of distances for initial median.
-		if self.__parallel:
-			# @todo: notice when parallel self.__ged_env is not modified.
-			self.__sum_of_distances = 0
-			self.__node_maps_from_median.clear()
+		if self._parallel:
+			# @todo: notice when parallel self._ged_env is not modified.
+			self._sum_of_distances = 0
+			self._node_maps_from_median.clear()
 			sum_of_distances_list = [0] * len(graph_ids)
 			
 			len_itr = len(graph_ids)
@@ -791,88 +796,88 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			nb_nodes_median = self.__ged_env.get_graph_num_nodes(gen_median_id)
-			do_fun = partial(_compute_init_node_maps_parallel, gen_median_id, self.__sort_graphs, nb_nodes_median)
-			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
-			if self.__print_to_stdout == 2:
+			nb_nodes_median = self._ged_env.get_graph_num_nodes(gen_median_id)
+			do_fun = partial(_compute_init_node_maps_parallel, gen_median_id, self._sort_graphs, nb_nodes_median)
+			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self._ged_env,))
+			if self._print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
 							desc='Computing initial node maps', file=sys.stdout)
 			else:
 				iterator = pool.imap_unordered(do_fun, itr, chunksize)
 			for g_id, sod, node_maps in iterator:
 				sum_of_distances_list[g_id] = sod
-				self.__node_maps_from_median[g_id] = node_maps
+				self._node_maps_from_median[g_id] = node_maps
 			pool.close()
 			pool.join()
 			
-			self.__sum_of_distances = np.sum(sum_of_distances_list)
-# 			xxx = self.__node_maps_from_median
+			self._sum_of_distances = np.sum(sum_of_distances_list)
+# 			xxx = self._node_maps_from_median
 			
 		else:
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				progress = tqdm(desc='Computing initial node maps', total=len(graph_ids), file=sys.stdout)
 				
-			self.__sum_of_distances = 0
-			self.__node_maps_from_median.clear()
-			nb_nodes_median = self.__ged_env.get_graph_num_nodes(gen_median_id)
+			self._sum_of_distances = 0
+			self._node_maps_from_median.clear()
+			nb_nodes_median = self._ged_env.get_graph_num_nodes(gen_median_id)
 			for graph_id in graph_ids:
-				nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
-				if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:
-					self.__ged_env.run_method(gen_median_id, graph_id)
-					self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(gen_median_id, graph_id)
+				nb_nodes_g = self._ged_env.get_graph_num_nodes(graph_id)
+				if nb_nodes_median <= nb_nodes_g or not self._sort_graphs:
+					self._ged_env.run_method(gen_median_id, graph_id)
+					self._node_maps_from_median[graph_id] = self._ged_env.get_node_map(gen_median_id, graph_id)
 				else:
-					self.__ged_env.run_method(graph_id, gen_median_id)
-					node_map_tmp = self.__ged_env.get_node_map(graph_id, gen_median_id)
+					self._ged_env.run_method(graph_id, gen_median_id)
+					node_map_tmp = self._ged_env.get_node_map(graph_id, gen_median_id)
 					node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
-					self.__node_maps_from_median[graph_id] = node_map_tmp
-	# 				print(self.__node_maps_from_median[graph_id])
-				self.__sum_of_distances += self.__node_maps_from_median[graph_id].induced_cost()
-	# 				print(self.__sum_of_distances)
+					self._node_maps_from_median[graph_id] = node_map_tmp
+	# 				print(self._node_maps_from_median[graph_id])
+				self._sum_of_distances += self._node_maps_from_median[graph_id].induced_cost()
+	# 				print(self._sum_of_distances)
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					progress.update(1)
 			
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				print('\n')
 
 		
-	def __termination_criterion_met(self, converged, timer, itr, itrs_without_update):
-		if timer.expired() or (itr >= self.__max_itrs if self.__max_itrs >= 0 else False):
-			if self.__state == AlgorithmState.TERMINATED:
-				self.__state = AlgorithmState.INITIALIZED
+	def _termination_criterion_met(self, converged, timer, itr, itrs_without_update):
+		if timer.expired() or (itr >= self._max_itrs if self._max_itrs >= 0 else False):
+			if self._state == AlgorithmState.TERMINATED:
+				self._state = AlgorithmState.INITIALIZED
 			return True
-		return converged or (itrs_without_update > self.__max_itrs_without_update if self.__max_itrs_without_update >= 0 else False)
+		return converged or (itrs_without_update > self._max_itrs_without_update if self._max_itrs_without_update >= 0 else False)
 	
 	
-	def __update_median(self, graphs, median):
+	def _update_median(self, graphs, median):
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('Updating median: ', end='')
 			
 		# Store copy of the old median.
 		old_median = median.copy() # @todo: this is just a shallow copy.
 		
 		# Update the node labels.
-		if self.__labeled_nodes:
-			self.__update_node_labels(graphs, median)
+		if self._labeled_nodes:
+			self._update_node_labels(graphs, median)
 			
 		# Update the edges and their labels.
-		self.__update_edges(graphs, median)
+		self._update_edges(graphs, median)
 		
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('done.')
 			
-		return not self.__are_graphs_equal(median, old_median)
+		return not self._are_graphs_equal(median, old_median)
 		
 		
-	def __update_node_labels(self, graphs, median):
+	def _update_node_labels(self, graphs, median):
 # 		print('----------------------------')
 		
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('nodes ... ', end='')
 			
 		# Iterate through all nodes of the median.
@@ -882,24 +887,24 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			node_labels = []
 			for graph_id, graph in graphs.items():
 # 				print('graph_id: ', graph_id)
-# 				print(self.__node_maps_from_median[graph_id])
-# 				print(self.__node_maps_from_median[graph_id].forward_map, self.__node_maps_from_median[graph_id].backward_map)
-				k = self.__node_maps_from_median[graph_id].image(i)
+# 				print(self._node_maps_from_median[graph_id])
+# 				print(self._node_maps_from_median[graph_id].forward_map, self._node_maps_from_median[graph_id].backward_map)
+				k = self._node_maps_from_median[graph_id].image(i)
 # 				print('k: ', k)
 				if k != np.inf:
 					node_labels.append(graph.nodes[k])
 					
 			# Compute the median label and update the median.
 			if len(node_labels) > 0:
-#				median_label = self.__ged_env.get_median_node_label(node_labels)
-				median_label = self.__get_median_node_label(node_labels)
-				if self.__ged_env.get_node_rel_cost(median.nodes[i], median_label) > self.__epsilon:
+#				median_label = self._ged_env.get_median_node_label(node_labels)
+				median_label = self._get_median_node_label(node_labels)
+				if self._ged_env.get_node_rel_cost(median.nodes[i], median_label) > self._epsilon:
 					nx.set_node_attributes(median, {i: median_label})
 					
 					
-	def __update_edges(self, graphs, median):
+	def _update_edges(self, graphs, median):
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('edges ... ', end='')
 			
 #		# Clear the adjacency lists of the median and reset number of edges to 0.
@@ -915,43 +920,43 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				# Collect the labels of the edges to which (i,j) is mapped by the node maps.
 				edge_labels = []
 				for graph_id, graph in graphs.items():
-					k = self.__node_maps_from_median[graph_id].image(i)
-					l = self.__node_maps_from_median[graph_id].image(j)
+					k = self._node_maps_from_median[graph_id].image(i)
+					l = self._node_maps_from_median[graph_id].image(j)
 					if k != np.inf and l != np.inf:
 						if graph.has_edge(k, l):
 							edge_labels.append(graph.edges[(k, l)])
 							
 				# Compute the median edge label and the overall edge relabeling cost.
 				rel_cost = 0
-				median_label = self.__ged_env.get_edge_label(1)
+				median_label = self._ged_env.get_edge_label(1)
 				if median.has_edge(i, j):
 					median_label = median.edges[(i, j)]
-				if self.__labeled_edges and len(edge_labels) > 0:
-					new_median_label = self.__get_median_edge_label(edge_labels)
-					if self.__ged_env.get_edge_rel_cost(median_label, new_median_label) > self.__epsilon:
+				if self._labeled_edges and len(edge_labels) > 0:
+					new_median_label = self._get_median_edge_label(edge_labels)
+					if self._ged_env.get_edge_rel_cost(median_label, new_median_label) > self._epsilon:
 						median_label = new_median_label
 					for edge_label in edge_labels:
-						rel_cost += self.__ged_env.get_edge_rel_cost(median_label, edge_label)
+						rel_cost += self._ged_env.get_edge_rel_cost(median_label, edge_label)
 						
 				# Update the median.
 				if median.has_edge(i, j):
 					median.remove_edge(i, j)
-				if rel_cost < (self.__edge_ins_cost + self.__edge_del_cost) * len(edge_labels) - self.__edge_del_cost * len(graphs):
+				if rel_cost < (self._edge_ins_cost + self._edge_del_cost) * len(edge_labels) - self._edge_del_cost * len(graphs):
 					median.add_edge(i, j, **median_label)
 # 				else:
 # 					if median.has_edge(i, j):
 # 						median.remove_edge(i, j)
 
 
-	def __update_node_maps(self):
+	def _update_node_maps(self):
 		# Update the node maps.
-		if self.__parallel:
-			# @todo: notice when parallel self.__ged_env is not modified.
+		if self._parallel:
+			# @todo: notice when parallel self._ged_env is not modified.
 			node_maps_were_modified = False
-# 			xxx = self.__node_maps_from_median.copy()
+# 			xxx = self._node_maps_from_median.copy()
 			
-			len_itr = len(self.__node_maps_from_median)
-			itr = [item for item in self.__node_maps_from_median.items()]
+			len_itr = len(self._node_maps_from_median)
+			itr = [item for item in self._node_maps_from_median.items()]
 			n_jobs = multiprocessing.cpu_count()
 			if len_itr < 100 * n_jobs:
 				chunksize = int(len_itr / n_jobs) + 1
@@ -960,66 +965,66 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			def init_worker(ged_env_toshare):
 				global G_ged_env
 				G_ged_env = ged_env_toshare
-			nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__median_id)
-			do_fun = partial(_update_node_maps_parallel, self.__median_id, self.__epsilon, self.__sort_graphs, nb_nodes_median)
-			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self.__ged_env,))
-			if self.__print_to_stdout == 2:
+			nb_nodes_median = self._ged_env.get_graph_num_nodes(self._median_id)
+			do_fun = partial(_update_node_maps_parallel, self._median_id, self._epsilon, self._sort_graphs, nb_nodes_median)
+			pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(self._ged_env,))
+			if self._print_to_stdout == 2:
 				iterator = tqdm(pool.imap_unordered(do_fun, itr, chunksize),
 							desc='Updating node maps', file=sys.stdout)
 			else:
 				iterator = pool.imap_unordered(do_fun, itr, chunksize)
 			for g_id, node_map, nm_modified in iterator:
-				self.__node_maps_from_median[g_id] = node_map
+				self._node_maps_from_median[g_id] = node_map
 				if nm_modified:
 					node_maps_were_modified = True
 			pool.close()
 			pool.join()
-# 			yyy = self.__node_maps_from_median.copy()
+# 			yyy = self._node_maps_from_median.copy()
 
 		else:
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
-				progress = tqdm(desc='Updating node maps', total=len(self.__node_maps_from_median), file=sys.stdout)
+			if self._print_to_stdout == 2:
+				progress = tqdm(desc='Updating node maps', total=len(self._node_maps_from_median), file=sys.stdout)
 				
 			node_maps_were_modified = False
-			nb_nodes_median = self.__ged_env.get_graph_num_nodes(self.__median_id)
-			for graph_id, node_map in self.__node_maps_from_median.items():
-				nb_nodes_g = self.__ged_env.get_graph_num_nodes(graph_id)
+			nb_nodes_median = self._ged_env.get_graph_num_nodes(self._median_id)
+			for graph_id, node_map in self._node_maps_from_median.items():
+				nb_nodes_g = self._ged_env.get_graph_num_nodes(graph_id)
 				
-				if nb_nodes_median <= nb_nodes_g or not self.__sort_graphs:
-					self.__ged_env.run_method(self.__median_id, graph_id)
-					if self.__ged_env.get_upper_bound(self.__median_id, graph_id) < node_map.induced_cost() - self.__epsilon:
-		# 				xxx = self.__node_maps_from_median[graph_id]
-						self.__node_maps_from_median[graph_id] = self.__ged_env.get_node_map(self.__median_id, graph_id)
+				if nb_nodes_median <= nb_nodes_g or not self._sort_graphs:
+					self._ged_env.run_method(self._median_id, graph_id)
+					if self._ged_env.get_upper_bound(self._median_id, graph_id) < node_map.induced_cost() - self._epsilon:
+		# 				xxx = self._node_maps_from_median[graph_id]
+						self._node_maps_from_median[graph_id] = self._ged_env.get_node_map(self._median_id, graph_id)
 						node_maps_were_modified = True
 						
 				else:
-					self.__ged_env.run_method(graph_id, self.__median_id)
-					if self.__ged_env.get_upper_bound(graph_id, self.__median_id) < node_map.induced_cost() - self.__epsilon:
-						node_map_tmp = self.__ged_env.get_node_map(graph_id, self.__median_id)
+					self._ged_env.run_method(graph_id, self._median_id)
+					if self._ged_env.get_upper_bound(graph_id, self._median_id) < node_map.induced_cost() - self._epsilon:
+						node_map_tmp = self._ged_env.get_node_map(graph_id, self._median_id)
 						node_map_tmp.forward_map, node_map_tmp.backward_map = node_map_tmp.backward_map, node_map_tmp.forward_map
-						self.__node_maps_from_median[graph_id] = node_map_tmp	
+						self._node_maps_from_median[graph_id] = node_map_tmp	
 						node_maps_were_modified = True
 					
 				# Print information about current iteration.
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					progress.update(1)
 				
 			# Print information about current iteration.
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				print('\n')
 			
 		# Return true if the node maps were modified.
 		return node_maps_were_modified
 	
 	
-	def __decrease_order(self, graphs, median):
+	def _decrease_order(self, graphs, median):
 		# Print information about current iteration
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('Trying to decrease order: ... ', end='')
 			
 		if nx.number_of_nodes(median) <= 1:
-			if self.__print_to_stdout == 2:
+			if self._print_to_stdout == 2:
 				print('median graph has only 1 node, skip decrease.')
 			return False
 			
@@ -1028,23 +1033,23 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		decreased_order = False
 		
 		# Decrease the order as long as the best deletion delta is negative.
-		while self.__compute_best_deletion_delta(graphs, median, id_deleted_node) < -self.__epsilon:
+		while self._compute_best_deletion_delta(graphs, median, id_deleted_node) < -self._epsilon:
 			decreased_order = True
-			self.__delete_node_from_median(id_deleted_node[0], median)
+			self._delete_node_from_median(id_deleted_node[0], median)
 			if nx.number_of_nodes(median) <= 1:
-				if self.__print_to_stdout == 2:
+				if self._print_to_stdout == 2:
 					print('decrease stopped because median graph remains only 1 node. ', end='')
 				break
 			
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('done.')
 			
 		# Return true iff the order was decreased.
 		return decreased_order
 	
 	
-	def __compute_best_deletion_delta(self, graphs, median, id_deleted_node):
+	def _compute_best_deletion_delta(self, graphs, median, id_deleted_node):
 		best_delta = 0.0
 		
 		# Determine node that should be deleted (if any).
@@ -1052,22 +1057,22 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			# Compute cost delta.
 			delta = 0.0
 			for graph_id, graph in graphs.items():
-				k = self.__node_maps_from_median[graph_id].image(i)
+				k = self._node_maps_from_median[graph_id].image(i)
 				if k == np.inf:
-					delta -= self.__node_del_cost
+					delta -= self._node_del_cost
 				else:
-					delta += self.__node_ins_cost - self.__ged_env.get_node_rel_cost(median.nodes[i], graph.nodes[k])
+					delta += self._node_ins_cost - self._ged_env.get_node_rel_cost(median.nodes[i], graph.nodes[k])
 				for j, j_label in median[i].items():
-					l = self.__node_maps_from_median[graph_id].image(j)
+					l = self._node_maps_from_median[graph_id].image(j)
 					if k == np.inf or l == np.inf:
-						delta -= self.__edge_del_cost
+						delta -= self._edge_del_cost
 					elif not graph.has_edge(k, l):
-						delta -= self.__edge_del_cost
+						delta -= self._edge_del_cost
 					else:
-						delta += self.__edge_ins_cost - self.__ged_env.get_edge_rel_cost(j_label, graph.edges[(k, l)])
+						delta += self._edge_ins_cost - self._ged_env.get_edge_rel_cost(j_label, graph.edges[(k, l)])
 						
 			# Update best deletion delta.
-			if delta < best_delta - self.__epsilon:
+			if delta < best_delta - self._epsilon:
 				best_delta = delta
 				id_deleted_node[0] = i
 # 			id_deleted_node[0] = 3 # @todo: 
@@ -1075,7 +1080,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return best_delta
 	
 	
-	def __delete_node_from_median(self, id_deleted_node, median):
+	def _delete_node_from_median(self, id_deleted_node, median):
 		# Update the median.
 		mapping = {}
 		for i in range(0, nx.number_of_nodes(median)):
@@ -1086,8 +1091,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		nx.relabel_nodes(median, mapping, copy=False)
 		
 		# Update the node maps.
-# 		xxx = self.__node_maps_from_median
-		for key, node_map in self.__node_maps_from_median.items():
+# 		xxx = self._node_maps_from_median
+		for key, node_map in self._node_maps_from_median.items():
 			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
 			is_unassigned_target_node = [True] * node_map.num_target_nodes()
 			for i in range(0, nx.number_of_nodes(median) + 1):
@@ -1100,38 +1105,38 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			for k in range(0, node_map.num_target_nodes()):
 				if is_unassigned_target_node[k]:
 					new_node_map.add_assignment(np.inf, k)
-# 			print(self.__node_maps_from_median[key].forward_map, self.__node_maps_from_median[key].backward_map)
+# 			print(self._node_maps_from_median[key].forward_map, self._node_maps_from_median[key].backward_map)
 # 			print(new_node_map.forward_map, new_node_map.backward_map
-			self.__node_maps_from_median[key] = new_node_map
+			self._node_maps_from_median[key] = new_node_map
 			
 		# Increase overall number of decreases.
-		self.__num_decrease_order += 1
+		self._num_decrease_order += 1
 	
 	
-	def __increase_order(self, graphs, median):
+	def _increase_order(self, graphs, median):
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('Trying to increase order: ... ', end='')
 			
 		# Initialize the best configuration and the best label of the node that is to be inserted.
 		best_config = {}
-		best_label = self.__ged_env.get_node_label(1)
+		best_label = self._ged_env.get_node_label(1)
 		increased_order = False
 		
 		# Increase the order as long as the best insertion delta is negative.
-		while self.__compute_best_insertion_delta(graphs, best_config, best_label) < - self.__epsilon:
+		while self._compute_best_insertion_delta(graphs, best_config, best_label) < - self._epsilon:
 			increased_order = True
-			self.__add_node_to_median(best_config, best_label, median)
+			self._add_node_to_median(best_config, best_label, median)
 			
 		# Print information about current iteration.
-		if self.__print_to_stdout == 2:
+		if self._print_to_stdout == 2:
 			print('done.')
 			
 		# Return true iff the order was increased.
 		return increased_order
 	
 	
-	def __compute_best_insertion_delta(self, graphs, best_config, best_label):
+	def _compute_best_insertion_delta(self, graphs, best_config, best_label):
 		# Construct sets of inserted nodes.
 		no_inserted_node = True
 		inserted_nodes = {}
@@ -1139,7 +1144,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			inserted_nodes[graph_id] = []
 			best_config[graph_id] = np.inf
 			for k in range(nx.number_of_nodes(graph)):
-				if self.__node_maps_from_median[graph_id].pre_image(k) == np.inf:
+				if self._node_maps_from_median[graph_id].pre_image(k) == np.inf:
 					no_inserted_node = False
 					inserted_nodes[graph_id].append((k, tuple(item for item in graph.nodes[k].items()))) # @todo: can order of label names be garantteed?
 					
@@ -1149,34 +1154,34 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		
 		# Compute insertion configuration, label, and delta.
 		best_delta = 0.0 # @todo
-		if len(self.__label_names['node_labels']) == 0 and len(self.__label_names['node_attrs']) == 0: # @todo
-			best_delta = self.__compute_insertion_delta_unlabeled(inserted_nodes, best_config, best_label)
-		elif len(self.__label_names['node_labels']) > 0: # self.__constant_node_costs:
-			best_delta = self.__compute_insertion_delta_constant(inserted_nodes, best_config, best_label)
+		if len(self._label_names['node_labels']) == 0 and len(self._label_names['node_attrs']) == 0: # @todo
+			best_delta = self._compute_insertion_delta_unlabeled(inserted_nodes, best_config, best_label)
+		elif len(self._label_names['node_labels']) > 0: # self._constant_node_costs:
+			best_delta = self._compute_insertion_delta_constant(inserted_nodes, best_config, best_label)
 		else:
-			best_delta = self.__compute_insertion_delta_generic(inserted_nodes, best_config, best_label)
+			best_delta = self._compute_insertion_delta_generic(inserted_nodes, best_config, best_label)
 			
 		# Return the best delta.
 		return best_delta
 	
 	
-	def __compute_insertion_delta_unlabeled(self, inserted_nodes, best_config, best_label): # @todo: go through and test.
+	def _compute_insertion_delta_unlabeled(self, inserted_nodes, best_config, best_label): # @todo: go through and test.
 		# Construct the nest configuration and compute its insertion delta.
 		best_delta = 0.0
 		best_config.clear()
 		for graph_id, node_set in inserted_nodes.items():
 			if len(node_set) == 0:
 				best_config[graph_id] = np.inf
-				best_delta += self.__node_del_cost
+				best_delta += self._node_del_cost
 			else:
 				best_config[graph_id] = node_set[0][0]
-				best_delta -= self.__node_ins_cost
+				best_delta -= self._node_ins_cost
 				
 		# Return the best insertion delta.
 		return best_delta
 	
 	
-	def __compute_insertion_delta_constant(self, inserted_nodes, best_config, best_label):
+	def _compute_insertion_delta_constant(self, inserted_nodes, best_config, best_label):
 		# Construct histogram and inverse label maps.
 		hist = {}
 		inverse_label_maps = {}
@@ -1207,24 +1212,24 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		# Construct the best configuration and compute its insertion delta.
 		best_config.clear()
 		best_delta = 0.0
-		node_rel_cost = self.__ged_env.get_node_rel_cost(self.__ged_env.get_node_label(1), self.__ged_env.get_node_label(2))
-		triangle_ineq_holds = (node_rel_cost <= self.__node_del_cost + self.__node_ins_cost)
+		node_rel_cost = self._ged_env.get_node_rel_cost(self._ged_env.get_node_label(1), self._ged_env.get_node_label(2))
+		triangle_ineq_holds = (node_rel_cost <= self._node_del_cost + self._node_ins_cost)
 		for graph_id, _ in inserted_nodes.items():
 			if best_label_tuple in inverse_label_maps[graph_id]:
 				best_config[graph_id] = inverse_label_maps[graph_id][best_label_tuple]
-				best_delta -= self.__node_ins_cost
+				best_delta -= self._node_ins_cost
 			elif triangle_ineq_holds and not len(inserted_nodes[graph_id]) == 0:
 				best_config[graph_id] = inserted_nodes[graph_id][0][0]
-				best_delta += node_rel_cost - self.__node_ins_cost
+				best_delta += node_rel_cost - self._node_ins_cost
 			else:
 				best_config[graph_id] = np.inf
-				best_delta += self.__node_del_cost
+				best_delta += self._node_del_cost
 				
 		# Return the best insertion delta.
 		return best_delta
 	
 	
-	def __compute_insertion_delta_generic(self, inserted_nodes, best_config, best_label):
+	def _compute_insertion_delta_generic(self, inserted_nodes, best_config, best_label):
 		# Collect all node labels of inserted nodes.
 		node_labels = []
 		for _, node_set in inserted_nodes.items():
@@ -1233,7 +1238,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 				
 		# Compute node label medians that serve as initial solutions for block gradient descent.
 		initial_node_labels = []
-		self.__compute_initial_node_labels(node_labels, initial_node_labels)
+		self._compute_initial_node_labels(node_labels, initial_node_labels)
 		
 		# Determine best insertion configuration, label, and delta via parallel block gradient descent from all initial node labels.
 		best_delta = 0.0
@@ -1241,15 +1246,15 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			# Construct local configuration.
 			config = {}
 			for graph_id, _ in inserted_nodes.items():
-				config[graph_id] = tuple((np.inf, tuple(item for item in self.__ged_env.get_node_label(1).items())))
+				config[graph_id] = tuple((np.inf, tuple(item for item in self._ged_env.get_node_label(1).items())))
 				
 			# Run block gradient descent.
 			converged = False
 			itr = 0
-			while not self.__insertion_termination_criterion_met(converged, itr):
-				converged = not self.__update_config(node_label, inserted_nodes, config, node_labels)
+			while not self._insertion_termination_criterion_met(converged, itr):
+				converged = not self._update_config(node_label, inserted_nodes, config, node_labels)
 				node_label_dict = dict(node_label)
-				converged = converged and (not self.__update_node_label([dict(item) for item in node_labels], node_label_dict)) # @todo: the dict is tupled again in the function, can be better.
+				converged = converged and (not self._update_node_label([dict(item) for item in node_labels], node_label_dict)) # @todo: the dict is tupled again in the function, can be better.
 				node_label = tuple(item for item in node_label_dict.items()) # @todo: watch out: initial_node_labels[i] is not modified here.
 
 				itr += 1
@@ -1258,12 +1263,12 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			delta = 0.0
 			for _, node in config.items():
 				if node[0] == np.inf:
-					delta += self.__node_del_cost
+					delta += self._node_del_cost
 				else:
-					delta += self.__ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self.__node_ins_cost
+					delta += self._ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self._node_ins_cost
 					
 			# Update best delta and global configuration if improvement has been found.
-			if delta < best_delta - self.__epsilon:
+			if delta < best_delta - self._epsilon:
 				best_delta = delta
 				best_label.clear()
 				for key, val in node_label:
@@ -1276,16 +1281,16 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return best_delta
 
 
-	def __compute_initial_node_labels(self, node_labels, median_labels):
+	def _compute_initial_node_labels(self, node_labels, median_labels):
 		median_labels.clear()
-		if self.__use_real_randomness: # @todo: may not work if parallelized.
+		if self._use_real_randomness: # @todo: may not work if parallelized.
 			rng = np.random.randint(0, high=2**32 - 1, size=1)
 			urng = np.random.RandomState(seed=rng[0])
 		else:
-			urng = np.random.RandomState(seed=self.__seed)
+			urng = np.random.RandomState(seed=self._seed)
 			
 		# Generate the initial node label medians.
-		if self.__init_type_increase_order == 'K-MEANS++':
+		if self._init_type_increase_order == 'K-MEANS++':
 			# Use k-means++ heuristic to generate the initial node label medians.
 			already_selected = [False] * len(node_labels)
 			selected_label_id = urng.randint(low=0, high=len(node_labels), size=1)[0] # c++ test: 23
@@ -1293,14 +1298,14 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			already_selected[selected_label_id] = True
 # 			xxx = [41, 0, 18, 9, 6, 14, 21, 25, 33] for c++ test
 # 			iii = 0 for c++ test
-			while len(median_labels) < self.__num_inits_increase_order:
+			while len(median_labels) < self._num_inits_increase_order:
 				weights = [np.inf] * len(node_labels)
 				for label_id in range(0, len(node_labels)):
 					if already_selected[label_id]:
 						weights[label_id] = 0
 						continue
 					for label in median_labels:
-						weights[label_id] = min(weights[label_id], self.__ged_env.get_node_rel_cost(dict(label), dict(node_labels[label_id])))
+						weights[label_id] = min(weights[label_id], self._ged_env.get_node_rel_cost(dict(label), dict(node_labels[label_id])))
 				
 				# get non-zero weights.
 				weights_p, idx_p = [], []
@@ -1315,26 +1320,26 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 # 				iii += 1 for c++ test
 					median_labels.append(node_labels[selected_label_id])
 					already_selected[selected_label_id] = True
-				else: # skip the loop when all node_labels are selected. This happens when len(node_labels) <= self.__num_inits_increase_order.
+				else: # skip the loop when all node_labels are selected. This happens when len(node_labels) <= self._num_inits_increase_order.
 					break
 		else:
 			# Compute the initial node medians as the medians of randomly generated clusters of (roughly) equal size.
 			# @todo: go through and test.
 			shuffled_node_labels = [np.inf] * len(node_labels) #@todo: random?
 			# @todo: std::shuffle(shuffled_node_labels.begin(), shuffled_node_labels.end(), urng);?
-			cluster_size = len(node_labels) / self.__num_inits_increase_order
+			cluster_size = len(node_labels) / self._num_inits_increase_order
 			pos = 0.0
 			cluster = []
-			while len(median_labels) < self.__num_inits_increase_order - 1:
+			while len(median_labels) < self._num_inits_increase_order - 1:
 				while pos < (len(median_labels) + 1) * cluster_size:
 					cluster.append(shuffled_node_labels[pos])
 					pos += 1
-				median_labels.append(self.__get_median_node_label(cluster))
+				median_labels.append(self._get_median_node_label(cluster))
 				cluster.clear()
 			while pos < len(shuffled_node_labels):
 				pos += 1
 				cluster.append(shuffled_node_labels[pos])
-			median_labels.append(self.__get_median_node_label(cluster))
+			median_labels.append(self._get_median_node_label(cluster))
 			cluster.clear()
 				
 		# Run Lloyd's Algorithm.
@@ -1342,8 +1347,8 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		closest_median_ids = [np.inf] * len(node_labels)
 		clusters = [[] for _ in range(len(median_labels))]
 		itr = 1
-		while not self.__insertion_termination_criterion_met(converged, itr):
-			converged = not self.__update_clusters(node_labels, median_labels, closest_median_ids)
+		while not self._insertion_termination_criterion_met(converged, itr):
+			converged = not self._update_clusters(node_labels, median_labels, closest_median_ids)
 			if not converged:
 				for cluster in clusters:
 					cluster.clear()
@@ -1351,33 +1356,33 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 					clusters[closest_median_ids[label_id]].append(node_labels[label_id])
 				for cluster_id in range(0, len(clusters)):
 					node_label = dict(median_labels[cluster_id])
-					self.__update_node_label([dict(item) for item in clusters[cluster_id]], node_label) # @todo: the dict is tupled again in the function, can be better.
+					self._update_node_label([dict(item) for item in clusters[cluster_id]], node_label) # @todo: the dict is tupled again in the function, can be better.
 					median_labels[cluster_id] = tuple(item for item in node_label.items())
 			itr += 1
 			
 			
-	def __insertion_termination_criterion_met(self, converged, itr):
-		return converged or (itr >= self.__max_itrs_increase_order if self.__max_itrs_increase_order > 0 else False)
+	def _insertion_termination_criterion_met(self, converged, itr):
+		return converged or (itr >= self._max_itrs_increase_order if self._max_itrs_increase_order > 0 else False)
 	
 	
-	def __update_config(self, node_label, inserted_nodes, config, node_labels):
+	def _update_config(self, node_label, inserted_nodes, config, node_labels):
 		# Determine the best configuration.
 		config_modified = False
 		for graph_id, node_set in inserted_nodes.items():
 			best_assignment = config[graph_id]
 			best_cost = 0.0
 			if best_assignment[0] == np.inf:
-				best_cost = self.__node_del_cost
+				best_cost = self._node_del_cost
 			else:
-				best_cost = self.__ged_env.get_node_rel_cost(dict(node_label), dict(best_assignment[1])) - self.__node_ins_cost
+				best_cost = self._ged_env.get_node_rel_cost(dict(node_label), dict(best_assignment[1])) - self._node_ins_cost
 			for node in node_set:
-				cost = self.__ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self.__node_ins_cost
-				if cost < best_cost - self.__epsilon:
+				cost = self._ged_env.get_node_rel_cost(dict(node_label), dict(node[1])) - self._node_ins_cost
+				if cost < best_cost - self._epsilon:
 					best_cost = cost
 					best_assignment = node
 					config_modified = True
-			if self.__node_del_cost < best_cost - self.__epsilon:
-				best_cost = self.__node_del_cost
+			if self._node_del_cost < best_cost - self._epsilon:
+				best_cost = self._node_del_cost
 				best_assignment = tuple((np.inf, best_assignment[1]))
 				config_modified = True
 			config[graph_id] = best_assignment
@@ -1392,11 +1397,11 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return config_modified
 				 
 	
-	def __update_node_label(self, node_labels, node_label):
-		if len(node_labels) == 0: # @todo: check if this is the correct solution. Especially after calling __update_config().
+	def _update_node_label(self, node_labels, node_label):
+		if len(node_labels) == 0: # @todo: check if this is the correct solution. Especially after calling _update_config().
 			return False
-		new_node_label = self.__get_median_node_label(node_labels)
-		if self.__ged_env.get_node_rel_cost(new_node_label, node_label) > self.__epsilon:
+		new_node_label = self._get_median_node_label(node_labels)
+		if self._ged_env.get_node_rel_cost(new_node_label, node_label) > self._epsilon:
 			node_label.clear()
 			for key, val in new_node_label.items():
 				node_label[key] = val
@@ -1404,15 +1409,15 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return False
 	
 	
-	def __update_clusters(self, node_labels, median_labels, closest_median_ids):
+	def _update_clusters(self, node_labels, median_labels, closest_median_ids):
 		# Determine the closest median for each node label.
 		clusters_modified = False
 		for label_id in range(0, len(node_labels)):
 			closest_median_id = np.inf
 			dist_to_closest_median = np.inf
 			for median_id in range(0, len(median_labels)):
-				dist_to_median = self.__ged_env.get_node_rel_cost(dict(median_labels[median_id]), dict(node_labels[label_id]))
-				if dist_to_median < dist_to_closest_median - self.__epsilon:
+				dist_to_median = self._ged_env.get_node_rel_cost(dict(median_labels[median_id]), dict(node_labels[label_id]))
+				if dist_to_median < dist_to_closest_median - self._epsilon:
 					dist_to_closest_median = dist_to_median
 					closest_median_id = median_id
 			if closest_median_id != closest_median_ids[label_id]:
@@ -1423,26 +1428,26 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return clusters_modified
 	
 	
-	def __add_node_to_median(self, best_config, best_label, median):
+	def _add_node_to_median(self, best_config, best_label, median):
 		# Update the median.
 		nb_nodes_median = nx.number_of_nodes(median)
 		median.add_node(nb_nodes_median, **best_label)
 		
 		# Update the node maps.
-		for graph_id, node_map in self.__node_maps_from_median.items():
+		for graph_id, node_map in self._node_maps_from_median.items():
 			node_map_as_rel = []
 			node_map.as_relation(node_map_as_rel)
 			new_node_map = NodeMap(nx.number_of_nodes(median), node_map.num_target_nodes())
 			for assignment in node_map_as_rel:
 				new_node_map.add_assignment(assignment[0], assignment[1])
 			new_node_map.add_assignment(nx.number_of_nodes(median) - 1, best_config[graph_id])
-			self.__node_maps_from_median[graph_id] = new_node_map
+			self._node_maps_from_median[graph_id] = new_node_map
 			
 		# Increase overall number of increases.
-		self.__num_increase_order += 1
+		self._num_increase_order += 1
 				
 	
-	def __are_graphs_equal(self, g1, g2):
+	def _are_graphs_equal(self, g1, g2):
 		"""
 		Check if the two graphs are equal.
 
@@ -1487,29 +1492,29 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			
 			
 	def set_label_names(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
-		self.__label_names = {'node_labels': node_labels, 'edge_labels': edge_labels,
+		self._label_names = {'node_labels': node_labels, 'edge_labels': edge_labels,
 						'node_attrs': node_attrs, 'edge_attrs': edge_attrs}
 			
 	
-	def __get_median_node_label(self, node_labels):
-		if len(self.__label_names['node_labels']) > 0:
-			return self.__get_median_label_symbolic(node_labels)
-		elif len(self.__label_names['node_attrs']) > 0:
-			return self.__get_median_label_nonsymbolic(node_labels)
+	def _get_median_node_label(self, node_labels):
+		if len(self._label_names['node_labels']) > 0:
+			return self._get_median_label_symbolic(node_labels)
+		elif len(self._label_names['node_attrs']) > 0:
+			return self._get_median_label_nonsymbolic(node_labels)
 		else:
 			raise Exception('Node label names are not given.')
 		
 			
-	def __get_median_edge_label(self, edge_labels):
-		if len(self.__label_names['edge_labels']) > 0:
-			return self.__get_median_label_symbolic(edge_labels)
-		elif len(self.__label_names['edge_attrs']) > 0:
-			return self.__get_median_label_nonsymbolic(edge_labels)
+	def _get_median_edge_label(self, edge_labels):
+		if len(self._label_names['edge_labels']) > 0:
+			return self._get_median_label_symbolic(edge_labels)
+		elif len(self._label_names['edge_attrs']) > 0:
+			return self._get_median_label_nonsymbolic(edge_labels)
 		else:
 			raise Exception('Edge label names are not given.')
 			
 			
-	def __get_median_label_symbolic(self, labels):
+	def _get_median_label_symbolic(self, labels):
 		# Construct histogram.
 		hist = {}
 		for label in labels:
@@ -1530,7 +1535,7 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 		return median_label
 		
 		
-	def __get_median_label_nonsymbolic(self, labels):
+	def _get_median_label_nonsymbolic(self, labels):
 		if len(labels) == 0:
 			return {} # @todo
 		else:
@@ -1589,11 +1594,11 @@ class MedianGraphEstimator(object): # @todo: differ dummy_node from undifined no
 			return median_label
 
 		
-#	def __get_median_edge_label_symbolic(self, edge_labels):
+#	def _get_median_edge_label_symbolic(self, edge_labels):
 #		pass
 	
 	
-#	def __get_median_edge_label_nonsymbolic(self, edge_labels):
+#	def _get_median_edge_label_nonsymbolic(self, edge_labels):
 #		if len(edge_labels) == 0:
 #			return {}
 #		else:
@@ -1657,7 +1662,7 @@ def _compute_medoid_parallel(graph_ids, sort, itr):
 	i = itr[1]
 	# @todo: timer not considered here.
 # 			if timer.expired():
-# 				self.__state = AlgorithmState.CALLED
+# 				self._state = AlgorithmState.CALLED
 # 				break
 	nb_nodes_g = G_ged_env.get_graph_num_nodes(g_id)
 	sum_of_distances = 0
@@ -1678,13 +1683,13 @@ def _compute_init_node_maps_parallel(gen_median_id, sort, nb_nodes_median, itr):
 	if nb_nodes_median <= nb_nodes_g or not sort:
 		G_ged_env.run_method(gen_median_id, graph_id)
 		node_map = G_ged_env.get_node_map(gen_median_id, graph_id)
-# 				print(self.__node_maps_from_median[graph_id])
+# 				print(self._node_maps_from_median[graph_id])
 	else:
 		G_ged_env.run_method(graph_id, gen_median_id)
 		node_map = G_ged_env.get_node_map(graph_id, gen_median_id)
 		node_map.forward_map, node_map.backward_map = node_map.backward_map, node_map.forward_map
 	sum_of_distance = node_map.induced_cost()
-# 				print(self.__sum_of_distances)
+# 				print(self._sum_of_distances)
 	return graph_id, sum_of_distance, node_map
 					
 

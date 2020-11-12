@@ -13,10 +13,6 @@ import os
 
 class Dataset(object):
 	
-	import warnings
-	warnings.simplefilter('always', DeprecationWarning)
-	warnings.warn('This class has been moved to "gklearn.dataset" module. The class "gklearn.utils.dataset.Dataset" has not been maintained since Nov 12th, 2020 (version 0.2.1) and will be removed since version 0.4.0.', DeprecationWarning)
-	
 	
 	def __init__(self, filename=None, filename_targets=None, **kwargs):
 		if filename is None:
@@ -807,10 +803,6 @@ class Dataset(object):
 	
 	
 def split_dataset_by_target(dataset):
-	import warnings
-	warnings.simplefilter('always', DeprecationWarning)
-	warnings.warn('This function has been moved to "gklearn.dataset" module. The function "gklearn.utils.dataset.split_dataset_by_target" has not been maintained since Nov 12th, 2020 (version 0.2.1) and will be removed since version 0.4.0.', DeprecationWarning)
-	
 	from gklearn.preimage.utils import get_same_item_indices
 	
 	graphs = dataset.graphs
