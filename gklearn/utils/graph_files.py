@@ -1,5 +1,9 @@
 """ Utilities function to manage graph files
 """
+import warnings
+warnings.simplefilter('always', DeprecationWarning)
+warnings.warn('The functions in the module "gklearn.utils.graph_files" will be deprecated and removed since version 0.4.0. Use the corresponding functions in the module "gklearn.dataset" instead.', DeprecationWarning)
+
 from os.path import dirname, splitext
 
 
@@ -45,6 +49,10 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 	for details. Note here filename is the name of either .txt file in
 	the dataset directory.
 	"""
+	import warnings
+	warnings.simplefilter('always', DeprecationWarning)
+	warnings.warn('The function "gklearn.utils.load_dataset" will be deprecated and removed since version 0.4.0. Use the class "gklearn.dataset.DataLoader" instead.', DeprecationWarning)
+
 	extension = splitext(filename)[1][1:]
 	if extension == "ds":
 		data, y, label_names = load_from_ds(filename, filename_targets)
@@ -66,6 +74,10 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', **kwargs):
 	"""Save list of graphs.
 	"""
+	import warnings
+	warnings.simplefilter('always', DeprecationWarning)
+	warnings.warn('The function "gklearn.utils.save_dataset" will be deprecated and removed since version 0.4.0. Use the class "gklearn.dataset.DataSaver" instead.', DeprecationWarning)
+	
 	import os
 	dirname_ds = os.path.dirname(filename)
 	if dirname_ds != '':
