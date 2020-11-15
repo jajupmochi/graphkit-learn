@@ -32,7 +32,7 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': [],
 		'stereoisomerism': True,
-		'load_files': [],
+		'load_files': ['data.ds'],
 	},
 	'Acyclic': {
 		'database': 'greyc',
@@ -165,7 +165,7 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': ['trainset_0.ds', None, 'testset_0.ds'],
 		'stereoisomerism': False,
-		'load_files': [],
+		'load_files': ['dataset.ds'],
 	},
 	'PTC': {
 		'database': 'greyc',
@@ -654,7 +654,7 @@ TUDataset_META = {
 		'node_attr_dim': 0,
 		'geometry': None,
 		'edge_attr_dim': 0,
-		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/NCI-H23.zip-H23',
+		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/NCI-H23.zip',
 		'domain': 'small molecules',
 	},
 	'NCI-H23H': {
@@ -670,7 +670,7 @@ TUDataset_META = {
 		'node_attr_dim': 0,
 		'geometry': None,
 		'edge_attr_dim': 0,
-		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/NCI-H23H.zip-H23H',
+		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/NCI-H23H.zip',
 		'domain': 'small molecules',
 	},
 	'OVCAR-8': {
@@ -686,7 +686,7 @@ TUDataset_META = {
 		'node_attr_dim': 0,
 		'geometry': None,
 		'edge_attr_dim': 0,
-		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/OVCAR-8.zip-8',
+		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/OVCAR-8.zip',
 		'domain': 'small molecules',
 	},
 	'OVCAR-8H': {
@@ -702,7 +702,7 @@ TUDataset_META = {
 		'node_attr_dim': 0,
 		'geometry': None,
 		'edge_attr_dim': 0,
-		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/OVCAR-8H.zip-8H',
+		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/OVCAR-8H.zip',
 		'domain': 'small molecules',
 	},
 	'P388': {

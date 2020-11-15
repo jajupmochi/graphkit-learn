@@ -74,6 +74,7 @@ class DataLoader():
 		label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 		with open(filename) as fn:
 			content = fn.read().splitlines()
+		content = [line for line in content if not line.endswith('.ds')]
 		extension = splitext(content[0].split(' ')[0])[1][1:]
 		if extension == 'ct':
 			load_file_fun = self.load_ct
