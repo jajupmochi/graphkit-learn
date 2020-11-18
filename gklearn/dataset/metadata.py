@@ -165,7 +165,7 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': ['trainset_0.ds', None, 'testset_0.ds'],
 		'stereoisomerism': False,
-		'load_files': ['dataset.ds'],
+		'load_files': [['trainset_0.ds', 'testset_0.ds']],
 	},
 	'PTC': {
 		'database': 'greyc',

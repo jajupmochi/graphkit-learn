@@ -74,6 +74,8 @@ class DataFetcher():
 			message = 'Invalid Dataset name "' + self._name + '".'
 			message += '\nAvailable datasets are as follows: \n\n'
 			message += '\n'.join(ds for ds in sorted(DATASET_META))
+			message += '\n\nFollowing special suffices can be added to the name:'
+			message += '\n\n' + '\n'.join(['_unlabeled'])
 			raise ValueError(message)
 		else:
 			self.write_archive_file(self._name)
@@ -127,9 +129,9 @@ class DataFetcher():
 	
 	def write_archive_file(self, ds_name):
 		path = osp.join(self._root, ds_name)
-		url = DATASET_META[ds_name]['url']
 # 		filename_dir = osp.join(path,filename)
 		if not osp.exists(path) or self._reload:
+			url = DATASET_META[ds_name]['url']
 			response = self.download_file(url)
 			if response is None: 
 				return False
@@ -152,7 +154,7 @@ class DataFetcher():
 				with tarfile.open(filename_archive, 'r:gz') as tar:
 					if self._reload and self._verbose: 
 						print(filename + ' Downloaded.')
-					subpath = os.path.join(path, tar.getnames()[0])
+					subpath = os.path.join(path, tar.getnames()[0].split('/')[0])
 					if not osp.exists(subpath) or self._reload:
 						tar.extractall(path = path)
 					return subpath
