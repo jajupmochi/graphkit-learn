@@ -9,10 +9,11 @@ import numpy as np
 import networkx as nx
 import multiprocessing
 import time
+from gklearn.utils import normalize_gram_matrix
 
 
 class GraphKernel(object):
-	
+
 	def __init__(self):
 		self._graphs = None
 		self._parallel = ''
@@ -22,14 +23,14 @@ class GraphKernel(object):
 		self._run_time = 0
 		self._gram_matrix = None
 		self._gram_matrix_unnorm = None
-	
+
 
 	def compute(self, *graphs, **kwargs):
 		self._parallel = kwargs.get('parallel', 'imap_unordered')
 		self._n_jobs = kwargs.get('n_jobs', multiprocessing.cpu_count())
 		self._normalize = kwargs.get('normalize', True)
 		self._verbose = kwargs.get('verbose', 2)
-		
+
 		if len(graphs) == 1:
 			if not isinstance(graphs[0], list):
 				raise Exception('Cannot detect graphs.')
@@ -40,9 +41,9 @@ class GraphKernel(object):
 				self._gram_matrix = self._compute_gram_matrix()
 				self._gram_matrix_unnorm = np.copy(self._gram_matrix)
 				if self._normalize:
-					self._gram_matrix = self.normalize_gm(self._gram_matrix)
+					self._gram_matrix = normalize_gram_matrix(self._gram_matrix)
 				return self._gram_matrix, self._run_time
-			
+
 		elif len(graphs) == 2:
 			if self.is_graph(graphs[0]) and self.is_graph(graphs[1]):
 				kernel = self._compute_single_kernel(graphs[0].copy(), graphs[1].copy())
@@ -59,14 +60,14 @@ class GraphKernel(object):
 				return kernel_list, self._run_time
 			else:
 				raise Exception('Cannot detect graphs.')
-				
+
 		elif len(graphs) == 0 and self._graphs is None:
 			raise Exception('Please add graphs before computing.')
-			
+
 		else:
 			raise Exception('Cannot detect graphs.')
-			
-			
+
+
 	def normalize_gm(self, gram_matrix):
 		import warnings
 		warnings.warn('gklearn.kernels.graph_kernel.normalize_gm will be deprecated, use gklearn.utils.normalize_gram_matrix instead', DeprecationWarning)
@@ -77,8 +78,8 @@ class GraphKernel(object):
 				gram_matrix[i][j] /= np.sqrt(diag[i] * diag[j])
 				gram_matrix[j][i] = gram_matrix[i][j]
 		return gram_matrix
-	
-	
+
+
 	def compute_distance_matrix(self):
 		if self._gram_matrix is None:
 			raise Exception('Please compute the Gram matrix before computing distance matrix.')
@@ -97,98 +98,98 @@ class GraphKernel(object):
 		dis_min = np.min(np.min(dis_mat[dis_mat != 0]))
 		dis_mean = np.mean(np.mean(dis_mat))
 		return dis_mat, dis_max, dis_min, dis_mean
-			
-			
+
+
 	def _compute_gram_matrix(self):
 		start_time = time.time()
-		
+
 		if self._parallel == 'imap_unordered':
 			gram_matrix = self._compute_gm_imap_unordered()
 		elif self._parallel is None:
 			gram_matrix = self._compute_gm_series()
 		else:
 			raise Exception('Parallel mode is not set correctly.')
-		
+
 		self._run_time = time.time() - start_time
 		if self._verbose:
 			print('Gram matrix of size %d built in %s seconds.'
 			  % (len(self._graphs), self._run_time))
-			
+
 		return gram_matrix
-			
-			
+
+
 	def _compute_gm_series(self):
 		pass
 
 
 	def _compute_gm_imap_unordered(self):
 		pass
-	
-	
+
+
 	def _compute_kernel_list(self, g1, g_list):
 		start_time = time.time()
-		
+
 		if self._parallel == 'imap_unordered':
 			kernel_list = self._compute_kernel_list_imap_unordered(g1, g_list)
 		elif self._parallel is None:
 			kernel_list = self._compute_kernel_list_series(g1, g_list)
 		else:
 			raise Exception('Parallel mode is not set correctly.')
-		
+
 		self._run_time = time.time() - start_time
 		if self._verbose:
 			print('Graph kernel bewteen a graph and a list of %d graphs built in %s seconds.'
 			  % (len(g_list), self._run_time))
-			
+
 		return kernel_list
-	
+
 
 	def _compute_kernel_list_series(self, g1, g_list):
 		pass
 
-	
+
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		pass
-	
-	
+
+
 	def _compute_single_kernel(self, g1, g2):
 		start_time = time.time()
-		
+
 		kernel = self._compute_single_kernel_series(g1, g2)
-		
+
 		self._run_time = time.time() - start_time
 		if self._verbose:
 			print('Graph kernel bewteen two graphs built in %s seconds.' % (self._run_time))
-			
+
 		return kernel
-	
-	
+
+
 	def _compute_single_kernel_series(self, g1, g2):
 		pass
-	
-	
+
+
 	def is_graph(self, graph):
 		if isinstance(graph, nx.Graph):
 			return True
 		if isinstance(graph, nx.DiGraph):
-			return True 
+			return True
 		if isinstance(graph, nx.MultiGraph):
-			return True 
+			return True
 		if isinstance(graph, nx.MultiDiGraph):
-			return True 
+			return True
 		return False
-	
-	
+
+
 	@property
 	def graphs(self):
 		return self._graphs
-	
-	
+
+
 	@property
 	def parallel(self):
 		return self._parallel
-	
-	
+
+
 	@property
 	def n_jobs(self):
 		return self._n_jobs
@@ -197,30 +198,30 @@ class GraphKernel(object):
 	@property
 	def verbose(self):
 		return self._verbose
-	
-	
+
+
 	@property
 	def normalize(self):
 		return self._normalize
-	
-	
+
+
 	@property
 	def run_time(self):
 		return self._run_time
-	
-	 
+
+
 	@property
 	def gram_matrix(self):
 		return self._gram_matrix
-	
+
 	@gram_matrix.setter
 	def gram_matrix(self, value):
 		self._gram_matrix = value
-	
-	 
+
+
 	@property
 	def gram_matrix_unnorm(self):
-		return self._gram_matrix_unnorm 
+		return self._gram_matrix_unnorm
 
 	@gram_matrix_unnorm.setter
 	def gram_matrix_unnorm(self, value):

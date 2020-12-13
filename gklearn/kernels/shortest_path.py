@@ -5,9 +5,9 @@ Created on Tue Apr  7 15:24:58 2020
 
 @author: ljia
 
-@references: 
-    
-    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData 
+@references:
+
+    [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData
     Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
 """
 
@@ -23,13 +23,14 @@ from gklearn.kernels import GraphKernel
 
 
 class ShortestPath(GraphKernel):
-	
+
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
 		self._node_labels = kwargs.get('node_labels', [])
 		self._node_attrs = kwargs.get('node_attrs', [])
 		self._edge_weight = kwargs.get('edge_weight', None)
 		self._node_kernels = kwargs.get('node_kernels', None)
+		self._fcsp = kwargs.get('fcsp', True)
 		self._ds_infos = kwargs.get('ds_infos', {})
 
 
@@ -40,10 +41,10 @@ class ShortestPath(GraphKernel):
 		else:
 			iterator = self._graphs
 		self._graphs = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
-		
+
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
-		
+
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		if self._verbose >= 2:
@@ -54,10 +55,10 @@ class ShortestPath(GraphKernel):
 			kernel = self._sp_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel
-				
+
 		return gram_matrix
-			
-			
+
+
 	def _compute_gm_imap_unordered(self):
 		# get shortest path graph of each graph.
 		pool = Pool(self._n_jobs)
@@ -76,20 +77,20 @@ class ShortestPath(GraphKernel):
 			self._graphs[i] = g
 		pool.close()
 		pool.join()
-		
+
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
-		
+
 		def init_worker(gs_toshare):
 			global G_gs
 			G_gs = gs_toshare
 		do_fun = self._wrapper_sp_do
-		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker, 
+		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
 					glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
-			
+
 		return gram_matrix
-	
-	
+
+
 	def _compute_kernel_list_series(self, g1, g_list):
 		# get shortest path graphs of g1 and each graph in g_list.
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
@@ -98,7 +99,7 @@ class ShortestPath(GraphKernel):
 		else:
 			iterator = g_list
 		g_list = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
-		
+
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		if self._verbose >= 2:
@@ -108,10 +109,10 @@ class ShortestPath(GraphKernel):
 		for i in iterator:
 			kernel = self._sp_do(g1, g_list[i])
 			kernel_list[i] = kernel
-				
+
 		return kernel_list
-	
-	
+
+
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		# get shortest path graphs of g1 and each graph in g_list.
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
@@ -131,49 +132,57 @@ class ShortestPath(GraphKernel):
 			g_list[i] = g
 		pool.close()
 		pool.join()
-		
+
 		# compute Gram matrix.
 		kernel_list = [None] * len(g_list)
 
 		def init_worker(g1_toshare, gl_toshare):
 			global G_g1, G_gl
-			G_g1 = g1_toshare	 
-			G_gl = gl_toshare	 	 
+			G_g1 = g1_toshare
+			G_gl = gl_toshare
 		do_fun = self._wrapper_kernel_list_do
-		def func_assign(result, var_to_assign):	
+		def func_assign(result, var_to_assign):
 			var_to_assign[result[0]] = result[1]
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
-			
+
 		return kernel_list
-	
-	
+
+
 	def _wrapper_kernel_list_do(self, itr):
 		return itr, self._sp_do(G_g1, G_gl[itr])
-	
-	
+
+
 	def _compute_single_kernel_series(self, g1, g2):
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
 		g2 = getSPGraph(g2, edge_weight=self._edge_weight)
 		kernel = self._sp_do(g1, g2)
-		return kernel			
-		
-	
+		return kernel
+
+
 	def _wrapper_get_sp_graphs(self, itr_item):
 		g = itr_item[0]
 		i = itr_item[1]
 		return i, getSPGraph(g, edge_weight=self._edge_weight)
-	
-	
+
+
 	def _sp_do(self, g1, g2):
-		
+
+		if self._fcsp: # @todo: it may be put outside the _sp_do().
+			return self._sp_do_fcsp(g1, g2)
+		else:
+			return self._sp_do_naive(g1, g2)
+
+
+	def _sp_do_fcsp(self, g1, g2):
+
 		kernel = 0
-	
+
 		# compute shortest path matrices first, method borrowed from FCSP.
 		vk_dict = {}  # shortest path matrices dict
-		if len(self._node_labels) > 0:
+		if len(self._node_labels) > 0: # @todo: it may be put outside the _sp_do().
 			# node symb and non-synb labeled
 			if len(self._node_attrs) > 0:
 				kn = self._node_kernels['mix']
@@ -208,7 +217,7 @@ class ShortestPath(GraphKernel):
 					if e1[2]['cost'] == e2[2]['cost']:
 						kernel += 1
 				return kernel
-	
+
 		# compute graph kernels
 		if self._ds_infos['directed']:
 			for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
@@ -225,7 +234,7 @@ class ShortestPath(GraphKernel):
 					kn1 = nk11 * nk22
 					kn2 = nk12 * nk21
 					kernel += kn1 + kn2
-	
+
 			# # ---- exact implementation of the Fast Computation of Shortest Path Kernel (FCSP), reference [2], sadly it is slower than the current implementation
 			# # compute vertex kernels
 			# try:
@@ -238,7 +247,7 @@ class ShortestPath(GraphKernel):
 			#			 vk_mat[i1][i2] = kn(
 			#				 n1[1][node_label], n2[1][node_label],
 			#				 [n1[1]['attributes']], [n2[1]['attributes']])
-	
+
 			#	 range1 = range(0, len(edge_w_g[i]))
 			#	 range2 = range(0, len(edge_w_g[j]))
 			#	 for i1 in range1:
@@ -254,10 +263,67 @@ class ShortestPath(GraphKernel):
 			#				 kn1 = vk_mat[x1][x2] * vk_mat[y1][y2]
 			#				 kn2 = vk_mat[x1][y2] * vk_mat[y1][x2]
 			#				 kernel += kn1 + kn2
-	
+
 		return kernel
-	
-	
+
+
+	def _sp_do_naive(self, g1, g2):
+
+		kernel = 0
+
+		# Define the function to compute kernels between vertices in each condition.
+		if len(self._node_labels) > 0:
+			# node symb and non-synb labeled
+			if len(self._node_attrs) > 0:
+				def compute_vk(n1, n2):
+					kn = self._node_kernels['mix']
+					n1_labels = [g1.nodes[n1][nl] for nl in self._node_labels]
+					n2_labels = [g2.nodes[n2][nl] for nl in self._node_labels]
+					n1_attrs = [g1.nodes[n1][na] for na in self._node_attrs]
+					n2_attrs = [g2.nodes[n2][na] for na in self._node_attrs]
+					return kn(n1_labels, n2_labels, n1_attrs, n2_attrs)
+			# node symb labeled
+			else:
+				def compute_vk(n1, n2):
+					kn = self._node_kernels['symb']
+					n1_labels = [g1.nodes[n1][nl] for nl in self._node_labels]
+					n2_labels = [g2.nodes[n2][nl] for nl in self._node_labels]
+					return kn(n1_labels, n2_labels)
+		else:
+			# node non-synb labeled
+			if len(self._node_attrs) > 0:
+				def compute_vk(n1, n2):
+					kn = self._node_kernels['nsymb']
+					n1_attrs = [g1.nodes[n1][na] for na in self._node_attrs]
+					n2_attrs = [g2.nodes[n2][na] for na in self._node_attrs]
+					return kn(n1_attrs, n2_attrs)
+			# node unlabeled
+			else:
+				for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+					if e1[2]['cost'] == e2[2]['cost']:
+						kernel += 1
+				return kernel
+
+		# compute graph kernels
+		if self._ds_infos['directed']:
+			for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+				if e1[2]['cost'] == e2[2]['cost']:
+					nk11, nk22 = compute_vk(e1[0], e2[0]), compute_vk(e1[1], e2[1])
+					kn1 = nk11 * nk22
+					kernel += kn1
+		else:
+			for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
+				if e1[2]['cost'] == e2[2]['cost']:
+					# each edge walk is counted twice, starting from both its extreme nodes.
+					nk11, nk12, nk21, nk22 = compute_vk(e1[0], e2[0]), compute_vk(
+						e1[0], e2[1]), compute_vk(e1[1], e2[0]), compute_vk(e1[1], e2[1])
+					kn1 = nk11 * nk22
+					kn2 = nk12 * nk21
+					kernel += kn1 + kn2
+
+		return kernel
+
+
 	def _wrapper_sp_do(self, itr):
 		i = itr[0]
 		j = itr[1]
