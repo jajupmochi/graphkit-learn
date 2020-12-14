@@ -14,6 +14,7 @@ import functools
 import os
 import pickle
 import sys
+import logging
 
 
 def run_all(fcsp):
@@ -23,13 +24,17 @@ def run_all(fcsp):
 	from sklearn.model_selection import ParameterGrid
 
 	Dataset_List = ['Alkane_unlabeled', 'Alkane', 'Acyclic', 'MAO_lite', 'MAO',
-				    'PAH', 'MUTAG', 'Monoterpenoids', 'Letter-high',
-					'Letter-med', 'Letter-low',
-					'ENZYMES', 'AIDS_lite', 'AIDS', 'NCI1', 'NCI109', 'DD']
+				    'PAH_unlabeled', 'PAH', 'MUTAG', 'Letter-high', 'Letter-med', 'Letter-low',
+					'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD',
+					'BZR', 'COX2', 'DHFR', 'PTC_FM', 'PTC_FR', 'PTC_MM', 'PTC_MR',
+					'Cuneiform', 'KKI', 'OHSU', 'Peking_1', 'SYNTHETICnew',
+					'Synthie', 'SYNTHETIC', 'Fingerprint', 'IMDB-BINARY',
+					'IMDB-MULTI', 'COIL-DEL', 'PROTEINS', 'PROTEINS_full',
+					'Mutagenicity', 'REDDIT-BINARY']
 
 	Kernel_List = ['ShortestPath', 'StructuralSP']
 
-	work_grid = ParameterGrid({'kernel': Kernel_List[0:], 'dataset': Dataset_List[2:3]})
+	work_grid = ParameterGrid({'kernel': Kernel_List[:], 'dataset': Dataset_List[:]})
 
 	for work in list(work_grid):
 
@@ -39,7 +44,14 @@ def run_all(fcsp):
 			print()
 			print((work['kernel'], work['dataset']))
 
-			gram_matrix, run_time = run_work(work['kernel'], work['dataset'], fcsp)
+			try:
+				gram_matrix, run_time = run_work(work['kernel'], work['dataset'], fcsp)
+			except Exception as exp:
+				print('An exception occured when running this experiment:')
+				LOG_FILENAME = save_dir + 'error.txt'
+				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+				logging.exception(save_file_suffix)
+				print(repr(exp))
 
 			save_file_suffix = '.' + work['kernel'] + work['dataset']
 

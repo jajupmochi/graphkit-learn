@@ -12,8 +12,8 @@ from gklearn.dataset import DATASET_META, DataFetcher, DataLoader
 
 
 class Dataset(object):
-	
-	
+
+
 	def __init__(self, inputs=None, root='datasets', filename_targets=None, targets=None, mode='networkx', clean_labels=True, reload=False, verbose=False, **kwargs):
 		self._substructures = None
 		self._node_label_dim = None
@@ -40,7 +40,7 @@ class Dataset(object):
 		self._edge_attr_dim = None
 		self._class_number = None
 		self._ds_name = None
-		
+
 		if inputs is None:
 			self._graphs = None
 			self._targets = None
@@ -48,7 +48,7 @@ class Dataset(object):
 			self._edge_labels = None
 			self._node_attrs = None
 			self._edge_attrs = None
-			
+
 		# If inputs is a list of graphs.
 		elif isinstance(inputs, list):
 			node_labels = kwargs.get('node_labels', None)
@@ -59,33 +59,31 @@ class Dataset(object):
 			self.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
 			if clean_labels:
 				self.clean_labels()
-			
+
 		elif isinstance(inputs, str):
 			# If inputs is predefined dataset name.
 			if inputs in DATASET_META:
 				self.load_predefined_dataset(inputs, root=root, clean_labels=clean_labels, reload=reload, verbose=verbose)
 				self._ds_name = inputs
-				
-			elif inputs.endswith('_unlabeled'):
-				self.load_predefined_dataset(inputs[:len(inputs) - 10], root=root, clean_labels=clean_labels, reload=reload, verbose=verbose)
+
+			# If the dataset is specially defined, i.g., Alkane_unlabeled, MAO_lite.
+			elif self.is_special_dataset(inputs):
+				self.load_special_dataset(inputs, root, clean_labels, reload, verbose)
 				self._ds_name = inputs
 
-				# Deal with special suffices.
-				self.check_special_suffices()
-				
 			# If inputs is a file name.
 			elif os.path.isfile(inputs):
-				self.load_dataset(inputs, filename_targets=filename_targets, clean_labels=clean_labels, **kwargs)			
-				
+				self.load_dataset(inputs, filename_targets=filename_targets, clean_labels=clean_labels, **kwargs)
+
 			# If inputs is a file name.
 			else:
 				raise ValueError('The "inputs" argument "' + inputs + '" is not a valid dataset name or file name.')
-				
+
 		else:
 			raise TypeError('The "inputs" argument cannot be recognized. "Inputs" can be a list of graphs, a predefined dataset name, or a file name of a dataset.')
-	
-	
-	
+
+
+
 	def load_dataset(self, filename, filename_targets=None, clean_labels=True, **kwargs):
 		self._graphs, self._targets, label_names = DataLoader(filename, filename_targets=filename_targets, **kwargs).data
 		self._node_labels = label_names['node_labels']
@@ -94,18 +92,18 @@ class Dataset(object):
 		self._edge_attrs = label_names['edge_attrs']
 		if clean_labels:
 			self.clean_labels()
-		
-		
+
+
 	def load_graphs(self, graphs, targets=None):
 		# this has to be followed by set_labels().
 		self._graphs = graphs
 		self._targets = targets
 #		self.set_labels_attrs() # @todo
-		
-		
+
+
 	def load_predefined_dataset(self, ds_name, root='datasets', clean_labels=True, reload=False, verbose=False):
 		path = DataFetcher(name=ds_name, root=root, reload=reload, verbose=verbose).path
-		
+
 		if DATASET_META[ds_name]['database'] == 'tudataset':
 			ds_file = os.path.join(path, ds_name + '_A.txt')
 			fn_targets = None
@@ -116,21 +114,21 @@ class Dataset(object):
 			else: # load_files[0] is a list of files.
 				ds_file = [os.path.join(path, fn) for fn in load_files[0]]
 			fn_targets = os.path.join(path, load_files[1]) if len(load_files) == 2 else None
-			
+
 		self._graphs, self._targets, label_names = DataLoader(ds_file, filename_targets=fn_targets).data
-	
+
 		self._node_labels = label_names['node_labels']
 		self._node_attrs = label_names['node_attrs']
 		self._edge_labels = label_names['edge_labels']
 		self._edge_attrs = label_names['edge_attrs']
 		if clean_labels:
 			self.clean_labels()
-			
+
 		# Deal with specific datasets.
 		if ds_name == 'Alkane':
 			self.trim_dataset(edge_required=True)
 			self.remove_labels(node_labels=['atom_symbol'])
-	
+
 
 	def set_labels(self, node_labels=[], node_attrs=[], edge_labels=[], edge_attrs=[]):
 		self._node_labels = node_labels
@@ -138,7 +136,7 @@ class Dataset(object):
 		self._edge_labels = edge_labels
 		self._edge_attrs = edge_attrs
 
-		
+
 	def set_labels_attrs(self, node_labels=None, node_attrs=None, edge_labels=None, edge_attrs=None):
 		# @todo: remove labels which have only one possible values.
 		if node_labels is None:
@@ -164,86 +162,86 @@ class Dataset(object):
 #					if 'attributes' in e[2]:
 #						return len(e[2]['attributes'])
 #		return 0
-			
-			
+
+
 	def get_dataset_infos(self, keys=None, params=None):
 		"""Computes and returns the structure and property information of the graph dataset.
-	
+
 		Parameters
 		----------
 		keys : list, optional
 			A list of strings which indicate which informations will be returned. The
 			possible choices includes:
-	
-			'substructures': sub-structures graphs contains, including 'linear', 'non 
+
+			'substructures': sub-structures graphs contains, including 'linear', 'non
 		linear' and 'cyclic'.
-	
+
 			'node_label_dim': whether vertices have symbolic labels.
-	
+
 			'edge_label_dim': whether egdes have symbolic labels.
-	
+
 			'directed': whether graphs in dataset are directed.
-	
+
 			'dataset_size': number of graphs in dataset.
-			
+
 			'total_node_num': total number of vertices of all graphs in dataset.
-			
+
 			'ave_node_num': average number of vertices of graphs in dataset.
-	
+
 			'min_node_num': minimum number of vertices of graphs in dataset.
-	
+
 			'max_node_num': maximum number of vertices of graphs in dataset.
-			
+
 			'total_edge_num': total number of edges of all graphs in dataset.
-	
+
 			'ave_edge_num': average number of edges of graphs in dataset.
-	
+
 			'min_edge_num': minimum number of edges of graphs in dataset.
-	
+
 			'max_edge_num': maximum number of edges of graphs in dataset.
-	
+
 			'ave_node_degree': average vertex degree of graphs in dataset.
-	
+
 			'min_node_degree': minimum vertex degree of graphs in dataset.
-	
+
 			'max_node_degree': maximum vertex degree of graphs in dataset.
-	
-			'ave_fill_factor': average fill factor (number_of_edges / 
+
+			'ave_fill_factor': average fill factor (number_of_edges /
 		(number_of_nodes ** 2)) of graphs in dataset.
-	
+
 			'min_fill_factor': minimum fill factor of graphs in dataset.
-	
+
 			'max_fill_factor': maximum fill factor of graphs in dataset.
-	
+
 			'node_label_nums': list of numbers of symbolic vertex labels of graphs in dataset.
-	
+
 			'edge_label_nums': list number of symbolic edge labels of graphs in dataset.
-	
-			'node_attr_dim': number of dimensions of non-symbolic vertex labels. 
+
+			'node_attr_dim': number of dimensions of non-symbolic vertex labels.
 		Extracted from the 'attributes' attribute of graph nodes.
-	
-			'edge_attr_dim': number of dimensions of non-symbolic edge labels. 
+
+			'edge_attr_dim': number of dimensions of non-symbolic edge labels.
 		Extracted from the 'attributes' attribute of graph edges.
-	
+
 			'class_number': number of classes. Only available for classification problems.
-			
+
 			'all_degree_entropy': the entropy of degree distribution of each graph.
-				
+
 			'ave_degree_entropy': the average entropy of degree distribution of all graphs.
-			
+
 			All informations above will be returned if `keys` is not given.
-			
+
 		params: dict of dict, optional
-			A dictinary which contains extra parameters for each possible 
+			A dictinary which contains extra parameters for each possible
 			element in ``keys``.
-	
+
 		Return
 		------
 		dict
 			Information of the graph dataset keyed by `keys`.
 		"""
 		infos = {}
-		
+
 		if keys == None:
 			keys = [
 				'substructures',
@@ -273,13 +271,13 @@ class Dataset(object):
 				'all_degree_entropy',
 				'ave_degree_entropy'
 			]
-	
+
 		# dataset size
 		if 'dataset_size' in keys:
 			if self._dataset_size is None:
 				self._dataset_size = self._get_dataset_size()
 			infos['dataset_size'] = self._dataset_size
-	
+
 		# graph node number
 		if any(i in keys for i in ['total_node_num', 'ave_node_num', 'min_node_num', 'max_node_num']):
 			all_node_nums = self._get_all_node_nums()
@@ -288,22 +286,22 @@ class Dataset(object):
 			if self._total_node_num is None:
 				self._total_node_num = self._get_total_node_num(all_node_nums)
 			infos['total_node_num'] = self._total_node_num
-	
+
 		if 'ave_node_num' in keys:
 			if self._ave_node_num is None:
 				self._ave_node_num = self._get_ave_node_num(all_node_nums)
 			infos['ave_node_num'] = self._ave_node_num
-	
+
 		if 'min_node_num' in keys:
 			if self._min_node_num is None:
 				self._min_node_num = self._get_min_node_num(all_node_nums)
 			infos['min_node_num'] = self._min_node_num
-	
+
 		if 'max_node_num' in keys:
 			if self._max_node_num is None:
 				self._max_node_num = self._get_max_node_num(all_node_nums)
 			infos['max_node_num'] = self._max_node_num
-	
+
 		# graph edge number
 		if any(i in keys for i in ['total_edge_num', 'ave_edge_num', 'min_edge_num', 'max_edge_num']):
 			all_edge_nums = self._get_all_edge_nums()
@@ -312,12 +310,12 @@ class Dataset(object):
 			if self._total_edge_num is None:
 				self._total_edge_num = self._get_total_edge_num(all_edge_nums)
 			infos['total_edge_num'] = self._total_edge_num
-			
+
 		if 'ave_edge_num' in keys:
 			if self._ave_edge_num is None:
 				self._ave_edge_num = self._get_ave_edge_num(all_edge_nums)
 			infos['ave_edge_num'] = self._ave_edge_num
-	
+
 		if 'max_edge_num' in keys:
 			if self._max_edge_num is None:
 				self._max_edge_num = self._get_max_edge_num(all_edge_nums)
@@ -327,120 +325,120 @@ class Dataset(object):
 			if self._min_edge_num is None:
 				self._min_edge_num = self._get_min_edge_num(all_edge_nums)
 			infos['min_edge_num'] = self._min_edge_num
-	
+
 		# label number
 		if 'node_label_dim' in keys:
 			if self._node_label_dim is None:
 				self._node_label_dim = self._get_node_label_dim()
-			infos['node_label_dim'] = self._node_label_dim	
-	
+			infos['node_label_dim'] = self._node_label_dim
+
 		if 'node_label_nums' in keys:
 			if self._node_label_nums is None:
 				self._node_label_nums = {}
 				for node_label in self._node_labels:
 					self._node_label_nums[node_label] = self._get_node_label_num(node_label)
 			infos['node_label_nums'] = self._node_label_nums
-	
+
 		if 'edge_label_dim' in keys:
 			if self._edge_label_dim is None:
 				self._edge_label_dim = self._get_edge_label_dim()
-			infos['edge_label_dim'] = self._edge_label_dim	
-	
+			infos['edge_label_dim'] = self._edge_label_dim
+
 		if 'edge_label_nums' in keys:
 			if self._edge_label_nums is None:
 				self._edge_label_nums = {}
 				for edge_label in self._edge_labels:
 					self._edge_label_nums[edge_label] = self._get_edge_label_num(edge_label)
 			infos['edge_label_nums'] = self._edge_label_nums
-	
+
 		if 'directed' in keys or 'substructures' in keys:
 			if self._directed is None:
 				self._directed = self._is_directed()
 			infos['directed'] = self._directed
-	
+
 		# node degree
 		if any(i in keys for i in ['ave_node_degree', 'max_node_degree', 'min_node_degree']):
 			all_node_degrees = self._get_all_node_degrees()
-			
+
 		if 'ave_node_degree' in keys:
 			if self._ave_node_degree is None:
 				self._ave_node_degree = self._get_ave_node_degree(all_node_degrees)
 			infos['ave_node_degree'] = self._ave_node_degree
-	
+
 		if 'max_node_degree' in keys:
 			if self._max_node_degree is None:
 				self._max_node_degree = self._get_max_node_degree(all_node_degrees)
 			infos['max_node_degree'] = self._max_node_degree
-	
+
 		if 'min_node_degree' in keys:
 			if self._min_node_degree is None:
 				self._min_node_degree = self._get_min_node_degree(all_node_degrees)
 			infos['min_node_degree'] = self._min_node_degree
-			
+
 		# fill factor
 		if any(i in keys for i in ['ave_fill_factor', 'max_fill_factor', 'min_fill_factor']):
 			all_fill_factors = self._get_all_fill_factors()
-			
+
 		if 'ave_fill_factor' in keys:
 			if self._ave_fill_factor is None:
 				self._ave_fill_factor = self._get_ave_fill_factor(all_fill_factors)
 			infos['ave_fill_factor'] = self._ave_fill_factor
-	
+
 		if 'max_fill_factor' in keys:
 			if self._max_fill_factor is None:
 				self._max_fill_factor = self._get_max_fill_factor(all_fill_factors)
 			infos['max_fill_factor'] = self._max_fill_factor
-	
+
 		if 'min_fill_factor' in keys:
 			if self._min_fill_factor is None:
 				self._min_fill_factor = self._get_min_fill_factor(all_fill_factors)
 			infos['min_fill_factor'] = self._min_fill_factor
-	
+
 		if 'substructures' in keys:
 			if self._substructures is None:
 				self._substructures = self._get_substructures()
 			infos['substructures'] = self._substructures
-	
+
 		if 'class_number' in keys:
 			if self._class_number is None:
 				self._class_number = self._get_class_number()
 			infos['class_number'] = self._class_number
-	
+
 		if 'node_attr_dim' in keys:
 			if self._node_attr_dim is None:
 				self._node_attr_dim = self._get_node_attr_dim()
 			infos['node_attr_dim'] = self._node_attr_dim
-	
+
 		if 'edge_attr_dim' in keys:
 			if self._edge_attr_dim is None:
 				self._edge_attr_dim = self._get_edge_attr_dim()
 			infos['edge_attr_dim'] = self._edge_attr_dim
-			
+
 		# entropy of degree distribution.
-		
+
 		if 'all_degree_entropy' in keys:
 			if params is not None and ('all_degree_entropy' in params) and ('base' in params['all_degree_entropy']):
 				base = params['all_degree_entropy']['base']
 			else:
 				base = None
 			infos['all_degree_entropy'] = self._compute_all_degree_entropy(base=base)
-			
+
 		if 'ave_degree_entropy' in keys:
 			if params is not None and ('ave_degree_entropy' in params) and ('base' in params['ave_degree_entropy']):
 				base = params['ave_degree_entropy']['base']
 			else:
 				base = None
 			infos['ave_degree_entropy'] = np.mean(self._compute_all_degree_entropy(base=base))
-			
+
 		return infos
-			
-			
+
+
 	def print_graph_infos(self, infos):
 		from collections import OrderedDict
 		keys = list(infos.keys())
 		print(OrderedDict(sorted(infos.items(), key=lambda i: keys.index(i[0]))))
-		
-		
+
+
 	def remove_labels(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
 		node_labels = [item for item in node_labels if item in self._node_labels]
 		edge_labels = [item for item in edge_labels if item in self._edge_labels]
@@ -466,8 +464,8 @@ class Dataset(object):
 			self._node_attrs = [na for na in self._node_attrs if na not in node_attrs]
 		if len(edge_attrs) > 0:
 			self._edge_attrs = [ea for ea in self._edge_attrs if ea not in edge_attrs]
-	
-			
+
+
 	def clean_labels(self):
 		labels = []
 		for name in self._node_labels:
@@ -524,8 +522,8 @@ class Dataset(object):
 					for ed in G.edges():
 						del G.edges[ed][name]
 		self._edge_attrs = labels
-				
-		
+
+
 	def cut_graphs(self, range_):
 		self._graphs = [self._graphs[i] for i in range_]
 		if self._targets is not None:
@@ -542,8 +540,8 @@ class Dataset(object):
 		self._graphs = [p[1] for p in trimed_pairs]
 		self._targets = [self._targets[i] for i in idx]
 		self.clean_labels()
-		
-		
+
+
 	def copy(self):
 		dataset = Dataset()
 		graphs = [g.copy() for g in self._graphs] if self._graphs is not None else None
@@ -556,16 +554,32 @@ class Dataset(object):
 		dataset.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
 		# @todo: clean_labels and add other class members?
 		return dataset
-	
-	
-	def check_special_suffices(self):
-		if self._ds_name.endswith('_unlabeled'):
-			self.remove_labels(node_labels=self._node_labels, 
-					  edge_labels=self._edge_labels, 
-					  node_attrs=self._node_attrs, 
+
+
+	def is_special_dataset(self, inputs):
+		if inputs.endswith('_unlabeled'):
+			return True
+		if inputs == 'MAO_lite':
+			return True
+		return False
+
+
+	def load_special_dataset(self, inputs, root, clean_labels, reload, verbose):
+		if inputs.endswith('_unlabeled'):
+			self.load_predefined_dataset(inputs[:len(inputs) - 10], root=root, clean_labels=clean_labels, reload=reload, verbose=verbose)
+
+			self.remove_labels(node_labels=self._node_labels,
+					  edge_labels=self._edge_labels,
+					  node_attrs=self._node_attrs,
 					  edge_attrs=self._edge_attrs)
-	
-	
+
+		elif inputs == 'MAO_lite':
+			self.load_predefined_dataset(inputs[:len(inputs) - 5], root=root, clean_labels=clean_labels, reload=reload, verbose=verbose)
+
+			self.remove_labels(edge_labels=['bond_stereo'], node_attrs=['x', 'y'])
+
+
+
 	def get_all_node_labels(self):
 		node_labels = []
 		for g in self._graphs:
@@ -574,8 +588,8 @@ class Dataset(object):
 				if nl not in node_labels:
 					node_labels.append(nl)
 		return node_labels
-	
-	
+
+
 	def get_all_edge_labels(self):
 		edge_labels = []
 		for g in self._graphs:
@@ -584,94 +598,94 @@ class Dataset(object):
 				if el not in edge_labels:
 					edge_labels.append(el)
 		return edge_labels
-		
-	
+
+
 	def _get_dataset_size(self):
 		return len(self._graphs)
-	
-	
+
+
 	def _get_all_node_nums(self):
 		return [nx.number_of_nodes(G) for G in self._graphs]
-	
-	
+
+
 	def _get_total_node_nums(self, all_node_nums):
 		return np.sum(all_node_nums)
-	
-	
+
+
 	def _get_ave_node_num(self, all_node_nums):
 		return np.mean(all_node_nums)
-	
-	
+
+
 	def _get_min_node_num(self, all_node_nums):
 		return np.amin(all_node_nums)
-	
-	
+
+
 	def _get_max_node_num(self, all_node_nums):
 		return np.amax(all_node_nums)
-	
-	
+
+
 	def _get_all_edge_nums(self):
 		return [nx.number_of_edges(G) for G in self._graphs]
-	
-	
+
+
 	def _get_total_edge_nums(self, all_edge_nums):
 		return np.sum(all_edge_nums)
-	
-	
+
+
 	def _get_ave_edge_num(self, all_edge_nums):
 		return np.mean(all_edge_nums)
-	
-		
+
+
 	def _get_min_edge_num(self, all_edge_nums):
 		return np.amin(all_edge_nums)
-	
-		
+
+
 	def _get_max_edge_num(self, all_edge_nums):
 		return np.amax(all_edge_nums)
-	
-	
+
+
 	def _get_node_label_dim(self):
 		return len(self._node_labels)
-	
-		
+
+
 	def _get_node_label_num(self, node_label):
 		nl = set()
 		for G in self._graphs:
 			nl = nl | set(nx.get_node_attributes(G, node_label).values())
 		return len(nl)
-	
-	
+
+
 	def _get_edge_label_dim(self):
 		return len(self._edge_labels)
-	
-		
+
+
 	def _get_edge_label_num(self, edge_label):
 		el = set()
 		for G in self._graphs:
 			el = el | set(nx.get_edge_attributes(G, edge_label).values())
 		return len(el)
-	
-		
+
+
 	def _is_directed(self):
 		return nx.is_directed(self._graphs[0])
-	
-		
+
+
 	def _get_all_node_degrees(self):
 		return [np.mean(list(dict(G.degree()).values())) for G in self._graphs]
-	
-	
+
+
 	def _get_ave_node_degree(self, all_node_degrees):
 		return np.mean(all_node_degrees)
-	
-	
+
+
 	def _get_max_node_degree(self, all_node_degrees):
 		return np.amax(all_node_degrees)
-	
-		
+
+
 	def _get_min_node_degree(self, all_node_degrees):
 		return np.amin(all_node_degrees)
-		
-	
+
+
 	def _get_all_fill_factors(self):
 		"""Get fill factor, the number of non-zero entries in the adjacency matrix.
 
@@ -681,20 +695,20 @@ class Dataset(object):
 			List of fill factors for all graphs.
 		"""
 		return [nx.number_of_edges(G) / (nx.number_of_nodes(G) ** 2) for G in self._graphs]
-	   
+
 
 	def _get_ave_fill_factor(self, all_fill_factors):
 		return np.mean(all_fill_factors)
-	
-		
+
+
 	def _get_max_fill_factor(self, all_fill_factors):
 		return np.amax(all_fill_factors)
-	
-		
+
+
 	def _get_min_fill_factor(self, all_fill_factors):
 		return np.amin(all_fill_factors)
-	
-		
+
+
 	def _get_substructures(self):
 		subs = set()
 		for G in self._graphs:
@@ -726,22 +740,22 @@ class Dataset(object):
 			#			 if any(len(i) > 2 for i in cyc):
 			#				 subs.add('cyclic')
 			#				 break
-	
+
 			return subs
-	
-		
+
+
 	def _get_class_num(self):
 		return len(set(self._targets))
-	
-		
+
+
 	def _get_node_attr_dim(self):
 		return len(self._node_attrs)
-	
-		
+
+
 	def _get_edge_attr_dim(self):
 		return len(self._edge_attrs)
 
-	
+
 	def _compute_all_degree_entropy(self, base=None):
 		"""Compute the entropy of degree distribution of each graph.
 
@@ -756,15 +770,15 @@ class Dataset(object):
 			The calculated entropy.
 		"""
 		from gklearn.utils.stats import entropy
-		
+
 		degree_entropy = []
 		for g in self._graphs:
 			degrees = list(dict(g.degree()).values())
 			en = entropy(degrees, base=base)
 			degree_entropy.append(en)
 		return degree_entropy
-			
-	
+
+
 	@property
 	def graphs(self):
 		return self._graphs
@@ -773,8 +787,8 @@ class Dataset(object):
 	@property
 	def targets(self):
 		return self._targets
-	
-		
+
+
 	@property
 	def node_labels(self):
 		return self._node_labels
@@ -783,21 +797,21 @@ class Dataset(object):
 	@property
 	def edge_labels(self):
 		return self._edge_labels
-	
-	
+
+
 	@property
 	def node_attrs(self):
 		return self._node_attrs
-	
-	
+
+
 	@property
 	def edge_attrs(self):
 		return self._edge_attrs
-	
-	
+
+
 def split_dataset_by_target(dataset):
 	from gklearn.preimage.utils import get_same_item_indices
-	
+
 	graphs = dataset.graphs
 	targets = dataset.targets
 	datasets = []

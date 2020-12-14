@@ -71,7 +71,7 @@ class DataFetcher():
 				print('Finished.', str(sum(v is not None for v in self._path)), 'of', str(len(self._path)), 'datasets are successfully fetched.')
 
 		elif self._name not in DATASET_META:
-			message = 'Invalid Dataset name "' + self._name + '".'
+			message = 'Invalid dataset name "' + self._name + '".'
 			message += '\nAvailable datasets are as follows: \n\n'
 			message += '\n'.join(ds for ds in sorted(DATASET_META))
 			message += '\n\nFollowing special suffices can be added to the name:'
