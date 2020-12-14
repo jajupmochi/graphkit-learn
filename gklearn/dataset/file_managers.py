@@ -38,7 +38,11 @@ class DataLoader():
 		for details. Note here filename is the name of either .txt file in
 		the dataset directory.
 		"""
-		extension = splitext(filename)[1][1:]
+		if isinstance(filename, str):
+			extension = splitext(filename)[1][1:]
+		else: # filename is a list of files.
+			extension = splitext(filename[0])[1][1:]
+			
 		if extension == "ds":
 			self._graphs, self._targets, self._label_names = self.load_from_ds(filename, filename_targets)
 		elif extension == "cxl":
@@ -67,13 +71,24 @@ class DataLoader():
 	
 		Note these graph formats are checked automatically by the extensions of 
 		graph files.
-		"""		
-		dirname_dataset = dirname(filename)
+		"""
+		if isinstance(filename, str):
+			dirname_dataset = dirname(filename)
+			with open(filename) as f:
+				content = f.read().splitlines()
+		else: # filename is a list of files.
+			dirname_dataset = dirname(filename[0])
+			content = []
+			for fn in filename:
+				with open(fn) as f:
+					content += f.read().splitlines()
+			# to remove duplicate file names.
+
 		data = []
 		y = []
 		label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
-		with open(filename) as fn:
-			content = fn.read().splitlines()
+		content = [line for line in content if not line.endswith('.ds')] # Alkane
+		content = [line for line in content if not line.startswith('#')] # Acyclic
 		extension = splitext(content[0].split(' ')[0])[1][1:]
 		if extension == 'ct':
 			load_file_fun = self.load_ct

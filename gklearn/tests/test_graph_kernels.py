@@ -3,13 +3,14 @@
 
 import pytest
 import multiprocessing
+import numpy as np
 
 
 def chooseDataset(ds_name):
 	"""Choose dataset according to name.
 	"""
 	from gklearn.utils import Dataset
-	
+
 	dataset = Dataset()
 
 	# no node labels (and no edge labels).
@@ -18,6 +19,7 @@ def chooseDataset(ds_name):
 		dataset.trim_dataset(edge_required=False)
 		irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']}
 		dataset.remove_labels(**irrelevant_labels)
+		dataset.cut_graphs(range(1, 10))
 	# node symbolic labels.
 	elif ds_name == 'Acyclic':
 		dataset.load_predefined_dataset(ds_name)
@@ -46,9 +48,9 @@ def chooseDataset(ds_name):
 	elif ds_name == 'Cuneiform':
 		dataset.load_predefined_dataset(ds_name)
 		dataset.trim_dataset(edge_required=True)
-		
+
 	dataset.cut_graphs(range(0, 3))
-	
+
 	return dataset
 
 
@@ -57,7 +59,7 @@ def test_list_graph_kernels():
 	"""
 	from gklearn.kernels import GRAPH_KERNELS, list_of_graph_kernels
 	assert list_of_graph_kernels() == [i for i in GRAPH_KERNELS]
-	
+
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
@@ -68,10 +70,10 @@ def test_CommonWalk(ds_name, parallel, weight, compute_method):
 	"""
 	from gklearn.kernels import CommonWalk
 	import networkx as nx
-	
+
 	dataset = chooseDataset(ds_name)
 	dataset.load_graphs([g for g in dataset.graphs if nx.number_of_nodes(g) > 1])
-	
+
 	try:
 		graph_kernel = CommonWalk(node_labels=dataset.node_labels,
 					edge_labels=dataset.edge_labels,
@@ -87,8 +89,8 @@ def test_CommonWalk(ds_name, parallel, weight, compute_method):
 
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
 @pytest.mark.parametrize('remove_totters', [False]) #[True, False])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -96,9 +98,9 @@ def test_Marginalized(ds_name, parallel, remove_totters):
 	"""Test marginalized kernel.
 	"""
 	from gklearn.kernels import Marginalized
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	try:
 		graph_kernel = Marginalized(node_labels=dataset.node_labels,
 					edge_labels=dataset.edge_labels,
@@ -115,15 +117,15 @@ def test_Marginalized(ds_name, parallel, remove_totters):
 
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_SylvesterEquation(ds_name, parallel):
 	"""Test sylvester equation kernel.
 	"""
 	from gklearn.kernels import SylvesterEquation
-	
+
 	dataset = chooseDataset(ds_name)
 
 	try:
@@ -139,11 +141,11 @@ def test_SylvesterEquation(ds_name, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-	
+
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_ConjugateGradient(ds_name, parallel):
@@ -152,9 +154,9 @@ def test_ConjugateGradient(ds_name, parallel):
 	from gklearn.kernels import ConjugateGradient
 	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 	import functools
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 
@@ -177,11 +179,11 @@ def test_ConjugateGradient(ds_name, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-	
+
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_FixedPoint(ds_name, parallel):
@@ -190,9 +192,9 @@ def test_FixedPoint(ds_name, parallel):
 	from gklearn.kernels import FixedPoint
 	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 	import functools
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 
@@ -215,11 +217,11 @@ def test_FixedPoint(ds_name, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-	
+
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
 @pytest.mark.parametrize('sub_kernel', ['exp', 'geo'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -227,7 +229,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel, parallel):
 	"""Test spectral decomposition kernel.
 	"""
 	from gklearn.kernels import SpectralDecomposition
-	
+
 	dataset = chooseDataset(ds_name)
 
 	try:
@@ -244,11 +246,11 @@ def test_SpectralDecomposition(ds_name, sub_kernel, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-	
+
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 # @pytest.mark.parametrize(
 #		'compute_method,ds_name,sub_kernel',
 #		[
@@ -268,7 +270,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel, parallel):
 #	from gklearn.kernels import RandomWalk
 #	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 #	import functools
-#	
+#
 #	dataset = chooseDataset(ds_name)
 
 #	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
@@ -297,7 +299,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel, parallel):
 #	except Exception as exception:
 #		assert False, exception
 
-		
+
 @pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_ShortestPath(ds_name, parallel):
@@ -306,17 +308,30 @@ def test_ShortestPath(ds_name, parallel):
 	from gklearn.kernels import ShortestPath
 	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 	import functools
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 	try:
 		graph_kernel = ShortestPath(node_labels=dataset.node_labels,
 					node_attrs=dataset.node_attrs,
 					ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					fcsp=True,
 					node_kernels=sub_kernels)
-		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
+		gram_matrix1, run_time = graph_kernel.compute(dataset.graphs,
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
+		graph_kernel = ShortestPath(node_labels=dataset.node_labels,
+					node_attrs=dataset.node_attrs,
+					ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					fcsp=False,
+					node_kernels=sub_kernels)
+		gram_matrix2, run_time = graph_kernel.compute(dataset.graphs,
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
@@ -325,6 +340,8 @@ def test_ShortestPath(ds_name, parallel):
 
 	except Exception as exception:
 		assert False, exception
+
+	assert np.array_equal(gram_matrix1, gram_matrix2)
 
 
 #@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
@@ -336,28 +353,46 @@ def test_StructuralSP(ds_name, parallel):
 	from gklearn.kernels import StructuralSP
 	from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
 	import functools
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
 	try:
 		graph_kernel = StructuralSP(node_labels=dataset.node_labels,
-					 edge_labels=dataset.edge_labels, 
+					 edge_labels=dataset.edge_labels,
 					 node_attrs=dataset.node_attrs,
 					 edge_attrs=dataset.edge_attrs,
 					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 fcsp=True,
 					 node_kernels=sub_kernels,
 					 edge_kernels=sub_kernels)
-		gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		gram_matrix1, run_time = graph_kernel.compute(dataset.graphs,
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True, normalize=False)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
+		graph_kernel = StructuralSP(node_labels=dataset.node_labels,
+					 edge_labels=dataset.edge_labels,
+					 node_attrs=dataset.node_attrs,
+					 edge_attrs=dataset.edge_attrs,
+					 ds_infos=dataset.get_dataset_infos(keys=['directed']),
+					 fcsp=False,
+					 node_kernels=sub_kernels,
+					 edge_kernels=sub_kernels)
+		gram_matrix2, run_time = graph_kernel.compute(dataset.graphs,
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True, normalize=False)
+		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 	except Exception as exception:
 		assert False, exception
+
+	assert np.array_equal(gram_matrix1, gram_matrix2)
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
@@ -369,9 +404,9 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 	"""Test path kernel up to length $h$.
 	"""
 	from gklearn.kernels import PathUpToH
-	
+
 	dataset = chooseDataset(ds_name)
-	
+
 	try:
 		graph_kernel = PathUpToH(node_labels=dataset.node_labels,
 					 edge_labels=dataset.edge_labels,
@@ -385,8 +420,8 @@ def test_PathUpToH(ds_name, parallel, k_func, compute_method):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 	except Exception as exception:
 		assert False, exception
-	
-	
+
+
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
 @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_Treelet(ds_name, parallel):
@@ -395,10 +430,10 @@ def test_Treelet(ds_name, parallel):
 	from gklearn.kernels import Treelet
 	from gklearn.utils.kernels import polynomialkernel
 	import functools
-	
+
 	dataset = chooseDataset(ds_name)
 
-	pkernel = functools.partial(polynomialkernel, d=2, c=1e5)	
+	pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
 	try:
 		graph_kernel = Treelet(node_labels=dataset.node_labels,
 					 edge_labels=dataset.edge_labels,
@@ -412,8 +447,8 @@ def test_Treelet(ds_name, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 	except Exception as exception:
 		assert False, exception
-		
-		
+
+
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
 #@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
 # @pytest.mark.parametrize('base_kernel', ['subtree'])
@@ -422,7 +457,7 @@ def test_WLSubtree(ds_name, parallel):
 	"""Test Weisfeiler-Lehman subtree kernel.
 	"""
 	from gklearn.kernels import WLSubtree
-	
+
 	dataset = chooseDataset(ds_name)
 
 	try:
@@ -438,12 +473,15 @@ def test_WLSubtree(ds_name, parallel):
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 	except Exception as exception:
 		assert False, exception
-		
+
 
 if __name__ == "__main__":
 	test_list_graph_kernels()
 #	test_spkernel('Alkane', 'imap_unordered')
+# 	test_ShortestPath('Alkane', 'imap_unordered')
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+# 	test_StructuralSP('Alkane', None)
+# 	test_StructuralSP('Cuneiform', None)
 # 	test_WLSubtree('Acyclic', 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')

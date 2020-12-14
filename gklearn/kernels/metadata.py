@@ -12,7 +12,7 @@ GRAPH_KERNELS = {
 	'common walk': '',
 	'marginalized': '',
 	'sylvester equation': '',
-	'fixed_point': '',
+	'fixed point': '',
 	'conjugate gradient': '',
 	'spectral decomposition': '',
 	### based on paths.
