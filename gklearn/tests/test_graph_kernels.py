@@ -19,6 +19,7 @@ def chooseDataset(ds_name):
 		dataset.trim_dataset(edge_required=False)
 		irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']}
 		dataset.remove_labels(**irrelevant_labels)
+		dataset.cut_graphs(range(1, 10))
 	# node symbolic labels.
 	elif ds_name == 'Acyclic':
 		dataset.load_predefined_dataset(ds_name)
@@ -337,10 +338,10 @@ def test_ShortestPath(ds_name, parallel):
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
-		assert np.array_equal(gram_matrix1, gram_matrix2)
-
 	except Exception as exception:
 		assert False, exception
+
+	assert np.array_equal(gram_matrix1, gram_matrix2)
 
 
 #@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
@@ -367,11 +368,11 @@ def test_StructuralSP(ds_name, parallel):
 					 node_kernels=sub_kernels,
 					 edge_kernels=sub_kernels)
 		gram_matrix1, run_time = graph_kernel.compute(dataset.graphs,
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True, normalize=False)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		graph_kernel = StructuralSP(node_labels=dataset.node_labels,
 					 edge_labels=dataset.edge_labels,
@@ -382,16 +383,16 @@ def test_StructuralSP(ds_name, parallel):
 					 node_kernels=sub_kernels,
 					 edge_kernels=sub_kernels)
 		gram_matrix2, run_time = graph_kernel.compute(dataset.graphs,
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True, normalize=False)
 		kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 		kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-
-		assert np.array_equal(gram_matrix1, gram_matrix2)
+ 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 	except Exception as exception:
 		assert False, exception
+
+	assert np.array_equal(gram_matrix1, gram_matrix2)
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
@@ -477,8 +478,10 @@ def test_WLSubtree(ds_name, parallel):
 if __name__ == "__main__":
 	test_list_graph_kernels()
 #	test_spkernel('Alkane', 'imap_unordered')
+# 	test_ShortestPath('Alkane', 'imap_unordered')
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
-	test_StructuralSP('Acyclic', 'imap_unordered')
+# 	test_StructuralSP('Alkane', None)
+# 	test_StructuralSP('Cuneiform', None)
 # 	test_WLSubtree('Acyclic', 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
