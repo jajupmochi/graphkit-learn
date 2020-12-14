@@ -5,9 +5,9 @@ Created on Thu Sep 27 10:56:23 2018
 
 @author: linlin
 
-@references: 
+@references:
 
-	[1] Suard F, Rakotomamonjy A, Bensrhair A. Kernel on Bag of Paths For 
+	[1] Suard F, Rakotomamonjy A, Bensrhair A. Kernel on Bag of Paths For
 	Measuring Similarity of Shapes. InESANN 2007 Apr 25 (pp. 355-360).
 """
 
@@ -43,7 +43,7 @@ def structuralspkernel(*args,
 	----------
 	Gn : List of NetworkX graph
 		List of graphs between which the kernels are computed.
-	
+
 	G1, G2 : NetworkX graphs
 		Two graphs between which the kernel is computed.
 
@@ -51,25 +51,25 @@ def structuralspkernel(*args,
 		Node attribute used as label. The default node label is atom.
 
 	edge_weight : string
-		Edge attribute name corresponding to the edge weight. Applied for the 
+		Edge attribute name corresponding to the edge weight. Applied for the
 		computation of the shortest paths.
 
 	edge_label : string
 		Edge attribute used as label. The default edge label is bond_type.
 
 	node_kernels : dict
-		A dictionary of kernel functions for nodes, including 3 items: 'symb' 
-		for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
-		for both labels. The first 2 functions take two node labels as 
+		A dictionary of kernel functions for nodes, including 3 items: 'symb'
+		for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix'
+		for both labels. The first 2 functions take two node labels as
 		parameters, and the 'mix' function takes 4 parameters, a symbolic and a
 		non-symbolic label for each the two nodes. Each label is in form of 2-D
 		dimension array (n_samples, n_features). Each function returns a number
 		as the kernel value. Ignored when nodes are unlabeled.
 
 	edge_kernels : dict
-		A dictionary of kernel functions for edges, including 3 items: 'symb' 
-		for symbolic edge labels, 'nsymb' for non-symbolic edge labels, 'mix' 
-		for both labels. The first 2 functions take two edge labels as 
+		A dictionary of kernel functions for edges, including 3 items: 'symb'
+		for symbolic edge labels, 'nsymb' for non-symbolic edge labels, 'mix'
+		for both labels. The first 2 functions take two edge labels as
 		parameters, and the 'mix' function takes 4 parameters, a symbolic and a
 		non-symbolic label for each the two edges. Each label is in form of 2-D
 		dimension array (n_samples, n_features). Each function returns a number
@@ -89,7 +89,7 @@ def structuralspkernel(*args,
 	Return
 	------
 	Kmatrix : Numpy matrix
-		Kernel matrix, each element of which is the mean average structural 
+		Kernel matrix, each element of which is the mean average structural
 		shortest path kernel between 2 praphs.
 	"""
 	# pre-process
@@ -135,9 +135,9 @@ def structuralspkernel(*args,
 				chunksize = 100
 		# get shortest path graphs of Gn
 		if compute_method == 'trie':
-			getsp_partial = partial(wrapper_getSP_trie, weight, ds_attrs['is_directed'])	
+			getsp_partial = partial(wrapper_getSP_trie, weight, ds_attrs['is_directed'])
 		else:
-			getsp_partial = partial(wrapper_getSP_naive, weight, ds_attrs['is_directed'])   
+			getsp_partial = partial(wrapper_getSP_naive, weight, ds_attrs['is_directed'])
 		if verbose:
 			iterator = tqdm(pool.imap_unordered(getsp_partial, itr, chunksize),
 							desc='getting shortest paths', file=sys.stdout)
@@ -161,17 +161,17 @@ def structuralspkernel(*args,
 		else:
 			for g in iterator:
 				splist.append(get_shortest_paths(g, weight, ds_attrs['is_directed']))
-	
+
 #	ss = 0
 #	ss += sys.getsizeof(splist)
 #	for spss in splist:
 #		ss += sys.getsizeof(spss)
 #		for spp in spss:
 #			ss += sys.getsizeof(spp)
-	
-	
+
+
 #	time.sleep(20)
-	
+
 
 
 	# # ---- only for the Fast Computation of Shortest Path Kernel (FCSP)
@@ -194,21 +194,21 @@ def structuralspkernel(*args,
 
 	Kmatrix = np.zeros((len(Gn), len(Gn)))
 
-	# ---- use pool.imap_unordered to parallel and track progress. ----	
+	# ---- use pool.imap_unordered to parallel and track progress. ----
 	if parallel == 'imap_unordered':
 		def init_worker(spl_toshare, gs_toshare):
 			global G_spl, G_gs
 			G_spl = spl_toshare
-			G_gs = gs_toshare	 
-		if compute_method == 'trie':	   
-			do_partial = partial(wrapper_ssp_do_trie, ds_attrs, node_label, edge_label, 
-								 node_kernels, edge_kernels)   
-			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
-								glbv=(splist, Gn), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose) 
-		else:  
-			do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
-								 node_kernels, edge_kernels)   
-			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker, 
+			G_gs = gs_toshare
+		if compute_method == 'trie':
+			do_partial = partial(wrapper_ssp_do_trie, ds_attrs, node_label, edge_label,
+								 node_kernels, edge_kernels)
+			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker,
+								glbv=(splist, Gn), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
+		else:
+			do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label,
+								 node_kernels, edge_kernels)
+			parallel_gm(do_partial, Kmatrix, Gn, init_worker=init_worker,
 								glbv=(splist, Gn), n_jobs=n_jobs, chunksize=chunksize, verbose=verbose)
 	# ---- direct running, normally use single CPU core. ----
 	elif parallel is None:
@@ -232,10 +232,10 @@ def structuralspkernel(*args,
 		#			print("error here ")
 				Kmatrix[i][j] = kernel
 				Kmatrix[j][i] = kernel
-	
+
 #	# ---- use pool.map to parallel. ----
 #	pool = Pool(n_jobs)
-#	do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+#	do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label,
 #						 node_kernels, edge_kernels)
 #	itr = zip(combinations_with_replacement(Gn, 2),
 #			  combinations_with_replacement(splist, 2),
@@ -249,7 +249,7 @@ def structuralspkernel(*args,
 #	pool.join()
 
 #	# ---- use pool.imap_unordered to parallel and track progress. ----
-#	do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label, 
+#	do_partial = partial(wrapper_ssp_do, ds_attrs, node_label, edge_label,
 #						 node_kernels, edge_kernels)
 #	itr = zip(combinations_with_replacement(Gn, 2),
 #			  combinations_with_replacement(splist, 2),
@@ -282,7 +282,7 @@ def structuralspkernel(*args,
 
 def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
 						  node_kernels, edge_kernels):
-	
+
 	kernel = 0
 
 	# First, compute shortest path matrices, method borrowed from FCSP.
@@ -373,25 +373,25 @@ def structuralspkernel_do(g1, g2, spl1, spl2, ds_attrs, node_label, edge_label,
 	return kernel
 
 
-def wrapper_ssp_do(ds_attrs, node_label, edge_label, node_kernels, 
+def wrapper_ssp_do(ds_attrs, node_label, edge_label, node_kernels,
 				   edge_kernels, itr):
 	i = itr[0]
 	j = itr[1]
-	return i, j, structuralspkernel_do(G_gs[i], G_gs[j], G_spl[i], G_spl[j], 
-									   ds_attrs, node_label, edge_label, 
+	return i, j, structuralspkernel_do(G_gs[i], G_gs[j], G_spl[i], G_spl[j],
+									   ds_attrs, node_label, edge_label,
 									   node_kernels, edge_kernels)
-	
-	
+
+
 def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 						  node_kernels, edge_kernels):
-	
+
 #	# traverse all paths in graph1. Deep-first search is applied.
 #	def traverseBothTrie(root, trie2, kernel, pcurrent=[]):
 #		for key, node in root['children'].items():
 #			pcurrent.append(key)
 #			if node['isEndOfWord']:
 #	#					print(node['count'])
-#				traverseTrie2(trie2.root, pcurrent, kernel, 
+#				traverseTrie2(trie2.root, pcurrent, kernel,
 #							  pcurrent=[])
 #			if node['children'] != {}:
 #				traverseBothTrie(node, trie2, kernel, pcurrent)
@@ -399,14 +399,14 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #				del pcurrent[-1]
 #		if pcurrent != []:
 #			del pcurrent[-1]
-#			
-#			
-#	# traverse all paths in graph2 and find out those that are not in 
-#	# graph1. Deep-first search is applied.				
+#
+#
+#	# traverse all paths in graph2 and find out those that are not in
+#	# graph1. Deep-first search is applied.
 #	def traverseTrie2(root, p1, kernel, pcurrent=[]):
 #		for key, node in root['children'].items():
 #			pcurrent.append(key)
-#			if node['isEndOfWord']:				   
+#			if node['isEndOfWord']:
 #	#					print(node['count'])
 #				kernel[0] += computePathKernel(p1, pcurrent, vk_dict, ek_dict)
 #			if node['children'] != {}:
@@ -415,8 +415,8 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #				del pcurrent[-1]
 #		if pcurrent != []:
 #			del pcurrent[-1]
-# 
-#	
+#
+#
 #	kernel = [0]
 #
 #	# First, compute shortest path matrices, method borrowed from FCSP.
@@ -437,7 +437,7 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #			pcurrent.append(key)
 #			if node['isEndOfWord']:
 #	#					print(node['count'])
-#				traverseTrie2(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+#				traverseTrie2(trie2.root, pcurrent, kernel, vk_dict, ek_dict,
 #							  pcurrent=[])
 #			if node['children'] != {}:
 #				traverseBothTrie(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
@@ -445,14 +445,14 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #				del pcurrent[-1]
 #		if pcurrent != []:
 #			del pcurrent[-1]
-#			
-#			
-#	# traverse all paths in graph2 and find out those that are not in 
-#	# graph1. Deep-first search is applied.				
+#
+#
+#	# traverse all paths in graph2 and find out those that are not in
+#	# graph1. Deep-first search is applied.
 #	def traverseTrie2(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 #		for key, node in root['children'].items():
 #			pcurrent.append(key)
-#			if node['isEndOfWord']:				   
+#			if node['isEndOfWord']:
 #	#					print(node['count'])
 #				kernel[0] += computePathKernel(p1, pcurrent, vk_dict, ek_dict)
 #			if node['children'] != {}:
@@ -461,8 +461,8 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 #				del pcurrent[-1]
 #		if pcurrent != []:
 #			del pcurrent[-1]
- 
-	
+
+
 	kernel = [0]
 
 	# First, compute shortest path matrices, method borrowed from FCSP.
@@ -483,20 +483,20 @@ def ssp_do_trie(g1, g2, trie1, trie2, ds_attrs, node_label, edge_label,
 		if ek_dict:
 			traverseBothTriee(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
 		else:
-			traverseBothTrieu(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)				
+			traverseBothTrieu(trie1[0].root, trie2[0], kernel, vk_dict, ek_dict)
 
 	kernel = kernel[0] / (trie1[1] * trie2[1])  # Compute mean average
 
 	return kernel
 
 
-def wrapper_ssp_do_trie(ds_attrs, node_label, edge_label, node_kernels, 
+def wrapper_ssp_do_trie(ds_attrs, node_label, edge_label, node_kernels,
 				   edge_kernels, itr):
 	i = itr[0]
 	j = itr[1]
-	return i, j, ssp_do_trie(G_gs[i], G_gs[j], G_spl[i], G_spl[j], ds_attrs, 
+	return i, j, ssp_do_trie(G_gs[i], G_gs[j], G_spl[i], G_spl[j], ds_attrs,
 							 node_label, edge_label, node_kernels, edge_kernels)
-	
+
 
 def getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs):
 	# compute shortest path matrices, method borrowed from FCSP.
@@ -528,7 +528,7 @@ def getAllNodeKernels(g1, g2, node_kernels, node_label, ds_attrs):
 		# node unlabeled
 		else:
 			pass
-		
+
 	return vk_dict
 
 
@@ -573,17 +573,17 @@ def getAllEdgeKernels(g1, g2, edge_kernels, edge_label, ds_attrs):
 		# edge unlabeled
 		else:
 			pass
-		
-		return ek_dict
-	
-	
+
+	return ek_dict
+
+
 # traverse all paths in graph1. Deep-first search is applied.
 def traverseBothTriem(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
 		if node['isEndOfWord']:
 #					print(node['count'])
-			traverseTrie2m(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+			traverseTrie2m(trie2.root, pcurrent, kernel, vk_dict, ek_dict,
 						  pcurrent=[])
 		if node['children'] != {}:
 			traverseBothTriem(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
@@ -591,14 +591,14 @@ def traverseBothTriem(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-		
-		
-# traverse all paths in graph2 and find out those that are not in 
-# graph1. Deep-first search is applied.				
+
+
+# traverse all paths in graph2 and find out those that are not in
+# graph1. Deep-first search is applied.
 def traverseTrie2m(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
-		if node['isEndOfWord']:				   
+		if node['isEndOfWord']:
 #					print(node['count'])
 			if len(p1) == len(pcurrent):
 				kpath = vk_dict[(p1[0], pcurrent[0])]
@@ -616,7 +616,7 @@ def traverseTrie2m(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-		
+
 
 # traverse all paths in graph1. Deep-first search is applied.
 def traverseBothTriev(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
@@ -624,7 +624,7 @@ def traverseBothTriev(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 		pcurrent.append(key)
 		if node['isEndOfWord']:
 #					print(node['count'])
-			traverseTrie2v(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+			traverseTrie2v(trie2.root, pcurrent, kernel, vk_dict, ek_dict,
 						  pcurrent=[])
 		if node['children'] != {}:
 			traverseBothTriev(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
@@ -632,14 +632,14 @@ def traverseBothTriev(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-		
-		
-# traverse all paths in graph2 and find out those that are not in 
-# graph1. Deep-first search is applied.				
+
+
+# traverse all paths in graph2 and find out those that are not in
+# graph1. Deep-first search is applied.
 def traverseTrie2v(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
-		if node['isEndOfWord']:				   
+		if node['isEndOfWord']:
 #					print(node['count'])
 			if len(p1) == len(pcurrent):
 				kpath = vk_dict[(p1[0], pcurrent[0])]
@@ -655,15 +655,15 @@ def traverseTrie2v(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-			
-			
+
+
 # traverse all paths in graph1. Deep-first search is applied.
 def traverseBothTriee(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
 		if node['isEndOfWord']:
 #					print(node['count'])
-			traverseTrie2e(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+			traverseTrie2e(trie2.root, pcurrent, kernel, vk_dict, ek_dict,
 						  pcurrent=[])
 		if node['children'] != {}:
 			traverseBothTriee(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
@@ -671,14 +671,14 @@ def traverseBothTriee(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-		
-		
-# traverse all paths in graph2 and find out those that are not in 
-# graph1. Deep-first search is applied.				
+
+
+# traverse all paths in graph2 and find out those that are not in
+# graph1. Deep-first search is applied.
 def traverseTrie2e(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
-		if node['isEndOfWord']:				   
+		if node['isEndOfWord']:
 #					print(node['count'])
 			if len(p1) == len(pcurrent):
 				if len(p1) == 0:
@@ -697,15 +697,15 @@ def traverseTrie2e(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-			
-			
+
+
 # traverse all paths in graph1. Deep-first search is applied.
 def traverseBothTrieu(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
 		if node['isEndOfWord']:
 #					print(node['count'])
-			traverseTrie2u(trie2.root, pcurrent, kernel, vk_dict, ek_dict, 
+			traverseTrie2u(trie2.root, pcurrent, kernel, vk_dict, ek_dict,
 						  pcurrent=[])
 		if node['children'] != {}:
 			traverseBothTrieu(node, trie2, kernel, vk_dict, ek_dict, pcurrent)
@@ -713,14 +713,14 @@ def traverseBothTrieu(root, trie2, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-		
-		
-# traverse all paths in graph2 and find out those that are not in 
-# graph1. Deep-first search is applied.				
+
+
+# traverse all paths in graph2 and find out those that are not in
+# graph1. Deep-first search is applied.
 def traverseTrie2u(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 	for key, node in root['children'].items():
 		pcurrent.append(key)
-		if node['isEndOfWord']:				   
+		if node['isEndOfWord']:
 #					print(node['count'])
 			if len(p1) == len(pcurrent):
 				kernel[0] += 1
@@ -730,8 +730,8 @@ def traverseTrie2u(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 			del pcurrent[-1]
 	if pcurrent != []:
 		del pcurrent[-1]
-	
-	
+
+
 #def computePathKernel(p1, p2, vk_dict, ek_dict):
 #	kernel = 0
 #	if vk_dict:
@@ -771,7 +771,7 @@ def traverseTrie2u(root, p1, kernel, vk_dict, ek_dict, pcurrent=[]):
 #		else:
 #			if len(p1) == len(p2):
 #				kernel += 1
-#				
+#
 #	return kernel
 
 
@@ -804,7 +804,7 @@ def get_shortest_paths(G, weight, directed):
 			# each edge walk is counted twice, starting from both its extreme nodes.
 			if not directed:
 				sp += [sptemp[::-1] for sptemp in spltemp]
-				
+
 	# add single nodes as length 0 paths.
 	sp += [[n] for n in G.nodes()]
 	return sp
@@ -849,7 +849,7 @@ def get_sps_as_trie(G, weight, directed):
 			# each edge walk is counted twice, starting from both its extreme nodes.
 				if not directed:
 					sptrie.insertWord(sp[::-1])
-				
+
 	# add single nodes as length 0 paths.
 	for n in G.nodes():
 		sptrie.insertWord([n])
