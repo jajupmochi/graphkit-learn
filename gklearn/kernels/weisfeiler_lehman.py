@@ -231,7 +231,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		return i, j, self.pairwise_kernel(G_gn[i], G_gn[j])
 
 
-	def _compute_kernel_itr(kernel, all_num_of_each_label):
+	def _compute_kernel_itr(self, kernel, all_num_of_each_label):
 		labels = set(list(all_num_of_each_label[0].keys()) +
 			   list(all_num_of_each_label[1].keys()))
 		vector1 = np.array([(all_num_of_each_label[0][label]
