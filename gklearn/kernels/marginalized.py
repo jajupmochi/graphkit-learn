@@ -7,19 +7,19 @@ Created on Wed Jun  3 22:22:57 2020
 
 @references:
 
-	[1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between 
-	labeled graphs. In Proceedings of the 20th International Conference on 
+	[1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between
+	labeled graphs. In Proceedings of the 20th International Conference on
 	Machine Learning, Washington, DC, United States, 2003.
 
-	[2] Pierre Mahé, Nobuhisa Ueda, Tatsuya Akutsu, Jean-Luc Perret, and 
-	Jean-Philippe Vert. Extensions of marginalized graph kernels. In 
-	Proceedings of the twenty-first international conference on Machine 
+	[2] Pierre Mahé, Nobuhisa Ueda, Tatsuya Akutsu, Jean-Luc Perret, and
+	Jean-Philippe Vert. Extensions of marginalized graph kernels. In
+	Proceedings of the twenty-first international conference on Machine
 	learning, page 70. ACM, 2004.
 """
 
 import sys
 from multiprocessing import Pool
-from tqdm import tqdm
+from gklearn.utils import get_iters
 import numpy as np
 import networkx as nx
 from gklearn.utils import SpecialLabel
@@ -30,7 +30,7 @@ from gklearn.kernels import GraphKernel
 
 
 class Marginalized(GraphKernel):
-	
+
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
 		self._node_labels = kwargs.get('node_labels', [])
@@ -44,35 +44,31 @@ class Marginalized(GraphKernel):
 
 	def _compute_gm_series(self):
 		self._add_dummy_labels(self._graphs)
-		
+
 		if self._remove_totters:
-			if self._verbose >= 2:
-				iterator = tqdm(self._graphs, desc='removing tottering', file=sys.stdout)
-			else:
-				iterator = self._graphs
+			iterator = get_iters(self._graphs, desc='removing tottering', file=sys.stdout, verbose=(self._verbose >= 2))
 			# @todo: this may not work.
 			self._graphs = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
-		
+
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
-		
+
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
-		else:
-			iterator = itr
+		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
+					length=len_itr, verbose=(self._verbose >= 2))
 		for i, j in iterator:
 			kernel = self._kernel_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel # @todo: no directed graph considered?
-				
+
 		return gram_matrix
-			
-			
+
+
 	def _compute_gm_imap_unordered(self):
 		self._add_dummy_labels(self._graphs)
-		
+
 		if self._remove_totters:
 			pool = Pool(self._n_jobs)
 			itr = range(0, len(self._graphs))
@@ -81,57 +77,49 @@ class Marginalized(GraphKernel):
 			else:
 				chunksize = 100
 			remove_fun = self._wrapper_untotter
-			if self._verbose >= 2:
-				iterator = tqdm(pool.imap_unordered(remove_fun, itr, chunksize),
-								desc='removing tottering', file=sys.stdout)
-			else:
-				iterator = pool.imap_unordered(remove_fun, itr, chunksize)
+			iterator = get_iters(pool.imap_unordered(remove_fun, itr, chunksize),
+							desc='removing tottering', file=sys.stdout,
+							length=len(self._graphs), verbose=(self._verbose >= 2))
 			for i, g in iterator:
 				self._graphs[i] = g
 			pool.close()
 			pool.join()
-		
+
 		# compute Gram matrix.
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
-		
+
 		def init_worker(gn_toshare):
 			global G_gn
 			G_gn = gn_toshare
 		do_fun = self._wrapper_kernel_do
-		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker, 
+		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
 					glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
-			
+
 		return gram_matrix
-	
-	
+
+
 	def _compute_kernel_list_series(self, g1, g_list):
 		self._add_dummy_labels(g_list + [g1])
-		
+
 		if self._remove_totters:
 			g1 = untotterTransformation(g1, self._node_labels, self._edge_labels) # @todo: this may not work.
-			if self._verbose >= 2:
-				iterator = tqdm(g_list, desc='removing tottering', file=sys.stdout)
-			else:
-				iterator = g_list
+			iterator = get_iters(g_list, desc='removing tottering', file=sys.stdout, verbose=(self._verbose >= 2))
 			# @todo: this may not work.
 			g_list = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
-				
+
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
-		else:
-			iterator = range(len(g_list))
+		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
 		for i in iterator:
 			kernel = self._kernel_do(g1, g_list[i])
 			kernel_list[i] = kernel
-				
+
 		return kernel_list
-	
-	
+
+
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		self._add_dummy_labels(g_list + [g1])
-		
+
 		if self._remove_totters:
 			g1 = untotterTransformation(g1, self._node_labels, self._edge_labels) # @todo: this may not work.
 			pool = Pool(self._n_jobs)
@@ -141,16 +129,14 @@ class Marginalized(GraphKernel):
 			else:
 				chunksize = 100
 			remove_fun = self._wrapper_untotter
-			if self._verbose >= 2:
-				iterator = tqdm(pool.imap_unordered(remove_fun, itr, chunksize),
-								desc='removing tottering', file=sys.stdout)
-			else:
-				iterator = pool.imap_unordered(remove_fun, itr, chunksize)
+			iterator = get_iters(pool.imap_unordered(remove_fun, itr, chunksize),
+							desc='removing tottering', file=sys.stdout,
+							length=len(g_list), verbose=(self._verbose >= 2))
 			for i, g in iterator:
 				g_list[i] = g
 			pool.close()
 			pool.join()
-		
+
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 
@@ -159,38 +145,38 @@ class Marginalized(GraphKernel):
 			G_g1 = g1_toshare
 			G_g_list = g_list_toshare
 		do_fun = self._wrapper_kernel_list_do
-		def func_assign(result, var_to_assign):	
+		def func_assign(result, var_to_assign):
 			var_to_assign[result[0]] = result[1]
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', 
+			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered',
 			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
-			
+
 		return kernel_list
-	
-	
+
+
 	def _wrapper_kernel_list_do(self, itr):
 		return itr, self._kernel_do(G_g1, G_g_list[itr])
-	
-	
+
+
 	def _compute_single_kernel_series(self, g1, g2):
 		self._add_dummy_labels([g1] + [g2])
 		if self._remove_totters:
 			g1 = untotterTransformation(g1, self._node_labels, self._edge_labels) # @todo: this may not work.
 			g2 = untotterTransformation(g2, self._node_labels, self._edge_labels)
 		kernel = self._kernel_do(g1, g2)
-		return kernel			
-	
-	
+		return kernel
+
+
 	def _kernel_do(self, g1, g2):
 		"""Compute marginalized graph kernel between 2 graphs.
-		
+
 		Parameters
 		----------
 		g1, g2 : NetworkX graphs
 			2 graphs between which the kernel is computed.
-			
+
 		Return
 		------
 		kernel : float
@@ -204,10 +190,10 @@ class Marginalized(GraphKernel):
 		# (uniform distribution over |G|)
 		p_init_G1 = 1 / num_nodes_G1
 		p_init_G2 = 1 / num_nodes_G2
-	
+
 		q = self._p_quit * self._p_quit
 		r1 = q
-	
+
 	#	# initial R_inf
 	#	# matrix to save all the R_inf for all pairs of nodes
 	#	R_inf = np.zeros([num_nodes_G1, num_nodes_G2])
@@ -229,7 +215,7 @@ class Marginalized(GraphKernel):
 	#					neighbor_n2 = g2[node2[0]]
 	#					if len(neighbor_n2) > 0:
 	#						p_trans_n2 = (1 - p_quit) / len(neighbor_n2)
-	#		
+	#
 	#						for neighbor1 in neighbor_n1:
 	#							for neighbor2 in neighbor_n2:
 	#								t = p_trans_n1 * p_trans_n2 * \
@@ -238,7 +224,7 @@ class Marginalized(GraphKernel):
 	#									deltakernel(
 	#										neighbor_n1[neighbor1][edge_label],
 	#										neighbor_n2[neighbor2][edge_label])
-	#		
+	#
 	#								R_inf_new[node1[0]][node2[0]] += t * R_inf[neighbor1][
 	#									neighbor2]  # ref [1] equation (8)
 	#		R_inf[:] = R_inf_new
@@ -249,8 +235,8 @@ class Marginalized(GraphKernel):
 	#			s = p_init_G1 * p_init_G2 * deltakernel(
 	#				node1[1][node_label], node2[1][node_label])
 	#			kernel += s * R_inf[node1[0]][node2[0]]  # ref [1] equation (6)
-		
-		
+
+
 		R_inf = {} # dict to save all the R_inf for all pairs of nodes
 		# initial R_inf, the 1st iteration.
 		for node1 in g1.nodes():
@@ -266,7 +252,7 @@ class Marginalized(GraphKernel):
 						R_inf[(node1, node2)] = self._p_quit
 					else:
 						R_inf[(node1, node2)] = 1
-				
+
 		# compute all transition probability first.
 		t_dict = {}
 		if self._n_iteration > 1:
@@ -287,11 +273,11 @@ class Marginalized(GraphKernel):
 										p_trans_n1 * p_trans_n2 * \
 										deltakernel(tuple(g1.nodes[neighbor1][nl] for nl in self._node_labels), tuple(g2.nodes[neighbor2][nl] for nl in self._node_labels)) * \
 										deltakernel(tuple(neighbor_n1[neighbor1][el] for el in self._edge_labels), tuple(neighbor_n2[neighbor2][el] for el in self._edge_labels))
-	
+
 		# Compute R_inf with a simple interative method
 		for i in range(2, self._n_iteration + 1):
 			R_inf_old = R_inf.copy()
-	
+
 			# Compute R_inf for each pair of nodes
 			for node1 in g1.nodes():
 				neighbor_n1 = g1[node1]
@@ -301,32 +287,32 @@ class Marginalized(GraphKernel):
 				if len(neighbor_n1) > 0:
 					for node2 in g2.nodes():
 						neighbor_n2 = g2[node2]
-						if len(neighbor_n2) > 0:   
+						if len(neighbor_n2) > 0:
 							R_inf[(node1, node2)] = r1
 							for neighbor1 in neighbor_n1:
 								for neighbor2 in neighbor_n2:
 									R_inf[(node1, node2)] += \
 										(t_dict[(node1, node2, neighbor1, neighbor2)] * \
 										R_inf_old[(neighbor1, neighbor2)])  # ref [1] equation (8)
-	
+
 		# add elements of R_inf up and compute kernel.
 		for (n1, n2), value in R_inf.items():
 			s = p_init_G1 * p_init_G2 * deltakernel(tuple(g1.nodes[n1][nl] for nl in self._node_labels), tuple(g2.nodes[n2][nl] for nl in self._node_labels))
 			kernel += s * value  # ref [1] equation (6)
-	
+
 		return kernel
-	
-	
+
+
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]
 		return i, j, self._kernel_do(G_gn[i], G_gn[j])
 
-	
+
 	def _wrapper_untotter(self, i):
 		return i, untotterTransformation(self._graphs[i], self._node_labels, self._edge_labels) # @todo: this may not work.
-	
-	
+
+
 	def _add_dummy_labels(self, Gn):
 		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
