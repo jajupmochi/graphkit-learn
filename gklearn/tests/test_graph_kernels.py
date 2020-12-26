@@ -544,3 +544,4 @@ if __name__ == "__main__":
 #	test_RandomWalk('Acyclic', 'fp', None, None)
 #	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
 # 	test_CommonWalk('Alkane', 0.01, 'geo')
+# 	test_ShortestPath('Acyclic')
