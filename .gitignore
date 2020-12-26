@@ -16,8 +16,6 @@ datasets/*
 !datasets/AIDS/
 !datasets/monoterpenoides/
 !datasets/Monoterpenoides/
-!datasets/Fingerprint/*.txt
-!datasets/Cuneiform/*.txt
 notebooks/results/*
 notebooks/check_gm/*
 notebooks/test_parallel/*

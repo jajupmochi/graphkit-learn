@@ -21,36 +21,38 @@ def chooseDataset(ds_name):
 	"""
 	from gklearn.dataset import Dataset
 
+	root = '../../datasets/'
+
 	# no node labels (and no edge labels).
 	if ds_name == 'Alkane':
-		dataset = Dataset('Alkane_unlabeled')
+		dataset = Dataset('Alkane_unlabeled', root=root)
 		dataset.trim_dataset(edge_required=False)
 		dataset.cut_graphs(range(1, 10))
 	# node symbolic labels.
 	elif ds_name == 'Acyclic':
-		dataset = Dataset('Acyclic')
+		dataset = Dataset('Acyclic', root=root)
 		dataset.trim_dataset(edge_required=False)
 	# node non-symbolic labels.
 	elif ds_name == 'Letter-med':
-		dataset = Dataset('Letter-med')
+		dataset = Dataset('Letter-med', root=root)
 		dataset.trim_dataset(edge_required=False)
 	# node symbolic and non-symbolic labels (and edge symbolic labels).
 	elif ds_name == 'AIDS':
-		dataset = Dataset('AIDS')
+		dataset = Dataset('AIDS', root=root)
 		dataset.trim_dataset(edge_required=False)
 	# edge non-symbolic labels (no node labels).
 	elif ds_name == 'Fingerprint_edge':
-		dataset = Dataset('Fingerprint')
+		dataset = Dataset('Fingerprint', root=root)
 		dataset.trim_dataset(edge_required=True)
 		irrelevant_labels = {'edge_attrs': ['orient', 'angle']}
 		dataset.remove_labels(**irrelevant_labels)
 	# edge non-symbolic labels (and node non-symbolic labels).
 	elif ds_name == 'Fingerprint':
-		dataset = Dataset('Fingerprint')
+		dataset = Dataset('Fingerprint', root=root)
 		dataset.trim_dataset(edge_required=True)
 	# edge symbolic and non-symbolic labels (and node symbolic and non-symbolic labels).
 	elif ds_name == 'Cuneiform':
-		dataset = Dataset('Cuneiform')
+		dataset = Dataset('Cuneiform', root=root)
 		dataset.trim_dataset(edge_required=True)
 
 	dataset.cut_graphs(range(0, 3))
@@ -537,5 +539,5 @@ if __name__ == "__main__":
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)
 #	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
-# 	test_CommonWalk('Alkane', 0.01, 'geo')
+ 	# test_CommonWalk('AIDS', 0.01, 'geo')
  	# test_ShortestPath('Acyclic')
