@@ -3,7 +3,7 @@
 """
 Created on Tue Oct 20 14:25:49 2020
 
-@author: 
+@author:
 	Paul Zanoncelli, paul.zanoncelli@ecole.ensicaen.fr
 	Luc Brun luc.brun@ensicaen.fr
 	Sebastien Bougleux sebastien.bougleux@unicaen.fr
@@ -12,23 +12,23 @@ Created on Tue Oct 20 14:25:49 2020
 """
 import os
 import os.path as osp
-import urllib 
+import urllib
 import tarfile
 from zipfile import ZipFile
 # from gklearn.utils.graphfiles import loadDataset
-import torch.nn.functional as F
+# import torch.nn.functional as F
 import networkx as nx
-import torch
-import random 
+# import torch
+import random
 import sys
-from lxml import etree
+# from lxml import etree
 import re
-from tqdm import tqdm
+# from tqdm import tqdm
 from gklearn.dataset import DATABASES, DATASET_META
 
 
 class DataFetcher():
-	
+
 	def __init__(self, name=None, root='datasets', reload=False, verbose=False):
 		self._name = name
 		self._root = root
@@ -50,7 +50,7 @@ class DataFetcher():
 # 			"Protein" : ('Protein/data/test.cxl','Protein/data/train.cxl','Protein/data/valid.cxl'),
 # # 			"Web" : ('Web/data/test.cxl','Web/data/train.cxl','Web/data/valid.cxl')
 # 		}
-	
+
 		if self._name is None:
 			if self._verbose:
 				print('No dataset name entered. All possible datasets will be loaded.')
@@ -66,7 +66,7 @@ class DataFetcher():
 					self._path.append(None)
 				if self._verbose and self._path[-1] is not None and not self._reload:
 					print('Fetched.')
-					
+
 			if self._verbose:
 				print('Finished.', str(sum(v is not None for v in self._path)), 'of', str(len(self._path)), 'datasets are successfully fetched.')
 
@@ -81,17 +81,17 @@ class DataFetcher():
 			self.write_archive_file(self._name)
 			self._path = self.open_files(self._name)
 
-# 		self.max_for_letter = 0		 
+# 		self.max_for_letter = 0
 # 		if mode == 'Pytorch':
-# 			if self._name in self.data_to_use_in_datasets : 
+# 			if self._name in self.data_to_use_in_datasets :
 # 				Gs,y = self.dataset
 # 				inputs,adjs,y = self.from_networkx_to_pytorch(Gs,y)
 # 				#print(inputs,adjs)
 # 				self.pytorch_dataset = inputs,adjs,y
 # 			elif self._name == "Pah":
 # 				self.pytorch_dataset = []
-# 				test,train = self.dataset 
-# 				Gs_test,y_test = test 
+# 				test,train = self.dataset
+# 				Gs_test,y_test = test
 # 				Gs_train,y_train = train
 # 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
 # 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
@@ -99,22 +99,22 @@ class DataFetcher():
 # 				self.pytorch_dataset = []
 # 				#[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])
 # 				test,train,valid = self.dataset
-# 				Gs_test,y_test = test 
-# 				
-# 				Gs_train,y_train = train 
+# 				Gs_test,y_test = test
+#
+# 				Gs_train,y_train = train
 # 				Gs_valid,y_valid = valid
 # 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
 # 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
 # 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_valid,y_valid))
 # 			#############
 # 			"""
-# 			for G in Gs : 
+# 			for G in Gs :
 # 				for e in G.edges():
 # 					print(G[e[0]])
 # 			"""
 # 			##############
-			
-			
+
+
 	def download_file(self, url):
 		try :
 			response = urllib.request.urlopen(url)
@@ -125,34 +125,34 @@ class DataFetcher():
 			print('Network is unreachable.')
 			return
 		return response
-	
-	
+
+
 	def write_archive_file(self, ds_name):
 		path = osp.join(self._root, ds_name)
 # 		filename_dir = osp.join(path,filename)
 		if not osp.exists(path) or self._reload:
 			url = DATASET_META[ds_name]['url']
 			response = self.download_file(url)
-			if response is None: 
+			if response is None:
 				return False
 			os.makedirs(path, exist_ok=True)
-			with open(os.path.join(path, url.split('/')[-1]), 'wb') as outfile: 
+			with open(os.path.join(path, url.split('/')[-1]), 'wb') as outfile:
 				outfile.write(response.read())
-				
+
 		return True
-				
-				
+
+
 	def open_files(self, ds_name=None):
 		if ds_name is None:
 			ds_name = (self._name if isinstance(self._name, str) else self._name[0])
-		filename = DATASET_META[ds_name]['url'].split('/')[-1] 
+		filename = DATASET_META[ds_name]['url'].split('/')[-1]
 		path = osp.join(self._root, ds_name)
 		filename_archive = osp.join(path, filename)
-		
+
 		if filename.endswith('gz'):
 			if tarfile.is_tarfile(filename_archive):
 				with tarfile.open(filename_archive, 'r:gz') as tar:
-					if self._reload and self._verbose: 
+					if self._reload and self._verbose:
 						print(filename + ' Downloaded.')
 					subpath = os.path.join(path, tar.getnames()[0].split('/')[0])
 					if not osp.exists(subpath) or self._reload:
@@ -167,7 +167,7 @@ class DataFetcher():
 					if not osp.exists(subpath) or self._reload:
 						tar.extractall(path = path)
 					return subpath
-		elif filename.endswith('.zip'):			 
+		elif filename.endswith('.zip'):
 			with ZipFile(filename_archive, 'r') as zip_ref:
 				if self._reload and self._verbose:
 					print(filename + ' Downloaded.')
@@ -177,8 +177,8 @@ class DataFetcher():
 				return subpath
 		else:
 			raise ValueError(filename + ' Unsupported file.')
-				
-				
+
+
 	def get_all_ds_infos(self, database):
 		"""Get information of all datasets from a database.
 
@@ -201,10 +201,10 @@ class DataFetcher():
 			msg += '\n'.join(db for db in sorted(DATABASES))
 			msg += 'Check "gklearn.dataset.DATASET_META" for more details.'
 			raise ValueError(msg)
-		
+
 		return infos
-			
-			
+
+
 	def get_all_tud_ds_infos(self):
 		"""Get information of all datasets from database TUDataset.
 
@@ -212,13 +212,15 @@ class DataFetcher():
 		-------
 		None.
 		"""
+		from lxml import etree
+
 		try:
 			response = urllib.request.urlopen(DATABASES['tudataset'])
 		except urllib.error.HTTPError:
 			print('The URL of the database "TUDataset" is not available:\n' + DATABASES['tudataset'])
-		
+
 		infos = {}
-		
+
 		# Get tables.
 		h_str = response.read()
 		tree = etree.HTML(h_str)
@@ -230,13 +232,13 @@ class DataFetcher():
 				domain = h2_nodes.text.strip().lower()
 			else:
 				domain = ''
-			
+
 			# Get each line in the table.
 			tr_nodes = table.xpath('tbody/tr')
 			for tr in tr_nodes[1:]:
 				# Get each element in the line.
 				td_node = tr.xpath('td')
-				
+
 				# task type.
 				cls_txt = td_node[3].text.strip()
 				if not cls_txt.startswith('R'):
@@ -245,14 +247,14 @@ class DataFetcher():
 				else:
 					class_number = None
 					task_type = 'regression'
-				
+
 				# node attrs.
 				na_text = td_node[8].text.strip()
 				if not na_text.startswith('+'):
 					node_attr_dim = 0
 				else:
 					node_attr_dim = int(re.findall('\((.*)\)', na_text)[0])
-					
+
 				# edge attrs.
 				ea_text = td_node[10].text.strip()
 				if ea_text == 'temporal':
@@ -261,19 +263,19 @@ class DataFetcher():
 					edge_attr_dim = 0
 				else:
 					edge_attr_dim = int(re.findall('\((.*)\)', ea_text)[0])
-					
+
 				# geometry.
 				geo_txt = td_node[9].text.strip()
 				if geo_txt == '–':
 					geometry = None
 				else:
 					geometry = geo_txt
-					
+
 				# url.
 				url = td_node[11].xpath('a')[0].attrib['href'].strip()
 				pos_zip = url.rfind('.zip')
 				url = url[:pos_zip + 4]
-					
+
 				infos[td_node[0].xpath('strong')[0].text.strip()] = {
 					'database': 'tudataset',
 					'reference': td_node[1].text.strip(),
@@ -292,8 +294,8 @@ class DataFetcher():
 					}
 
 		return infos
-	
-	
+
+
 	def pretty_ds_infos(self, infos):
 		"""Get the string that pretty prints the information of datasets.
 
@@ -318,52 +320,52 @@ class DataFetcher():
 					p_str += '' + str(v) + ',\n'
 			p_str += '\t},\n'
 		p_str += '}'
-		
+
 		return p_str
-				
-	
+
+
 	@property
 	def path(self):
 		return self._path
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-				
-				
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	def dataset(self):
 		if self.mode == "Tensorflow":
 			return #something
 		if self.mode == "Pytorch":
 			return self.pytorch_dataset
 		return self.dataset
-		
-	
+
+
 	def info(self):
 		print(self.info_dataset[self._name])
-		
-		
+
+
 	def iter_load_dataset(self,data):
 		results = []
-		for datasets in data : 
+		for datasets in data :
 			results.append(loadDataset(osp.join(self._root,self._name,datasets)))
 		return results
-	
-	
+
+
 	def load_dataset(self,list_files):
 		if self._name == "Ptc":
 			if type(self.option) != str or self.option.upper() not in ['FR','FM','MM','MR']:
@@ -378,7 +380,7 @@ class DataFetcher():
 				if file.endswith('ds'):
 					maximum_sets = max(maximum_sets,int(file.split('_')[1].split('.')[0]))
 			self.max_for_letter = maximum_sets
-			if not type(self.option) == int or self.option > maximum_sets or self.option < 0: 
+			if not type(self.option) == int or self.option > maximum_sets or self.option < 0:
 				raise ValueError('option needs to be an integer between 0 and ' + str(maximum_sets))
 			data = self.has_train_valid_test["Pah"]
 			data[0] = self.has_train_valid_test["Pah"][0].split('_')[0] + '_' + str(self.option) + '.ds'
@@ -402,13 +404,13 @@ class DataFetcher():
 			if data in list_files:
 				return loadDataset(osp.join(self.root,self.name,data))
 
-	
+
 	def build_dictionary(self,Gs):
 		labels = set()
 		#next line : from DeepGraphWithNNTorch
 		#bond_type_number_maxi = int(max(max([[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])))
 		sizes = set()
-		for G in Gs : 
+		for G in Gs :
 			for _,node in G.nodes(data = True): # or for node in nx.nodes(G)
 				#print(_,node)
 				labels.add(node["label"][0]) # labels.add(G.nodes[node]["label"][0])   #what do we use for IAM datasets (they don't have bond_type or event label) ?
@@ -419,8 +421,8 @@ class DataFetcher():
 			label_dict[label] = [0.]*len(labels)
 			label_dict[label][i] = 1.
 		return label_dict
-	
-	
+
+
 	def from_networkx_to_pytorch(self,Gs,y):
 		#exemple for MAO: atom_to_onehot = {'C': [1., 0., 0.], 'N': [0., 1., 0.], 'O': [0., 0., 1.]}
 		# code from https://github.com/bgauzere/pygnn/blob/master/utils.py
@@ -445,34 +447,34 @@ class DataFetcher():
 			X = F.pad(torch.Tensor(f_0), pad=(0, 0, 0, max_size-G.order()))
 			inputs.append(X)
 		return inputs,adjs,y
-	
-			
+
+
 	def from_pytorch_to_tensorflow(self,batch_size):
 		seed = random.randrange(sys.maxsize)
 		random.seed(seed)
 		tf_inputs = random.sample(self.pytorch_dataset[0],batch_size)
 		random.seed(seed)
-		tf_y = random.sample(self.pytorch_dataset[2],batch_size)	
-		
-	
+		tf_y = random.sample(self.pytorch_dataset[2],batch_size)
+
+
 	def from_networkx_to_tensor(self,G,dict):
 		A=nx.to_numpy_matrix(G)
 		lab=[dict[G.nodes[v]['label'][0]] for v in nx.nodes(G)]
 		return (torch.tensor(A).view(1,A.shape[0]*A.shape[1]),torch.tensor(lab))
-	
-		
-			
-		   
+
+
+
+
 	#dataset= selfopen_files()
 	#print(build_dictionary(Gs))
 	#dic={'C':0,'N':1,'O':2}
 	#A,labels=from_networkx_to_tensor(Gs[13],dic)
 	#print(nx.to_numpy_matrix(Gs[13]),labels)
 	#print(A,labels)
-	
+
 	#@todo : from_networkx_to_tensorflow
 
-		
+
 # dataloader = DataLoader('Acyclic',root = "database",option = 'high',mode = "Pytorch")
 # dataloader.info()
 # inputs,adjs,y = dataloader.pytorch_dataset
@@ -487,7 +489,7 @@ class DataFetcher():
 # #print(Gs,y)
 # """
 # Gs,y = dataloader.dataset
-# for G in Gs : 
+# for G in Gs :
 # 	for e in G.edges():
 # 		print(G[e[0]])
 
@@ -532,7 +534,7 @@ class DataFetcher():
 
 # import os
 # import os.path as osp
-# import urllib 
+# import urllib
 # import tarfile
 # from zipfile import ZipFile
 # from gklearn.utils.graphfiles import loadDataset
@@ -543,7 +545,7 @@ class DataFetcher():
 # import numpy as np
 
 
-# 	
+#
 # def DataLoader(name,root = 'data',mode = "Networkx",downloadAll = False,reload = False,letter = "High",number = 0,gender = "MM"):
 # 	dir_name = "_".join(name.split("-"))
 # 	if not osp.exists(root) :
@@ -571,14 +573,14 @@ class DataFetcher():
 # 		"Vitamin" : (url,"DatasetVitamin.tar"),
 # 		"Web" : (urliam,"Web.zip")
 # 	}
-# 	
+#
 # 	data_to_use_in_datasets = {
 # 		"Acyclic" : ("Acyclic/dataset_bps.ds"),
 # 		"Aids" : ("AIDS_A.txt"),
 # 		"Alkane" : ("Alkane/dataset.ds","Alkane/dataset_boiling_point_names.txt"),
 # 		"Mao" : ("MAO/dataset.ds"),
 # 		"Monoterpenoides" : ("monoterpenoides/dataset_10+.ds"), #('monoterpenoides/dataset.ds'),('monoterpenoides/dataset_9.ds'),('monoterpenoides/trainset_9.ds')
-# 		
+#
 # 	}
 # 	has_train_valid_test = {
 # 		"Coil_Del" : ('COIL-DEL/data/test.cxl','COIL-DEL/data/train.cxl','COIL-DEL/data/valid.cxl'),
@@ -594,8 +596,8 @@ class DataFetcher():
 # 		"Protein" : ('Protein/data/test.cxl','Protein/data/train.cxl','Protein/data/valid.cxl'),
 # 		"Web" : ('Web/data/test.cxl','Web/data/train.cxl','Web/data/valid.cxl')
 # 	}
-# 	
-# 	if not name : 
+#
+# 	if not name :
 # 		raise ValueError("No dataset entered")
 # 	if name not in list_database:
 # 		message = "Invalid Dataset name " + name
@@ -603,7 +605,7 @@ class DataFetcher():
 
 # 		message += '\n'.join(database for database in list_database)
 # 		raise ValueError(message)
-# 	 
+#
 # 	def download_file(url,filename):
 # 		try :
 # 			response = urllib.request.urlopen(url + filename)
@@ -611,34 +613,34 @@ class DataFetcher():
 # 			print(filename + " not available or incorrect http link")
 # 			return
 # 		return response
-# 	
+#
 # 	def write_archive_file(root,database):
 # 		path = osp.join(root,database)
 # 		url,filename = list_database[database]
 # 		filename_dir = osp.join(path,filename)
 # 		if not osp.exists(filename_dir) or reload:
 # 			response = download_file(url,filename)
-# 			if response is None : 
-# 				return 
+# 			if response is None :
+# 				return
 # 			if not osp.exists(path) :
 # 				os.makedirs(path)
-# 			with open(filename_dir,'wb') as outfile : 
-# 				outfile.write(response.read())   
-# 	
+# 			with open(filename_dir,'wb') as outfile :
+# 				outfile.write(response.read())
+#
 # 	if downloadAll :
 # 		print('Waiting...')
-# 		for database in list_database : 
+# 		for database in list_database :
 # 			write_archive_file(root,database)
 # 		print('Downloading finished')
 # 	else:
 # 		write_archive_file(root,name)
-# 		
+#
 # 	def iter_load_dataset(data):
 # 		results = []
-# 		for datasets in data : 
+# 		for datasets in data :
 # 			results.append(loadDataset(osp.join(root,name,datasets)))
 # 		return results
-# 	
+#
 # 	def load_dataset(list_files):
 # 		if name == "Ptc":
 # 			if gender.upper() not in ['FR','FM','MM','MR']:
@@ -652,7 +654,7 @@ class DataFetcher():
 # 			for file in list_files:
 # 				if file.endswith('ds'):
 # 					maximum_sets = max(maximum_sets,int(file.split('_')[1].split('.')[0]))
-# 			if number > maximum_sets : 
+# 			if number > maximum_sets :
 # 				raise ValueError("Please select a dataset with number less than " + str(maximum_sets + 1))
 # 			data = has_train_valid_test["Pah"]
 # 			data[0] = has_train_valid_test["Pah"][0].split('_')[0] + '_' + str(number) + '.ds'
@@ -667,13 +669,13 @@ class DataFetcher():
 # 				message += "\nhigh  med  low"
 # 				raise ValueError(message)
 # 			results = []
-# 			for datasets in data: 
+# 			for datasets in data:
 # 				results.append(loadDataset(osp.join(root,name,datasets)))
 # 			return results
 # 		if name in has_train_valid_test : #common IAM dataset with train, valid and test
 # 			data = has_train_valid_test[name]
 # 			results = []
-# 			for datasets in data : 
+# 			for datasets in data :
 # 				results.append(loadDataset(osp.join(root,name,datasets)))
 # 			return results
 # 		else:  #common dataset without train,valid and test, only dataset.ds file
@@ -682,49 +684,49 @@ class DataFetcher():
 # 				return loadDataset(osp.join(root,name,data[0]),filename_y = osp.join(root,name,data[1]))
 # 			if data in list_files:
 # 				return loadDataset(osp.join(root,name,data))
- 
+
 # 	def open_files():
 # 		filename = list_database[name][1]
 # 		path = osp.join(root,name)
 # 		filename_archive = osp.join(root,name,filename)
-# 		
+#
 # 		if filename.endswith('gz'):
 # 			if tarfile.is_tarfile(filename_archive):
 # 				with tarfile.open(filename_archive,"r:gz") as tar:
-# 					if reload: 
+# 					if reload:
 # 						print(filename + " Downloaded")
 # 					tar.extractall(path = path)
 # 					return load_dataset(tar.getnames())
 # 					#raise ValueError("dataset not available")
-# 					
-# 					
+#
+#
 # 		elif filename.endswith('.tar'):
 # 			if tarfile.is_tarfile(filename_archive):
 # 				with tarfile.open(filename_archive,"r:") as tar:
-# 					if reload : 
+# 					if reload :
 # 						print(filename + " Downloaded")
 # 					tar.extractall(path = path)
 # 					return load_dataset(tar.getnames())
-# 		elif filename.endswith('.zip'):			 
+# 		elif filename.endswith('.zip'):
 # 			with ZipFile(filename_archive,"r") as zip_ref:
-# 				if reload : 
+# 				if reload :
 # 						print(filename + " Downloaded")
 # 				zip_ref.extractall(path)
 # 				return load_dataset(zip_ref.namelist())
 # 		else:
-# 			print(filename + " Unsupported file") 
+# 			print(filename + " Unsupported file")
 # 		"""
 # 		with tarfile.open(osp.join(root,name,list_database[name][1]),"r:gz") as files:
 # 			for file in files.getnames():
 # 				print(file)
 # 		"""
-# 	
+#
 # 	def build_dictionary(Gs):
 # 		labels = set()
 # 		bond_type_number_maxi = int(max(max([[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])))
 # 		print(bond_type_number_maxi)
 # 		sizes = set()
-# 		for G in Gs : 
+# 		for G in Gs :
 # 			for _,node in G.nodes(data = True): # or for node in nx.nodes(G)
 # 				#print(node)
 # 				labels.add(node["label"][0]) # labels.add(G.nodes[node]["label"][0])
@@ -736,7 +738,7 @@ class DataFetcher():
 # 			label_dict[label] = [0.]*bond_type_number_maxi
 # 			label_dict[label][i] = 1.
 # 		return label_dict
-# 	
+#
 # 	def from_networkx_to_pytorch(Gs):
 # 		#exemple : atom_to_onehot = {'C': [1., 0., 0.], 'N': [0., 1., 0.], 'O': [0., 0., 1.]}
 # 		# code from https://github.com/bgauzere/pygnn/blob/master/utils.py
@@ -760,22 +762,22 @@ class DataFetcher():
 # 			X = F.pad(torch.Tensor(f_0), pad=(0, 0, 0, max_size-G.order()))
 # 			inputs.append(X)
 # 		return inputs,adjs,y
-# 			
+#
 # 	def from_networkx_to_tensor(G,dict):
 
 # 		A=nx.to_numpy_matrix(G)
 # 		lab=[dict[G.nodes[v]['label'][0]] for v in nx.nodes(G)]
 # 		return (torch.tensor(A).view(1,A.shape[0]*A.shape[1]),torch.tensor(lab))
-# 		   
+#
 # 	dataset= open_files()
 # 	#print(build_dictionary(Gs))
 # 	#dic={'C':0,'N':1,'O':2}
 # 	#A,labels=from_networkx_to_tensor(Gs[13],dic)
 # 	#print(nx.to_numpy_matrix(Gs[13]),labels)
 # 	#print(A,labels)
-# 	
+#
 # 	"""
-# 	for G in Gs : 
+# 	for G in Gs :
 # 		for node in nx.nodes(G):
 # 			print(G.nodes[node])
 # 	"""
@@ -784,8 +786,8 @@ class DataFetcher():
 # 		inputs,adjs,y = from_networkx_to_pytorch(Gs)
 # 		print(inputs,adjs)
 # 		return inputs,adjs,y
-# 		
-# 		
+#
+#
 # 		"""
 # 		dic = dict()
 # 		for i,l in enumerate(label):
@@ -795,18 +797,18 @@ class DataFetcher():
 # 		#print(A,labels)
 # 		return A,labels
 # 		"""
-# 		
+#
 # 	return dataset
-# 	
+#
 # 	#open_files()
-# 		
+#
 
 # def label_to_color(label):
 # 	if label == 'C':
 # 		return 0.1
 # 	elif label == 'O':
 # 		return 0.8
-# 	
+#
 # def nodes_to_color_sequence(G):
 # 	return [label_to_color(c[1]['label'][0]) for c in G.nodes(data=True)]
 
@@ -904,7 +906,7 @@ class DataFetcher():
 # """
 
 # """
-# dataset = DataLoader('Web', root = "database")  
+# dataset = DataLoader('Web', root = "database")
 # test,train,valid = dataset
 # Gs,y = test
 # Gs2,y2 = train
@@ -968,14 +970,14 @@ class DataFetcher():
 # DATA_PATH = Path("data")
 
 # def import_datasets():
-# 	
-# 	import urllib 
+#
+# 	import urllib
 # 	import tarfile
 # 	from zipfile import ZipFile
 
 # 	URL = "https://brunl01.users.greyc.fr/CHEMISTRY/"
 # 	URLIAM = "https://iapr-tc15.greyc.fr/IAM/"
-# 	
+#
 
 # 	LIST_DATABASE = {
 # 		"Pah" : (URL,"PAH.tar.gz"),
@@ -1004,7 +1006,7 @@ class DataFetcher():
 # 	print("Choice : ",end = ' ')
 # 	selected_databases = input().split()
 
-# 	
+#
 # 	def download_file(url,filename):
 # 		try :
 # 			response = urllib.request.urlopen(url + filename)
@@ -1012,20 +1014,20 @@ class DataFetcher():
 # 			print(filename + " not available or incorrect http link")
 # 			return
 # 		return response
-# 	
+#
 # 	def write_archive_file(database):
-# 		
+#
 # 		PATH = DATA_PATH / database
 # 		url,filename = LIST_DATABASE[database]
 # 		if not (PATH / filename).exists():
 # 			response = download_file(url,filename)
-# 			if response is None : 
-# 				return 
-# 			if not PATH.exists() : 
+# 			if response is None :
+# 				return
+# 			if not PATH.exists() :
 # 				PATH.mkdir(parents=True, exist_ok=True)
-# 			with open(PATH/filename,'wb') as outfile : 
+# 			with open(PATH/filename,'wb') as outfile :
 # 				outfile.write(response.read())
-# 			
+#
 # 			if filename[-2:] == 'gz':
 # 				if tarfile.is_tarfile(PATH/filename):
 # 					with tarfile.open(PATH/filename,"r:gz") as tar:
@@ -1035,8 +1037,8 @@ class DataFetcher():
 # 				if tarfile.is_tarfile(PATH/filename):
 # 					with tarfile.open(PATH/filename,"r:") as tar:
 # 						tar.extractall(path = PATH)
-# 						print(filename + '   Downloaded') 
-# 			elif filename[-3:] == 'zip':			 
+# 						print(filename + '   Downloaded')
+# 			elif filename[-3:] == 'zip':
 # 				with ZipFile(PATH/filename,"r") as zip_ref:
 # 					zip_ref.extractall(PATH)
 # 					print(filename + '   Downloaded')
@@ -1045,13 +1047,13 @@ class DataFetcher():
 
 # 	if 'All' in selected_databases:
 # 		print('Waiting...')
-# 		for database in LIST_DATABASE : 
+# 		for database in LIST_DATABASE :
 # 			write_archive_file(database)
 # 		print('Finished')
 # 	else:
 # 		print('Waiting...')
-# 		for database in selected_databases : 
-# 			if database in LIST_DATABASE : 
+# 		for database in selected_databases :
+# 			if database in LIST_DATABASE :
 # 				write_archive_file(database)
 # 		print('Finished')
 # import_datasets()
@@ -1087,8 +1089,8 @@ class DataFetcher():
 
 
 # class GraphFetcher(object):
-# 	
-# 	
+#
+#
 # 	def __init__(self, filename=None, filename_targets=None, **kwargs):
 # 		if filename is None:
 # 			self._graphs = None
@@ -1099,7 +1101,7 @@ class DataFetcher():
 # 			self._edge_attrs = None
 # 		else:
 # 			self.load_dataset(filename, filename_targets=filename_targets, **kwargs)
-# 		
+#
 # 		self._substructures = None
 # 		self._node_label_dim = None
 # 		self._edge_label_dim = None
@@ -1124,8 +1126,8 @@ class DataFetcher():
 # 		self._node_attr_dim = None
 # 		self._edge_attr_dim = None
 # 		self._class_number = None
-# 	
-# 	
+#
+#
 # 	def load_dataset(self, filename, filename_targets=None, **kwargs):
 # 		self._graphs, self._targets, label_names = load_dataset(filename, filename_targets=filename_targets, **kwargs)
 # 		self._node_labels = label_names['node_labels']
@@ -1133,15 +1135,15 @@ class DataFetcher():
 # 		self._edge_labels = label_names['edge_labels']
 # 		self._edge_attrs = label_names['edge_attrs']
 # 		self.clean_labels()
-# 		
-# 		
+#
+#
 # 	def load_graphs(self, graphs, targets=None):
 # 		# this has to be followed by set_labels().
 # 		self._graphs = graphs
 # 		self._targets = targets
 # #		self.set_labels_attrs() # @todo
-# 		
-# 		
+#
+#
 # 	def load_predefined_dataset(self, ds_name):
 # 		current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 # 		if ds_name == 'Acyclic':
@@ -1201,7 +1203,7 @@ class DataFetcher():
 # 			self._graphs, self._targets, label_names = load_dataset(ds_file)
 # 		elif ds_name == 'NCI109':
 # 			ds_file = current_path + '../../datasets/NCI109/NCI109_A.txt'
-# 			self._graphs, self._targets, label_names = load_dataset(ds_file)	
+# 			self._graphs, self._targets, label_names = load_dataset(ds_file)
 # 		elif ds_name == 'PAH':
 # 			ds_file = current_path + '../../datasets/PAH/dataset.ds'
 # 			self._graphs, self._targets, label_names = load_dataset(ds_file)
@@ -1214,13 +1216,13 @@ class DataFetcher():
 # 			pass
 # 		else:
 # 			raise Exception('The dataset name "', ds_name, '" is not pre-defined.')
-# 	
+#
 # 		self._node_labels = label_names['node_labels']
 # 		self._node_attrs = label_names['node_attrs']
 # 		self._edge_labels = label_names['edge_labels']
 # 		self._edge_attrs = label_names['edge_attrs']
 # 		self.clean_labels()
-# 	
+#
 
 # 	def set_labels(self, node_labels=[], node_attrs=[], edge_labels=[], edge_attrs=[]):
 # 		self._node_labels = node_labels
@@ -1228,7 +1230,7 @@ class DataFetcher():
 # 		self._edge_labels = edge_labels
 # 		self._edge_attrs = edge_attrs
 
-# 		
+#
 # 	def set_labels_attrs(self, node_labels=None, node_attrs=None, edge_labels=None, edge_attrs=None):
 # 		# @todo: remove labels which have only one possible values.
 # 		if node_labels is None:
@@ -1254,86 +1256,86 @@ class DataFetcher():
 # #					if 'attributes' in e[2]:
 # #						return len(e[2]['attributes'])
 # #		return 0
-# 			
-# 			
+#
+#
 # 	def get_dataset_infos(self, keys=None, params=None):
 # 		"""Computes and returns the structure and property information of the graph dataset.
-# 	
+#
 # 		Parameters
 # 		----------
 # 		keys : list, optional
 # 			A list of strings which indicate which informations will be returned. The
 # 			possible choices includes:
-# 	
-# 			'substructures': sub-structures graphs contains, including 'linear', 'non 
+#
+# 			'substructures': sub-structures graphs contains, including 'linear', 'non
 # 		linear' and 'cyclic'.
-# 	
+#
 # 			'node_label_dim': whether vertices have symbolic labels.
-# 	
+#
 # 			'edge_label_dim': whether egdes have symbolic labels.
-# 	
+#
 # 			'directed': whether graphs in dataset are directed.
-# 	
+#
 # 			'dataset_size': number of graphs in dataset.
-# 			
+#
 # 			'total_node_num': total number of vertices of all graphs in dataset.
-# 			
+#
 # 			'ave_node_num': average number of vertices of graphs in dataset.
-# 	
+#
 # 			'min_node_num': minimum number of vertices of graphs in dataset.
-# 	
+#
 # 			'max_node_num': maximum number of vertices of graphs in dataset.
-# 			
+#
 # 			'total_edge_num': total number of edges of all graphs in dataset.
-# 	
+#
 # 			'ave_edge_num': average number of edges of graphs in dataset.
-# 	
+#
 # 			'min_edge_num': minimum number of edges of graphs in dataset.
-# 	
+#
 # 			'max_edge_num': maximum number of edges of graphs in dataset.
-# 	
+#
 # 			'ave_node_degree': average vertex degree of graphs in dataset.
-# 	
+#
 # 			'min_node_degree': minimum vertex degree of graphs in dataset.
-# 	
+#
 # 			'max_node_degree': maximum vertex degree of graphs in dataset.
-# 	
-# 			'ave_fill_factor': average fill factor (number_of_edges / 
+#
+# 			'ave_fill_factor': average fill factor (number_of_edges /
 # 		(number_of_nodes ** 2)) of graphs in dataset.
-# 	
+#
 # 			'min_fill_factor': minimum fill factor of graphs in dataset.
-# 	
+#
 # 			'max_fill_factor': maximum fill factor of graphs in dataset.
-# 	
+#
 # 			'node_label_nums': list of numbers of symbolic vertex labels of graphs in dataset.
-# 	
+#
 # 			'edge_label_nums': list number of symbolic edge labels of graphs in dataset.
-# 	
-# 			'node_attr_dim': number of dimensions of non-symbolic vertex labels. 
+#
+# 			'node_attr_dim': number of dimensions of non-symbolic vertex labels.
 # 		Extracted from the 'attributes' attribute of graph nodes.
-# 	
-# 			'edge_attr_dim': number of dimensions of non-symbolic edge labels. 
+#
+# 			'edge_attr_dim': number of dimensions of non-symbolic edge labels.
 # 		Extracted from the 'attributes' attribute of graph edges.
-# 	
+#
 # 			'class_number': number of classes. Only available for classification problems.
-# 			
+#
 # 			'all_degree_entropy': the entropy of degree distribution of each graph.
-# 				
+#
 # 			'ave_degree_entropy': the average entropy of degree distribution of all graphs.
-# 			
+#
 # 			All informations above will be returned if `keys` is not given.
-# 			
+#
 # 		params: dict of dict, optional
-# 			A dictinary which contains extra parameters for each possible 
+# 			A dictinary which contains extra parameters for each possible
 # 			element in ``keys``.
-# 	
+#
 # 		Return
 # 		------
 # 		dict
 # 			Information of the graph dataset keyed by `keys`.
 # 		"""
 # 		infos = {}
-# 		
+#
 # 		if keys == None:
 # 			keys = [
 # 				'substructures',
@@ -1363,13 +1365,13 @@ class DataFetcher():
 # 				'all_degree_entropy',
 # 				'ave_degree_entropy'
 # 			]
-# 	
+#
 # 		# dataset size
 # 		if 'dataset_size' in keys:
 # 			if self._dataset_size is None:
 # 				self._dataset_size = self._get_dataset_size()
 # 			infos['dataset_size'] = self._dataset_size
-# 	
+#
 # 		# graph node number
 # 		if any(i in keys for i in ['total_node_num', 'ave_node_num', 'min_node_num', 'max_node_num']):
 # 			all_node_nums = self._get_all_node_nums()
@@ -1378,22 +1380,22 @@ class DataFetcher():
 # 			if self._total_node_num is None:
 # 				self._total_node_num = self._get_total_node_num(all_node_nums)
 # 			infos['total_node_num'] = self._total_node_num
-# 	
+#
 # 		if 'ave_node_num' in keys:
 # 			if self._ave_node_num is None:
 # 				self._ave_node_num = self._get_ave_node_num(all_node_nums)
 # 			infos['ave_node_num'] = self._ave_node_num
-# 	
+#
 # 		if 'min_node_num' in keys:
 # 			if self._min_node_num is None:
 # 				self._min_node_num = self._get_min_node_num(all_node_nums)
 # 			infos['min_node_num'] = self._min_node_num
-# 	
+#
 # 		if 'max_node_num' in keys:
 # 			if self._max_node_num is None:
 # 				self._max_node_num = self._get_max_node_num(all_node_nums)
 # 			infos['max_node_num'] = self._max_node_num
-# 	
+#
 # 		# graph edge number
 # 		if any(i in keys for i in ['total_edge_num', 'ave_edge_num', 'min_edge_num', 'max_edge_num']):
 # 			all_edge_nums = self._get_all_edge_nums()
@@ -1402,12 +1404,12 @@ class DataFetcher():
 # 			if self._total_edge_num is None:
 # 				self._total_edge_num = self._get_total_edge_num(all_edge_nums)
 # 			infos['total_edge_num'] = self._total_edge_num
-# 			
+#
 # 		if 'ave_edge_num' in keys:
 # 			if self._ave_edge_num is None:
 # 				self._ave_edge_num = self._get_ave_edge_num(all_edge_nums)
 # 			infos['ave_edge_num'] = self._ave_edge_num
-# 	
+#
 # 		if 'max_edge_num' in keys:
 # 			if self._max_edge_num is None:
 # 				self._max_edge_num = self._get_max_edge_num(all_edge_nums)
@@ -1417,120 +1419,120 @@ class DataFetcher():
 # 			if self._min_edge_num is None:
 # 				self._min_edge_num = self._get_min_edge_num(all_edge_nums)
 # 			infos['min_edge_num'] = self._min_edge_num
-# 	
+#
 # 		# label number
 # 		if 'node_label_dim' in keys:
 # 			if self._node_label_dim is None:
 # 				self._node_label_dim = self._get_node_label_dim()
-# 			infos['node_label_dim'] = self._node_label_dim	
-# 	
+# 			infos['node_label_dim'] = self._node_label_dim
+#
 # 		if 'node_label_nums' in keys:
 # 			if self._node_label_nums is None:
 # 				self._node_label_nums = {}
 # 				for node_label in self._node_labels:
 # 					self._node_label_nums[node_label] = self._get_node_label_num(node_label)
 # 			infos['node_label_nums'] = self._node_label_nums
-# 	
+#
 # 		if 'edge_label_dim' in keys:
 # 			if self._edge_label_dim is None:
 # 				self._edge_label_dim = self._get_edge_label_dim()
-# 			infos['edge_label_dim'] = self._edge_label_dim	
-# 	
+# 			infos['edge_label_dim'] = self._edge_label_dim
+#
 # 		if 'edge_label_nums' in keys:
 # 			if self._edge_label_nums is None:
 # 				self._edge_label_nums = {}
 # 				for edge_label in self._edge_labels:
 # 					self._edge_label_nums[edge_label] = self._get_edge_label_num(edge_label)
 # 			infos['edge_label_nums'] = self._edge_label_nums
-# 	
+#
 # 		if 'directed' in keys or 'substructures' in keys:
 # 			if self._directed is None:
 # 				self._directed = self._is_directed()
 # 			infos['directed'] = self._directed
-# 	
+#
 # 		# node degree
 # 		if any(i in keys for i in ['ave_node_degree', 'max_node_degree', 'min_node_degree']):
 # 			all_node_degrees = self._get_all_node_degrees()
-# 			
+#
 # 		if 'ave_node_degree' in keys:
 # 			if self._ave_node_degree is None:
 # 				self._ave_node_degree = self._get_ave_node_degree(all_node_degrees)
 # 			infos['ave_node_degree'] = self._ave_node_degree
-# 	
+#
 # 		if 'max_node_degree' in keys:
 # 			if self._max_node_degree is None:
 # 				self._max_node_degree = self._get_max_node_degree(all_node_degrees)
 # 			infos['max_node_degree'] = self._max_node_degree
-# 	
+#
 # 		if 'min_node_degree' in keys:
 # 			if self._min_node_degree is None:
 # 				self._min_node_degree = self._get_min_node_degree(all_node_degrees)
 # 			infos['min_node_degree'] = self._min_node_degree
-# 			
+#
 # 		# fill factor
 # 		if any(i in keys for i in ['ave_fill_factor', 'max_fill_factor', 'min_fill_factor']):
 # 			all_fill_factors = self._get_all_fill_factors()
-# 			
+#
 # 		if 'ave_fill_factor' in keys:
 # 			if self._ave_fill_factor is None:
 # 				self._ave_fill_factor = self._get_ave_fill_factor(all_fill_factors)
 # 			infos['ave_fill_factor'] = self._ave_fill_factor
-# 	
+#
 # 		if 'max_fill_factor' in keys:
 # 			if self._max_fill_factor is None:
 # 				self._max_fill_factor = self._get_max_fill_factor(all_fill_factors)
 # 			infos['max_fill_factor'] = self._max_fill_factor
-# 	
+#
 # 		if 'min_fill_factor' in keys:
 # 			if self._min_fill_factor is None:
 # 				self._min_fill_factor = self._get_min_fill_factor(all_fill_factors)
 # 			infos['min_fill_factor'] = self._min_fill_factor
-# 	
+#
 # 		if 'substructures' in keys:
 # 			if self._substructures is None:
 # 				self._substructures = self._get_substructures()
 # 			infos['substructures'] = self._substructures
-# 	
+#
 # 		if 'class_number' in keys:
 # 			if self._class_number is None:
 # 				self._class_number = self._get_class_number()
 # 			infos['class_number'] = self._class_number
-# 	
+#
 # 		if 'node_attr_dim' in keys:
 # 			if self._node_attr_dim is None:
 # 				self._node_attr_dim = self._get_node_attr_dim()
 # 			infos['node_attr_dim'] = self._node_attr_dim
-# 	
+#
 # 		if 'edge_attr_dim' in keys:
 # 			if self._edge_attr_dim is None:
 # 				self._edge_attr_dim = self._get_edge_attr_dim()
 # 			infos['edge_attr_dim'] = self._edge_attr_dim
-# 			
+#
 # 		# entropy of degree distribution.
-# 		
+#
 # 		if 'all_degree_entropy' in keys:
 # 			if params is not None and ('all_degree_entropy' in params) and ('base' in params['all_degree_entropy']):
 # 				base = params['all_degree_entropy']['base']
 # 			else:
 # 				base = None
 # 			infos['all_degree_entropy'] = self._compute_all_degree_entropy(base=base)
-# 			
+#
 # 		if 'ave_degree_entropy' in keys:
 # 			if params is not None and ('ave_degree_entropy' in params) and ('base' in params['ave_degree_entropy']):
 # 				base = params['ave_degree_entropy']['base']
 # 			else:
 # 				base = None
 # 			infos['ave_degree_entropy'] = np.mean(self._compute_all_degree_entropy(base=base))
-# 			
+#
 # 		return infos
-# 			
-# 			
+#
+#
 # 	def print_graph_infos(self, infos):
 # 		from collections import OrderedDict
 # 		keys = list(infos.keys())
 # 		print(OrderedDict(sorted(infos.items(), key=lambda i: keys.index(i[0]))))
-# 		
-# 		
+#
+#
 # 	def remove_labels(self, node_labels=[], edge_labels=[], node_attrs=[], edge_attrs=[]):
 # 		node_labels = [item for item in node_labels if item in self._node_labels]
 # 		edge_labels = [item for item in edge_labels if item in self._edge_labels]
@@ -1556,8 +1558,8 @@ class DataFetcher():
 # 			self._node_attrs = [na for na in self._node_attrs if na not in node_attrs]
 # 		if len(edge_attrs) > 0:
 # 			self._edge_attrs = [ea for ea in self._edge_attrs if ea not in edge_attrs]
-# 	
-# 			
+#
+#
 # 	def clean_labels(self):
 # 		labels = []
 # 		for name in self._node_labels:
@@ -1614,8 +1616,8 @@ class DataFetcher():
 # 					for ed in G.edges():
 # 						del G.edges[ed][name]
 # 		self._edge_attrs = labels
-# 				
-# 		
+#
+#
 # 	def cut_graphs(self, range_):
 # 		self._graphs = [self._graphs[i] for i in range_]
 # 		if self._targets is not None:
@@ -1632,8 +1634,8 @@ class DataFetcher():
 # 		self._graphs = [p[1] for p in trimed_pairs]
 # 		self._targets = [self._targets[i] for i in idx]
 # 		self.clean_labels()
-# 		
-# 		
+#
+#
 # 	def copy(self):
 # 		dataset = Dataset()
 # 		graphs = [g.copy() for g in self._graphs] if self._graphs is not None else None
@@ -1646,8 +1648,8 @@ class DataFetcher():
 # 		dataset.set_labels(node_labels=node_labels, node_attrs=node_attrs, edge_labels=edge_labels, edge_attrs=edge_attrs)
 # 		# @todo: clean_labels and add other class members?
 # 		return dataset
-# 	
-# 	
+#
+#
 # 	def get_all_node_labels(self):
 # 		node_labels = []
 # 		for g in self._graphs:
@@ -1656,8 +1658,8 @@ class DataFetcher():
 # 				if nl not in node_labels:
 # 					node_labels.append(nl)
 # 		return node_labels
-# 	
-# 	
+#
+#
 # 	def get_all_edge_labels(self):
 # 		edge_labels = []
 # 		for g in self._graphs:
@@ -1666,94 +1668,94 @@ class DataFetcher():
 # 				if el not in edge_labels:
 # 					edge_labels.append(el)
 # 		return edge_labels
-# 		
-# 	
+#
+#
 # 	def _get_dataset_size(self):
 # 		return len(self._graphs)
-# 	
-# 	
+#
+#
 # 	def _get_all_node_nums(self):
 # 		return [nx.number_of_nodes(G) for G in self._graphs]
-# 	
-# 	
+#
+#
 # 	def _get_total_node_nums(self, all_node_nums):
 # 		return np.sum(all_node_nums)
-# 	
-# 	
+#
+#
 # 	def _get_ave_node_num(self, all_node_nums):
 # 		return np.mean(all_node_nums)
-# 	
-# 	
+#
+#
 # 	def _get_min_node_num(self, all_node_nums):
 # 		return np.amin(all_node_nums)
-# 	
-# 	
+#
+#
 # 	def _get_max_node_num(self, all_node_nums):
 # 		return np.amax(all_node_nums)
-# 	
-# 	
+#
+#
 # 	def _get_all_edge_nums(self):
 # 		return [nx.number_of_edges(G) for G in self._graphs]
-# 	
-# 	
+#
+#
 # 	def _get_total_edge_nums(self, all_edge_nums):
 # 		return np.sum(all_edge_nums)
-# 	
-# 	
+#
+#
 # 	def _get_ave_edge_num(self, all_edge_nums):
 # 		return np.mean(all_edge_nums)
-# 	
-# 		
+#
+#
 # 	def _get_min_edge_num(self, all_edge_nums):
 # 		return np.amin(all_edge_nums)
-# 	
-# 		
+#
+#
 # 	def _get_max_edge_num(self, all_edge_nums):
 # 		return np.amax(all_edge_nums)
-# 	
-# 	
+#
+#
 # 	def _get_node_label_dim(self):
 # 		return len(self._node_labels)
-# 	
-# 		
+#
+#
 # 	def _get_node_label_num(self, node_label):
 # 		nl = set()
 # 		for G in self._graphs:
 # 			nl = nl | set(nx.get_node_attributes(G, node_label).values())
 # 		return len(nl)
-# 	
-# 	
+#
+#
 # 	def _get_edge_label_dim(self):
 # 		return len(self._edge_labels)
-# 	
-# 		
+#
+#
 # 	def _get_edge_label_num(self, edge_label):
 # 		el = set()
 # 		for G in self._graphs:
 # 			el = el | set(nx.get_edge_attributes(G, edge_label).values())
 # 		return len(el)
-# 	
-# 		
+#
+#
 # 	def _is_directed(self):
 # 		return nx.is_directed(self._graphs[0])
-# 	
-# 		
+#
+#
 # 	def _get_all_node_degrees(self):
 # 		return [np.mean(list(dict(G.degree()).values())) for G in self._graphs]
-# 	
-# 	
+#
+#
 # 	def _get_ave_node_degree(self, all_node_degrees):
 # 		return np.mean(all_node_degrees)
-# 	
-# 	
+#
+#
 # 	def _get_max_node_degree(self, all_node_degrees):
 # 		return np.amax(all_node_degrees)
-# 	
-# 		
+#
+#
 # 	def _get_min_node_degree(self, all_node_degrees):
 # 		return np.amin(all_node_degrees)
-# 		
-# 	
+#
+#
 # 	def _get_all_fill_factors(self):
 # 		"""Get fill factor, the number of non-zero entries in the adjacency matrix.
 
@@ -1763,20 +1765,20 @@ class DataFetcher():
 # 			List of fill factors for all graphs.
 # 		"""
 # 		return [nx.number_of_edges(G) / (nx.number_of_nodes(G) ** 2) for G in self._graphs]
-# 	   
+#
 
 # 	def _get_ave_fill_factor(self, all_fill_factors):
 # 		return np.mean(all_fill_factors)
-# 	
-# 		
+#
+#
 # 	def _get_max_fill_factor(self, all_fill_factors):
 # 		return np.amax(all_fill_factors)
-# 	
-# 		
+#
+#
 # 	def _get_min_fill_factor(self, all_fill_factors):
 # 		return np.amin(all_fill_factors)
-# 	
-# 		
+#
+#
 # 	def _get_substructures(self):
 # 		subs = set()
 # 		for G in self._graphs:
@@ -1808,22 +1810,22 @@ class DataFetcher():
 # 			#			 if any(len(i) > 2 for i in cyc):
 # 			#				 subs.add('cyclic')
 # 			#				 break
-# 	
+#
 # 			return subs
-# 	
-# 		
+#
+#
 # 	def _get_class_num(self):
 # 		return len(set(self._targets))
-# 	
-# 		
+#
+#
 # 	def _get_node_attr_dim(self):
 # 		return len(self._node_attrs)
-# 	
-# 		
+#
+#
 # 	def _get_edge_attr_dim(self):
 # 		return len(self._edge_attrs)
 
-# 	
+#
 # 	def _compute_all_degree_entropy(self, base=None):
 # 		"""Compute the entropy of degree distribution of each graph.
 
@@ -1838,15 +1840,15 @@ class DataFetcher():
 # 			The calculated entropy.
 # 		"""
 # 		from gklearn.utils.stats import entropy
-# 		
+#
 # 		degree_entropy = []
 # 		for g in self._graphs:
 # 			degrees = list(dict(g.degree()).values())
 # 			en = entropy(degrees, base=base)
 # 			degree_entropy.append(en)
 # 		return degree_entropy
-# 			
-# 	
+#
+#
 # 	@property
 # 	def graphs(self):
 # 		return self._graphs
@@ -1855,8 +1857,8 @@ class DataFetcher():
 # 	@property
 # 	def targets(self):
 # 		return self._targets
-# 	
-# 		
+#
+#
 # 	@property
 # 	def node_labels(self):
 # 		return self._node_labels
@@ -1865,21 +1867,21 @@ class DataFetcher():
 # 	@property
 # 	def edge_labels(self):
 # 		return self._edge_labels
-# 	
-# 	
+#
+#
 # 	@property
 # 	def node_attrs(self):
 # 		return self._node_attrs
-# 	
-# 	
+#
+#
 # 	@property
 # 	def edge_attrs(self):
 # 		return self._edge_attrs
-# 	
-# 	
+#
+#
 # def split_dataset_by_target(dataset):
 # 	from gklearn.preimage.utils import get_same_item_indices
-# 	
+#
 # 	graphs = dataset.graphs
 # 	targets = dataset.targets
 # 	datasets = []
