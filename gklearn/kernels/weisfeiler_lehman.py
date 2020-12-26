@@ -33,9 +33,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _compute_gm_series(self):
-# 		if self._verbose >= 2:
-# 			import warnings
-# 			warnings.warn('A part of the computation is parallelized.')
+#		if self._verbose >= 2:
+#			import warnings
+#			warnings.warn('A part of the computation is parallelized.')
 
 		self._add_dummy_node_labels(self._graphs)
 
@@ -64,6 +64,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		if self._base_kernel == 'subtree':
 			gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
 
+#			for i in range(len(self._graphs)):
+#				for j in range(i, len(self._graphs)):
+#					gram_matrix[i][j] = self.pairwise_kernel(self._graphs[i], self._graphs[j])
+#					gram_matrix[j][i] = gram_matrix[i][j]
+
 			def init_worker(gn_toshare):
 				global G_gn
 				G_gn = gn_toshare
@@ -79,9 +84,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _compute_kernel_list_series(self, g1, g_list): # @todo: this should be better.
-# 		if self._verbose >= 2:
-# 			import warnings
-# 			warnings.warn('A part of the computation is parallelized.')
+#		if self._verbose >= 2:
+#			import warnings
+#			warnings.warn('A part of the computation is parallelized.')
 
 		self._add_dummy_node_labels(g_list + [g1])
 
@@ -131,7 +136,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _wrapper_kernel_list_do(self, itr):
-		return self._kernel_do_exp(G_g1, G_g_list[itr])
+		return itr, self.pairwise_kernel(G_g1, G_g_list[itr])
 
 
 	def _compute_single_kernel_series(self, g1, g2):  # @todo: this should be better.
@@ -157,7 +162,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def pairwise_kernel(self, g1, g2):
-		Gn = [g1, g2]
+		Gn = [g1.copy(), g2.copy()] # @todo: make sure it is a full deep copy. and faster!
 		kernel = 0
 
 		# initial for height = 0
@@ -327,15 +332,15 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 	def _compute_gram_itr(self, gram_matrix, all_num_of_each_label):
 		"""Compute Gram matrix using the base kernel.
 		"""
-# 		if self._parallel == 'imap_unordered':
-# 			# compute kernels.
-# 			def init_worker(alllabels_toshare):
-# 				global G_alllabels
-# 				G_alllabels = alllabels_toshare
-# 			do_partial = partial(self._wrapper_compute_subtree_kernel, gram_matrix)
-# 			parallel_gm(do_partial, gram_matrix, Gn, init_worker=init_worker,
-# 						glbv=(all_num_of_each_label,), n_jobs=self._n_jobs, verbose=self._verbose)
-# 		elif self._parallel is None:
+#		if self._parallel == 'imap_unordered':
+#			# compute kernels.
+#			def init_worker(alllabels_toshare):
+#				global G_alllabels
+#				G_alllabels = alllabels_toshare
+#			do_partial = partial(self._wrapper_compute_subtree_kernel, gram_matrix)
+#			parallel_gm(do_partial, gram_matrix, Gn, init_worker=init_worker,
+#						glbv=(all_num_of_each_label,), n_jobs=self._n_jobs, verbose=self._verbose)
+#		elif self._parallel is None:
 		for i in range(len(gram_matrix)):
 			for j in range(i, len(gram_matrix)):
 				gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],
@@ -357,10 +362,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		return kernel
 
 
-# 	def _wrapper_compute_subtree_kernel(self, gram_matrix, itr):
-# 		i = itr[0]
-# 		j = itr[1]
-# 		return i, j, self._compute_subtree_kernel(G_alllabels[i], G_alllabels[j], gram_matrix[i][j])
+#	def _wrapper_compute_subtree_kernel(self, gram_matrix, itr):
+#		i = itr[0]
+#		j = itr[1]
+#		return i, j, self._compute_subtree_kernel(G_alllabels[i], G_alllabels[j], gram_matrix[i][j])
 
 
 	def _wl_spkernel_do(Gn, node_label, edge_label, height):
