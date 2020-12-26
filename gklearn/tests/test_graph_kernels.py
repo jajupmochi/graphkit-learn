@@ -118,6 +118,7 @@ def test_CommonWalk(ds_name, weight, compute_method):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -151,6 +152,7 @@ def test_Marginalized(ds_name, remove_totters):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -183,6 +185,7 @@ def test_SylvesterEquation(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -226,6 +229,7 @@ def test_ConjugateGradient(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -269,6 +273,7 @@ def test_FixedPoint(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -303,6 +308,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -387,6 +393,7 @@ def test_ShortestPath(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -426,6 +433,7 @@ def test_StructuralSP(ds_name):
 	 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -457,7 +465,9 @@ def test_PathUpToH(ds_name, k_func):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -490,7 +500,9 @@ def test_Treelet(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -521,7 +533,9 @@ def test_WLSubtree(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
 			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+
 		except Exception as exception:
+			print(repr(exception))
 			assert False, exception
 		else:
 			return gram_matrix, kernel_list, kernel
@@ -534,9 +548,9 @@ if __name__ == "__main__":
 #	test_spkernel('Alkane', 'imap_unordered')
  	# test_ShortestPath('Alkane')
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
-# 	test_StructuralSP('Alkane', None)
+ 	# test_StructuralSP('Acyclic')
 # 	test_StructuralSP('Cuneiform', None)
-# 	test_WLSubtree('Acyclic', 'imap_unordered')
+ 	# test_WLSubtree('Acyclic')
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)
