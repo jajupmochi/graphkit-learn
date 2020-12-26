@@ -20,8 +20,10 @@ def chooseDataset(ds_name):
 	"""Choose dataset according to name.
 	"""
 	from gklearn.dataset import Dataset
+	import os
 
-	root = '../../datasets/'
+	current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
+	root = current_path + '../../datasets/'
 
 	# no node labels (and no edge labels).
 	if ds_name == 'Alkane':
