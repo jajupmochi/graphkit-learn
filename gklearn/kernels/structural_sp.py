@@ -252,7 +252,6 @@ class StructuralSP(GraphKernel):
 								if not kpath:
 									break
 							kernel += kpath  # add up kernels of all paths
-# 							print(kernel, ',', p1, ',', p2)
 			else:
 				for p1, p2 in product(spl1, spl2):
 					if len(p1) == len(p2):
@@ -399,7 +398,6 @@ class StructuralSP(GraphKernel):
 								if not kpath:
 									break
 							kernel += kpath  # add up kernels of all paths
-# 							print(kernel, ',', p1, ',', p2)
 			else:
 				for p1, p2 in product(spl1, spl2):
 					if len(p1) == len(p2):

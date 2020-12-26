@@ -5,13 +5,13 @@ Created on Thu Aug 20 16:12:45 2020
 
 @author: ljia
 
-@references: 
+@references:
 
 	[1] S Vichy N Vishwanathan, Nicol N Schraudolph, Risi Kondor, and Karsten M Borgwardt. Graph kernels. Journal of Machine Learning Research, 11(Apr):1201–1242, 2010.
 """
 
 import sys
-from tqdm import tqdm
+from gklearn.utils import get_iters
 import numpy as np
 import networkx as nx
 from scipy.sparse import kron
@@ -20,12 +20,12 @@ from gklearn.kernels import RandomWalkMeta
 
 
 class SpectralDecomposition(RandomWalkMeta):
-	
-	
+
+
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 		self._sub_kernel = kwargs.get('sub_kernel', None)
-		
+
 
 	def _compute_gm_series(self):
 		self._check_edge_weight(self._graphs, self._verbose)
@@ -33,18 +33,15 @@ class SpectralDecomposition(RandomWalkMeta):
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
-				
+
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
-		
+		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
-			if self._verbose >= 2:
-				iterator = tqdm(self._graphs, desc='spectral decompose', file=sys.stdout)
-			else:
-				iterator = self._graphs
+			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -60,42 +57,37 @@ class SpectralDecomposition(RandomWalkMeta):
 
 				from itertools import combinations_with_replacement
 				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-				if self._verbose >= 2:
-					iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
-				else:
-					iterator = itr
-					
+				len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self._verbose >= 2))
+
 				for i, j in iterator:
 					kernel = self._kernel_do(q_T_list[i], q_T_list[j], P_list[i], P_list[j], D_list[i], D_list[j], self._weight, self._sub_kernel)
 					gram_matrix[i][j] = kernel
 					gram_matrix[j][i] = kernel
-			
+
 			else: # @todo
 				pass
 		else: # @todo
 			pass
-				
+
 		return gram_matrix
-			
-			
+
+
 	def _compute_gm_imap_unordered(self):
 		self._check_edge_weight(self._graphs, self._verbose)
 		self._check_graphs(self._graphs)
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
-				
+
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))		
-		
+		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
-			if self._verbose >= 2:
-				iterator = tqdm(self._graphs, desc='spectral decompose', file=sys.stdout)
-			else:
-				iterator = self._graphs
+			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -106,45 +98,42 @@ class SpectralDecomposition(RandomWalkMeta):
 
 			if self._p is None: # p is uniform distribution as default.
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in self._graphs] # @todo: parallel?
-				
+
 				def init_worker(q_T_list_toshare, P_list_toshare, D_list_toshare):
 					global G_q_T_list, G_P_list, G_D_list
 					G_q_T_list = q_T_list_toshare
 					G_P_list = P_list_toshare
 					G_D_list = D_list_toshare
-					
-				do_fun = self._wrapper_kernel_do					
-				parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker, 
+
+				do_fun = self._wrapper_kernel_do
+				parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
 							glbv=(q_T_list, P_list, D_list), n_jobs=self._n_jobs, verbose=self._verbose)
 
 			else: # @todo
 				pass
 		else: # @todo
 			pass
-				
+
 		return gram_matrix
-	
-	
+
+
 	def _compute_kernel_list_series(self, g1, g_list):
 		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
-							
+
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		
+
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
 			D1, P1 = np.linalg.eig(A1)
 			P_list = []
 			D_list = []
-			if self._verbose >= 2:
-				iterator = tqdm(g_list, desc='spectral decompose', file=sys.stdout)
-			else:
-				iterator = g_list
+			iterator = get_iters(g_list, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -156,33 +145,30 @@ class SpectralDecomposition(RandomWalkMeta):
 			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in g_list]
-				if self._verbose >= 2:
-					iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
-				else:
-					iterator = range(len(g_list))
-					
+				iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+
 				for i in iterator:
 					kernel = self._kernel_do(q_T1, q_T_list[i], P1, P_list[i], D1, D_list[i], self._weight, self._sub_kernel)
 					kernel_list[i] = kernel
-					
+
 			else: # @todo
 				pass
 		else: # @todo
 			pass
-				
+
 		return kernel_list
-	
-	
+
+
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
 		self._check_edge_weight(g_list + [g1], self._verbose)
 		self._check_graphs(g_list + [g1])
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
-				
+
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		
+
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
@@ -204,7 +190,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in g_list] # @todo: parallel?
-				
+
 				def init_worker(q_T1_toshare, P1_toshare, D1_toshare, q_T_list_toshare, P_list_toshare, D_list_toshare):
 					global G_q_T1, G_P1, G_D1, G_q_T_list, G_P_list, G_D_list
 					G_q_T1 = q_T1_toshare
@@ -214,34 +200,34 @@ class SpectralDecomposition(RandomWalkMeta):
 					G_P_list = P_list_toshare
 					G_D_list = D_list_toshare
 
-				do_fun = self._wrapper_kernel_list_do	
-				
-				def func_assign(result, var_to_assign):	
+				do_fun = self._wrapper_kernel_list_do
+
+				def func_assign(result, var_to_assign):
 					var_to_assign[result[0]] = result[1]
 				itr = range(len(g_list))
 				len_itr = len(g_list)
 				parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 					init_worker=init_worker, glbv=(q_T1, P1, D1, q_T_list, P_list, D_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
-			
+
 			else: # @todo
 				pass
 		else: # @todo
 			pass
-				
+
 		return kernel_list
 
 
 	def _wrapper_kernel_list_do(self, itr):
 		return itr, self._kernel_do(G_q_T1, G_q_T_list[itr], G_P1, G_P_list[itr], G_D1, G_D_list[itr], self._weight, self._sub_kernel)
-	
-	
+
+
 	def _compute_single_kernel_series(self, g1, g2):
 		self._check_edge_weight([g1] + [g2], self._verbose)
 		self._check_graphs([g1] + [g2])
 		if self._verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
-		
+
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			A1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
@@ -257,10 +243,10 @@ class SpectralDecomposition(RandomWalkMeta):
 				pass
 		else: # @todo
 			pass
-				
-		return kernel		
-	
-	
+
+		return kernel
+
+
 	def _kernel_do(self, q_T1, q_T2, P1, P2, D1, D2, weight, sub_kernel):
 		# use uniform distribution if there is no prior knowledge.
 		kl = kron(np.dot(q_T1, P1), np.dot(q_T2, P2)).todense()
@@ -276,7 +262,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			kmiddle = np.linalg.inv(kmiddle)
 		return np.dot(np.dot(kl, kmiddle), kl.T)[0, 0]
 
-	
+
 	def _wrapper_kernel_do(self, itr):
 		i = itr[0]
 		j = itr[1]

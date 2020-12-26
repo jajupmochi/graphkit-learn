@@ -15,7 +15,7 @@ import sys
 from itertools import product
 # from functools import partial
 from multiprocessing import Pool
-from tqdm import tqdm
+from gklearn.utils import get_iters
 import numpy as np
 import networkx as nx
 from gklearn.utils.parallel import parallel_gm, parallel_me
@@ -38,10 +38,7 @@ class ShortestPath(GraphKernel):
 	def _compute_gm_series(self):
 		self._all_graphs_have_edges(self._graphs)
 		# get shortest path graph of each graph.
-		if self._verbose >= 2:
-			iterator = tqdm(self._graphs, desc='getting sp graphs', file=sys.stdout)
-		else:
-			iterator = self._graphs
+		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self._verbose >= 2))
 		self._graphs = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
 
 		# compute Gram matrix.
@@ -49,10 +46,9 @@ class ShortestPath(GraphKernel):
 
 		from itertools import combinations_with_replacement
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		if self._verbose >= 2:
-			iterator = tqdm(itr, desc='Computing kernels', file=sys.stdout)
-		else:
-			iterator = itr
+		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		iterator = get_iters(itr, desc='Computing kernels',
+					length=len_itr, file=sys.stdout,verbose=(self._verbose >= 2))
 		for i, j in iterator:
 			kernel = self._sp_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
@@ -71,11 +67,9 @@ class ShortestPath(GraphKernel):
 			chunksize = int(len(self._graphs) / self._n_jobs) + 1
 		else:
 			chunksize = 100
-		if self._verbose >= 2:
-			iterator = tqdm(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
-							desc='getting sp graphs', file=sys.stdout)
-		else:
-			iterator = pool.imap_unordered(get_sp_graphs_fun, itr, chunksize)
+		iterator = get_iters(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
+						desc='getting sp graphs', file=sys.stdout,
+						length=len(self._graphs), verbose=(self._verbose >= 2))
 		for i, g in iterator:
 			self._graphs[i] = g
 		pool.close()
@@ -98,18 +92,12 @@ class ShortestPath(GraphKernel):
 		self._all_graphs_have_edges([g1] + g_list)
 		# get shortest path graphs of g1 and each graph in g_list.
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
-		if self._verbose >= 2:
-			iterator = tqdm(g_list, desc='getting sp graphs', file=sys.stdout)
-		else:
-			iterator = g_list
+		iterator = get_iters(g_list, desc='getting sp graphs', file=sys.stdout, verbose=(self._verbose >= 2))
 		g_list = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
 
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		if self._verbose >= 2:
-			iterator = tqdm(range(len(g_list)), desc='Computing kernels', file=sys.stdout)
-		else:
-			iterator = range(len(g_list))
+		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
 		for i in iterator:
 			kernel = self._sp_do(g1, g_list[i])
 			kernel_list[i] = kernel
@@ -128,11 +116,9 @@ class ShortestPath(GraphKernel):
 			chunksize = int(len(g_list) / self._n_jobs) + 1
 		else:
 			chunksize = 100
-		if self._verbose >= 2:
-			iterator = tqdm(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
-							desc='getting sp graphs', file=sys.stdout)
-		else:
-			iterator = pool.imap_unordered(get_sp_graphs_fun, itr, chunksize)
+		iterator = get_iters(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
+						desc='getting sp graphs', file=sys.stdout,
+						length=len(g_list), verbose=(self._verbose >= 2))
 		for i, g in iterator:
 			g_list[i] = g
 		pool.close()

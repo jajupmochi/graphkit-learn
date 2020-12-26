@@ -101,7 +101,7 @@ def get_shortest_paths(G, weight, directed):
 			# each edge walk is counted twice, starting from both its extreme nodes.
 			if not directed:
 				sp += [sptemp[::-1] for sptemp in spltemp]
-				
+
 	# add single nodes as length 0 paths.
 	sp += [[n] for n in G.nodes()]
 	return sp
@@ -233,7 +233,7 @@ def direct_product_graph(G1, G2, node_labels, edge_labels):
 		A list of node attributes used as labels.
 	edge_labels : list
 		A list of edge attributes used as labels.
-		
+
 	Return
 	------
 	gt : NetworkX graph
@@ -287,9 +287,9 @@ def direct_product_graph(G1, G2, node_labels, edge_labels):
 
 
 def graph_deepcopy(G):
-	"""Deep copy a graph, including deep copy of all nodes, edges and 
+	"""Deep copy a graph, including deep copy of all nodes, edges and
 	attributes of the graph, nodes and edges.
-	
+
 	Note
 	----
 	It is the same as the NetworkX function graph.copy(), as far as I know.
@@ -302,28 +302,28 @@ def graph_deepcopy(G):
 		G_copy = nx.DiGraph(**labels)
 	else:
 		G_copy = nx.Graph(**labels)
-		
-	# add nodes	
+
+	# add nodes
 	for nd, attrs in G.nodes(data=True):
 		labels = {}
 		for k, v in attrs.items():
 			labels[k] = deepcopy(v)
 		G_copy.add_node(nd, **labels)
-		
+
 	# add edges.
 	for nd1, nd2, attrs in G.edges(data=True):
 		labels = {}
 		for k, v in attrs.items():
 			labels[k] = deepcopy(v)
 		G_copy.add_edge(nd1, nd2, **labels)
-	
+
 	return G_copy
 
 
 def graph_isIdentical(G1, G2):
 	"""Check if two graphs are identical, including: same nodes, edges, node
 	labels/attributes, edge labels/attributes.
-	
+
 	Notes
 	-----
 	1. The type of graphs has to be the same.
@@ -341,7 +341,7 @@ def graph_isIdentical(G1, G2):
 	if not elist1 == elist2:
 		return False
 	# check graph attributes.
-	
+
 	return True
 
 
@@ -363,7 +363,9 @@ def get_edge_labels(Gn, edge_label):
 	return el
 
 
-def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attrs=None, edge_attrs=None, ds_infos=None, kernel_options={}):
+def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attrs=None, edge_attrs=None, ds_infos=None, kernel_options={}, **kwargs):
+	if len(kwargs) != 0:
+		kernel_options = kwargs
 	if name == 'Marginalized':
 		from gklearn.kernels import Marginalized
 		graph_kernel = Marginalized(node_labels=node_labels,
@@ -379,7 +381,7 @@ def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attr
 	elif name == 'StructuralSP':
 		from gklearn.kernels import StructuralSP
 		graph_kernel = StructuralSP(node_labels=node_labels,
-								  edge_labels=edge_labels, 
+								  edge_labels=edge_labels,
 								  node_attrs=node_attrs,
 								  edge_attrs=edge_attrs,
 								  ds_infos=ds_infos,
@@ -417,7 +419,7 @@ def get_graph_kernel_by_name(name, node_labels=None, edge_labels=None, node_attr
 def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, dir_save='', irrelevant_labels=None, edge_required=False):
 	import os
 	from gklearn.utils import Dataset, split_dataset_by_target
-	
+
 	# 1. get dataset.
 	print('1. getting dataset...')
 	dataset_all = Dataset()
@@ -427,20 +429,20 @@ def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, d
 		dataset_all.remove_labels(**irrelevant_labels)
 # 	dataset_all.cut_graphs(range(0, 10))
 	datasets = split_dataset_by_target(dataset_all)
-	
+
 	gram_matrix_unnorm_list = []
 	run_time_list = []
-	
+
 	print('start generating preimage for each class of target...')
 	for idx, dataset in enumerate(datasets):
 		target = dataset.targets[0]
 		print('\ntarget =', target, '\n')
-		
+
 		# 2. initialize graph kernel.
 		print('2. initializing graph kernel and setting parameters...')
-		graph_kernel = get_graph_kernel_by_name(kernel_options['name'], 
+		graph_kernel = get_graph_kernel_by_name(kernel_options['name'],
 										  node_labels=dataset.node_labels,
-										  edge_labels=dataset.edge_labels, 
+										  edge_labels=dataset.edge_labels,
 										  node_attrs=dataset.node_attrs,
 										  edge_attrs=dataset.edge_attrs,
 										  ds_infos=dataset.get_dataset_infos(keys=['directed']),
@@ -450,24 +452,24 @@ def compute_gram_matrices_by_class(ds_name, kernel_options, save_results=True, d
 		print('3. computing gram matrix...')
 		gram_matrix, run_time = graph_kernel.compute(dataset.graphs, **kernel_options)
 		gram_matrix_unnorm = graph_kernel.gram_matrix_unnorm
-		
+
 		gram_matrix_unnorm_list.append(gram_matrix_unnorm)
 		run_time_list.append(run_time)
-				
+
 	# 4. save results.
 	print()
 	print('4. saving results...')
 	if save_results:
 		os.makedirs(dir_save, exist_ok=True)
-		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)	
+		np.savez(dir_save + 'gram_matrix_unnorm.' + ds_name + '.' + kernel_options['name'] + '.gm', gram_matrix_unnorm_list=gram_matrix_unnorm_list, run_time_list=run_time_list)
 
-	print('\ncomplete.')	
-	
-	
+	print('\ncomplete.')
+
+
 def find_paths(G, source_node, length):
-	"""Find all paths with a certain length those start from a source node. 
+	"""Find all paths with a certain length those start from a source node.
 	A recursive depth first search is applied.
-	
+
 	Parameters
 	----------
 	G : NetworkX graphs
@@ -476,7 +478,7 @@ def find_paths(G, source_node, length):
 		The number of the node from where all paths start.
 	length : integer
 		The length of paths.
-		
+
 	Return
 	------
 	path : list of list
@@ -492,14 +494,14 @@ def find_paths(G, source_node, length):
 def find_all_paths(G, length, is_directed):
 	"""Find all paths with a certain length in a graph. A recursive depth first
 	search is applied.
-	
+
 	Parameters
 	----------
 	G : NetworkX graphs
 		The graph in which paths are searched.
 	length : integer
 		The length of paths.
-		
+
 	Return
 	------
 	path : list of list
@@ -508,18 +510,18 @@ def find_all_paths(G, length, is_directed):
 	all_paths = []
 	for node in G:
 		all_paths.extend(find_paths(G, node, length))
-		
+
 	if not is_directed:
-		# For each path, two presentations are retrieved from its two extremities. 
+		# For each path, two presentations are retrieved from its two extremities.
 		# Remove one of them.
-		all_paths_r = [path[::-1] for path in all_paths]  
+		all_paths_r = [path[::-1] for path in all_paths]
 		for idx, path in enumerate(all_paths[:-1]):
 			for path2 in all_paths_r[idx+1::]:
 				if path == path2:
 					all_paths[idx] = []
 					break
 		all_paths = list(filter(lambda a: a != [], all_paths))
-			
+
 	return all_paths
 
 
@@ -535,8 +537,8 @@ def get_mlti_dim_edge_attrs(G, attr_names):
 	for ed, attrs in G.edges(data=True):
 		attributes.append(tuple(attrs[aname] for aname in attr_names))
 	return attributes
-	
-	
+
+
 def normalize_gram_matrix(gram_matrix):
 	diag = gram_matrix.diagonal().copy()
 	for i in range(len(gram_matrix)):
@@ -544,8 +546,8 @@ def normalize_gram_matrix(gram_matrix):
 			gram_matrix[i][j] /= np.sqrt(diag[i] * diag[j])
 			gram_matrix[j][i] = gram_matrix[i][j]
 	return gram_matrix
-	
-	
+
+
 def compute_distance_matrix(gram_matrix):
 	dis_mat = np.empty((len(gram_matrix), len(gram_matrix)))
 	for i in range(len(gram_matrix)):
@@ -573,9 +575,9 @@ def compute_vertex_kernels(g1, g2, node_kernels, node_labels=[], node_attrs=[]):
 	g1, g2 : NetworkX graph
 		The kernels bewteen pairs of vertices in these two graphs are computed.
 	node_kernels : dict
-		A dictionary of kernel functions for nodes, including 3 items: 'symb' 
-		for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix' 
-		for both labels. The first 2 functions take two node labels as 
+		A dictionary of kernel functions for nodes, including 3 items: 'symb'
+		for symbolic node labels, 'nsymb' for non-symbolic node labels, 'mix'
+		for both labels. The first 2 functions take two node labels as
 		parameters, and the 'mix' function takes 4 parameters, a symbolic and a
 		non-symbolic label for each the two nodes. Each label is in form of 2-D
 		dimension array (n_samples, n_features). Each function returns a number
@@ -590,18 +592,18 @@ def compute_vertex_kernels(g1, g2, node_kernels, node_labels=[], node_attrs=[]):
 	-------
 	vk_dict : dict
 		Vertex kernels keyed by vertices.
-		
+
 	Notes
 	-----
-	This function is used by ``gklearn.kernels.FixedPoint'' and 
+	This function is used by ``gklearn.kernels.FixedPoint'' and
 	``gklearn.kernels.StructuralSP''. The method is borrowed from FCSP [1].
 
 	References
 	----------
-	.. [1] Lifan Xu, Wei Wang, M Alvarez, John Cavazos, and Dongping Zhang. 
-	Parallelization of shortest path graph kernels on multi-core cpus and gpus. 
-	Proceedings of the Programmability Issues for Heterogeneous Multicores 
-	(MultiProg), Vienna, Austria, 2014.	
+	.. [1] Lifan Xu, Wei Wang, M Alvarez, John Cavazos, and Dongping Zhang.
+	Parallelization of shortest path graph kernels on multi-core cpus and gpus.
+	Proceedings of the Programmability Issues for Heterogeneous Multicores
+	(MultiProg), Vienna, Austria, 2014.
 	"""
 	vk_dict = {}  # shortest path matrices dict
 	if len(node_labels) > 0:
