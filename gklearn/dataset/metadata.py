@@ -108,7 +108,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': [],
 		'stereoisomerism': True,
-		'load_files': [],
+		'load_files': ['data.txt'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'MAO': {
 		'database': 'greyc',
@@ -269,9 +270,9 @@ IAM_META = {
 	},
 }
 
-	
+
 ### -------- database tudataset -------- ###
-TUDataset_META = {	
+TUDataset_META = {
 	### small molecules
 	'AIDS': {
 		'database': 'tudataset',
@@ -1697,7 +1698,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/ZINC_val.zip',
 		'domain': 'small molecules',
 	},
-	
+
 	### bioinformatics
 	'DD': {
 		'database': 'tudataset',
@@ -1811,7 +1812,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/PROTEINS_full.zip',
 		'domain': 'bioinformatics',
 	},
-	
+
 	### computer vision
 	'COIL-DEL': {
 		'database': 'tudataset',
@@ -1989,7 +1990,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/MSRC_21C.zip',
 		'domain': 'computer vision',
 	},
-	
+
 	### social networks
 	'COLLAB': {
 		'database': 'tudataset',
@@ -2375,7 +2376,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/TWITTER-Real-Graph-Partial.zip',
 		'domain': 'social networks',
 	},
-	
+
 	### synthetic
 	'COLORS-3': {
 		'database': 'tudataset',
