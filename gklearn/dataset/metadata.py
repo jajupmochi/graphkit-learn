@@ -33,6 +33,7 @@ GREYC_META = {
 		'train_valid_test': [],
 		'stereoisomerism': True,
 		'load_files': ['data.ds'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'Acyclic': {
 		'database': 'greyc',
@@ -108,7 +109,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': [],
 		'stereoisomerism': True,
-		'load_files': [],
+		'load_files': ['data.txt'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'MAO': {
 		'database': 'greyc',
@@ -204,7 +206,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': ['trainset_0.ds', None, 'testset_0.ds'],
 		'stereoisomerism': False,
-		'load_files': [],
+		'load_files': ['dataWithOutsider.ds'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'Vitamin_D': {
 		'database': 'greyc',
@@ -223,7 +226,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': [],
 		'stereoisomerism': True,
-		'load_files': [],
+		'load_files': ['data.txt'],
+		'extra_params': {'gformat': 'cml'}
 	},
 }
 
@@ -247,7 +251,7 @@ IAM_META = {
 		'url': 'https://iapr-tc15.greyc.fr/IAM/GREC.zip',
 		'domain': None,
 		'train_valid_test': ['data/test.cxl','data/train.cxl', 'data/valid.cxl'],
-		'load_files': [],
+		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
 	},
 	'Web': {
 		'database': 'iam',
@@ -265,13 +269,13 @@ IAM_META = {
 		'url': 'https://iapr-tc15.greyc.fr/IAM/Web.zip',
 		'domain': None,
 		'train_valid_test': ['data/test.cxl', 'data/train.cxl', 'data/valid.cxl'],
-		'load_files': [],
+		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
 	},
 }
 
-	
+
 ### -------- database tudataset -------- ###
-TUDataset_META = {	
+TUDataset_META = {
 	### small molecules
 	'AIDS': {
 		'database': 'tudataset',
@@ -1697,7 +1701,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/ZINC_val.zip',
 		'domain': 'small molecules',
 	},
-	
+
 	### bioinformatics
 	'DD': {
 		'database': 'tudataset',
@@ -1811,7 +1815,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/PROTEINS_full.zip',
 		'domain': 'bioinformatics',
 	},
-	
+
 	### computer vision
 	'COIL-DEL': {
 		'database': 'tudataset',
@@ -1989,7 +1993,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/MSRC_21C.zip',
 		'domain': 'computer vision',
 	},
-	
+
 	### social networks
 	'COLLAB': {
 		'database': 'tudataset',
@@ -2375,7 +2379,7 @@ TUDataset_META = {
 		'url': 'https://www.chrsmrrs.com/graphkerneldatasets/TWITTER-Real-Graph-Partial.zip',
 		'domain': 'social networks',
 	},
-	
+
 	### synthetic
 	'COLORS-3': {
 		'database': 'tudataset',

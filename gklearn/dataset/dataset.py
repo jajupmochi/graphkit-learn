@@ -115,7 +115,12 @@ class Dataset(object):
 				ds_file = [os.path.join(path, fn) for fn in load_files[0]]
 			fn_targets = os.path.join(path, load_files[1]) if len(load_files) == 2 else None
 
-		self._graphs, self._targets, label_names = DataLoader(ds_file, filename_targets=fn_targets).data
+		if 'extra_params' in DATASET_META[ds_name]:
+			kwargs = DATASET_META[ds_name]['extra_params']
+		else:
+			kwargs = {}
+
+		self._graphs, self._targets, label_names = DataLoader(ds_file, filename_targets=fn_targets, **kwargs).data
 
 		self._node_labels = label_names['node_labels']
 		self._node_attrs = label_names['node_attrs']
@@ -561,6 +566,8 @@ class Dataset(object):
 			return True
 		if inputs == 'MAO_lite':
 			return True
+		if inputs == 'Monoterpens':
+			return True
 		return False
 
 
@@ -578,6 +585,8 @@ class Dataset(object):
 
 			self.remove_labels(edge_labels=['bond_stereo'], node_attrs=['x', 'y'])
 
+		elif inputs == 'Monoterpens':
+			self.load_predefined_dataset('Monoterpenoides', root=root, clean_labels=clean_labels, reload=reload, verbose=verbose)
 
 
 	def get_all_node_labels(self):
