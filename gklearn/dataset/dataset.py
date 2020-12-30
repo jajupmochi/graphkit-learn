@@ -117,6 +117,8 @@ class Dataset(object):
 
 		if 'extra_params' in DATASET_META[ds_name]:
 			kwargs = DATASET_META[ds_name]['extra_params']
+		else:
+			kwargs = {}
 
 		self._graphs, self._targets, label_names = DataLoader(ds_file, filename_targets=fn_targets, **kwargs).data
 

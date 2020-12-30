@@ -206,7 +206,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': ['trainset_0.ds', None, 'testset_0.ds'],
 		'stereoisomerism': False,
-		'load_files': [],
+		'load_files': ['dataWithOutsider.ds'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'Vitamin_D': {
 		'database': 'greyc',
@@ -250,7 +251,7 @@ IAM_META = {
 		'url': 'https://iapr-tc15.greyc.fr/IAM/GREC.zip',
 		'domain': None,
 		'train_valid_test': ['data/test.cxl','data/train.cxl', 'data/valid.cxl'],
-		'load_files': [],
+		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
 	},
 	'Web': {
 		'database': 'iam',
@@ -268,7 +269,7 @@ IAM_META = {
 		'url': 'https://iapr-tc15.greyc.fr/IAM/Web.zip',
 		'domain': None,
 		'train_valid_test': ['data/test.cxl', 'data/train.cxl', 'data/valid.cxl'],
-		'load_files': [],
+		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
 	},
 }
 
