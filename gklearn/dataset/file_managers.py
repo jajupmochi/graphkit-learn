@@ -537,16 +537,18 @@ class DataLoader():
 
 
 	def load_cml(self, filename): # @todo: directed graphs.
+		# @todo: what is "atomParity" and "bondStereo" in the data file?
 		from os.path import basename
 		import networkx as nx
 		import xml.etree.ElementTree as ET
 
+		xmlns = '{http://www.xml-cml.org/schema}' # @todo: why this has to be added?
 		tree = ET.parse(filename)
 		root = tree.getroot()
 		index = 0
-		g = nx.Graph(filename=basename(filename), name=root.attrib['id'])
+		g_id = root.find(xmlns + 'molecule').attrib['id']
+		g = nx.Graph(filename=basename(filename), name=g_id)
 		dic = {}  # used to retrieve incident nodes of edges
-		xmlns = '{http://www.xml-cml.org/schema}' # @todo: why this has to be added?
 		for atom in root.iter(xmlns + 'atom'):
 			dic[atom.attrib['id']] = index
 			labels = {}

@@ -33,6 +33,7 @@ GREYC_META = {
 		'train_valid_test': [],
 		'stereoisomerism': True,
 		'load_files': ['data.ds'],
+		'extra_params': {'gformat': 'cml'}
 	},
 	'Acyclic': {
 		'database': 'greyc',
@@ -224,7 +225,8 @@ GREYC_META = {
 		'domain': 'small molecules',
 		'train_valid_test': [],
 		'stereoisomerism': True,
-		'load_files': [],
+		'load_files': ['data.txt'],
+		'extra_params': {'gformat': 'cml'}
 	},
 }
 
