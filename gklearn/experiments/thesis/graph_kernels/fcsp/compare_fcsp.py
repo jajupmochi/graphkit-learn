@@ -10,6 +10,7 @@ This script compares the results with and without FCSP.
 from gklearn.dataset import Dataset
 from gklearn.utils import get_graph_kernel_by_name
 from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+from gklearn.experiments import DATASET_ROOT
 import functools
 import os
 import pickle
@@ -17,50 +18,77 @@ import sys
 import logging
 
 
-def run_all(fcsp):
-	save_dir = 'outputs/' + ('fscp' if fcsp == True else 'naive') + '/'
-	os.makedirs(save_dir, exist_ok=True)
+# def run_all(fcsp):
 
-	from sklearn.model_selection import ParameterGrid
+# 	from sklearn.model_selection import ParameterGrid
 
-	Dataset_List = ['Alkane_unlabeled', 'Alkane', 'Acyclic', 'MAO_lite', 'MAO',
-				    'PAH_unlabeled', 'PAH', 'MUTAG', 'Letter-high', 'Letter-med', 'Letter-low',
-					'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD',
-					'BZR', 'COX2', 'DHFR', 'PTC_FM', 'PTC_FR', 'PTC_MM', 'PTC_MR',
-					'Cuneiform', 'KKI', 'OHSU', 'Peking_1', 'SYNTHETICnew',
-					'Synthie', 'SYNTHETIC', 'Fingerprint', 'IMDB-BINARY',
-					'IMDB-MULTI', 'COIL-DEL', 'PROTEINS', 'PROTEINS_full',
-					'Mutagenicity', 'REDDIT-BINARY']
+# 	Dataset_List = ['Alkane_unlabeled', 'Alkane', 'Acyclic', 'MAO_lite', 'MAO',
+# 				    'PAH_unlabeled', 'PAH', 'MUTAG', 'Monoterpens',
+# 					'Letter-high', 'Letter-med', 'Letter-low',
+# 					'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD',
+# 					'BZR', 'COX2', 'DHFR', 'PTC_FM', 'PTC_FR', 'PTC_MM', 'PTC_MR',
+# 					'Cuneiform', 'KKI', 'OHSU', 'Peking_1', 'SYNTHETICnew',
+# 					'Synthie', 'SYNTHETIC', 'Fingerprint', 'IMDB-BINARY',
+# 					'IMDB-MULTI', 'COIL-DEL', 'PROTEINS', 'PROTEINS_full',
+# 					'Mutagenicity', 'REDDIT-BINARY']
 
-	Kernel_List = ['ShortestPath', 'StructuralSP']
+# 	Kernel_List = ['ShortestPath', 'StructuralSP']
 
-	work_grid = ParameterGrid({'kernel': Kernel_List[:], 'dataset': Dataset_List[:]})
+# 	task_grid = ParameterGrid({'kernel': Kernel_List[:], 'dataset': Dataset_List[:]})
 
-	for work in list(work_grid):
+# 	for task in list(task_grid):
 
-		save_file_suffix = '.' + work['kernel'] + '.' + work['dataset']
-		file_name = os.path.join(save_dir, 'run_time' + save_file_suffix + '.pkl')
-		if not os.path.isfile(file_name):
-			print()
-			print((work['kernel'], work['dataset']))
+# 		save_file_suffix = '.' + task['kernel'] + '.' + task['dataset']
+# 		file_name = os.path.join(save_dir, 'run_time' + save_file_suffix + '.pkl')
+# 		if not os.path.isfile(file_name):
+# 			print()
+# 			print((task['kernel'], task['dataset']))
 
-			try:
-				gram_matrix, run_time = run_work(work['kernel'], work['dataset'], fcsp)
-			except Exception as exp:
-				print('An exception occured when running this experiment:')
-				LOG_FILENAME = save_dir + 'error.txt'
-				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
-				logging.exception(save_file_suffix)
-				print(repr(exp))
+# 			try:
+# 				gram_matrix, run_time = compute(task['kernel'], task['dataset'], fcsp)
 
-			save_file_suffix = '.' + work['kernel'] + work['dataset']
+# 			except Exception as exp:
+# 				print('An exception occured when running this experiment:')
+# 				LOG_FILENAME = save_dir + 'error.txt'
+# 				logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+# 				logging.exception('\n--------------' + save_file_suffix + '------------------')
+# 				print(repr(exp))
+# 			else:
+# 				save_file_suffix = '.' + task['kernel'] + task['dataset']
 
+# 				with open(file_name, 'wb') as f:
+# 					pickle.dump(run_time, f)
+
+
+
+def run_task(kernel_name, ds_name, fcsp):
+	save_file_suffix = '.' + kernel_name + '.' + ds_name + '.' + str(fcsp)
+	file_name = os.path.join(save_dir, 'run_time' + save_file_suffix + '.pkl')
+
+	if not os.path.isfile(file_name):
+		print()
+		print((kernel_name, ds_name, str(fcsp)))
+
+		try:
+			gram_matrix, run_time = compute(kernel_name, ds_name, fcsp)
+
+		except Exception as exp:
+			print('An exception occured when running this experiment:')
+			LOG_FILENAME = os.path.join(save_dir, 'error' + save_file_suffix + '.txt')
+			logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+			logging.exception('\n--------------' + save_file_suffix + '------------------')
+			print(repr(exp))
+
+		else:
 			with open(file_name, 'wb') as f:
 				pickle.dump(run_time, f)
 
 
-def run_work(kernel_name, ds_name, fcsp):
-	dataset = Dataset(ds_name, verbose=True)
+def compute(kernel_name, ds_name, fcsp):
+	dataset = Dataset(ds_name, root=DATASET_ROOT, verbose=True)
+	if kernel_name == 'ShortestPath':
+		dataset.trim_dataset(edge_required=True)
+
 
 	mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
 	node_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
@@ -87,8 +115,15 @@ def run_work(kernel_name, ds_name, fcsp):
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
-		fcsp = True if sys.argv[1] == 'True' else False
+		kernel_name = sys.argv[1]
+		ds_name = sys.argv[2]
+		fcsp = True if sys.argv[3] == 'True' else False
 	else:
+		kernel_name = 'ShortestPath'
+		ds_name = 'Acyclic'
 		fcsp = True
-	run_all(fcsp)
 
+	save_dir = 'outputs/'
+	os.makedirs(save_dir, exist_ok=True)
+
+	run_task(kernel_name, ds_name, fcsp)

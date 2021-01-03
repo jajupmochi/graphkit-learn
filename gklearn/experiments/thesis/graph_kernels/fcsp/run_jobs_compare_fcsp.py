@@ -10,27 +10,60 @@ import os
 import re
 
 
-def get_job_script(param):
+OUT_TIME_LIST = [('ShortestPath', 'ENZYMES', 'False'),
+				 ('StructuralSP', 'ENZYMES', 'True'),
+				 ('StructuralSP', 'ENZYMES', 'False'),
+				 ('StructuralSP', 'AIDS', 'False'),
+				 ('ShortestPath', 'NCI1', 'False'),
+				 ('StructuralSP', 'NCI1', 'True'),
+				 ('StructuralSP', 'NCI1', 'False'),
+				 ('ShortestPath', 'NCI109', 'False'),
+				 ('StructuralSP', 'NCI109', 'True'),
+				 ('StructuralSP', 'NCI109', 'False'),
+				 ('ShortestPath', 'DD', 'True'),
+				 ('ShortestPath', 'DD', 'False'),
+				 ('StructuralSP', 'BZR', 'False'),
+				 ('ShortestPath', 'COX2', 'False'),
+				 ('StructuralSP', 'COX2', 'False'),
+				 ('ShortestPath', 'DHFR', 'False'),
+				 ]
+
+OUT_MEM_LIST = [('StructuralSP', 'PROTEINS', 'True'),
+				('StructuralSP', 'PROTEINS', 'False'),
+				('StructuralSP', 'PROTEINS_full', 'True'),
+				('StructuralSP', 'PROTEINS_full', 'False'),
+				('ShortestPath', 'REDDIT-BINARY', 'True'),
+				]
+
+MISS_LABEL_LIST = [('StructuralSP', 'GREC', 'True'),
+				   ('StructuralSP', 'GREC', 'False'),
+				   ('StructuralSP', 'Web', 'True'),
+				   ('StructuralSP', 'Web', 'False'),
+				   ]
+
+
+def get_job_script(kernel, dataset, fcsp):
 	script = r"""
 #!/bin/bash
 
 #SBATCH --exclusive
-#SBATCH --job-name="fcsp.""" + param + r""""
-#SBATCH --partition=long
+#SBATCH --job-name="fcsp.""" + kernel + r"." + dataset + r"." + fcsp + r""""
+#SBATCH --partition=tlong
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jajupmochi@gmail.com
-#SBATCH --output="outputs/output_fcsp.""" + param + r""".txt"
-#SBATCH --error="errors/error_fcsp.""" + param + r""".txt"
+#SBATCH --output="outputs/output_fcsp.""" + kernel + r"." + dataset + r"." + fcsp + r""".txt"
+#SBATCH --error="errors/error_fcsp.""" + kernel + r"." + dataset + r"." + fcsp + r""".txt"
 #
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=100:00:00
-#SBATCH --mem-per-cpu=4000
+#SBATCH --time=300:00:00
+##SBATCH --mem-per-cpu=4000
+#SBATCH --mem=40000
 
 srun hostname
 srun cd /home/2019015/ljia02/graphkit-learn/gklearn/experiments/thesis/graph_kernels/fcsp
-srun python3 compare_fcsp.py """ + param
+srun python3 compare_fcsp.py """ + kernel + r" " + dataset + r" " + fcsp
 	script = script.strip()
 	script = re.sub('\n\t+', '\n', script)
 	script = re.sub('\n +', '\n', script)
@@ -38,15 +71,75 @@ srun python3 compare_fcsp.py """ + param
 	return script
 
 
+def check_task_status(save_dir, *params):
+	str_task_id = '.' + '.'.join(params)
+
+	# Check if the task is in out of memeory or out of space lists or missing labels.
+	if params in OUT_MEM_LIST or params in OUT_TIME_LIST or params in MISS_LABEL_LIST:
+		return True
+
+	# Check if the task is running or in queue of slurm.
+	command = 'squeue --user ljia02 --name "fcsp' + str_task_id + '" --format "%.2t" --noheader'
+	stream = os.popen(command)
+	output = stream.readlines()
+	if len(output) > 0:
+		return True
+
+	# Check if the results are already computed.
+	file_name = os.path.join(save_dir, 'run_time' + str_task_id + '.pkl')
+	if os.path.isfile(file_name):
+		return True
+
+	return False
+
+
 if __name__ == '__main__':
+	save_dir = 'outputs/'
+	os.makedirs(save_dir, exist_ok=True)
 	os.makedirs('outputs/', exist_ok=True)
 	os.makedirs('errors/', exist_ok=True)
 
-	param_list = ['True', 'False']
-	for param in param_list[:]:
-		job_script = get_job_script(param)
-		command = 'sbatch <<EOF\n' + job_script + '\nEOF'
-# 			print(command)
-		os.system(command)
+	from sklearn.model_selection import ParameterGrid
+
+	Dataset_List = ['Alkane_unlabeled', 'Alkane', 'Acyclic', 'MAO_lite', 'MAO',
+				    'PAH_unlabeled', 'PAH', 'MUTAG', 'Monoterpens',
+					'Letter-high', 'Letter-med', 'Letter-low',
+					'ENZYMES', 'AIDS', 'NCI1', 'NCI109', 'DD',
+					# new: not so large.
+					'PTC_FM', 'PTC_FR', 'PTC_MM', 'PTC_MR', 'Chiral', 'Vitamin_D',
+					'ACE', 'Steroid', 'KKI', 'Fingerprint', 'IMDB-BINARY',
+					'IMDB-MULTI', 'Peking_1', 'Cuneiform', 'OHSU', 'BZR', 'COX2',
+					'DHFR', 'SYNTHETICnew', 'Synthie', 'SYNTHETIC',
+					# new: large.
+					'TWITTER-Real-Graph-Partial', 'GREC', 'Web', 'MCF-7',
+					'MCF-7H', 'MOLT-4', 'MOLT-4H', 'NCI-H23', 'NCI-H23H',
+					'OVCAR-8', 'OVCAR-8H', 'P388', 'P388H', 'PC-3', 'PC-3H',
+					'SF-295', 'SF-295H', 'SN12C', 'SN12CH', 'SW-620', 'SW-620H',
+					'TRIANGLES', 'UACC257', 'UACC257H', 'Yeast', 'YeastH',
+					'COLORS-3', 'DBLP_v1', 'REDDIT-MULTI-12K',
+					'REDDIT-MULTI-12K', 'REDDIT-MULTI-12K',
+					'REDDIT-MULTI-12K', 'MSRC_9', 'MSRC_21', 'MSRC_21C',
+					'COLLAB', 'COIL-DEL',
+					'COIL-RAG', 'PROTEINS', 'PROTEINS_full', 'Mutagenicity',
+					'REDDIT-BINARY', 'FRANKENSTEIN', 'REDDIT-MULTI-5K',
+					'REDDIT-MULTI-12K']
+
+	Kernel_List = ['ShortestPath', 'StructuralSP']
+
+	fcsp_list = ['True', 'False']
+
+	task_grid = ParameterGrid({'kernel': Kernel_List[:],
+							'dataset': Dataset_List[:],
+							'fcsp': fcsp_list[:]})
+
+	from tqdm import tqdm
+
+	for task in tqdm(list(task_grid), desc='submitting tasks/jobs'):
+
+		if False == check_task_status(save_dir, task['kernel'], task['dataset'], task['fcsp']):
+			job_script = get_job_script(task['kernel'], task['dataset'], task['fcsp'])
+			command = 'sbatch <<EOF\n' + job_script + '\nEOF'
+	# 			print(command)
+			os.system(command)
 	# 		os.popen(command)
 	# 		output = stream.readlines()
