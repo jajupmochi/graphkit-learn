@@ -23,7 +23,7 @@ def compute_ged(g1, g2, options):
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
 	ged_env.add_nx_graph(g1, '')
 	ged_env.add_nx_graph(g2, '')
-	listID = ged_env.get_all_graph_ids()	
+	listID = ged_env.get_all_graph_ids()
 	ged_env.init(init_type=options['init_option'])
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
@@ -33,9 +33,46 @@ def compute_ged(g1, g2, options):
 	ged_env.run_method(g, h)
 	pi_forward = ged_env.get_forward_map(g, h)
 	pi_backward = ged_env.get_backward_map(g, h)
-	upper = ged_env.get_upper_bound(g, h)	
+	upper = ged_env.get_upper_bound(g, h)
 	dis = upper
-			
+
+	# make the map label correct (label remove map as np.inf)
+	nodes1 = [n for n in g1.nodes()]
+	nodes2 = [n for n in g2.nodes()]
+	nb1 = nx.number_of_nodes(g1)
+	nb2 = nx.number_of_nodes(g2)
+	pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
+	pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
+#		print(pi_forward)
+
+	return dis, pi_forward, pi_backward
+
+
+def pairwise_ged(g1, g2, options={}, sort=True, repeats=1, parallel=False, verbose=True):
+	from gklearn.gedlib import librariesImport, gedlibpy
+
+	ged_env = gedlibpy.GEDEnv()
+	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
+	ged_env.add_nx_graph(g1, '')
+	ged_env.add_nx_graph(g2, '')
+	listID = ged_env.get_all_graph_ids()
+	ged_env.init(init_option=(options['init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES'))
+	ged_env.set_method(options['method'], ged_options_to_string(options))
+	ged_env.init_method()
+
+	g = listID[0]
+	h = listID[1]
+	dis_min = np.inf
+	for i in range(0, repeats):
+		ged_env.run_method(g, h)
+		upper = ged_env.get_upper_bound(g, h)
+		dis = upper
+		if dis < dis_min:
+			dis_min = dis
+			pi_forward = ged_env.get_forward_map(g, h)
+			pi_backward = ged_env.get_backward_map(g, h)
+# 			lower = ged_env.get_lower_bound(g, h)
+
 	# make the map label correct (label remove map as np.inf)
 	nodes1 = [n for n in g1.nodes()]
 	nodes2 = [n for n in g2.nodes()]
@@ -56,7 +93,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()
-	
+
 	node_labels = ged_env.get_all_node_labels()
 	edge_labels =  ged_env.get_all_edge_labels()
 	node_label_costs = label_costs_to_matrix(options['node_label_costs'], len(node_labels)) if 'node_label_costs' in options else None
@@ -73,7 +110,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	if node_label_costs is None and edge_label_costs is None:
 		neo_options = {'edit_cost': options['edit_cost'],
 				 'is_cml': False,
-				 'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
+				 'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'],
 				 'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
 	else:
 		neo_options = {'edit_cost': options['edit_cost'],
@@ -114,7 +151,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 #			print(i, j, idx_itr, dis)
 		pool.close()
 		pool.join()
-		
+
 	else:
 		ged_vec = []
 		n_edit_operations = []
@@ -146,7 +183,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
-	listID = ged_env.get_all_graph_ids()	
+	listID = ged_env.get_all_graph_ids()
 	ged_env.init()
 	if parallel:
 		options['threads'] = 1
@@ -155,7 +192,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 
 	# compute ged.
 	neo_options = {'edit_cost': options['edit_cost'],
-				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'], 
+				'node_labels': options['node_labels'], 'edge_labels': options['edge_labels'],
 				'node_attrs': options['node_attrs'], 'edge_attrs': options['edge_attrs']}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
@@ -191,7 +228,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 #			print(i, j, idx_itr, dis)
 		pool.close()
 		pool.join()
-		
+
 	else:
 		ged_vec = []
 		n_edit_operations = []
@@ -232,14 +269,14 @@ def _compute_ged_parallel(env, gid1, gid2, g1, g2, options, sort, repeats):
 
 
 def _compute_ged(env, gid1, gid2, g1, g2, repeats):
-	dis_min = np.inf
+	dis_min = np.inf # @todo: maybe compare distance and then do others (faster).
 	for i in range(0, repeats):
 		env.run_method(gid1, gid2)
 		pi_forward = env.get_forward_map(gid1, gid2)
 		pi_backward = env.get_backward_map(gid1, gid2)
-		upper = env.get_upper_bound(gid1, gid2)	
+		upper = env.get_upper_bound(gid1, gid2)
 		dis = upper
-				
+
 		# make the map label correct (label remove map as np.inf)
 		nodes1 = [n for n in g1.nodes()]
 		nodes2 = [n for n in g2.nodes()]
@@ -247,7 +284,7 @@ def _compute_ged(env, gid1, gid2, g1, g2, repeats):
 		nb2 = nx.number_of_nodes(g2)
 		pi_forward = [nodes2[pi] if pi < nb2 else np.inf for pi in pi_forward]
 		pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
-		
+
 		if dis < dis_min:
 			dis_min = dis
 			pi_forward_min = pi_forward
@@ -268,7 +305,7 @@ def label_costs_to_matrix(costs, nb_labels):
 
 	Returns
 	-------
-	cost_matrix : numpy.array. 
+	cost_matrix : numpy.array.
 		The reformed label cost matrix of size (nb_labels, nb_labels). Each row/column of cost_matrix corresponds to a label, and the first label is the dummy label. This is the same setting as in GEDData.
 	"""
 	# Initialize label cost matrix.
@@ -282,13 +319,13 @@ def label_costs_to_matrix(costs, nb_labels):
 	for row in range(1, nb_labels + 1):
 		cost_matrix[row, 0] = costs[i]
 		i += 1
-	# Costs of substitutions.				
+	# Costs of substitutions.
 	for row in range(1, nb_labels + 1):
 		for col in range(row + 1, nb_labels + 1):
 			cost_matrix[row, col] = costs[i]
 			cost_matrix[col, row] = costs[i]
 			i += 1
-			
+
 	return cost_matrix
 
 
@@ -299,7 +336,7 @@ def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, is
 			edge_labels = kwargs.get('edge_labels', [])
 			return get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 											  node_labels=node_labels, edge_labels=edge_labels)
-		else: 
+		else:
 			raise Exception('Edit cost "', edit_cost, '" is not supported.')
 	else:
 		if edit_cost == 'LETTER' or edit_cost == 'LETTER2':
@@ -307,21 +344,21 @@ def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, is
 		elif edit_cost == 'NON_SYMBOLIC':
 			node_attrs = kwargs.get('node_attrs', [])
 			edge_attrs = kwargs.get('edge_attrs', [])
-			return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map, 
+			return get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
 												node_attrs=node_attrs, edge_attrs=edge_attrs)
 		elif edit_cost == 'CONSTANT':
 			node_labels = kwargs.get('node_labels', [])
 			edge_labels = kwargs.get('edge_labels', [])
-			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map, 
+			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
 											 node_labels=node_labels, edge_labels=edge_labels)
-		else: 
-			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)	
-		
-		
-def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map, 
+		else:
+			return get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map)
+
+
+def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 										node_labels=[], edge_labels=[]):
 	"""Compute times that edit operations are used in an edit path for symbolic-labeled graphs, where the costs are different for each pair of nodes.
-	
+
 	Returns
 	-------
 	list
@@ -330,7 +367,7 @@ def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 	# Initialize.
 	nb_ops_node = np.zeros((1 + len(node_labels), 1 + len(node_labels)))
 	nb_ops_edge = np.zeros((1 + len(edge_labels), 1 + len(edge_labels)))
-	
+
 	# For nodes.
 	nodes1 = [n for n in g1.nodes()]
 	for i, map_i in enumerate(forward_map):
@@ -350,7 +387,7 @@ def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 			label = tuple(g2.nodes[nodes2[i]].items())
 			idx_label = node_labels.index(label) # @todo: faster
 			nb_ops_node[0, idx_label + 1] += 1
-			
+
 	# For edges.
 	edges1 = [e for e in g1.edges()]
 	edges2_marked = []
@@ -371,7 +408,7 @@ def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 				label2 = tuple(g2.edges[(nf2, nt2)].items())
 				if label1 != label2:
 					idx_label2 = edge_labels.index(label2) # @todo: faster
-					nb_ops_edge[idx_label1 + 1, idx_label2 + 1] += 1		
+					nb_ops_edge[idx_label1 + 1, idx_label2 + 1] += 1
 			# Switch nf2 and nt2, for directed graphs.
 			elif (nt2, nf2) in g2.edges():
 				edges2_marked.append((nt2, nf2))
@@ -389,7 +426,7 @@ def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 			label = tuple(g2.edges[(nt, nf)].items())
 			idx_label = edge_labels.index(label) # @todo: faster
 			nb_ops_edge[0, idx_label + 1] += 1
-			
+
 	# Reform the numbers of edit oeprations into a vector.
 	nb_eo_vector = []
 	# node insertion.
@@ -412,9 +449,9 @@ def get_nb_edit_operations_symbolic_cml(g1, g2, forward_map, backward_map,
 	for i in range(1, len(nb_ops_edge)):
 		for j in range(i + 1, len(nb_ops_edge)):
 			nb_eo_vector.append(nb_ops_edge[i, j])
-	
+
 	return nb_eo_vector
-	
+
 
 def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
 									node_labels=[], edge_labels=[]):
@@ -426,7 +463,7 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
 	n_ei = 0
 	n_er = 0
 	n_es = 0
-	
+
 	nodes1 = [n for n in g1.nodes()]
 	for i, map_i in enumerate(forward_map):
 		if map_i == np.inf:
@@ -441,9 +478,9 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
 	for map_i in backward_map:
 		if map_i == np.inf:
 			n_vi += 1
-	
+
 #	idx_nodes1 = range(0, len(node1))
-	
+
 	edges1 = [e for e in g1.edges()]
 	nb_edges2_cnted = 0
 	for n1, n2 in edges1:
@@ -475,7 +512,7 @@ def get_nb_edit_operations_symbolic(g1, g2, forward_map, backward_map,
 		else:
 			n_er += 1
 	n_ei = nx.number_of_edges(g2) - nb_edges2_cnted
-	
+
 	return n_vi, n_vr, n_vs, n_ei, n_er, n_es
 
 
@@ -488,7 +525,7 @@ def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
 	sod_vs = 0
 	n_ei = 0
 	n_er = 0
-	
+
 	nodes1 = [n for n in g1.nodes()]
 	for i, map_i in enumerate(forward_map):
 		if map_i == np.inf:
@@ -501,9 +538,9 @@ def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
 	for map_i in backward_map:
 		if map_i == np.inf:
 			n_vi += 1
-	
+
 #	idx_nodes1 = range(0, len(node1))
-	
+
 	edges1 = [e for e in g1.edges()]
 	nb_edges2_cnted = 0
 	for n1, n2 in edges1:
@@ -520,7 +557,7 @@ def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
 		else:
 			n_er += 1
 	n_ei = nx.number_of_edges(g2) - nb_edges2_cnted
-	
+
 	return n_vi, n_vr, n_vs, sod_vs, n_ei, n_er
 
 
@@ -536,7 +573,7 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
 	n_er = 0
 	n_es = 0
 	sod_es = 0
-	
+
 	nodes1 = [n for n in g1.nodes()]
 	for i, map_i in enumerate(forward_map):
 		if map_i == np.inf:
@@ -551,9 +588,9 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
 	for map_i in backward_map:
 		if map_i == np.inf:
 			n_vi += 1
-	
+
 #	idx_nodes1 = range(0, len(node1))
-	
+
 	edges1 = [e for e in g1.edges()]
 	for n1, n2 in edges1:
 		idx1 = nodes1.index(n1)
@@ -582,7 +619,7 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
 		else:
 			n_er += 1
 	n_ei = nx.number_of_edges(g2) - n_es
-		
+
 	return n_vi, n_vr, sod_vs, n_ei, n_er, sod_es
 
 
@@ -615,7 +652,7 @@ def ged_options_to_string(options):
 			opt_str += '--log ' + str(val) + ' '
 		elif key == 'randomness':
 			opt_str += '--randomness ' + str(val) + ' '
-			
+
 # 		if not isinstance(val, list):
 # 			opt_str += '--' + key.replace('_', '-') + ' '
 # 			if val == False:
