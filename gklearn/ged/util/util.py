@@ -11,9 +11,10 @@ import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 import sys
-from tqdm import tqdm
+# from tqdm import tqdm
 import networkx as nx
 from gklearn.ged.env import GEDEnv
+from gklearn.utils import get_iters
 
 
 def compute_ged(g1, g2, options):
@@ -135,11 +136,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 			G_listID = listID_toshare
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		if verbose:
-			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
-						desc='computing GEDs', file=sys.stdout)
-		else:
-			iterator = pool.imap_unordered(do_partial, itr, chunksize)
+		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -155,10 +152,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		if verbose:
-			iterator = tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout)
-		else:
-			iterator = range(len(graphs))
+		iterator = get_iters(range(len(graphs)), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
 		for i in iterator:
 #		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
@@ -175,7 +169,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	return ged_vec, ged_mat, n_edit_operations
 
 
-def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbose=True):
+def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, n_jobs=None, verbose=True):
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	# initialize ged env.
@@ -200,7 +194,8 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 		ged_vec = [0 for i in range(len_itr)]
 		n_edit_operations = [0 for i in range(len_itr)]
 		itr = combinations(range(0, len(graphs)), 2)
-		n_jobs = multiprocessing.cpu_count()
+		if n_jobs is None:
+			n_jobs = multiprocessing.cpu_count()
 		if len_itr < 100 * n_jobs:
 			chunksize = int(len_itr / n_jobs) + 1
 		else:
@@ -212,11 +207,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 			G_listID = listID_toshare
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort, repeats)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		if verbose:
-			iterator = tqdm(pool.imap_unordered(do_partial, itr, chunksize),
-						desc='computing GEDs', file=sys.stdout)
-		else:
-			iterator = pool.imap_unordered(do_partial, itr, chunksize)
+		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -232,10 +223,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, verbo
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		if verbose:
-			iterator = tqdm(range(len(graphs)), desc='computing GEDs', file=sys.stdout)
-		else:
-			iterator = range(len(graphs))
+		iterator = get_iters(range(len(graphs)), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
 		for i in iterator:
 #		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
