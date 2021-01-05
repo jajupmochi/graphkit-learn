@@ -10,7 +10,7 @@ import os
 import re
 
 
-OUT_TIME_LIST = [('ShortestPath', 'ENZYMES', 'False'),
+OUT_TIME_LIST = set({('ShortestPath', 'ENZYMES', 'False'),
 				 ('StructuralSP', 'ENZYMES', 'True'),
 				 ('StructuralSP', 'ENZYMES', 'False'),
 				 ('StructuralSP', 'AIDS', 'False'),
@@ -26,20 +26,28 @@ OUT_TIME_LIST = [('ShortestPath', 'ENZYMES', 'False'),
 				 ('ShortestPath', 'COX2', 'False'),
 				 ('StructuralSP', 'COX2', 'False'),
 				 ('ShortestPath', 'DHFR', 'False'),
-				 ]
+				 ('StructuralSP', 'DHFR', 'False'),
+				 ('StructuralSP', 'OHSU', 'True'),
+				 ('StructuralSP', 'OHSU', 'False'),
+				 ('ShortestPath', 'SYNTHETICnew', 'False'),
+				 ('StructuralSP', 'SYNTHETICnew', 'True'),
+				 ('StructuralSP', 'SYNTHETICnew', 'False'),
+				 ('ShortestPath', 'Synthie', 'False'),
+				 ('StructuralSP', 'Synthie', 'True'),
+				 })
 
-OUT_MEM_LIST = [('StructuralSP', 'PROTEINS', 'True'),
+OUT_MEM_LIST = set({('StructuralSP', 'PROTEINS', 'True'),
 				('StructuralSP', 'PROTEINS', 'False'),
 				('StructuralSP', 'PROTEINS_full', 'True'),
 				('StructuralSP', 'PROTEINS_full', 'False'),
 				('ShortestPath', 'REDDIT-BINARY', 'True'),
-				]
+				})
 
-MISS_LABEL_LIST = [('StructuralSP', 'GREC', 'True'),
+MISS_LABEL_LIST = set({('StructuralSP', 'GREC', 'True'),
 				   ('StructuralSP', 'GREC', 'False'),
 				   ('StructuralSP', 'Web', 'True'),
 				   ('StructuralSP', 'Web', 'False'),
-				   ]
+				   })
 
 
 def get_job_script(kernel, dataset, fcsp):
