@@ -34,6 +34,7 @@ OUT_TIME_LIST = set({('ShortestPath', 'ENZYMES', 'False'),
 				 ('StructuralSP', 'SYNTHETICnew', 'False'),
 				 ('ShortestPath', 'Synthie', 'False'),
 				 ('StructuralSP', 'Synthie', 'True'),
+				 ('StructuralSP', 'Synthie', 'False'),
 				 })
 
 OUT_MEM_LIST = set({('StructuralSP', 'PROTEINS', 'True'),
