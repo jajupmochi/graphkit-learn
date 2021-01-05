@@ -36,7 +36,7 @@ def update_group_marker(file_name):
 	marker_fn = os.path.join(path, 'group_names_finished.pkl')
 	if os.path.isfile(marker_fn):
 		with open(marker_fn, 'rb') as f:
-			fns = pickle.loads(f)
+			fns = pickle.load(f)
 			if name in fns:
 				return
 			else:
@@ -170,5 +170,5 @@ if __name__ == '__main__':
  	# dir_folder = 'outputs/CRIANN/edit_costs.repeats.ratios.bipartite/'
  	# group_all_in_folder(dir_folder)
 
-	dir_folder = 'outputs/edit_costs.real_data.num_sols.ratios.IPFP/groups/'
+	dir_folder = 'outputs/CRIANN/edit_costs.real_data.num_sols.ratios.IPFP/groups/'
 	create_group_marker_file(dir_folder)
