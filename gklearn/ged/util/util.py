@@ -136,7 +136,7 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 			G_listID = listID_toshare
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
+		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len_itr, verbose=verbose)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -207,7 +207,7 @@ def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, n_job
 			G_listID = listID_toshare
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort, repeats)
 		pool = Pool(processes=n_jobs, initializer=init_worker, initargs=(graphs, ged_env, listID))
-		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len(graphs), verbose=verbose)
+		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize), desc='computing GEDs', file=sys.stdout, length=len_itr, verbose=verbose)
 #		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
