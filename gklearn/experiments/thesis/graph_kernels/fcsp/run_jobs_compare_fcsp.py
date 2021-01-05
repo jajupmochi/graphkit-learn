@@ -46,7 +46,7 @@ def get_job_script(kernel, dataset, fcsp):
 	script = r"""
 #!/bin/bash
 
-#SBATCH --exclusive
+##SBATCH --exclusive
 #SBATCH --job-name="fcsp.""" + kernel + r"." + dataset + r"." + fcsp + r""""
 #SBATCH --partition=tlong
 #SBATCH --mail-type=ALL

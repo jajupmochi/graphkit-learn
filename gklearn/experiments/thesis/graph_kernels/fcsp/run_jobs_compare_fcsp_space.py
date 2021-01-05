@@ -123,7 +123,7 @@ def get_job_script(kernel, dataset, fcsp):
 	script = r"""
 #!/bin/bash
 
-#SBATCH --exclusive
+##SBATCH --exclusive
 #SBATCH --job-name="fcsp.space.""" + kernel + r"." + dataset + r"." + fcsp + r""""
 #SBATCH --partition=""" + (r"court" if kernel == 'ShortestPath' else r"court") + r"""
 #SBATCH --mail-type=ALL
