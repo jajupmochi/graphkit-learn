@@ -197,7 +197,7 @@ def check_task_status(save_dir, *params):
 		return True
 
 	# Check if the task is running or in queue of slurm.
-	command = 'squeue --user ljia02 --name "fcsp.space' + str_task_id + '" --format "%.2t" --noheader'
+	command = 'squeue --user $USER --name "fcsp.space' + str_task_id + '" --format "%.2t" --noheader'
 	stream = os.popen(command)
 	output = stream.readlines()
 	if len(output) > 0:

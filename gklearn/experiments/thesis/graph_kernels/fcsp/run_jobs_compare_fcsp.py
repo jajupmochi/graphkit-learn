@@ -29,13 +29,22 @@ OUT_TIME_LIST = set({('ShortestPath', 'ENZYMES', 'False'),
 				 ('StructuralSP', 'DHFR', 'False'),
 				 ('StructuralSP', 'OHSU', 'True'),
 				 ('StructuralSP', 'OHSU', 'False'),
+				 ('StructuralSP', 'SYNTHETIC', 'False'),
 				 ('StructuralSP', 'SYNTHETIC', 'True'),
+				 ('StructuralSP', 'SYNTHETIC', 'False'),
 				 ('ShortestPath', 'SYNTHETICnew', 'False'),
 				 ('StructuralSP', 'SYNTHETICnew', 'True'),
 				 ('StructuralSP', 'SYNTHETICnew', 'False'),
 				 ('ShortestPath', 'Synthie', 'False'),
 				 ('StructuralSP', 'Synthie', 'True'),
 				 ('StructuralSP', 'Synthie', 'False'),
+				 ('ShortestPath', 'COIL-DEL', 'False'),
+				 ('StructuralSP', 'COIL-DEL', 'True'),
+				 ('StructuralSP', 'COIL-DEL', 'False'),
+				 ('ShortestPath', 'PROTEINS', 'False'),
+				 ('ShortestPath', 'PROTEINS_full', 'False'),
+				 ('StructuralSP', 'Mutagenicity', 'True'),
+				 ('StructuralSP', 'Mutagenicity', 'False'),
 				 })
 
 OUT_MEM_LIST = set({('StructuralSP', 'PROTEINS', 'True'),
@@ -89,11 +98,19 @@ def check_task_status(save_dir, *params):
 		return True
 
 	# Check if the task is running or in queue of slurm.
-	command = 'squeue --user ljia02 --name "fcsp' + str_task_id + '" --format "%.2t" --noheader'
+	command = 'squeue --user $USER --name "fcsp' + str_task_id + '" --format "%.2t" --noheader'
 	stream = os.popen(command)
 	output = stream.readlines()
 	if len(output) > 0:
 		return True
+
+	# Check if there are more than 10 tlong tasks running.
+	command = 'squeue --user $USER --partition tlong --noheader'
+	stream = os.popen(command)
+	output = stream.readlines()
+	if len(output) > 10:
+		return True
+
 
 	# Check if the results are already computed.
 	file_name = os.path.join(save_dir, 'run_time' + str_task_id + '.pkl')
