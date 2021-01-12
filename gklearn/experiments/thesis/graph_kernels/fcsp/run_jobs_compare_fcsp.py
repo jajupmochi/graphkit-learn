@@ -47,12 +47,14 @@ OUT_TIME_LIST = set({('ShortestPath', 'ENZYMES', 'False'),
 				 ('StructuralSP', 'Mutagenicity', 'False'),
 				 })
 
-OUT_MEM_LIST = set({('StructuralSP', 'PROTEINS', 'True'),
-				('StructuralSP', 'PROTEINS', 'False'),
-				('StructuralSP', 'PROTEINS_full', 'True'),
-				('StructuralSP', 'PROTEINS_full', 'False'),
-				('ShortestPath', 'REDDIT-BINARY', 'True'),
-				})
+OUT_MEM_LIST = set({('StructuralSP', 'DD', 'True'),
+					('StructuralSP', 'DD', 'False'),
+					('StructuralSP', 'PROTEINS', 'True'),
+					('StructuralSP', 'PROTEINS', 'False'),
+					('StructuralSP', 'PROTEINS_full', 'True'),
+					('StructuralSP', 'PROTEINS_full', 'False'),
+					('ShortestPath', 'REDDIT-BINARY', 'True'),
+					})
 
 MISS_LABEL_LIST = set({('StructuralSP', 'GREC', 'True'),
 				   ('StructuralSP', 'GREC', 'False'),
@@ -108,7 +110,7 @@ def check_task_status(save_dir, *params):
 	command = 'squeue --user $USER --partition tlong --noheader'
 	stream = os.popen(command)
 	output = stream.readlines()
-	if len(output) > 10:
+	if len(output) >= 10:
 		return True
 
 
