@@ -45,6 +45,8 @@ OUT_TIME_LIST = set({('ShortestPath', 'ENZYMES', 'False'),
 				 ('ShortestPath', 'PROTEINS_full', 'False'),
 				 ('StructuralSP', 'Mutagenicity', 'True'),
 				 ('StructuralSP', 'Mutagenicity', 'False'),
+				 ('StructuralSP', 'REDDIT-BINARY', 'True'),
+				 ('StructuralSP', 'REDDIT-BINARY', 'False'),
 				 })
 
 OUT_MEM_LIST = set({('StructuralSP', 'DD', 'True'),
