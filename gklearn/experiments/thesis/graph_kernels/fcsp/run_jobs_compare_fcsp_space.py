@@ -16,10 +16,12 @@ OUT_TIME_LIST = []
 
 OUT_MEM_LIST = set({('ShortestPath', 'REDDIT-BINARY', 'True'),
 				('ShortestPath', 'REDDIT-BINARY', 'False'),
+				('StructuralSP', 'ENZYMES', 'False'),
 				('ShortestPath', 'DD', 'True'),
 				('ShortestPath', 'DD', 'False'),
 				('StructuralSP', 'DD', 'True'),
 				('StructuralSP', 'DD', 'False'),
+				('StructuralSP', 'COIL-DEL', 'True'),
 				('ShortestPath', 'COLORS-3', 'True'),
 				('ShortestPath', 'COLORS-3', 'False'),
 				('StructuralSP', 'COLORS-3', 'True'),
