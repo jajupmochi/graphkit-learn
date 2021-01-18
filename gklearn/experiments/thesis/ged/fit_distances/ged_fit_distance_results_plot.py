@@ -10,6 +10,9 @@ import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+# import matplotlib as mpl
+# mpl.rcParams['text.usetex'] = True
+# mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
 
 
 def rounder(x, decimals):
@@ -54,7 +57,7 @@ def df_to_latex_table(df, replace_header=True, end_mid_line=7):
 		i_end = ltx.find('\\\\\n\\midrule\n')
 		replace = r"""\begin{tabular}{lll@{~~}c@{~~}c@{~~}c@{~~}c}
 \toprule
-\multirow{2}[2]{*}{\textbf{Dataset}} & \multirow{2}[2]{*}{\textbf{Distance}} & \multirow{2}[2]{*}{\textbf{Method}} & \multicolumn{2}{c}{\textbf{BIPARTITE}} & \multicolumn{2}{c}{\textbf{IPFP}} \\
+\multirow{2}[2]{*}{\textbf{Dataset}} & \multirow{2}[2]{*}{\textbf{Distance}} & \multirow{2}[2]{*}{\textbf{Method}} & \multicolumn{2}{c}{\textbf{bipartite}} & \multicolumn{2}{c}{\textbf{IPFP}} \\
 \cmidrule(lr){4-5}\cmidrule(lr){6-7}
 &   &   &  \textbf{Train errors} & \textbf{Test errors} & \textbf{Train errors} & \textbf{Test errors} \\
 \midrule
@@ -95,6 +98,9 @@ def beautify_df(df):
 				for idx, index in enumerate(min_indices):
 					df.loc[(ds, gk, index), min_labels[idx]] = '\\textbf{' + df.loc[(ds, gk, index), min_labels[idx]] + '}'
 
+	# Rename indices.
+	df.index.set_levels([r'Euclidean', r'Manhattan'], level=1, inplace=True)
+
 	return df
 
 
@@ -118,6 +124,11 @@ def params_to_latex_table(results):
 				df.loc[idx_r, idx_c] = '-'
 
 # 	df = beautify_df(df)
+	# Rename indices.
+# 	df.index.set_levels([r'\texttt{bipartite}', r'\texttt{IPFP}'], level=1, inplace=True)
+	df.index.set_levels([r'bipartite', r'IPFP'], level=1, inplace=True)
+	df.index.set_levels([r'Euclidean', r'Manhattan'], level=2, inplace=True)
+
 	ltx = df_to_latex_table(df, replace_header=False, end_mid_line=9)
 	return ltx
 
@@ -208,14 +219,11 @@ def print_table_results(results_by_xp):
 	tab.append(["Method", "App","Test"])
 	#setups = ["random","expert","fitted"]
 
-
 	for i,setup in enumerate(results_by_xp.keys()):
 		current_line = [setup]
 		p = results_by_xp[setup]
 		current_line.append(f"{p['mean'][0]:.2f} +- {p['interval'][0]:.2f}")
-
 		current_line.append(f"{p['mean'][1]:.2f} +- {p['interval'][1]:.2f}")
-
 		tab.append(current_line)
 
 	print(tabulate(tab, headers="firstrow"))
@@ -342,6 +350,13 @@ def set_figure(nb_rows):
 	return fig
 
 
+def get_title(edit_cost, distance):
+	ed = 'bipartite' if edit_cost == 'BIPARTITE' else 'IPFP'
+# 	ed = r'\texttt{' + ed + r'}'
+	dis = distance[0].upper() + distance[1:]
+	return ed + ', ' + dis
+
+
 if __name__ == '__main__':
 	from sklearn.model_selection import ParameterGrid
 	import pickle
@@ -370,7 +385,8 @@ if __name__ == '__main__':
 		for col, contents in enumerate(row_grid_list):
 			ax = fig.add_subplot(gs[row, col])
 			y_label = (ds_name[:-10] if ds_name.endswith('_unlabeled') else ds_name) if col == 0 else ''
-			title = contents['edit_cost'] + ', ' + contents['distance'] if row == 0 else ''
+
+			title = get_title(contents['edit_cost'], contents['distance']) if row == 0 else ''
 			p, c = plot_a_task(ax, ds_name, contents['edit_cost'], contents['distance'], title, y_label)
 			results[(ds_name, contents['distance'], contents['edit_cost'])] = p
 			params[(ds_name, contents['distance'], contents['edit_cost'])] = c

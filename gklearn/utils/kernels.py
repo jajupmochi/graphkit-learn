@@ -18,8 +18,8 @@ def deltakernel(x, y):
 
     References
     ----------
-    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between 
-    labeled graphs. In Proceedings of the 20th International Conference on 
+    [1] H. Kashima, K. Tsuda, and A. Inokuchi. Marginalized kernels between
+    labeled graphs. In Proceedings of the 20th International Conference on
     Machine Learning, Washington, DC, United States, 2003.
     """
     return x == y  #(1 if condition else 0)
@@ -68,7 +68,7 @@ def polynomialkernel(x, y, d=1, c=0):
     x, y : array
 
     d : integer, default 1
-    
+
     c : float, default 0
 
     Returns
@@ -89,7 +89,7 @@ def linearkernel(x, y):
     x, y : array
 
     d : integer, default 1
-    
+
     c : float, default 0
 
     Returns

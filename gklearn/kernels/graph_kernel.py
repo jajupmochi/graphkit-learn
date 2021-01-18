@@ -37,7 +37,7 @@ class GraphKernel(object):
 			elif len(graphs[0]) == 0:
 				raise Exception('The graph list given is empty. No computation was performed.')
 			else:
-				self._graphs = [g.copy() for g in graphs[0]]
+				self._graphs = [g.copy() for g in graphs[0]] # @todo: might be very slow.
 				self._gram_matrix = self._compute_gram_matrix()
 				self._gram_matrix_unnorm = np.copy(self._gram_matrix)
 				if self._normalize:

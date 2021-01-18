@@ -139,7 +139,20 @@ Fork the library and open a pull request! Make your own contribute to the commun
 
 ## Citation
 
-Still waiting...
+If you have used `graphkit-learn` in your publication, please cite the the following paper:
+```
+@article{JIA2021,
+	title = "graphkit-learn: A Python Library for Graph Kernels Based on Linear Patterns",
+	journal = "Pattern Recognition Letters",
+	year = "2021",
+	issn = "0167-8655",
+	doi = "https://doi.org/10.1016/j.patrec.2021.01.003",
+	url = "http://www.sciencedirect.com/science/article/pii/S0167865521000131",
+	author = "Linlin Jia and Benoit Gaüzère and Paul Honeine",
+	keywords = "Graph Kernels, Linear Patterns, Python Implementation",
+	abstract = "This paper presents graphkit-learn, the first Python library for efficient computation of graph kernels based on linear patterns, able to address various types of graphs. Graph kernels based on linear patterns are thoroughly implemented, each with specific computing methods, as well as two well-known graph kernels based on non-linear patterns for comparative analysis. Since computational complexity is an Achilles’ heel of graph kernels, we provide several strategies to address this critical issue, including parallelization, the trie data structure, and the FCSP method that we extend to other kernels and edge comparison. All proposed strategies save orders of magnitudes of computing time and memory usage. Moreover, all the graph kernels can be simply computed with a single Python statement, thus are appealing to researchers and practitioners. For the convenience of use, an advanced model selection procedure is provided for both regression and classification problems. Experiments on synthesized datasets and 11 real-world benchmark datasets show the relevance of the proposed library."
+}
+```
 
 ## Acknowledgments
 

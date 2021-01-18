@@ -332,7 +332,8 @@ class DataLoader():
 				content_targets = ga.read().splitlines()  # targets (regression)
 			targets = [int(i) for i in content_targets]
 		else:
-			raise Exception('Can not find targets file. Please make sure there is a "', ds_name, '_graph_labels.txt" or "', ds_name, '_graph_attributes.txt"', 'file in your dataset folder.')
+			exp_msg = 'Can not find targets file. Please make sure there is a "', ds_name, '_graph_labels.txt" or "', ds_name, '_graph_attributes.txt"', 'file in your dataset folder.'
+			raise Exception(exp_msg)
 		if class_label_map is not None:
 			targets = [class_label_map[t] for t in targets]
 

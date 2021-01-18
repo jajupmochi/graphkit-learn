@@ -1,8 +1,8 @@
 """ Utilities function to manage graph files
 """
-import warnings
-warnings.simplefilter('always', DeprecationWarning)
-warnings.warn('The functions in the module "gklearn.utils.graph_files" will be deprecated and removed since version 0.4.0. Use the corresponding functions in the module "gklearn.dataset" instead.', DeprecationWarning)
+# import warnings
+# warnings.simplefilter('always', DeprecationWarning)
+# warnings.warn('The functions in the module "gklearn.utils.graph_files" will be deprecated and removed since version 0.4.0. Use the corresponding functions in the module "gklearn.dataset" instead.', DeprecationWarning)
 
 from os.path import dirname, splitext
 
@@ -26,17 +26,17 @@ def load_dataset(filename, filename_targets=None, gformat=None, **kwargs):
 	y : List
 
 	Targets corresponding to graphs.
-		
+
 	Notes
 	-----
 	This function supports following graph dataset formats:
 
 	'ds': load data from .ds file. See comments of function loadFromDS for a example.
 
-	'cxl': load data from Graph eXchange Language file (.cxl file). See 
+	'cxl': load data from Graph eXchange Language file (.cxl file). See
 	`here <http://www.gupro.de/GXL/Introduction/background.html>`__ for detail.
 
-	'sdf': load data from structured data file (.sdf file). See 
+	'sdf': load data from structured data file (.sdf file). See
 	`here <http://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx>`__
 	for details.
 
@@ -77,20 +77,20 @@ def save_dataset(Gn, y, gformat='gxl', group=None, filename='gfile', **kwargs):
 	import warnings
 	warnings.simplefilter('always', DeprecationWarning)
 	warnings.warn('The function "gklearn.utils.save_dataset" will be deprecated and removed since version 0.4.0. Use the class "gklearn.dataset.DataSaver" instead.', DeprecationWarning)
-	
+
 	import os
 	dirname_ds = os.path.dirname(filename)
 	if dirname_ds != '':
 		dirname_ds += '/'
 		os.makedirs(dirname_ds, exist_ok=True)
-				
+
 	if 'graph_dir' in kwargs:
 		graph_dir = kwargs['graph_dir'] + '/'
 		os.makedirs(graph_dir, exist_ok=True)
 		del kwargs['graph_dir']
 	else:
-		graph_dir = dirname_ds 
-			
+		graph_dir = dirname_ds
+
 	if group == 'xml' and gformat == 'gxl':
 		with open(filename + '.xml', 'w') as fgroup:
 			fgroup.write("<?xml version=\"1.0\"?>")
@@ -122,7 +122,7 @@ def load_ct(filename): # @todo: this function is only tested on CTFile V2000; he
 	1  3  1  1 <- each line describes an edge : to, from, bond type, bond stereo
 
 	2  3  1  1
-	  
+
 	Check `CTFile Formats file <https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=10&ved=2ahUKEwivhaSdjsTlAhVhx4UKHczHA8gQFjAJegQIARAC&url=https%3A%2F%2Fwww.daylight.com%2Fmeetings%2Fmug05%2FKappler%2Fctfile.pdf&usg=AOvVaw1cDNrrmMClkFPqodlF2inS>`__
 	for detailed format discription.
 	"""
@@ -144,7 +144,7 @@ def load_ct(filename): # @todo: this function is only tested on CTFile V2000; he
 			if count_line_tags[i] != '': # if not obsoleted
 				g.graph[count_line_tags[i]] = tmp[i].strip()
 			i += 1
-		
+
 		# read the atom block.
 		atom_tags = ['x', 'y', 'z', 'atom_symbol', 'mass_difference', 'charge', 'atom_stereo_parity', 'hydrogen_count_plus_1', 'stereo_care_box', 'valence', 'h0_designator', '', '', 'atom_atom_mapping_number', 'inversion_retention_flag', 'exact_change_flag']
 		for i in range(0, nb_atoms):
@@ -156,7 +156,7 @@ def load_ct(filename): # @todo: this function is only tested on CTFile V2000; he
 				if atom_tags[j] != '':
 					g.nodes[i][atom_tags[j]] = tmp[j].strip()
 				j += 1
-				
+
 		# read the bond block.
 		bond_tags = ['first_atom_number', 'second_atom_number', 'bond_type', 'bond_stereo', '', 'bond_topology', 'reacting_center_status']
 		for i in range(0, nb_bonds):
@@ -169,7 +169,7 @@ def load_ct(filename): # @todo: this function is only tested on CTFile V2000; he
 				if bond_tags[j] != '':
 					g.edges[(n1, n2)][bond_tags[j]] = tmp[j].strip()
 				j += 1
-				
+
 	# get label names.
 	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 	atom_symbolic = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, None, None, 1, 1, 1]
@@ -188,7 +188,7 @@ def load_ct(filename): # @todo: this function is only tested on CTFile V2000; he
 			else:
 				label_names['edge_attrs'].append(key)
 		break
-		
+
 	return g, label_names
 
 
@@ -215,19 +215,19 @@ def load_gxl(filename): # @todo: directed graphs.
 		for attr in edge.iter('attr'):
 			labels[attr.attrib['name']] = attr[0].text
 		g.add_edge(dic[edge.attrib['from']], dic[edge.attrib['to']], **labels)
-		
+
 	# get label names.
 	label_names = {'node_labels': [], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 	for node in root.iter('node'):
 		for attr in node.iter('attr'):
-			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow. 
+			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow.
 				label_names['node_labels'].append(attr.attrib['name'])
 			else:
 				label_names['node_attrs'].append(attr.attrib['name'])
 		break
 	for edge in root.iter('edge'):
 		for attr in edge.iter('attr'):
-			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow. 
+			if attr[0].tag == 'int': # @todo: this maybe wrong, and slow.
 				label_names['edge_labels'].append(attr.attrib['name'])
 			else:
 				label_names['edge_attrs'].append(attr.attrib['name'])
@@ -249,20 +249,20 @@ def save_gxl(graph, filename, method='default', node_labels=[], edge_labels=[], 
 		gxl_file.write("<graph id=\"" + name + "\" edgeids=\"false\" edgemode=\"undirected\">\n")
 		for v, attrs in graph.nodes(data=True):
 			gxl_file.write("<node id=\"_" + str(v) + "\">")
-			for l_name in node_labels:	
-				gxl_file.write("<attr name=\"" + l_name + "\"><int>" + 
+			for l_name in node_labels:
+				gxl_file.write("<attr name=\"" + l_name + "\"><int>" +
 							   str(attrs[l_name]) + "</int></attr>")
-			for a_name in node_attrs:	
-				gxl_file.write("<attr name=\"" + a_name + "\"><float>" + 
+			for a_name in node_attrs:
+				gxl_file.write("<attr name=\"" + a_name + "\"><float>" +
 							   str(attrs[a_name]) + "</float></attr>")
 			gxl_file.write("</node>\n")
 		for v1, v2, attrs in graph.edges(data=True):
 			gxl_file.write("<edge from=\"_" + str(v1) + "\" to=\"_" + str(v2) + "\">")
-			for l_name in edge_labels:	
-				gxl_file.write("<attr name=\"" + l_name + "\"><int>" + 
+			for l_name in edge_labels:
+				gxl_file.write("<attr name=\"" + l_name + "\"><int>" +
 							   str(attrs[l_name]) + "</int></attr>")
-			for a_name in edge_attrs:	
-				gxl_file.write("<attr name=\"" + a_name + "\"><float>" + 
+			for a_name in edge_attrs:
+				gxl_file.write("<attr name=\"" + a_name + "\"><float>" +
 							   str(attrs[a_name]) + "</float></attr>")
 			gxl_file.write("</edge>\n")
 		gxl_file.write("</graph>\n")
@@ -276,7 +276,7 @@ def save_gxl(graph, filename, method='default', node_labels=[], edge_labels=[], 
 		attr['edgeids'] = 'true'
 		attr['edgemode'] = 'undirected'
 		graph_node = ET.SubElement(root_node, 'graph', attrib=attr)
-	
+
 		for v in graph:
 			current_node = ET.SubElement(graph_node, 'node', attrib={'id': str(v)})
 			for attr in graph.nodes[v].keys():
@@ -285,7 +285,7 @@ def save_gxl(graph, filename, method='default', node_labels=[], edge_labels=[], 
 				cur_value = ET.SubElement(cur_attr,
 										  graph.nodes[v][attr].__class__.__name__)
 				cur_value.text = graph.nodes[v][attr]
-	
+
 		for v1 in graph:
 			for v2 in graph[v1]:
 				if (v1 < v2):  # Non oriented graphs
@@ -302,7 +302,7 @@ def save_gxl(graph, filename, method='default', node_labels=[], edge_labels=[], 
 						cur_value = ET.SubElement(
 							cur_attr, graph[v1][v2][attr].__class__.__name__)
 						cur_value.text = str(graph[v1][v2][attr])
-	
+
 		tree = ET.ElementTree(root_node)
 		tree.write(filename)
 	elif method == 'gedlib':
@@ -458,11 +458,11 @@ def load_mat(filename, order): # @todo: need to be updated (auto order) or depre
 						g.add_edge(col, row)
 					data.append(g)
 					# print(g.edges(data=True))
-					
+
 	label_names = {'node_labels': ['label_1'], 'edge_labels': [], 'node_attrs': [], 'edge_attrs': []}
 	if order[1] == 0:
 		label_names['edge_labels'].append('label_1')
-		
+
 	return data, y, label_names
 
 
@@ -477,12 +477,12 @@ def load_tud(filename):
 	import networkx as nx
 	from os import listdir
 	from os.path import dirname, basename
-	
-	
+
+
 	def get_infos_from_readme(frm): # @todo: add README (cuniform), maybe node/edge label maps.
 		"""Get information from DS_label_readme.txt file.
 		"""
-		
+
 		def get_label_names_from_line(line):
 			"""Get names of labels/attributes from a line.
 			"""
@@ -490,8 +490,8 @@ def load_tud(filename):
 			names = str_names.split(',')
 			names = [attr.strip() for attr in names]
 			return names
-		
-		
+
+
 		def get_class_label_map(label_map_strings):
 			label_map = {}
 			for string in label_map_strings:
@@ -500,7 +500,7 @@ def load_tud(filename):
 			return label_map
 
 
-		label_names = {'node_labels': [], 'node_attrs': [], 
+		label_names = {'node_labels': [], 'node_attrs': [],
 					   'edge_labels': [], 'edge_attrs': []}
 		class_label_map = None
 		class_label_map_strings = []
@@ -528,16 +528,16 @@ def load_tud(filename):
 					line = content_rm[i].strip()
 				class_label_map = get_class_label_map(class_label_map_strings)
 			i += 1
-				
+
 		return label_names, class_label_map
 
-	
+
 	# get dataset name.
 	dirname_dataset = dirname(filename)
 	filename = basename(filename)
 	fn_split = filename.split('_A')
 	ds_name = fn_split[0].strip()
-	
+
 	# load data file names
 	for name in listdir(dirname_dataset):
 		if ds_name + '_A' in name:
@@ -561,20 +561,20 @@ def load_tud(filename):
 		# this is supposed to be the node attrs, make sure to put this as the last 'elif'
 		elif ds_name + '_attributes' in name:
 			fna = dirname_dataset + '/' + name
-			
+
 	# get labels and attributes names.
 	if 'frm' in locals():
 		label_names, class_label_map = get_infos_from_readme(frm)
 	else:
-		label_names = {'node_labels': [], 'node_attrs': [], 
+		label_names = {'node_labels': [], 'node_attrs': [],
 					   'edge_labels': [], 'edge_attrs': []}
 		class_label_map = None
-	
+
 	with open(fgi) as gi:
 		content_gi = gi.read().splitlines()  # graph indicator
 	with open(fam) as am:
 		content_am = am.read().splitlines()  # adjacency matrix
-	
+
 	# load targets.
 	if 'fgl' in locals():
 		with open(fgl) as gl:
@@ -609,7 +609,7 @@ def load_tud(filename):
 	else:
 		for i, line in enumerate(content_gi):
 			data[int(line) - 1].add_node(i)
-			
+
 	# add edges
 	for line in content_am:
 		tmp = line.split(',')
@@ -670,7 +670,7 @@ def load_tud(filename):
 					data[g].edges[n[0], n[1]][a_name] = attrs[i]
 
 	return data, targets, label_names
-			
+
 
 def load_from_ds(filename, filename_targets):
 	"""Load data from .ds file.
@@ -681,9 +681,9 @@ def load_from_ds(filename, filename_targets):
 
 	'.gxl': see dunction load_gxl for detail.
 
-	Note these graph formats are checked automatically by the extensions of 
+	Note these graph formats are checked automatically by the extensions of
 	graph files.
-	"""		
+	"""
 	dirname_dataset = dirname(filename)
 	data = []
 	y = []
@@ -695,7 +695,7 @@ def load_from_ds(filename, filename_targets):
 		load_file_fun = load_ct
 	elif extension == 'gxl' or extension == 'sdf': # @todo: .sdf not tested yet.
 		load_file_fun = load_gxl
-		
+
 	if filename_targets is None or filename_targets == '':
 		for i in range(0, len(content)):
 			tmp = content[i].split(' ')
@@ -711,7 +711,7 @@ def load_from_ds(filename, filename_targets):
 			g, l_names = load_file_fun(dirname_dataset + '/' + tmp.replace('#', '', 1))
 			data.append(g)
 			_append_label_names(label_names, l_names)
-		
+
 		with open(filename_targets) as fnt:
 			content_y = fnt.read().splitlines()
 		# assume entries in filename and filename_targets have the same order.
@@ -719,13 +719,13 @@ def load_from_ds(filename, filename_targets):
 			tmp = item.split(' ')
 			# assume the 3rd entry in a line is y (for Alkane dataset)
 			y.append(float(tmp[2]))
-			
+
 	return data, y, label_names
 
 
 # def load_from_cxl(filename):
 # 	import xml.etree.ElementTree as ET
-# 	
+#
 # 	dirname_dataset = dirname(filename)
 # 	tree = ET.parse(filename)
 # 	root = tree.getroot()
@@ -736,11 +736,11 @@ def load_from_ds(filename, filename_targets):
 # 		mol_class = graph.attrib['class']
 # 		data.append(load_gxl(dirname_dataset + '/' + mol_filename))
 # 		y.append(mol_class)
-		
-		
+
+
 def load_from_xml(filename, dir_dataset=None):
 	import xml.etree.ElementTree as ET
-	
+
 	if dir_dataset is not None:
 		dir_dataset = dir_dataset
 	else:
@@ -757,16 +757,16 @@ def load_from_xml(filename, dir_dataset=None):
 		data.append(g)
 		_append_label_names(label_names, l_names)
 		y.append(mol_class)
-		
+
 	return data, y, label_names
 
 
 def _append_label_names(label_names, new_names):
 	for key, val in label_names.items():
 		label_names[key] += [name for name in new_names[key] if name not in val]
-		
-			
-if __name__ == '__main__':	
+
+
+if __name__ == '__main__':
 #	### Load dataset from .ds file.
 #	# .ct files.
 #	ds = {'name': 'Alkane', 'dataset': '../../datasets/Alkane/dataset.ds',
@@ -782,7 +782,7 @@ if __name__ == '__main__':
 # 	print(Gn[1].nodes(data=True))
 # 	print(Gn[1].edges(data=True))
 # 	print(targets[1])
-	
+
 # 	# .gxl file.
 # 	ds_file = '../../datasets/monoterpenoides/dataset_10+.ds'  # node/edge symb
 # 	Gn, y, label_names = load_dataset(ds_file)
@@ -803,7 +803,7 @@ if __name__ == '__main__':
 #	### Convert graph from one format to another.
 #	# .gxl file.
 #	import networkx as nx
-#	ds = {'name': 'monoterpenoides', 
+#	ds = {'name': 'monoterpenoides',
 #		  'dataset': '../../datasets/monoterpenoides/dataset_10+.ds'}  # node/edge symb
 #	Gn, y = loadDataset(ds['dataset'])
 #	y = [int(i) for i in y]
@@ -826,13 +826,13 @@ if __name__ == '__main__':
 #	filename = '/media/ljia/DATA/research-repo/codes/others/gedlib/tests_linlin/generated_datsets/monoterpenoides/gxl/monoterpenoides'
 #	xparams = {'method': 'gedlib'}
 #	saveDataset(Gn, y, gformat='gxl', group='xml', filename=filename, xparams=xparams)
-	
+
 	# save dataset.
 #	ds = {'name': 'MUTAG', 'dataset': '../../datasets/MUTAG/MUTAG.mat',
 #		  'extra_params': {'am_sp_al_nl_el': [0, 0, 3, 1, 2]}}  # node/edge symb
 #	Gn, y = loadDataset(ds['dataset'], extra_params=ds['extra_params'])
 #	saveDataset(Gn, y, group='xml', filename='temp/temp')
-	
+
 	# test - new way to add labels and attributes.
 #	dataset = '../../datasets/SYNTHETICnew/SYNTHETICnew_A.txt'
 # 	filename = '../../datasets/Fingerprint/Fingerprint_A.txt'
