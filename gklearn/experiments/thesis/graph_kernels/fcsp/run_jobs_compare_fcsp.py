@@ -59,6 +59,7 @@ OUT_MEM_LIST = set({('StructuralSP', 'DD', 'True'),
 					('ShortestPath', 'TWITTER-Real-Graph-Partial', 'True'),
 					('ShortestPath', 'TWITTER-Real-Graph-Partial', 'False'),
 					('StructuralSP', 'TWITTER-Real-Graph-Partial', 'True'),
+					('StructuralSP', 'TWITTER-Real-Graph-Partial', 'False'),
 					})
 
 MISS_LABEL_LIST = set({('StructuralSP', 'GREC', 'True'),
