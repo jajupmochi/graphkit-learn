@@ -15,7 +15,7 @@ if __name__ == '__main__':
          'file': 'run_jobs_compare_fcsp_space.py'
 		 },
 		{'path': 'ged/stability',
-         'file': 'Analysis_stability.ratios.real_data.relative_error.py'
+         'file': 'run_job_edit_costs.real_data.nums_sols.ratios.IPFP.py'
 		 },
 		]
 
