@@ -24,3 +24,6 @@ if __name__ == '__main__':
 		command += 'cd ' + t['path'] + '\n'
 		command += 'python3 ' + t['file'] + '\n'
 		command += 'cd ' + '/'.join(['..'] * len(t['path'].split('/'))) + '\n'
+
+	import os
+	os.system(command)
