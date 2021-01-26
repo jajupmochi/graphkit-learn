@@ -14,6 +14,7 @@ import sys
 from gklearn.utils import get_iters
 import numpy as np
 import networkx as nx
+from control import dlyap
 from gklearn.utils.parallel import parallel_gm, parallel_me
 from gklearn.kernels import RandomWalkMeta
 
@@ -22,7 +23,6 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def __init__(self, **kwargs):
-		from control import dlyap
 		super().__init__(**kwargs)
 
 
