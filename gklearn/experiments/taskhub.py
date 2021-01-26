@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
 	command = ''
 	for t in tasks:
+		print(t['file'])
 		command += 'cd ' + t['path'] + '\n'
 		command += 'python3 ' + t['file'] + '\n'
 		command += 'cd ' + '/'.join(['..'] * len(t['path'].split('/'))) + '\n'
