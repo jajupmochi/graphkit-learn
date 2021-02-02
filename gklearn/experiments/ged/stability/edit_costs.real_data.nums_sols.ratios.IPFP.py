@@ -13,7 +13,7 @@ import pickle
 import logging
 from gklearn.ged.util import compute_geds
 import time
-from utils import get_dataset, set_edit_cost_consts
+from utils import get_dataset, set_edit_cost_consts, dichotomous_permutation
 import sys
 from group_results import group_trials, check_group_existence, update_group_marker
 
@@ -37,7 +37,7 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 				   # the distance between non-symbolic node/edge labels is computed by euclidean distance.
 				   'attr_distance': 'euclidean',
 				   'ratio_runs_from_initial_solutions': 0.25,
-				   # parallel threads. Do not work if mpg_options['parallel'] = False.
+				   # parallel threads. Set to 1 automatically if parallel=True in compute_geds().
 				   'threads': multiprocessing.cpu_count(),
 				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'
 				   }
@@ -98,7 +98,7 @@ def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
 		ged_mats.append(ged_mat)
 		runtimes.append(runtime)
 
-	# Group trials and Remove single files.
+	# Group trials and remove single files.
 	# @todo: if the program stops between the following lines, then there may be errors.
 	name_prefix = 'ged_matrix' + name_middle
 	group_trials(save_dir, name_prefix, True, True, False, num_trials=num_trials)
@@ -111,20 +111,24 @@ def results_for_a_dataset(ds_name):
 	"""**1.   Get dataset.**"""
 	dataset = get_dataset(ds_name)
 
-	for ratio in ratio_list:
+	for params in list(param_grid):
 		print()
-		print('Ratio:', ratio)
-		for num_solutions in num_solutions_list:
-			print()
-			print('# of solutions:', num_solutions)
-			save_trials_as_group(dataset, ds_name, num_solutions, ratio)
+		print(params)
+		save_trials_as_group(dataset, ds_name, params['num_solutions'], params['ratio'])
 
 
-def get_param_lists(ds_name, test=False):
-	if test:
-		num_solutions_list = [1, 10, 20, 30, 40, 50]
+def get_param_lists(ds_name, mode='test'):
+	if mode == 'test':
+		num_solutions_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
 		ratio_list = [10]
 		return num_solutions_list, ratio_list
+
+	elif mode == 'simple':
+		from sklearn.model_selection import ParameterGrid
+		param_grid = ParameterGrid([
+			{'num_solutions': dichotomous_permutation([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]), 'ratio': [10]},
+			{'num_solutions': [10], 'ratio': dichotomous_permutation([0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9, 10])}])
+# 		print(list(param_grid))
 
 	if ds_name == 'AIDS_symb':
 		num_solutions_list = [1, 20, 40, 60, 80, 100]
@@ -133,7 +137,7 @@ def get_param_lists(ds_name, test=False):
 		num_solutions_list = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # [1, 20, 40, 60, 80, 100]
 		ratio_list = [0.1, 0.3, 0.5, 0.7, 0.9, 1, 3, 5, 7, 9, 10][::-1]
 
-	return num_solutions_list, ratio_list
+	return param_grid
 
 
 if __name__ == '__main__':
@@ -141,7 +145,7 @@ if __name__ == '__main__':
 		ds_name_list = sys.argv[1:]
 	else:
 		ds_name_list = ['Acyclic', 'Alkane_unlabeled', 'MAO_lite', 'Monoterpenoides', 'MUTAG']
-# 		ds_name_list = ['Acyclic'] # 'Alkane_unlabeled']
+# 		ds_name_list = ['MUTAG'] # 'Alkane_unlabeled']
 # 		ds_name_list = ['Acyclic', 'MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
 
 	save_dir = 'outputs/edit_costs.real_data.num_sols.ratios.IPFP/'
@@ -151,5 +155,5 @@ if __name__ == '__main__':
 	for ds_name in ds_name_list:
 		print()
 		print('Dataset:', ds_name)
-		num_solutions_list, ratio_list = get_param_lists(ds_name, test=False)
+		param_grid = get_param_lists(ds_name, mode='simple')
 		results_for_a_dataset(ds_name)
