@@ -210,11 +210,12 @@ def check_task_status(save_dir, *params):
 
 	# Check if the task is already computed.
 	file_name = os.path.join(save_dir, 'space' + str_task_id + '.pkl')
-	if os.path.isfile(file_name):
-		with open(file_name, 'rb') as f:
-			data = pickle.load(f)
-			if data['completed']:
-				return True
+	if os.path.getsize(file_name) > 0:
+		if os.path.isfile(file_name):
+			with open(file_name, 'rb') as f:
+				data = pickle.load(f)
+				if data['completed']:
+					return True
 
 	return False
 
