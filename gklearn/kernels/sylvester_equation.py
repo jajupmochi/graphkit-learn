@@ -27,9 +27,9 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
 
@@ -41,7 +41,7 @@ class SylvesterEquation(RandomWalkMeta):
 		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
-			iterator = get_iters(self._graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(self._graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator]
 	#		# normalized adjacency matrices
 	#		A_wave_list = []
@@ -55,7 +55,7 @@ class SylvesterEquation(RandomWalkMeta):
 				from itertools import combinations_with_replacement
 				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 				len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
-				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self._verbose >= 2))
+				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 				for i, j in iterator:
 					kernel = self._kernel_do(A_wave_list[i], A_wave_list[j], lmda)
@@ -71,9 +71,9 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def _compute_gm_imap_unordered(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
 
@@ -83,7 +83,7 @@ class SylvesterEquation(RandomWalkMeta):
 		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
-			iterator = get_iters(self._graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(self._graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator] # @todo: parallel?
 
 			if self._p is None: # p is uniform distribution as default.
@@ -94,7 +94,7 @@ class SylvesterEquation(RandomWalkMeta):
 				do_fun = self._wrapper_kernel_do
 
 				parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-							glbv=(A_wave_list,), n_jobs=self._n_jobs, verbose=self._verbose)
+							glbv=(A_wave_list,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 			else: # @todo
 				pass
@@ -105,9 +105,9 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
 
@@ -120,11 +120,11 @@ class SylvesterEquation(RandomWalkMeta):
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			A_wave_1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
-			iterator = get_iters(g_list, desc='compute adjacency matrices', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(g_list, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator]
 
 			if self._p is None: # p is uniform distribution as default.
-				iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+				iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 
 				for i in iterator:
 					kernel = self._kernel_do(A_wave_1, A_wave_list[i], lmda)
@@ -139,9 +139,9 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
 
@@ -152,7 +152,7 @@ class SylvesterEquation(RandomWalkMeta):
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
 			A_wave_1 = nx.adjacency_matrix(g1, self._edge_weight).todense().transpose()
-			iterator = get_iters(g_list, desc='compute adjacency matrices', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(g_list, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator] # @todo: parallel?
 
 			if self._p is None: # p is uniform distribution as default.
@@ -169,7 +169,7 @@ class SylvesterEquation(RandomWalkMeta):
 				len_itr = len(g_list)
 				parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 					init_worker=init_worker, glbv=(A_wave_1, A_wave_list), method='imap_unordered',
-					n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+					n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 			else: # @todo
 				pass
@@ -184,9 +184,9 @@ class SylvesterEquation(RandomWalkMeta):
 
 
 	def _compute_single_kernel_series(self, g1, g2):
-		self._check_edge_weight([g1] + [g2], self._verbose)
+		self._check_edge_weight([g1] + [g2], self.verbose)
 		self._check_graphs([g1] + [g2])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
 

@@ -46,7 +46,7 @@ class Marginalized(GraphKernel):
 		self._add_dummy_labels(self._graphs)
 
 		if self._remove_totters:
-			iterator = get_iters(self._graphs, desc='removing tottering', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(self._graphs, desc='removing tottering', file=sys.stdout, verbose=(self.verbose >= 2))
 			# @todo: this may not work.
 			self._graphs = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
 
@@ -57,7 +57,7 @@ class Marginalized(GraphKernel):
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
-					length=len_itr, verbose=(self._verbose >= 2))
+					length=len_itr, verbose=(self.verbose >= 2))
 		for i, j in iterator:
 			kernel = self._kernel_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
@@ -70,16 +70,16 @@ class Marginalized(GraphKernel):
 		self._add_dummy_labels(self._graphs)
 
 		if self._remove_totters:
-			pool = Pool(self._n_jobs)
+			pool = Pool(self.n_jobs)
 			itr = range(0, len(self._graphs))
-			if len(self._graphs) < 100 * self._n_jobs:
-				chunksize = int(len(self._graphs) / self._n_jobs) + 1
+			if len(self._graphs) < 100 * self.n_jobs:
+				chunksize = int(len(self._graphs) / self.n_jobs) + 1
 			else:
 				chunksize = 100
 			remove_fun = self._wrapper_untotter
 			iterator = get_iters(pool.imap_unordered(remove_fun, itr, chunksize),
 							desc='removing tottering', file=sys.stdout,
-							length=len(self._graphs), verbose=(self._verbose >= 2))
+							length=len(self._graphs), verbose=(self.verbose >= 2))
 			for i, g in iterator:
 				self._graphs[i] = g
 			pool.close()
@@ -93,7 +93,7 @@ class Marginalized(GraphKernel):
 			G_gn = gn_toshare
 		do_fun = self._wrapper_kernel_do
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-					glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
+					glbv=(self._graphs,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		return gram_matrix
 
@@ -103,13 +103,13 @@ class Marginalized(GraphKernel):
 
 		if self._remove_totters:
 			g1 = untotterTransformation(g1, self._node_labels, self._edge_labels) # @todo: this may not work.
-			iterator = get_iters(g_list, desc='removing tottering', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(g_list, desc='removing tottering', file=sys.stdout, verbose=(self.verbose >= 2))
 			# @todo: this may not work.
 			g_list = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
 
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 		for i in iterator:
 			kernel = self._kernel_do(g1, g_list[i])
 			kernel_list[i] = kernel
@@ -122,16 +122,16 @@ class Marginalized(GraphKernel):
 
 		if self._remove_totters:
 			g1 = untotterTransformation(g1, self._node_labels, self._edge_labels) # @todo: this may not work.
-			pool = Pool(self._n_jobs)
+			pool = Pool(self.n_jobs)
 			itr = range(0, len(g_list))
-			if len(g_list) < 100 * self._n_jobs:
-				chunksize = int(len(g_list) / self._n_jobs) + 1
+			if len(g_list) < 100 * self.n_jobs:
+				chunksize = int(len(g_list) / self.n_jobs) + 1
 			else:
 				chunksize = 100
 			remove_fun = self._wrapper_untotter
 			iterator = get_iters(pool.imap_unordered(remove_fun, itr, chunksize),
 							desc='removing tottering', file=sys.stdout,
-							length=len(g_list), verbose=(self._verbose >= 2))
+							length=len(g_list), verbose=(self.verbose >= 2))
 			for i, g in iterator:
 				g_list[i] = g
 			pool.close()
@@ -151,7 +151,7 @@ class Marginalized(GraphKernel):
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered',
-			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+			n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		return kernel_list
 

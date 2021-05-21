@@ -33,7 +33,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _compute_gm_series(self):
-#		if self._verbose >= 2:
+#		if self.verbose >= 2:
 #			import warnings
 #			warnings.warn('A part of the computation is parallelized.')
 
@@ -74,17 +74,17 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				G_gn = gn_toshare
 			do_fun = self._wrapper_pairwise
 			parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-			  glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
+			  glbv=(self._graphs,), n_jobs=self.n_jobs, verbose=self.verbose)
 			return gram_matrix
 		else:
-			if self._verbose >= 2:
+			if self.verbose >= 2:
 				import warnings
 				warnings.warn('This base kernel is not parallelized. The serial computation is used instead.')
 			return self._compute_gm_series()
 
 
 	def _compute_kernel_list_series(self, g1, g_list): # @todo: this should be better.
-#		if self._verbose >= 2:
+#		if self.verbose >= 2:
 #			import warnings
 #			warnings.warn('A part of the computation is parallelized.')
 
@@ -126,10 +126,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 			len_itr = len(g_list)
 			parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 				init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered',
-				n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+				n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 			return kernel_list
 		else:
-			if self._verbose >= 2:
+			if self.verbose >= 2:
 				import warnings
 				warnings.warn('This base kernel is not parallelized. The serial computation is used instead.')
 			return self._compute_kernel_list_series(g1, g_list)
@@ -332,15 +332,15 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 	def _compute_gram_itr(self, gram_matrix, all_num_of_each_label):
 		"""Compute Gram matrix using the base kernel.
 		"""
-#		if self._parallel == 'imap_unordered':
+#		if self.parallel == 'imap_unordered':
 #			# compute kernels.
 #			def init_worker(alllabels_toshare):
 #				global G_alllabels
 #				G_alllabels = alllabels_toshare
 #			do_partial = partial(self._wrapper_compute_subtree_kernel, gram_matrix)
 #			parallel_gm(do_partial, gram_matrix, Gn, init_worker=init_worker,
-#						glbv=(all_num_of_each_label,), n_jobs=self._n_jobs, verbose=self._verbose)
-#		elif self._parallel is None:
+#						glbv=(all_num_of_each_label,), n_jobs=self.n_jobs, verbose=self.verbose)
+#		elif self.parallel is None:
 		for i in range(len(gram_matrix)):
 			for j in range(i, len(gram_matrix)):
 				gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],

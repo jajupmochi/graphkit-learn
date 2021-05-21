@@ -28,9 +28,9 @@ class SpectralDecomposition(RandomWalkMeta):
 
 
 	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
@@ -41,7 +41,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
-			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self.verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -58,7 +58,7 @@ class SpectralDecomposition(RandomWalkMeta):
 				from itertools import combinations_with_replacement
 				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 				len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
-				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self._verbose >= 2))
+				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 				for i, j in iterator:
 					kernel = self._kernel_do(q_T_list[i], q_T_list[j], P_list[i], P_list[j], D_list[i], D_list[j], self._weight, self._sub_kernel)
@@ -74,9 +74,9 @@ class SpectralDecomposition(RandomWalkMeta):
 
 
 	def _compute_gm_imap_unordered(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
@@ -87,7 +87,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
-			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self.verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -107,7 +107,7 @@ class SpectralDecomposition(RandomWalkMeta):
 
 				do_fun = self._wrapper_kernel_do
 				parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-							glbv=(q_T_list, P_list, D_list), n_jobs=self._n_jobs, verbose=self._verbose)
+							glbv=(q_T_list, P_list, D_list), n_jobs=self.n_jobs, verbose=self.verbose)
 
 			else: # @todo
 				pass
@@ -118,9 +118,9 @@ class SpectralDecomposition(RandomWalkMeta):
 
 
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
@@ -133,7 +133,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			D1, P1 = np.linalg.eig(A1)
 			P_list = []
 			D_list = []
-			iterator = get_iters(g_list, desc='spectral decompose', file=sys.stdout, verbose=(self._verbose >= 2))
+			iterator = get_iters(g_list, desc='spectral decompose', file=sys.stdout, verbose=(self.verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -145,7 +145,7 @@ class SpectralDecomposition(RandomWalkMeta):
 			if self._p is None: # p is uniform distribution as default.
 				q_T1 = 1 / nx.number_of_nodes(g1)
 				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in g_list]
-				iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+				iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 
 				for i in iterator:
 					kernel = self._kernel_do(q_T1, q_T_list[i], P1, P_list[i], D1, D_list[i], self._weight, self._sub_kernel)
@@ -160,9 +160,9 @@ class SpectralDecomposition(RandomWalkMeta):
 
 
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
@@ -175,8 +175,8 @@ class SpectralDecomposition(RandomWalkMeta):
 			D1, P1 = np.linalg.eig(A1)
 			P_list = []
 			D_list = []
-			if self._verbose >= 2:
-				iterator = tqdm(g_list, desc='spectral decompose', file=sys.stdout)
+			if self.verbose >= 2:
+				iterator = get_iters(g_list, desc='spectral decompose', file=sys.stdout)
 			else:
 				iterator = g_list
 			for G in iterator:
@@ -207,7 +207,7 @@ class SpectralDecomposition(RandomWalkMeta):
 				itr = range(len(g_list))
 				len_itr = len(g_list)
 				parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-					init_worker=init_worker, glbv=(q_T1, P1, D1, q_T_list, P_list, D_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+					init_worker=init_worker, glbv=(q_T1, P1, D1, q_T_list, P_list, D_list), method='imap_unordered', n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 			else: # @todo
 				pass
@@ -222,9 +222,9 @@ class SpectralDecomposition(RandomWalkMeta):
 
 
 	def _compute_single_kernel_series(self, g1, g2):
-		self._check_edge_weight([g1] + [g2], self._verbose)
+		self._check_edge_weight([g1] + [g2], self.verbose)
 		self._check_graphs([g1] + [g2])
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
