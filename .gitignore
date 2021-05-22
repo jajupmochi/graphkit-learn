@@ -79,3 +79,9 @@ outputs/
 
 # pyCharm.
 .idea/
+
+# tests.
+gklearn/tests/datasets/
+
+# Experiments.
+gklearn/experiments/datasets/
