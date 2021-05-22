@@ -3,6 +3,7 @@ These kernels are defined between pairs of vectors.
 """
 import numpy as np
 
+
 def deltakernel(x, y):
 	"""Delta kernel. Return 1 if x == y, 0 otherwise.
 
@@ -56,7 +57,7 @@ def gaussiankernel(x, y, gamma=None):
 # 	kernel = np.exp(kernel)
 # 	return kernel
 
-	return np.exp((np.sum((x - y) ** 2)) * -gamma)
+	return np.exp((np.sum(np.subtract(x, y) ** 2)) * -gamma)
 
 
 
