@@ -369,13 +369,13 @@ class Treelet(GraphKernel):
 
 
 	def _compute_single_kernel_series(self, g1, g2):
-		self._add_dummy_labels([g1] + [g2])
+# 		self._add_dummy_labels([g1] + [g2])
 		canonkeys_1 = self._get_canonkeys(g1)
 		canonkeys_2 = self._get_canonkeys(g2)
 		kernel = self._kernel_do(canonkeys_1, canonkeys_2)
 		return kernel
 
-
+# 	@profile
 	def _kernel_do(self, canonkey1, canonkey2):
 		"""Compute treelet graph kernel between 2 graphs.
 
@@ -392,6 +392,23 @@ class Treelet(GraphKernel):
 		keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
 		vector1 = np.array([(canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys])
 		vector2 = np.array([(canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys])
+
+# 		vector1, vector2 = [], []
+# 		keys1, keys2 = canonkey1, canonkey2
+# 		keys_searched = {}
+# 		for k, v in canonkey1.items():
+# 			if k in keys2:
+# 				vector1.append(v)
+# 				vector2.append(canonkey2[k])
+# 				keys_searched[k] = v
+
+# 		for k, v in canonkey2.items():
+# 			if k in keys1 and k not in keys_searched:
+# 				vector1.append(canonkey1[k])
+# 				vector2.append(v)
+
+# 		vector1, vector2 = np.array(vector1), np.array(vector2)
+
 		kernel = self.sub_kernel(vector1, vector2)
 		return kernel
 
