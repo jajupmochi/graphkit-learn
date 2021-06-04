@@ -303,7 +303,7 @@ class Treelet(GraphKernel):
 
 
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._add_dummy_labels(g_list + [g1])
+# 		self._add_dummy_labels(g_list + [g1])
 
 		# get all canonical keys of all graphs before computing kernels to save
 		# time, but this may cost a lot of memory for large dataset.
