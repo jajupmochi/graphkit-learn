@@ -14,11 +14,14 @@ Created on Tue Apr 14 15:16:34 2020
 
 import numpy as np
 import networkx as nx
+import sys
 from collections import Counter
 # from functools import partial
+from itertools import combinations_with_replacement
 from gklearn.utils import SpecialLabel
 from gklearn.utils.parallel import parallel_gm, parallel_me
 from gklearn.kernels import GraphKernel
+from gklearn.utils.iters import get_iters
 
 
 class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
@@ -268,7 +271,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
 
 		# for each graph
-		for G in Gn:
+		if self.verbose >= 2:
+			iterator = get_iters(Gn, desc='Setting all labels into a tuple')
+		else:
+			iterator = Gn
+		for G in iterator:
 			# set all labels into a tuple.
 			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
 				G.nodes[nd]['label_tuple'] = tuple(attrs[name] for name in self._node_labels)
@@ -288,6 +295,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 			all_num_of_each_label = [] # number of occurence of each label in G
 
 			# @todo: parallel this part.
+# 			if self.verbose >= 2:
+# 				iterator = get_iters(enumerate(Gn), desc='Going through iteration ' + str(h), length=len(Gn))
+# 			else:
+# 				iterator = enumerate(Gn)
 			for idx, G in enumerate(Gn):
 
 				all_multisets = []
@@ -341,11 +352,15 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 #			parallel_gm(do_partial, gram_matrix, Gn, init_worker=init_worker,
 #						glbv=(all_num_of_each_label,), n_jobs=self.n_jobs, verbose=self.verbose)
 #		elif self.parallel is None:
-		for i in range(len(gram_matrix)):
-			for j in range(i, len(gram_matrix)):
-				gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],
-					   all_num_of_each_label[j], gram_matrix[i][j])
-				gram_matrix[j][i] = gram_matrix[i][j]
+		itr = combinations_with_replacement(range(0, len(gram_matrix)), 2)
+		len_itr = int(len(gram_matrix) * (len(gram_matrix) + 1) / 2)
+		iterator = get_iters(itr, desc='Computing Gram matrix for this iteration', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
+		for i, j in iterator:
+# 		for i in iterator:
+# 			for j in range(i, len(gram_matrix)):
+			gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],
+				   all_num_of_each_label[j], gram_matrix[i][j])
+			gram_matrix[j][i] = gram_matrix[i][j]
 
 
 	def _compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2, kernel):
