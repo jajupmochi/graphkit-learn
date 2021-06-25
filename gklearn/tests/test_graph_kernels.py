@@ -25,34 +25,40 @@ def chooseDataset(ds_name):
 	current_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 	root = current_path + '../../datasets/'
 
-	# no node labels (and no edge labels).
-	if ds_name == 'Alkane':
+	# no labels at all.
+	if ds_name == 'Alkane_unlabeled':
 		dataset = Dataset('Alkane_unlabeled', root=root)
 		dataset.trim_dataset(edge_required=False)
 		dataset.cut_graphs(range(1, 10))
-	# node symbolic labels.
+	# node symbolic labels only.
 	elif ds_name == 'Acyclic':
 		dataset = Dataset('Acyclic', root=root)
 		dataset.trim_dataset(edge_required=False)
-	# node non-symbolic labels.
+	# node non-symbolic labels only.
 	elif ds_name == 'Letter-med':
 		dataset = Dataset('Letter-med', root=root)
 		dataset.trim_dataset(edge_required=False)
-	# node symbolic and non-symbolic labels (and edge symbolic labels).
+	# node symbolic + non-symbolic labels + edge symbolic labels.
 	elif ds_name == 'AIDS':
 		dataset = Dataset('AIDS', root=root)
 		dataset.trim_dataset(edge_required=False)
-	# edge non-symbolic labels (no node labels).
+	# node non-symbolic labels + edge non-symbolic labels.
+	elif ds_name == 'Fingerprint':
+		dataset = Dataset('Fingerprint', root=root)
+		dataset.trim_dataset(edge_required=True)
+	# edge symbolic only.
+	elif ds_name == 'MAO':
+		dataset = Dataset('MAO', root=root)
+		dataset.trim_dataset(edge_required=True)
+		irrelevant_labels = {'node_labels': ['atom_symbol'], 'node_attrs': ['x', 'y']}
+		dataset.remove_labels(**irrelevant_labels)
+	# edge non-symbolic labels only.
 	elif ds_name == 'Fingerprint_edge':
 		dataset = Dataset('Fingerprint', root=root)
 		dataset.trim_dataset(edge_required=True)
 		irrelevant_labels = {'edge_attrs': ['orient', 'angle']}
 		dataset.remove_labels(**irrelevant_labels)
-	# edge non-symbolic labels (and node non-symbolic labels).
-	elif ds_name == 'Fingerprint':
-		dataset = Dataset('Fingerprint', root=root)
-		dataset.trim_dataset(edge_required=True)
-	# edge symbolic and non-symbolic labels (and node symbolic and non-symbolic labels).
+	# node symbolic and non-symbolic labels + edge symbolic and non-symbolic labels.
 	elif ds_name == 'Cuneiform':
 		dataset = Dataset('Cuneiform', root=root)
 		dataset.trim_dataset(edge_required=True)
@@ -91,7 +97,7 @@ def assert_equality(compute_fun, **kwargs):
 			assert np.array_equal(lst[i], lst[i + 1])
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
 @pytest.mark.parametrize('weight,compute_method', [(0.01, 'geo'), (1, 'exp')])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_CommonWalk(ds_name, weight, compute_method):
@@ -126,7 +132,7 @@ def test_CommonWalk(ds_name, weight, compute_method):
 	assert_equality(compute, parallel=['imap_unordered', None])
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
 @pytest.mark.parametrize('remove_totters', [False]) #[True, False])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_Marginalized(ds_name, remove_totters):
@@ -319,13 +325,13 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 # @pytest.mark.parametrize(
 #		'compute_method,ds_name,sub_kernel',
 #		[
-#			('sylvester', 'Alkane', None),
-#			('conjugate', 'Alkane', None),
+#			('sylvester', 'Alkane_unlabeled', None),
+#			('conjugate', 'Alkane_unlabeled', None),
 #			('conjugate', 'AIDS', None),
-#			('fp', 'Alkane', None),
+#			('fp', 'Alkane_unlabeled', None),
 #			('fp', 'AIDS', None),
-#			('spectral', 'Alkane', 'exp'),
-#			('spectral', 'Alkane', 'geo'),
+#			('spectral', 'Alkane_unlabeled', 'exp'),
+#			('spectral', 'Alkane_unlabeled', 'geo'),
 #		]
 # )
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -365,7 +371,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 #		assert False, exception
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_ShortestPath(ds_name):
 	"""Test shortest path kernel.
@@ -401,8 +407,8 @@ def test_ShortestPath(ds_name):
 	assert_equality(compute, parallel=['imap_unordered', None], fcsp=[True, False])
 
 
-#@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
-@pytest.mark.parametrize('ds_name', ['Alkane', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint', 'Fingerprint_edge', 'Cuneiform'])
+#@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint', 'Fingerprint_edge', 'Cuneiform'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_StructuralSP(ds_name):
 	"""Test structural shortest path kernel.
@@ -441,7 +447,7 @@ def test_StructuralSP(ds_name):
 	assert_equality(compute, parallel=['imap_unordered', None], fcsp=[True, False])
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 #@pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto', None])
 @pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto'])
@@ -476,7 +482,7 @@ def test_PathUpToH(ds_name, k_func):
 				 compute_method=['trie', 'naive'])
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane', 'AIDS'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_Treelet(ds_name):
 	"""Test treelet kernel.
@@ -510,7 +516,7 @@ def test_Treelet(ds_name):
 	assert_equality(compute, parallel=['imap_unordered', None])
 
 
-@pytest.mark.parametrize('ds_name', ['Acyclic'])
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'MAO', 'AIDS'])
 #@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
 # @pytest.mark.parametrize('base_kernel', ['subtree'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -540,17 +546,17 @@ def test_WLSubtree(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 if __name__ == "__main__":
- 	test_list_graph_kernels()
-#	test_spkernel('Alkane', 'imap_unordered')
- 	# test_ShortestPath('Alkane')
+ 	# test_list_graph_kernels()
+#	test_spkernel('Alkane_unlabeled', 'imap_unordered')
+ 	# test_ShortestPath('Alkane_unlabeled')
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
  	# test_StructuralSP('Acyclic')
 # 	test_StructuralSP('Cuneiform', None)
- 	# test_WLSubtree('Acyclic')
+ 	test_WLSubtree('MAO') # 'Alkane_unlabeled', 'Acyclic', 'AIDS'
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)
@@ -559,7 +565,7 @@ if __name__ == "__main__":
     # test_Marginalized('Acyclic', False)
  	# test_ShortestPath('Acyclic')
 # 	 test_PathUpToH('Acyclic', 'MinMax')
-# 	test_Treelet('Acyclic')
+ 	# test_Treelet('AIDS')
 # 	test_SylvesterEquation('Acyclic')
 # 	test_ConjugateGradient('Acyclic')
 # 	test_FixedPoint('Acyclic')

@@ -26,13 +26,28 @@ from gklearn.utils.iters import get_iters
 
 class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
+
 	def __init__(self, **kwargs):
 		GraphKernel.__init__(self)
-		self._node_labels = kwargs.get('node_labels', [])
-		self._edge_labels = kwargs.get('edge_labels', [])
-		self._height = int(kwargs.get('height', 0))
+		self.node_labels = kwargs.get('node_labels', [])
+		self.edge_labels = kwargs.get('edge_labels', [])
+		self.height = int(kwargs.get('height', 0))
 		self._base_kernel = kwargs.get('base_kernel', 'subtree')
 		self._ds_infos = kwargs.get('ds_infos', {})
+
+
+	##########################################################################
+	# The following is the 1st paradigm to compute kernel matrix, which is
+	# compatible with `scikit-learn`.
+	# -------------------------------------------------------------------
+	# Special thanks to the "GraKeL" library for providing an excellent template!
+	##########################################################################
+
+
+	##########################################################################
+	# The following is the 2nd paradigm to compute kernel matrix. It is
+	# simplified and not compatible with `scikit-learn`.
+	##########################################################################
 
 
 	def _compute_gm_series(self):
@@ -40,7 +55,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 #			import warnings
 #			warnings.warn('A part of the computation is parallelized.')
 
-		self._add_dummy_node_labels(self._graphs)
+# 		self._add_dummy_node_labels(self._graphs)
 
 		# for WL subtree kernel
 		if self._base_kernel == 'subtree':
@@ -62,7 +77,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _compute_gm_imap_unordered(self):
-		self._add_dummy_node_labels(self._graphs)
+# 		self._add_dummy_node_labels(self._graphs)
 
 		if self._base_kernel == 'subtree':
 			gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
@@ -163,6 +178,30 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		return gram_matrix[0][1]
 
+	##########################################################################
+	# The following are the methods used by both diagrams.
+	##########################################################################
+
+	def validate_parameters(self):
+		"""Validate all parameters for the transformer.
+
+		Returns
+		-------
+		None.
+
+		"""
+		super().validate_parameters()
+		if len(self.node_labels) == 0:
+			if len(self.edge_labels) == 0:
+				self._subtree_kernel_do = self._subtree_kernel_do_unlabeled
+			else:
+				self._subtree_kernel_do = self._subtree_kernel_do_el
+		else:
+			if len(self.edge_labels) == 0:
+				self._subtree_kernel_do = self._subtree_kernel_do_nl
+			else:
+				self._subtree_kernel_do = self._subtree_kernel_do_labeled
+
 
 	def pairwise_kernel(self, g1, g2):
 		Gn = [g1.copy(), g2.copy()] # @todo: make sure it is a full deep copy. and faster!
@@ -175,9 +214,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		for G in Gn:
 			# set all labels into a tuple.
 			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
-				G.nodes[nd]['label_tuple'] = tuple(attrs[name] for name in self._node_labels)
+				G.nodes[nd]['lt'] = tuple(attrs[name] for name in self.node_labels)
 			# get the set of original labels
-			labels_ori = list(nx.get_node_attributes(G, 'label_tuple').values())
+			labels_ori = list(nx.get_node_attributes(G, 'lt').values())
 			# number of occurence of each label in G
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 
@@ -185,22 +224,22 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		kernel = self._compute_kernel_itr(kernel, all_num_of_each_label)
 
 		# iterate each height
-		for h in range(1, self._height + 1):
+		for h in range(1, self.height + 1):
 			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
 			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
 	#		all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
 			all_num_of_each_label = [] # number of occurence of each label in G
 
 			# @todo: parallel this part.
-			for idx, G in enumerate(Gn):
+			for G in Gn:
 
 				all_multisets = []
 				for node, attrs in G.nodes(data=True):
 					# Multiset-label determination.
-					multiset = [G.nodes[neighbors]['label_tuple'] for neighbors in G[node]]
+					multiset = [G.nodes[neighbors]['lt'] for neighbors in G[node]]
 					# sorting each multiset
 					multiset.sort()
-					multiset = [attrs['label_tuple']] + multiset # add the prefix
+					multiset = [attrs['lt']] + multiset # add the prefix
 					all_multisets.append(tuple(multiset))
 
 				# label compression
@@ -211,19 +250,19 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				# else assign the number of labels occured + 1 as the compressed label.
 				for value in set_unique:
 					if value in all_set_compressed.keys():
-						set_compressed.update({value: all_set_compressed[value]})
+						set_compressed[value] = all_set_compressed[value]
 					else:
-						set_compressed.update({value: str(num_of_labels_occured + 1)})
+						set_compressed[value] = str(num_of_labels_occured + 1)
 						num_of_labels_occured += 1
 
 				all_set_compressed.update(set_compressed)
 
 				# relabel nodes
 				for idx, node in enumerate(G.nodes()):
-					G.nodes[node]['label_tuple'] = set_compressed[all_multisets[idx]]
+					G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
 
 				# get the set of compressed labels
-				labels_comp = list(nx.get_node_attributes(G, 'label_tuple').values())
+				labels_comp = list(nx.get_node_attributes(G, 'lt').values())
 	#			all_labels_ori.update(labels_comp)
 				all_num_of_each_label.append(dict(Counter(labels_comp)))
 
@@ -252,8 +291,8 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		return kernel
 
 
-	def _subtree_kernel_do(self, Gn):
-		"""Compute Weisfeiler-Lehman kernels between graphs.
+	def _subtree_kernel_do_nl(self, Gn):
+		"""Compute Weisfeiler-Lehman kernels between graphs with node labels.
 
 		Parameters
 		----------
@@ -276,11 +315,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		else:
 			iterator = Gn
 		for G in iterator:
-			# set all labels into a tuple.
+			# set all labels into a tuple. # @todo: remove this original labels or not?
 			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
-				G.nodes[nd]['label_tuple'] = tuple(attrs[name] for name in self._node_labels)
+				G.nodes[nd]['lt'] = tuple(attrs[name] for name in self.node_labels)
 			# get the set of original labels
-			labels_ori = list(nx.get_node_attributes(G, 'label_tuple').values())
+			labels_ori = list(nx.get_node_attributes(G, 'lt').values())
 			# number of occurence of each label in G
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 
@@ -288,7 +327,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		self._compute_gram_itr(gram_matrix, all_num_of_each_label)
 
 		# iterate each height
-		for h in range(1, self._height + 1):
+		for h in range(1, self.height + 1):
 			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
 			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
 	#		all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
@@ -299,45 +338,361 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 # 				iterator = get_iters(enumerate(Gn), desc='Going through iteration ' + str(h), length=len(Gn))
 # 			else:
 # 				iterator = enumerate(Gn)
-			for idx, G in enumerate(Gn):
-
-				all_multisets = []
-				for node, attrs in G.nodes(data=True):
-					# Multiset-label determination.
-					multiset = [G.nodes[neighbors]['label_tuple'] for neighbors in G[node]]
-					# sorting each multiset
-					multiset.sort()
-					multiset = [attrs['label_tuple']] + multiset # add the prefix
-					all_multisets.append(tuple(multiset))
-
-				# label compression
-				set_unique = list(set(all_multisets)) # set of unique multiset labels
-				# a dictionary mapping original labels to new ones.
-				set_compressed = {}
-				# if a label occured before, assign its former compressed label,
-				# else assign the number of labels occured + 1 as the compressed label.
-				for value in set_unique:
-					if value in all_set_compressed.keys():
-						set_compressed.update({value: all_set_compressed[value]})
-					else:
-						set_compressed.update({value: str(num_of_labels_occured + 1)})
-						num_of_labels_occured += 1
-
-				all_set_compressed.update(set_compressed)
-
-				# relabel nodes
-				for idx, node in enumerate(G.nodes()):
-					G.nodes[node]['label_tuple'] = set_compressed[all_multisets[idx]]
-
-				# get the set of compressed labels
-				labels_comp = list(nx.get_node_attributes(G, 'label_tuple').values())
-	#			all_labels_ori.update(labels_comp)
-				all_num_of_each_label.append(dict(Counter(labels_comp)))
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel
 			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
 
 		return gram_matrix
+
+
+	def _subtree_kernel_do_el(self, Gn):
+		"""Compute Weisfeiler-Lehman kernels between graphs with edge labels.
+
+		Parameters
+		----------
+		Gn : List of NetworkX graph
+			List of graphs between which the kernels are computed.
+
+		Return
+		------
+		gram_matrix : Numpy matrix
+			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
+		"""
+		gram_matrix = np.zeros((len(Gn), len(Gn)))
+
+		# initial for height = 0
+		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
+
+		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
+		iterator = combinations_with_replacement(range(0, len(gram_matrix)), 2)
+		for i, j in iterator:
+			gram_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
+			gram_matrix[j][i] = gram_matrix[i][j]
+
+
+		# if h >= 1.
+		if self.height > 0:
+			# Set all edge labels into a tuple. # @todo: remove this original labels or not?
+			if self.verbose >= 2:
+				iterator = get_iters(Gn, desc='Setting all labels into a tuple')
+			else:
+				iterator = Gn
+			for G in iterator:
+				for n1, n2, attrs in G.edges(data=True): # @todo: there may be a better way.
+					G.edges[(n1, n2)]['lt'] = tuple(attrs[name] for name in self.edge_labels)
+
+			# When h == 1, compute the kernel.
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_el(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+
+		# Iterate along heights (>= 2).
+		for h in range(2, self.height + 1):
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+		return gram_matrix
+
+
+	def _subtree_kernel_do_labeled(self, Gn):
+		"""Compute Weisfeiler-Lehman kernels between graphs with both node and
+		edge labels.
+
+		Parameters
+		----------
+		Gn : List of NetworkX graph
+			List of graphs between which the kernels are computed.
+
+		Return
+		------
+		gram_matrix : Numpy matrix
+			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
+		"""
+		gram_matrix = np.zeros((len(Gn), len(Gn)))
+
+		# initial for height = 0
+		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
+
+		# Set all node labels into a tuple and get # of occurence of each label.
+		if self.verbose >= 2:
+			iterator = get_iters(Gn, desc='Setting all node labels into a tuple')
+		else:
+			iterator = Gn
+		for G in iterator:
+			# Set all node labels into a tuple. # @todo: remove this original labels or not?
+			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
+				G.nodes[nd]['lt'] = tuple(attrs[name] for name in self.node_labels)
+			# Get the set of original labels.
+			labels_ori = list(nx.get_node_attributes(G, 'lt').values())
+			# number of occurence of each label in G
+			all_num_of_each_label.append(dict(Counter(labels_ori)))
+
+		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
+		self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+
+		# if h >= 1.
+		if self.height > 0:
+			# Set all edge labels into a tuple. # @todo: remove this original labels or not?
+			if self.verbose >= 2:
+				iterator = get_iters(Gn, desc='Setting all edge labels into a tuple')
+			else:
+				iterator = Gn
+			for G in iterator:
+				for n1, n2, attrs in G.edges(data=True): # @todo: there may be a better way.
+					G.edges[(n1, n2)]['lt'] = tuple(attrs[name] for name in self.edge_labels)
+
+			# When h == 1, compute the kernel.
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_labeled(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+
+		# Iterate along heights.
+		for h in range(2, self.height + 1):
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+		return gram_matrix
+
+
+	def _subtree_kernel_do_unlabeled(self, Gn):
+		"""Compute Weisfeiler-Lehman kernels between graphs without labels.
+
+		Parameters
+		----------
+		Gn : List of NetworkX graph
+			List of graphs between which the kernels are computed.
+
+		Return
+		------
+		gram_matrix : Numpy matrix
+			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
+		"""
+		gram_matrix = np.zeros((len(Gn), len(Gn)))
+
+		# initial for height = 0
+		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
+
+		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
+		iterator = combinations_with_replacement(range(0, len(gram_matrix)), 2)
+		for i, j in iterator:
+			gram_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
+			gram_matrix[j][i] = gram_matrix[i][j]
+
+
+		# if h >= 1.
+		if self.height > 0:
+			# When h == 1, compute the kernel.
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_unlabeled(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+
+		# Iterate along heights (>= 2).
+		for h in range(2, self.height + 1):
+			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
+			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
+			all_num_of_each_label = [] # number of occurence of each label in G
+
+			# @todo: parallel this part.
+			for G in Gn:
+				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
+
+			# Compute subtree kernel with h iterations and add it to the final kernel.
+			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+
+		return gram_matrix
+
+
+	def _subtree_1graph_nl(self, G, all_set_compressed, all_num_of_each_label, num_of_labels_occured):
+		all_multisets = []
+		for node, attrs in G.nodes(data=True):
+			# Multiset-label determination.
+			multiset = [G.nodes[neighbors]['lt'] for neighbors in G[node]]
+			# sorting each multiset
+			multiset.sort()
+			multiset = [attrs['lt']] + multiset # add the prefix
+			all_multisets.append(tuple(multiset))
+
+		# label compression
+		set_unique = list(set(all_multisets)) # set of unique multiset labels
+		# a dictionary mapping original labels to new ones.
+		set_compressed = {}
+		# If a label occured before, assign its former compressed label;
+		# otherwise assign the number of labels occured + 1 as the
+		# compressed label.
+		for value in set_unique:
+			if value in all_set_compressed.keys(): # @todo: put keys() function out of for loop?
+				set_compressed[value] = all_set_compressed[value]
+			else:
+				set_compressed[value] = str(num_of_labels_occured + 1) # @todo: remove str? and what if num_of_labels_occured is extremely big.
+				num_of_labels_occured += 1
+
+		all_set_compressed.update(set_compressed)
+
+		# Relabel nodes.
+		for idx, node in enumerate(G.nodes()):
+			G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
+
+		# Get the set of compressed labels.
+		labels_comp = list(nx.get_node_attributes(G, 'lt').values())
+		all_num_of_each_label.append(dict(Counter(labels_comp)))
+
+		return num_of_labels_occured
+
+
+	def _subtree_1graph_el(self, G, all_set_compressed, all_num_of_each_label, num_of_labels_occured):
+		all_multisets = []
+# 		for node, attrs in G.nodes(data=True):
+		for node in G.nodes():
+			# Multiset-label determination.
+			multiset = [G.edges[(node, neighbors)]['lt'] for neighbors in G[node]] # @todo: check reference for this.
+			# sorting each multiset
+			multiset.sort()
+# 			multiset = [attrs['lt']] + multiset # add the prefix
+			all_multisets.append(tuple(multiset))
+
+		# label compression
+		set_unique = list(set(all_multisets)) # set of unique multiset labels
+		# a dictionary mapping original labels to new ones.
+		set_compressed = {}
+		# If a label occured before, assign its former compressed label;
+		# otherwise assign the number of labels occured + 1 as the
+		# compressed label.
+		for value in set_unique:
+			if value in all_set_compressed.keys(): # @todo: put keys() function out of for loop?
+				set_compressed[value] = all_set_compressed[value]
+			else:
+				set_compressed[value] = str(num_of_labels_occured + 1) # @todo: remove str?
+				num_of_labels_occured += 1
+
+		all_set_compressed.update(set_compressed)
+
+		# Relabel nodes.
+		for idx, node in enumerate(G.nodes()):
+			G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
+
+		# Get the set of compressed labels.
+		labels_comp = list(nx.get_node_attributes(G, 'lt').values()) # @todo: maybe can be faster.
+		all_num_of_each_label.append(dict(Counter(labels_comp)))
+
+		return num_of_labels_occured
+
+
+	def _subtree_1graph_labeled(self, G, all_set_compressed, all_num_of_each_label, num_of_labels_occured):
+		all_multisets = []
+		for node, attrs in G.nodes(data=True):
+			# Multiset-label determination.
+			multiset = [tuple((G.edges[(node, neighbors)]['lt'], G.nodes[neighbors]['lt'])) for neighbors in G[node]] # @todo: check reference for this.
+			# sorting each multiset
+			multiset.sort()
+			multiset = [attrs['lt']] + multiset # add the prefix
+			all_multisets.append(tuple(multiset))
+
+		# label compression
+		set_unique = list(set(all_multisets)) # set of unique multiset labels
+		# a dictionary mapping original labels to new ones.
+		set_compressed = {}
+		# If a label occured before, assign its former compressed label;
+		# otherwise assign the number of labels occured + 1 as the
+		# compressed label.
+		for value in set_unique:
+			if value in all_set_compressed.keys(): # @todo: put keys() function out of for loop?
+				set_compressed[value] = all_set_compressed[value]
+			else:
+				set_compressed[value] = str(num_of_labels_occured + 1) # @todo: remove str?
+				num_of_labels_occured += 1
+
+		all_set_compressed.update(set_compressed)
+
+		# Relabel nodes.
+		for idx, node in enumerate(G.nodes()):
+			G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
+
+		# Get the set of compressed labels.
+		labels_comp = list(nx.get_node_attributes(G, 'lt').values())
+		all_num_of_each_label.append(dict(Counter(labels_comp)))
+
+		return num_of_labels_occured
+
+
+	def _subtree_1graph_unlabeled(self, G, all_set_compressed, all_num_of_each_label, num_of_labels_occured):
+# 		all_multisets = []
+# 		for node, attrs in G.nodes(data=True): # @todo: it can be better.
+# 			# Multiset-label determination.
+# 			multiset = [0 for neighbors in G[node]]
+# 			# sorting each multiset
+# 			multiset.sort()
+# 			multiset = [0] + multiset # add the prefix
+# 			all_multisets.append(tuple(multiset))
+		all_multisets = [len(G[node]) for node in G.nodes()]
+
+		# label compression
+		set_unique = list(set(all_multisets)) # set of unique multiset labels
+		# a dictionary mapping original labels to new ones.
+		set_compressed = {}
+		# If a label occured before, assign its former compressed label;
+		# otherwise assign the number of labels occured + 1 as the
+		# compressed label.
+		for value in set_unique:
+			if value in all_set_compressed.keys(): # @todo: put keys() function out of for loop?
+				set_compressed[value] = all_set_compressed[value]
+			else:
+				set_compressed[value] = str(num_of_labels_occured + 1) # @todo: remove str?
+				num_of_labels_occured += 1
+
+		all_set_compressed.update(set_compressed)
+
+		# Relabel nodes.
+		for idx, node in enumerate(G.nodes()):
+			G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
+
+		# Get the set of compressed labels.
+		labels_comp = list(nx.get_node_attributes(G, 'lt').values())
+		all_num_of_each_label.append(dict(Counter(labels_comp)))
+
+		return num_of_labels_occured
 
 
 	def _compute_gram_itr(self, gram_matrix, all_num_of_each_label):
@@ -358,12 +713,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		for i, j in iterator:
 # 		for i in iterator:
 # 			for j in range(i, len(gram_matrix)):
-			gram_matrix[i][j] = self._compute_subtree_kernel(all_num_of_each_label[i],
-				   all_num_of_each_label[j], gram_matrix[i][j])
+			gram_matrix[i][j] += self._compute_subtree_kernel(all_num_of_each_label[i],
+				   all_num_of_each_label[j])
 			gram_matrix[j][i] = gram_matrix[i][j]
 
 
-	def _compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2, kernel):
+	def _compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2):
 		"""Compute the subtree kernel.
 		"""
 		labels = set(list(num_of_each_label1.keys()) + list(num_of_each_label2.keys()))
@@ -373,7 +728,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		vector2 = np.array([(num_of_each_label2[label]
 							if (label in num_of_each_label2.keys()) else 0)
 							for label in labels])
-		kernel += np.dot(vector1, vector2)
+		kernel = np.dot(vector1, vector2)
 		return kernel
 
 
@@ -441,9 +796,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				# if a label occured before, assign its former compressed label, else assign the number of labels occured + 1 as the compressed label
 				for value in set_unique:
 					if value in all_set_compressed.keys():
-						set_compressed.update({ value : all_set_compressed[value] })
+						set_compressed[value] = all_set_compressed[value]
 					else:
-						set_compressed.update({ value : str(num_of_labels_occured + 1) })
+						set_compressed[value] = str(num_of_labels_occured + 1)
 						num_of_labels_occured += 1
 
 				all_set_compressed.update(set_compressed)
@@ -519,9 +874,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				# if a label occured before, assign its former compressed label, else assign the number of labels occured + 1 as the compressed label
 				for value in set_unique:
 					if value in all_set_compressed.keys():
-						set_compressed.update({ value : all_set_compressed[value] })
+						set_compressed[value] = all_set_compressed[value]
 					else:
-						set_compressed.update({ value : str(num_of_labels_occured + 1) })
+						set_compressed[value] = str(num_of_labels_occured + 1)
 						num_of_labels_occured += 1
 
 				all_set_compressed.update(set_compressed)
@@ -592,9 +947,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				# if a label occured before, assign its former compressed label, else assign the number of labels occured + 1 as the compressed label
 				for value in set_unique:
 					if value in all_set_compressed.keys():
-						set_compressed.update({ value : all_set_compressed[value] })
+						set_compressed[value] = all_set_compressed[value]
 					else:
-						set_compressed.update({ value : str(num_of_labels_occured + 1) })
+						set_compressed[value] = str(num_of_labels_occured + 1)
 						num_of_labels_occured += 1
 
 				all_set_compressed.update(set_compressed)
@@ -610,10 +965,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def _add_dummy_node_labels(self, Gn):
-		if len(self._node_labels) == 0 or (len(self._node_labels) == 1 and self._node_labels[0] == SpecialLabel.DUMMY):
+		if len(self.node_labels) == 0 or (len(self.node_labels) == 1 and self.node_labels[0] == SpecialLabel.DUMMY):
 			for i in range(len(Gn)):
 				nx.set_node_attributes(Gn[i], '0', SpecialLabel.DUMMY)
-			self._node_labels = [SpecialLabel.DUMMY]
+			self.node_labels = [SpecialLabel.DUMMY]
 
 
 class WLSubtree(WeisfeilerLehman):
