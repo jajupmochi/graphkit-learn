@@ -68,7 +68,7 @@ The docs of the library can be found [here](https://graphkit-learn.readthedocs.i
   * [The common walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/common_walk.py) [1]
     * Exponential
     * Geometric
-  * [The marginalized kenrel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/marginalized.py)
+  * [The marginalized kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/marginalized.py)
     * With tottering [2]
     * Without tottering [7]
   * [The generalized random walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/random_walk.py) [3]
