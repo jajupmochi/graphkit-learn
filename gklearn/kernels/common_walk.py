@@ -47,7 +47,7 @@ class CommonWalk(GraphKernel):
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
-					length=len_itr, verbose=(self._verbose >= 2))
+					length=len_itr, verbose=(self.verbose >= 2))
 
 		# direct product graph method - exponential
 		if self._compute_method == 'exp':
@@ -86,7 +86,7 @@ class CommonWalk(GraphKernel):
 			do_fun = self._wrapper_kernel_do_geo
 
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=_init_worker_gm,
-			  glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
+			  glbv=(self._graphs,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		return gram_matrix
 
@@ -100,9 +100,9 @@ class CommonWalk(GraphKernel):
 
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		if self._verbose >= 2:
+		if self.verbose >= 2:
 			iterator = get_iters(range(len(g_list)), desc='Computing kernels',
-						 file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+						 file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 		else:
 			iterator = range(len(g_list))
 
@@ -148,7 +148,7 @@ class CommonWalk(GraphKernel):
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 			init_worker=_init_worker_list, glbv=(g1, g_list), method='imap_unordered',
-			n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+			n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		return kernel_list
 

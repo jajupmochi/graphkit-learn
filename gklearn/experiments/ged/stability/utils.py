@@ -16,12 +16,12 @@ from gklearn.experiments import DATASET_ROOT
 
 def get_dataset(ds_name):
 	# The node/edge labels that will not be used in the computation.
-# 	if ds_name == 'MAO':
-# 		irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']}
-# 	if ds_name == 'Monoterpenoides':
-# 		irrelevant_labels = {'edge_labels': ['valence']}
-# 	elif ds_name == 'MUTAG':
-# 		irrelevant_labels = {'edge_labels': ['label_0']}
+#	if ds_name == 'MAO':
+#		irrelevant_labels = {'node_attrs': ['x', 'y', 'z'], 'edge_labels': ['bond_stereo']}
+#	if ds_name == 'Monoterpenoides':
+#		irrelevant_labels = {'edge_labels': ['valence']}
+#	elif ds_name == 'MUTAG':
+#		irrelevant_labels = {'edge_labels': ['label_0']}
 	if ds_name == 'AIDS_symb':
 		irrelevant_labels = {'node_attrs': ['chem', 'charge', 'x', 'y'], 'edge_labels': ['valence']}
 		ds_name = 'AIDS'
@@ -49,34 +49,36 @@ def set_edit_cost_consts(ratio, node_labeled=True, edge_labeled=True, mode='unif
 
 
 def nested_keys_exists(element, *keys):
-    '''
-    Check if *keys (nested) exists in `element` (dict).
-    '''
-    if not isinstance(element, dict):
-        raise AttributeError('keys_exists() expects dict as first argument.')
-    if len(keys) == 0:
-        raise AttributeError('keys_exists() expects at least two arguments, one given.')
+	'''
+	Check if *keys (nested) exists in `element` (dict).
+	'''
+	if not isinstance(element, dict):
+		raise AttributeError('keys_exists() expects dict as first argument.')
+	if len(keys) == 0:
+		raise AttributeError('keys_exists() expects at least two arguments, one given.')
 
-    _element = element
-    for key in keys:
-        try:
-            _element = _element[key]
-        except KeyError:
-            return False
-    return True
-
+	_element = element
+	for key in keys:
+		try:
+			_element = _element[key]
+		except KeyError:
+			return False
+	return True
 
 
 # Check average relative error along elements in two ged matrices.
 def matrices_ave_relative_error(m1, m2):
-    error = 0
-    base = 0
-    for i in range(m1.shape[0]):
-        for j in range(m1.shape[1]):
-            error += np.abs(m1[i, j] - m2[i, j])
-            base += (np.abs(m1[i, j]) + np.abs(m2[i, j])) / 2
+	error = 0
+	base = 0
+	for i in range(m1.shape[0]):
+		for j in range(m1.shape[1]):
+			error += np.abs(m1[i, j] - m2[i, j])
+# 			base += (np.abs(m1[i, j]) + np.abs(m2[i, j]))
+			base += (m1[i, j] + m2[i, j]) # Require only 25% of the time of "base += (np.abs(m1[i, j]) + np.abs(m2[i, j]))".
 
-    return error / base
+	base = base / 2
+
+	return error / base
 
 
 def compute_relative_error(ged_mats):
@@ -92,9 +94,9 @@ def compute_relative_error(ged_mats):
 		errors = []
 		for i, mat in enumerate(ged_mats):
 			err = matrices_ave_relative_error(mat, ged_mat_s)
-	    #             if not per_correct:
-	    #                 print('matrix # ', str(i))
-	    #                 pass
+		#			 if not per_correct:
+		#				 print('matrix # ', str(i))
+		#				 pass
 			errors.append(err)
 	else:
 		errors = [0]
@@ -107,11 +109,11 @@ def parse_group_file_name(fn):
 	key1 = splits_all[1]
 
 	pos2 = splits_all[2].rfind('_')
-# 	key2 = splits_all[2][:pos2]
+#	key2 = splits_all[2][:pos2]
 	val2 = splits_all[2][pos2+1:]
 
 	pos3 = splits_all[3].rfind('_')
-# 	key3 = splits_all[3][:pos3]
+#	key3 = splits_all[3][:pos3]
 	val3 = splits_all[3][pos3+1:] + '.' + splits_all[4]
 
 	return key1, val2, val3
@@ -232,7 +234,7 @@ def set_axis_style(ax):
 	ax.tick_params(labelsize=8, color='w', pad=1, grid_color='w')
 	ax.tick_params(axis='x', pad=-2)
 	ax.tick_params(axis='y', labelrotation=-40, pad=-2)
-# 	ax.zaxis._axinfo['juggled'] = (1, 2, 0)
+#	ax.zaxis._axinfo['juggled'] = (1, 2, 0)
 	ax.set_xlabel(ax.get_xlabel(), fontsize=10, labelpad=-3)
 	ax.set_ylabel(ax.get_ylabel(), fontsize=10, labelpad=-2, rotation=50)
 	ax.set_zlabel(ax.get_zlabel(), fontsize=10, labelpad=-2)
@@ -240,16 +242,99 @@ def set_axis_style(ax):
 	return
 
 
+def dichotomous_permutation(arr, layer=0):
+	import math
+
+# 	def seperate_arr(arr, new_arr):
+# 		if (length % 2) == 0:
+# 			half = int(length / 2)
+# 			new_arr += [arr[half - 1], arr[half]]
+# 			subarr1 = [arr[i] for i in range(1, half - 1)]
+# 		else:
+# 			half = math.floor(length / 2)
+# 			new_arr.append(arr[half])
+# 			subarr1 = [arr[i] for i in range(1, half)]
+# 		subarr2 = [arr[i] for i in range(half + 1, length - 1)]
+# 		subarrs = [subarr1, subarr2]
+# 		return subarrs
+
+
+	if layer == 0:
+		length = len(arr)
+		if length <= 2:
+			return arr
+
+		new_arr = [arr[0], arr[-1]]
+		if (length % 2) == 0:
+ 			half = int(length / 2)
+ 			new_arr += [arr[half - 1], arr[half]]
+ 			subarr1 = [arr[i] for i in range(1, half - 1)]
+		else:
+ 			half = math.floor(length / 2)
+ 			new_arr.append(arr[half])
+ 			subarr1 = [arr[i] for i in range(1, half)]
+		subarr2 = [arr[i] for i in range(half + 1, length - 1)]
+		subarrs = [subarr1, subarr2]
+# 		subarrs = seperate_arr(arr, new_arr)
+		new_arr += dichotomous_permutation(subarrs, layer=layer+1)
+
+	else:
+		new_arr = []
+		subarrs = []
+		for a in arr:
+			length = len(a)
+			if length <= 2:
+				new_arr += a
+			else:
+# 				subarrs += seperate_arr(a, new_arr)
+				if (length % 2) == 0:
+ 					half = int(length / 2)
+ 					new_arr += [a[half - 1], a[half]]
+ 					subarr1 = [a[i] for i in range(0, half - 1)]
+				else:
+ 					half = math.floor(length / 2)
+ 					new_arr.append(a[half])
+ 					subarr1 = [a[i] for i in range(0, half)]
+				subarr2 = [a[i] for i in range(half + 1, length)]
+				subarrs += [subarr1, subarr2]
+
+		if len(subarrs) > 0:
+			new_arr += dichotomous_permutation(subarrs, layer=layer+1)
+
+	return new_arr
+
+# 	length = len(arr)
+# 	if length <= 2:
+# 		return arr
+
+# 	new_arr = [arr[0], arr[-1]]
+# 	if (length % 2) == 0:
+# 		half = int(length / 2)
+# 		new_arr += [arr[half - 1], arr[half]]
+# 		subarr1 = [arr[i] for i in range(1, half - 1)]
+# 	else:
+# 		half = math.floor(length / 2)
+# 		new_arr.append(arr[half])
+# 		subarr1 = [arr[i] for i in range(1, half)]
+# 	subarr2 = [arr[i] for i in range(half + 1, length - 1)]
+# 	if len(subarr1) > 0:
+# 		new_arr += dichotomous_permutation(subarr1)
+# 	if len(subarr2) > 0:
+# 		new_arr += dichotomous_permutation(subarr2)
+
+# 	return new_arr
+
+
 if __name__ == '__main__':
 	root_dir = 'outputs/CRIANN/'
-# 	for dir_ in sorted(os.listdir(root_dir)):
-# 		if os.path.isdir(root_dir):
-# 			full_dir = os.path.join(root_dir, dir_)
-# 			print('---', full_dir,':')
-# 			save_dir = os.path.join(full_dir, 'groups/')
-# 			if os.path.exists(save_dir):
-# 				try:
-# 					get_relative_errors(save_dir)
-# 				except Exception as exp:
-# 					print('An exception occured when running this experiment:')
-# 					print(repr(exp))
+#	for dir_ in sorted(os.listdir(root_dir)):
+#		if os.path.isdir(root_dir):
+#			full_dir = os.path.join(root_dir, dir_)
+#			print('---', full_dir,':')
+#			save_dir = os.path.join(full_dir, 'groups/')
+#			if os.path.exists(save_dir):
+#				try:
+#					get_relative_errors(save_dir)
+#				except Exception as exp:
+#					print('An exception occured when running this experiment:')
+#					print(repr(exp))

@@ -41,7 +41,7 @@ class StructuralSP(GraphKernel):
 	def _compute_gm_series(self):
 		# get shortest paths of each graph in the graphs.
 		splist = []
-		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for g in iterator:
 				splist.append(self._get_sps_as_trie(g))
@@ -56,7 +56,7 @@ class StructuralSP(GraphKernel):
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
-					   length=len_itr, verbose=(self._verbose >= 2))
+					   length=len_itr, verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for i, j in iterator:
 				kernel = self._ssp_do_trie(self._graphs[i], self._graphs[j], splist[i], splist[j])
@@ -76,10 +76,10 @@ class StructuralSP(GraphKernel):
 	def _compute_gm_imap_unordered(self):
 		# get shortest paths of each graph in the graphs.
 		splist = [None] * len(self._graphs)
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		itr = zip(self._graphs, range(0, len(self._graphs)))
-		if len(self._graphs) < 100 * self._n_jobs:
-			chunksize = int(len(self._graphs) / self._n_jobs) + 1
+		if len(self._graphs) < 100 * self.n_jobs:
+			chunksize = int(len(self._graphs) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		# get shortest path graphs of self._graphs
@@ -89,7 +89,7 @@ class StructuralSP(GraphKernel):
 			get_sps_fun = self._wrapper_get_sps_naive
 		iterator = get_iters(pool.imap_unordered(get_sps_fun, itr, chunksize),
 						desc='getting shortest paths', file=sys.stdout,
-						length=len(self._graphs), verbose=(self._verbose >= 2))
+						length=len(self._graphs), verbose=(self.verbose >= 2))
 		for i, sp in iterator:
 			splist[i] = sp
 		pool.close()
@@ -107,7 +107,7 @@ class StructuralSP(GraphKernel):
 		else:
 			do_fun = self._wrapper_ssp_do_naive
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-							glbv=(splist, self._graphs), n_jobs=self._n_jobs, verbose=self._verbose)
+							glbv=(splist, self._graphs), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		return gram_matrix
 
@@ -117,7 +117,7 @@ class StructuralSP(GraphKernel):
 		sp1 = get_shortest_paths(g1, self._edge_weight, self._ds_infos['directed'])
 		splist = []
 		iterator = get_iters(g_list, desc='getting sp graphs', file=sys.stdout,
-					verbose=(self._verbose >= 2))
+					verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for g in iterator:
 				splist.append(self._get_sps_as_trie(g))
@@ -128,7 +128,7 @@ class StructuralSP(GraphKernel):
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
 		iterator = get_iters(range(len(g_list)), desc='Computing kernels',
-					   file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+					   file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for i in iterator:
 				kernel = self._ssp_do_trie(g1, g_list[i], sp1, splist[i])
@@ -145,10 +145,10 @@ class StructuralSP(GraphKernel):
 		# get shortest paths of g1 and each graph in g_list.
 		sp1 = get_shortest_paths(g1, self._edge_weight, self._ds_infos['directed'])
 		splist = [None] * len(g_list)
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		itr = zip(g_list, range(0, len(g_list)))
-		if len(g_list) < 100 * self._n_jobs:
-			chunksize = int(len(g_list) / self._n_jobs) + 1
+		if len(g_list) < 100 * self.n_jobs:
+			chunksize = int(len(g_list) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		# get shortest path graphs of g_list
@@ -158,7 +158,7 @@ class StructuralSP(GraphKernel):
 			get_sps_fun = self._wrapper_get_sps_naive
 		iterator = get_iters(pool.imap_unordered(get_sps_fun, itr, chunksize),
 						desc='getting shortest paths', file=sys.stdout,
-						length=len(g_list), verbose=(self._verbose >= 2))
+						length=len(g_list), verbose=(self.verbose >= 2))
 		for i, sp in iterator:
 			splist[i] = sp
 		pool.close()
@@ -182,7 +182,7 @@ class StructuralSP(GraphKernel):
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(sp1, splist, g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(sp1, splist, g1, g_list), method='imap_unordered', n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		return kernel_list
 

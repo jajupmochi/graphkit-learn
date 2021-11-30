@@ -41,10 +41,10 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 
 		from itertools import combinations_with_replacement
 		itr_kernel = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		iterator_ps = get_iters(range(0, len(self._graphs)), desc='getting paths', file=sys.stdout, length=len(self._graphs), verbose=(self._verbose >= 2))
+		iterator_ps = get_iters(range(0, len(self._graphs)), desc='getting paths', file=sys.stdout, length=len(self._graphs), verbose=(self.verbose >= 2))
 		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
 		iterator_kernel = get_iters(itr_kernel, desc='Computing kernels',
-						   file=sys.stdout, length=len_itr, verbose=(self._verbose >= 2))
+						   file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
 
@@ -69,10 +69,10 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 
 		# get all paths of all graphs before computing kernels to save time,
 		# but this may cost a lot of memory for large datasets.
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		itr = zip(self._graphs, range(0, len(self._graphs)))
-		if len(self._graphs) < 100 * self._n_jobs:
-			chunksize = int(len(self._graphs) / self._n_jobs) + 1
+		if len(self._graphs) < 100 * self.n_jobs:
+			chunksize = int(len(self._graphs) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		all_paths = [[] for _ in range(len(self._graphs))]
@@ -84,7 +84,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 			get_ps_fun = partial(self._wrapper_find_all_paths_until_length, False)
 		iterator = get_iters(pool.imap_unordered(get_ps_fun, itr, chunksize),
 						desc='getting paths', file=sys.stdout,
-						length=len(self._graphs), verbose=(self._verbose >= 2))
+						length=len(self._graphs), verbose=(self.verbose >= 2))
 		for i, ps in iterator:
 			all_paths[i] = ps
 		pool.close()
@@ -109,7 +109,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 				G_plist = plist_toshare
 			do_fun = self._wrapper_kernel_do_kernelless # @todo: what is this?
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-					glbv=(all_paths,), n_jobs=self._n_jobs, verbose=self._verbose)
+					glbv=(all_paths,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		return gram_matrix
 
@@ -117,8 +117,8 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 	def _compute_kernel_list_series(self, g1, g_list):
 		self._add_dummy_labels(g_list + [g1])
 
-		iterator_ps = get_iters(g_list, desc='getting paths', file=sys.stdout, verbose=(self._verbose >= 2))
-		iterator_kernel = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+		iterator_ps = get_iters(g_list, desc='getting paths', file=sys.stdout, verbose=(self.verbose >= 2))
+		iterator_kernel = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 
 		kernel_list = [None] * len(g_list)
 
@@ -143,10 +143,10 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 
 		# get all paths of all graphs before computing kernels to save time,
 		# but this may cost a lot of memory for large datasets.
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		itr = zip(g_list, range(0, len(g_list)))
-		if len(g_list) < 100 * self._n_jobs:
-			chunksize = int(len(g_list) / self._n_jobs) + 1
+		if len(g_list) < 100 * self.n_jobs:
+			chunksize = int(len(g_list) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		paths_g_list = [[] for _ in range(len(g_list))]
@@ -161,7 +161,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 			get_ps_fun = partial(self._wrapper_find_all_paths_until_length, False)
 		iterator = get_iters(pool.imap_unordered(get_ps_fun, itr, chunksize),
 						desc='getting paths', file=sys.stdout,
-						length=len(g_list), verbose=(self._verbose >= 2))
+						length=len(g_list), verbose=(self.verbose >= 2))
 		for i, ps in iterator:
 			paths_g_list[i] = ps
 		pool.close()
@@ -180,7 +180,7 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(paths_g1, paths_g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(paths_g1, paths_g_list), method='imap_unordered', n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		return kernel_list
 

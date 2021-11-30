@@ -35,7 +35,7 @@ class FixedPoint(RandomWalkMeta):
 
 
 	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
 
 		lmda = self._weight
@@ -44,7 +44,7 @@ class FixedPoint(RandomWalkMeta):
 		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
 
 		# Reindex nodes using consecutive integers for the convenience of kernel computation.
-		iterator = get_iters(self._graphs, desc='Reindex vertices', file=sys.stdout,verbose=(self._verbose >= 2))
+		iterator = get_iters(self._graphs, desc='Reindex vertices', file=sys.stdout,verbose=(self.verbose >= 2))
 		self._graphs = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
 
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
@@ -52,7 +52,7 @@ class FixedPoint(RandomWalkMeta):
 			from itertools import combinations_with_replacement
 			itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 			len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
-			iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self._verbose >= 2))
+			iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 			for i, j in iterator:
 				kernel = self._kernel_do(self._graphs[i], self._graphs[j], lmda)
@@ -66,7 +66,7 @@ class FixedPoint(RandomWalkMeta):
 
 
 	def _compute_gm_imap_unordered(self):
-		self._check_edge_weight(self._graphs, self._verbose)
+		self._check_edge_weight(self._graphs, self.verbose)
 		self._check_graphs(self._graphs)
 
 		# Compute Gram matrix.
@@ -74,7 +74,7 @@ class FixedPoint(RandomWalkMeta):
 
 		# @todo: parallel this.
 		# Reindex nodes using consecutive integers for the convenience of kernel computation.
-		iterator = get_iters(self._graphs, desc='Reindex vertices', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(self._graphs, desc='Reindex vertices', file=sys.stdout, verbose=(self.verbose >= 2))
 		self._graphs = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
 
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
@@ -86,7 +86,7 @@ class FixedPoint(RandomWalkMeta):
 			do_fun = self._wrapper_kernel_do
 
 			parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-						glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
+						glbv=(self._graphs,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		else: # @todo
 			pass
@@ -95,7 +95,7 @@ class FixedPoint(RandomWalkMeta):
 
 
 	def _compute_kernel_list_series(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
 
 		lmda = self._weight
@@ -105,12 +105,12 @@ class FixedPoint(RandomWalkMeta):
 
 		# Reindex nodes using consecutive integers for the convenience of kernel computation.
 		g1 = nx.convert_node_labels_to_integers(g1, first_label=0, label_attribute='label_orignal')
-		iterator = get_iters(g_list, desc='Reindex vertices', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(g_list, desc='Reindex vertices', file=sys.stdout, verbose=(self.verbose >= 2))
 		g_list = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
 
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
 
-			iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+			iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 
 			for i in iterator:
 				kernel = self._kernel_do(g1, g_list[i], lmda)
@@ -123,7 +123,7 @@ class FixedPoint(RandomWalkMeta):
 
 
 	def _compute_kernel_list_imap_unordered(self, g1, g_list):
-		self._check_edge_weight(g_list + [g1], self._verbose)
+		self._check_edge_weight(g_list + [g1], self.verbose)
 		self._check_graphs(g_list + [g1])
 
 		# compute kernel list.
@@ -132,7 +132,7 @@ class FixedPoint(RandomWalkMeta):
 		# Reindex nodes using consecutive integers for the convenience of kernel computation.
 		g1 = nx.convert_node_labels_to_integers(g1, first_label=0, label_attribute='label_orignal')
 		# @todo: parallel this.
-		iterator = get_iters(g_list, desc='Reindex vertices', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(g_list, desc='Reindex vertices', file=sys.stdout, verbose=(self.verbose >= 2))
 		g_list = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
 
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
@@ -150,7 +150,7 @@ class FixedPoint(RandomWalkMeta):
 			len_itr = len(g_list)
 			parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
 				init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered',
-				n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+				n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		else: # @todo
 			pass
@@ -163,7 +163,7 @@ class FixedPoint(RandomWalkMeta):
 
 
 	def _compute_single_kernel_series(self, g1, g2):
-		self._check_edge_weight([g1] + [g2], self._verbose)
+		self._check_edge_weight([g1] + [g2], self.verbose)
 		self._check_graphs([g1] + [g2])
 
 		lmda = self._weight

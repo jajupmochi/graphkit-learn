@@ -38,7 +38,7 @@ class ShortestPath(GraphKernel):
 	def _compute_gm_series(self):
 		self._all_graphs_have_edges(self._graphs)
 		# get shortest path graph of each graph.
-		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
 		self._graphs = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
 
 		# compute Gram matrix.
@@ -48,7 +48,7 @@ class ShortestPath(GraphKernel):
 		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
 		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels',
-					length=len_itr, file=sys.stdout,verbose=(self._verbose >= 2))
+					length=len_itr, file=sys.stdout,verbose=(self.verbose >= 2))
 		for i, j in iterator:
 			kernel = self._sp_do(self._graphs[i], self._graphs[j])
 			gram_matrix[i][j] = kernel
@@ -60,16 +60,16 @@ class ShortestPath(GraphKernel):
 	def _compute_gm_imap_unordered(self):
 		self._all_graphs_have_edges(self._graphs)
 		# get shortest path graph of each graph.
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		get_sp_graphs_fun = self._wrapper_get_sp_graphs
 		itr = zip(self._graphs, range(0, len(self._graphs)))
-		if len(self._graphs) < 100 * self._n_jobs:
-			chunksize = int(len(self._graphs) / self._n_jobs) + 1
+		if len(self._graphs) < 100 * self.n_jobs:
+			chunksize = int(len(self._graphs) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		iterator = get_iters(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
 						desc='getting sp graphs', file=sys.stdout,
-						length=len(self._graphs), verbose=(self._verbose >= 2))
+						length=len(self._graphs), verbose=(self.verbose >= 2))
 		for i, g in iterator:
 			self._graphs[i] = g
 		pool.close()
@@ -83,7 +83,7 @@ class ShortestPath(GraphKernel):
 			G_gs = gs_toshare
 		do_fun = self._wrapper_sp_do
 		parallel_gm(do_fun, gram_matrix, self._graphs, init_worker=init_worker,
-					glbv=(self._graphs,), n_jobs=self._n_jobs, verbose=self._verbose)
+					glbv=(self._graphs,), n_jobs=self.n_jobs, verbose=self.verbose)
 
 		return gram_matrix
 
@@ -92,12 +92,12 @@ class ShortestPath(GraphKernel):
 		self._all_graphs_have_edges([g1] + g_list)
 		# get shortest path graphs of g1 and each graph in g_list.
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
-		iterator = get_iters(g_list, desc='getting sp graphs', file=sys.stdout, verbose=(self._verbose >= 2))
+		iterator = get_iters(g_list, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
 		g_list = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
 
 		# compute kernel list.
 		kernel_list = [None] * len(g_list)
-		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self._verbose >= 2))
+		iterator = get_iters(range(len(g_list)), desc='Computing kernels', file=sys.stdout, length=len(g_list), verbose=(self.verbose >= 2))
 		for i in iterator:
 			kernel = self._sp_do(g1, g_list[i])
 			kernel_list[i] = kernel
@@ -109,16 +109,16 @@ class ShortestPath(GraphKernel):
 		self._all_graphs_have_edges([g1] + g_list)
 		# get shortest path graphs of g1 and each graph in g_list.
 		g1 = getSPGraph(g1, edge_weight=self._edge_weight)
-		pool = Pool(self._n_jobs)
+		pool = Pool(self.n_jobs)
 		get_sp_graphs_fun = self._wrapper_get_sp_graphs
 		itr = zip(g_list, range(0, len(g_list)))
-		if len(g_list) < 100 * self._n_jobs:
-			chunksize = int(len(g_list) / self._n_jobs) + 1
+		if len(g_list) < 100 * self.n_jobs:
+			chunksize = int(len(g_list) / self.n_jobs) + 1
 		else:
 			chunksize = 100
 		iterator = get_iters(pool.imap_unordered(get_sp_graphs_fun, itr, chunksize),
 						desc='getting sp graphs', file=sys.stdout,
-						length=len(g_list), verbose=(self._verbose >= 2))
+						length=len(g_list), verbose=(self.verbose >= 2))
 		for i, g in iterator:
 			g_list[i] = g
 		pool.close()
@@ -137,7 +137,7 @@ class ShortestPath(GraphKernel):
 		itr = range(len(g_list))
 		len_itr = len(g_list)
 		parallel_me(do_fun, func_assign, kernel_list, itr, len_itr=len_itr,
-			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', n_jobs=self._n_jobs, itr_desc='Computing kernels', verbose=self._verbose)
+			init_worker=init_worker, glbv=(g1, g_list), method='imap_unordered', n_jobs=self.n_jobs, itr_desc='Computing kernels', verbose=self.verbose)
 
 		return kernel_list
 

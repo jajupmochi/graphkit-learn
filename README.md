@@ -1,5 +1,5 @@
 # graphkit-learn
-[![Build Status](https://travis-ci.org/jajupmochi/graphkit-learn.svg?branch=master)](https://travis-ci.org/jajupmochi/graphkit-learn)
+[![Build Status](https://travis-ci.com/jajupmochi/graphkit-learn.svg?branch=master)](https://travis-ci.com/jajupmochi/graphkit-learn)
 [![Build status](https://ci.appveyor.com/api/projects/status/bdxsolk0t1uji9rd?svg=true)](https://ci.appveyor.com/project/jajupmochi/graphkit-learn)
 [![codecov](https://codecov.io/gh/jajupmochi/graphkit-learn/branch/master/graph/badge.svg)](https://codecov.io/gh/jajupmochi/graphkit-learn)
 [![Documentation Status](https://readthedocs.org/projects/graphkit-learn/badge/?version=master)](https://graphkit-learn.readthedocs.io/en/master/?badge=master)
@@ -68,7 +68,7 @@ The docs of the library can be found [here](https://graphkit-learn.readthedocs.i
   * [The common walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/common_walk.py) [1]
     * Exponential
     * Geometric
-  * [The marginalized kenrel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/marginalized.py)
+  * [The marginalized kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/marginalized.py)
     * With tottering [2]
     * Without tottering [7]
   * [The generalized random walk kernel](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/kernels/random_walk.py) [3]
