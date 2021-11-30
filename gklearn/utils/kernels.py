@@ -4,7 +4,7 @@ These kernels are defined between pairs of vectors.
 import numpy as np
 
 
-def deltakernel(x, y):
+def delta_kernel(x, y):
 	"""Delta kernel. Return 1 if x == y, 0 otherwise.
 
 	Parameters
@@ -26,7 +26,11 @@ def deltakernel(x, y):
 	return x == y  #(1 if condition else 0)
 
 
-def gaussiankernel(x, y, gamma=None):
+def deltakernel(x, y):
+	return delta_kernel(x, y)
+
+
+def gaussian_kernel(x, y, gamma=None):
 	"""Gaussian kernel.
 	Compute the rbf (gaussian) kernel between x and y:
 
@@ -60,8 +64,15 @@ def gaussiankernel(x, y, gamma=None):
 	return np.exp((np.sum(np.subtract(x, y) ** 2)) * -gamma)
 
 
+def gaussiankernel(x, y, gamma=None):
+	return gaussian_kernel(x, y, gamma=gamma)
 
-def polynomialkernel(x, y, d=1, c=0):
+
+def polynomial_kernel(x, y, gamma=1, coef0=0, d=1):
+	return (np.dot(x, y) * gamma + coef0) ** d
+
+
+def highest_polynomial_kernel(x, y, d=1, c=0):
 	"""Polynomial kernel.
 	Compute the polynomial kernel between x and y:
 
@@ -82,7 +93,11 @@ def polynomialkernel(x, y, d=1, c=0):
 	return np.dot(x, y) ** d + c
 
 
-def linearkernel(x, y):
+def polynomialkernel(x, y, d=1, c=0):
+	return highest_polynomial_kernel(x, y, d=d, c=c)
+
+
+def linear_kernel(x, y):
 	"""Polynomial kernel.
 	Compute the polynomial kernel between x and y:
 
@@ -101,6 +116,61 @@ def linearkernel(x, y):
 	kernel : float
 	"""
 	return np.dot(x, y)
+
+
+def linearkernel(x, y):
+	return linear_kernel(x, y)
+
+
+def cosine_kernel(x, y):
+	return np.dot(x, y) / (np.abs(x) * np.abs(y))
+
+
+def sigmoid_kernel(x, y, gamma=None, coef0=1):
+	if gamma is None:
+		gamma = 1.0 / len(x)
+
+	k = np.dot(x, y)
+	k *= gamma
+	k += coef0
+	k = np.tanh(k)
+# 	k = np.tanh(k, k) # compute tanh in-place
+	return k
+
+
+def laplacian_kernel(x, y, gamma=None):
+	if gamma is None:
+		gamma = 1.0 / len(x)
+
+	k = -gamma * np.abs(np.subtract(x, y))
+	k = np.exp(k)
+	return k
+
+
+def chi2_kernel(x, y, gamma=1.0):
+	k = np.divide(np.subtract(x, y) ** 2, np.add(x, y))
+	k = np.sum(k)
+	k *= -gamma
+	return np.exp(k)
+
+
+def exponential_kernel(x, y, gamma=None):
+	if gamma is None:
+		gamma = 1.0 / len(x)
+
+	return np.exp(np.dot(x, y) * gamma)
+
+
+def intersection_kernel(x, y):
+	return np.sum(np.minimum(x, y))
+
+
+def multiquadratic_kernel(x, y, c=0):
+	return np.sqrt((np.sum(np.subtract(x, y) ** 2)) + c)
+
+
+def inverse_multiquadratic_kernel(x, y, c=0):
+	return 1 / multiquadratic_kernel(x, y, c=c)
 
 
 def kernelsum(k1, k2, d11, d12, d21=None, d22=None, lamda1=1, lamda2=1):
