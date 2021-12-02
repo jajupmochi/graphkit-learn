@@ -127,7 +127,7 @@ def linearkernel(x, y):
 
 
 def cosine_kernel(x, y):
-	return np.dot(x, y) / (np.abs(x) * np.abs(y))
+	return np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 
 def sigmoid_kernel(x, y, gamma=None, coef0=1):
@@ -146,7 +146,7 @@ def laplacian_kernel(x, y, gamma=None):
 	if gamma is None:
 		gamma = 1.0 / len(x)
 
-	k = -gamma * np.abs(np.subtract(x, y))
+	k = -gamma * np.linalg.norm(np.subtract(x, y))
 	k = np.exp(k)
 	return k
 
