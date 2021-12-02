@@ -4,7 +4,7 @@ These kernels are defined between pairs of vectors.
 import numpy as np
 
 
-def delta_kernel(x, y):
+def kronecker_delta_kernel(x, y):
 	"""Delta kernel. Return 1 if x == y, 0 otherwise.
 
 	Parameters
@@ -23,6 +23,10 @@ def delta_kernel(x, y):
 	labeled graphs. In Proceedings of the 20th International Conference on
 	Machine Learning, Washington, DC, United States, 2003.
 	"""
+	return (1 if np.array_equal(x, y) else 0)
+
+
+def delta_kernel(x, y):
 	return x == y  #(1 if condition else 0)
 
 
