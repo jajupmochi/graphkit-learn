@@ -325,6 +325,22 @@ def dichotomous_permutation(arr, layer=0):
 # 	return new_arr
 
 
+def mix_param_grids(list_of_grids):
+	mixed_grids = []
+	not_finished = [True] * len(list_of_grids)
+	idx = 0
+	while sum(not_finished) > 0:
+		for g_idx, grid in enumerate(list_of_grids):
+			if idx < len(grid):
+				mixed_grids.append(grid[idx])
+			else:
+				not_finished[g_idx] = False
+		idx += 1
+
+	return mixed_grids
+
+
+
 if __name__ == '__main__':
 	root_dir = 'outputs/CRIANN/'
 #	for dir_ in sorted(os.listdir(root_dir)):

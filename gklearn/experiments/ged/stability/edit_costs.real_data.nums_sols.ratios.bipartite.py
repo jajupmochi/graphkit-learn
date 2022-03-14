@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct  20 11:48:02 2020
+Created on Mon Nov  2 16:17:01 2020
 
 @author: ljia
 """
-# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1].
+# This script tests the influence of the ratios between node costs and edge costs on the stability of the GED computation, where the base edit costs are [1, 1, 1, 1, 1, 1]. The minimum solution from given numbers of repeats are computed.
 
 import os
 import multiprocessing
@@ -29,16 +29,21 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 	"""**2.  Set parameters.**"""
 
 	# Parameters for GED computation.
-	ged_options = {'method': 'IPFP',  # use IPFP huristic.
-				   'initialization_method': 'RANDOM',  # or 'NODE', etc.
-				   # when bigger than 1, then the method is considered mIPFP.
-				   'initial_solutions': int(num_solutions * 4),
+	ged_options = {'method': 'BIPARTITE',  # use BIPARTITE huristic.
+  				   # 'initialization_method': 'RANDOM',  # or 'NODE', etc. (for GEDEnv)
+				   'lsape_model': 'ECBP',  #
+				   # ??when bigger than 1, then the method is considered mIPFP.
+				   # the actual number of computed solutions might be smaller than the specified value
+				   'max_num_solutions': 1, # @ max_num_solutions,
 				   'edit_cost': 'CONSTANT',  # use CONSTANT cost.
+				   'greedy_method': 'BASIC',  #
 				   # the distance between non-symbolic node/edge labels is computed by euclidean distance.
 				   'attr_distance': 'euclidean',
-				   'ratio_runs_from_initial_solutions': 0.25,
-				   # parallel threads. Set to 1 automatically if parallel=True in compute_geds().
+				   'optimal': True, # if TRUE, the option --greedy-method has no effect
+				   # parallel threads. Do not work if mpg_options['parallel'] = False.
 				   'threads': multiprocessing.cpu_count(),
+				   'centrality_method': 'NONE',
+				   'centrality_weight': 0.7,
 				   'init_option': 'EAGER_WITHOUT_SHUFFLED_COPIES'
 				   }
 
@@ -48,6 +53,7 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 											mode='uniform')
 #	edit_cost_constants = [item * 0.01 for item in edit_cost_constants]
 #	pickle.dump(edit_cost_constants, open(save_dir + "edit_costs" + save_file_suffix + ".pkl", "wb"))
+
 
 	options = ged_options.copy()
 	options['edit_cost_constants'] = edit_cost_constants
@@ -62,7 +68,13 @@ def xp_compute_ged_matrix(dataset, ds_name, num_solutions, ratio, trial):
 	runtime = 0
 	try:
 		time0 = time.time()
-		ged_vec_init, ged_mat, n_edit_operations = compute_geds(dataset.graphs, options=options, repeats=1, parallel=parallel, verbose=True)
+		ged_vec_init, ged_mat, n_edit_operations = compute_geds(dataset.graphs,
+														  options=options,
+														  repeats=num_solutions,
+														  permute_nodes=True,
+														  random_state=None,
+														  parallel=parallel,
+														  verbose=True)
 		runtime = time.time() - time0
 	except Exception as exp:
 		print('An exception occured when running this experiment:')
@@ -108,7 +120,7 @@ def save_trials_as_group(dataset, ds_name, num_solutions, ratio):
 
 
 def results_for_a_dataset(ds_name):
-	"""**1.   Get dataset.**"""
+	"""**1. Get dataset.**"""
 	dataset = get_dataset(ds_name)
 
 	for params in list(param_grid):
@@ -149,7 +161,7 @@ if __name__ == '__main__':
 # 		ds_name_list = ['MUTAG'] # 'Alkane_unlabeled']
 # 		ds_name_list = ['Acyclic', 'MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
 
-	save_dir = 'outputs/CRIANN/edit_costs.real_data.num_sols.ratios.IPFP/'
+	save_dir = 'outputs/CRIANN/edit_costs.max_num_sols.ratios.bipartite/'
 	os.makedirs(save_dir, exist_ok=True)
 	os.makedirs(save_dir + 'groups/', exist_ok=True)
 

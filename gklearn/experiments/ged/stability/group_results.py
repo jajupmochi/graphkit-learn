@@ -32,6 +32,7 @@ def check_group_existence(file_name):
 
 
 def update_group_marker(file_name):
+	# @todo: possible error when seveal tasks are using this file at the same time.
 	path, name = os.path.split(file_name)
 	marker_fn = os.path.join(path, 'group_names_finished.pkl')
 	if os.path.isfile(marker_fn):
