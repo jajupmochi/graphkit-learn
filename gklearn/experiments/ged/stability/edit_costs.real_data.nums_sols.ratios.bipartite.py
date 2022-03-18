@@ -161,7 +161,7 @@ if __name__ == '__main__':
 # 		ds_name_list = ['MUTAG'] # 'Alkane_unlabeled']
 # 		ds_name_list = ['Acyclic', 'MAO', 'Monoterpenoides', 'MUTAG', 'AIDS_symb']
 
-	save_dir = 'outputs/CRIANN/edit_costs.max_num_sols.ratios.bipartite/'
+	save_dir = 'outputs/CRIANN/edit_costs.real_data.nums_sols.ratios.bipartite/'
 	os.makedirs(save_dir, exist_ok=True)
 	os.makedirs(save_dir + 'groups/', exist_ok=True)
 
