@@ -28,7 +28,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def __init__(self, **kwargs):
-		GraphKernel.__init__(self)
+		GraphKernel.__init__(self, **{k: kwargs.get(k) for k in ['parallel', 'n_jobs', 'chunksize', 'normalize', 'copy_graphs', 'verbose'] if k in kwargs})
 		self.node_labels = kwargs.get('node_labels', [])
 		self.edge_labels = kwargs.get('edge_labels', [])
 		self.height = int(kwargs.get('height', 0))
@@ -50,7 +50,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 	##########################################################################
 
 
-	def _compute_gm_series(self):
+	def _compute_gm_series(self, graphs):
 #		if self.verbose >= 2:
 #			import warnings
 #			warnings.warn('A part of the computation is parallelized.')
@@ -59,19 +59,19 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		# for WL subtree kernel
 		if self._base_kernel == 'subtree':
-			gram_matrix = self._subtree_kernel_do(self._graphs)
+			gram_matrix = self._subtree_kernel_do(graphs)
 
 		# for WL shortest path kernel
 		elif self._base_kernel == 'sp':
-			gram_matrix = self._sp_kernel_do(self._graphs)
+			gram_matrix = self._sp_kernel_do(graphs)
 
 		# for WL edge kernel
 		elif self._base_kernel == 'edge':
-			gram_matrix = self._edge_kernel_do(self._graphs)
+			gram_matrix = self._edge_kernel_do(graphs)
 
 		# for user defined base kernel
 		else:
-			gram_matrix = self._user_kernel_do(self._graphs)
+			gram_matrix = self._user_kernel_do(graphs)
 
 		return gram_matrix
 
@@ -204,70 +204,13 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 
 	def pairwise_kernel(self, g1, g2):
-		Gn = [g1.copy(), g2.copy()] # @todo: make sure it is a full deep copy. and faster!
-		kernel = 0
+# 		Gn = [g1.copy(), g2.copy()] # @todo: make sure it is a full deep copy. and faster!
+		Gn = [g1, g2]
+		# for WL subtree kernel
+		if self._base_kernel == 'subtree':
+			kernel = self._subtree_kernel_do(Gn, return_mat=False)
 
-		# initial for height = 0
-		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
-
-		# for each graph
-		for G in Gn:
-			# set all labels into a tuple.
-			for nd, attrs in G.nodes(data=True): # @todo: there may be a better way.
-				G.nodes[nd]['lt'] = tuple(attrs[name] for name in self.node_labels)
-			# get the set of original labels
-			labels_ori = list(nx.get_node_attributes(G, 'lt').values())
-			# number of occurence of each label in G
-			all_num_of_each_label.append(dict(Counter(labels_ori)))
-
-		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		kernel = self._compute_kernel_itr(kernel, all_num_of_each_label)
-
-		# iterate each height
-		for h in range(1, self.height + 1):
-			all_set_compressed = {} # a dictionary mapping original labels to new ones in all graphs in this iteration
-			num_of_labels_occured = 0 # number of the set of letters that occur before as node labels at least once in all graphs
-	#		all_labels_ori = set() # all unique orignal labels in all graphs in this iteration
-			all_num_of_each_label = [] # number of occurence of each label in G
-
-			# @todo: parallel this part.
-			for G in Gn:
-
-				all_multisets = []
-				for node, attrs in G.nodes(data=True):
-					# Multiset-label determination.
-					multiset = [G.nodes[neighbors]['lt'] for neighbors in G[node]]
-					# sorting each multiset
-					multiset.sort()
-					multiset = [attrs['lt']] + multiset # add the prefix
-					all_multisets.append(tuple(multiset))
-
-				# label compression
-				set_unique = list(set(all_multisets)) # set of unique multiset labels
-				# a dictionary mapping original labels to new ones.
-				set_compressed = {}
-				# if a label occured before, assign its former compressed label,
-				# else assign the number of labels occured + 1 as the compressed label.
-				for value in set_unique:
-					if value in all_set_compressed.keys():
-						set_compressed[value] = all_set_compressed[value]
-					else:
-						set_compressed[value] = str(num_of_labels_occured + 1)
-						num_of_labels_occured += 1
-
-				all_set_compressed.update(set_compressed)
-
-				# relabel nodes
-				for idx, node in enumerate(G.nodes()):
-					G.nodes[node]['lt'] = set_compressed[all_multisets[idx]]
-
-				# get the set of compressed labels
-				labels_comp = list(nx.get_node_attributes(G, 'lt').values())
-	#			all_labels_ori.update(labels_comp)
-				all_num_of_each_label.append(dict(Counter(labels_comp)))
-
-			# Compute subtree kernel with h iterations and add it to the final kernel
-			kernel = self._compute_kernel_itr(kernel, all_num_of_each_label)
+		# @todo: other subkernels.
 
 		return kernel
 
@@ -291,7 +234,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 		return kernel
 
 
-	def _subtree_kernel_do_nl(self, Gn):
+	def _subtree_kernel_do_nl(self, Gn, return_mat=True):
 		"""Compute Weisfeiler-Lehman kernels between graphs with node labels.
 
 		Parameters
@@ -301,10 +244,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		Return
 		------
-		gram_matrix : Numpy matrix
+		kernel_matrix : Numpy matrix / float
 			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
 		"""
-		gram_matrix = np.zeros((len(Gn), len(Gn)))
+		kernel_matrix = (np.zeros((len(Gn), len(Gn))) if return_mat else 0)
+		gram_itr_fun = (self._compute_gram_itr if return_mat else self._compute_kernel_itr)
 
 		# initial for height = 0
 		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
@@ -324,7 +268,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+		kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
 		# iterate each height
 		for h in range(1, self.height + 1):
@@ -342,12 +286,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
-		return gram_matrix
+		return kernel_matrix
 
 
-	def _subtree_kernel_do_el(self, Gn):
+	def _subtree_kernel_do_el(self, Gn, return_mat=True):
 		"""Compute Weisfeiler-Lehman kernels between graphs with edge labels.
 
 		Parameters
@@ -357,19 +301,20 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		Return
 		------
-		gram_matrix : Numpy matrix
+		kernel_matrix : Numpy matrix
 			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
 		"""
-		gram_matrix = np.zeros((len(Gn), len(Gn)))
+		kernel_matrix = (np.zeros((len(Gn), len(Gn))) if return_mat else 0)
+		gram_itr_fun = (self._compute_gram_itr if return_mat else self._compute_kernel_itr)
 
 		# initial for height = 0
 		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
 
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		iterator = combinations_with_replacement(range(0, len(gram_matrix)), 2)
-		for i, j in iterator:
-			gram_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
-			gram_matrix[j][i] = gram_matrix[i][j]
+		iterator = combinations_with_replacement(range(0, len(kernel_matrix)), 2)
+		for i, j in iterator: # @todo: not correct if return_mat == False.
+			kernel_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
+			kernel_matrix[j][i] = kernel_matrix[i][j]
 
 
 		# if h >= 1.
@@ -393,7 +338,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_el(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
 
 		# Iterate along heights (>= 2).
@@ -407,12 +352,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
-		return gram_matrix
+		return kernel_matrix
 
 
-	def _subtree_kernel_do_labeled(self, Gn):
+	def _subtree_kernel_do_labeled(self, Gn, return_mat=True):
 		"""Compute Weisfeiler-Lehman kernels between graphs with both node and
 		edge labels.
 
@@ -423,10 +368,11 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		Return
 		------
-		gram_matrix : Numpy matrix
+		kernel_matrix : Numpy matrix
 			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
 		"""
-		gram_matrix = np.zeros((len(Gn), len(Gn)))
+		kernel_matrix = (np.zeros((len(Gn), len(Gn))) if return_mat else 0)
+		gram_itr_fun = (self._compute_gram_itr if return_mat else self._compute_kernel_itr)
 
 		# initial for height = 0
 		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
@@ -446,10 +392,10 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 			all_num_of_each_label.append(dict(Counter(labels_ori)))
 
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+		kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
 
-		# if h >= 1.
+		# if h >= 1:
 		if self.height > 0:
 			# Set all edge labels into a tuple. # @todo: remove this original labels or not?
 			if self.verbose >= 2:
@@ -470,7 +416,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_labeled(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
 
 		# Iterate along heights.
@@ -484,12 +430,12 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
-		return gram_matrix
+		return kernel_matrix
 
 
-	def _subtree_kernel_do_unlabeled(self, Gn):
+	def _subtree_kernel_do_unlabeled(self, Gn, return_mat=True):
 		"""Compute Weisfeiler-Lehman kernels between graphs without labels.
 
 		Parameters
@@ -499,19 +445,20 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 
 		Return
 		------
-		gram_matrix : Numpy matrix
+		kernel_matrix : Numpy matrix
 			Kernel matrix, each element of which is the Weisfeiler-Lehman kernel between 2 praphs.
 		"""
-		gram_matrix = np.zeros((len(Gn), len(Gn)))
+		kernel_matrix = (np.zeros((len(Gn), len(Gn))) if return_mat else 0)
+		gram_itr_fun = (self._compute_gram_itr if return_mat else self._compute_kernel_itr)
 
 		# initial for height = 0
 		all_num_of_each_label = [] # number of occurence of each label in each graph in this iteration
 
 		# Compute subtree kernel with the 0th iteration and add it to the final kernel.
-		iterator = combinations_with_replacement(range(0, len(gram_matrix)), 2)
-		for i, j in iterator:
-			gram_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
-			gram_matrix[j][i] = gram_matrix[i][j]
+		iterator = combinations_with_replacement(range(0, len(kernel_matrix)), 2)
+		for i, j in iterator: # @todo: not correct if return_mat == False.
+			kernel_matrix[i][j] += nx.number_of_nodes(Gn[i]) * nx.number_of_nodes(Gn[j])
+			kernel_matrix[j][i] = kernel_matrix[i][j]
 
 
 		# if h >= 1.
@@ -526,7 +473,7 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_unlabeled(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
 
 		# Iterate along heights (>= 2).
@@ -540,9 +487,9 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 				num_of_labels_occured = self._subtree_1graph_nl(G, all_set_compressed, all_num_of_each_label, num_of_labels_occured)
 
 			# Compute subtree kernel with h iterations and add it to the final kernel.
-			self._compute_gram_itr(gram_matrix, all_num_of_each_label)
+			kernel_matrix = gram_itr_fun(kernel_matrix, all_num_of_each_label)
 
-		return gram_matrix
+		return kernel_matrix
 
 
 	def _subtree_1graph_nl(self, G, all_set_compressed, all_num_of_each_label, num_of_labels_occured):
@@ -716,6 +663,8 @@ class WeisfeilerLehman(GraphKernel): # @todo: sp, edge user kernel.
 			gram_matrix[i][j] += self._compute_subtree_kernel(all_num_of_each_label[i],
 				   all_num_of_each_label[j])
 			gram_matrix[j][i] = gram_matrix[i][j]
+
+		return gram_matrix
 
 
 	def _compute_subtree_kernel(self, num_of_each_label1, num_of_each_label2):

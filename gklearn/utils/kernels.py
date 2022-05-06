@@ -68,6 +68,11 @@ def gaussian_kernel(x, y, gamma=None):
 	return np.exp((np.sum(np.subtract(x, y) ** 2)) * -gamma)
 
 
+def tanimoto_kernel(x, y):
+	xy = np.dot(x, y)
+	return xy / (np.dot(x, x) + np.dot(y, y) - xy)
+
+
 def gaussiankernel(x, y, gamma=None):
 	return gaussian_kernel(x, y, gamma=gamma)
 
