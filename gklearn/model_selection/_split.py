@@ -4,6 +4,8 @@
 Created on Fri Jun 24 11:13:26 2022
 
 @author: ljia
+
+Reference: scikit-learn.
 """
 from abc import abstractmethod
 import numbers
@@ -85,7 +87,7 @@ class BaseCrossValidatorWithValid(object):
 
 
 class _BaseKFoldWithValid(BaseCrossValidatorWithValid):
-	"""Base class for KFold, GroupKFold, and StratifiedKFold"""
+	"""Base class for KFoldWithValid, GroupKFoldWithValid, and StratifiedKFoldWithValid"""
 
 	@abstractmethod
 	def __init__(self, n_splits, *, stratify, shuffle, random_state):
