@@ -4,7 +4,7 @@ These kernels are defined between pairs of vectors.
 import numpy as np
 
 
-def delta_kernel(x, y):
+def kronecker_delta_kernel(x, y):
 	"""Delta kernel. Return 1 if x == y, 0 otherwise.
 
 	Parameters
@@ -23,6 +23,10 @@ def delta_kernel(x, y):
 	labeled graphs. In Proceedings of the 20th International Conference on
 	Machine Learning, Washington, DC, United States, 2003.
 	"""
+	return (1 if np.array_equal(x, y) else 0)
+
+
+def delta_kernel(x, y):
 	return x == y  #(1 if condition else 0)
 
 
@@ -62,6 +66,11 @@ def gaussian_kernel(x, y, gamma=None):
 # 	return kernel
 
 	return np.exp((np.sum(np.subtract(x, y) ** 2)) * -gamma)
+
+
+def tanimoto_kernel(x, y):
+	xy = np.dot(x, y)
+	return xy / (np.dot(x, x) + np.dot(y, y) - xy)
 
 
 def gaussiankernel(x, y, gamma=None):
@@ -123,7 +132,7 @@ def linearkernel(x, y):
 
 
 def cosine_kernel(x, y):
-	return np.dot(x, y) / (np.abs(x) * np.abs(y))
+	return np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 
 def sigmoid_kernel(x, y, gamma=None, coef0=1):
@@ -142,7 +151,7 @@ def laplacian_kernel(x, y, gamma=None):
 	if gamma is None:
 		gamma = 1.0 / len(x)
 
-	k = -gamma * np.abs(np.subtract(x, y))
+	k = -gamma * np.linalg.norm(np.subtract(x, y))
 	k = np.exp(k)
 	return k
 

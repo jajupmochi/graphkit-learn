@@ -32,7 +32,13 @@ class GraphKernel(BaseEstimator): #, ABC):
 	https://ysig.github.io/GraKeL/0.1a8/_modules/grakel/kernels/kernel.html#Kernel.
 	"""
 
-	def __init__(self, parallel=None, n_jobs=None, chunksize=None, normalize=True, verbose=2):
+	def __init__(self,
+			  parallel=None,
+			  n_jobs=None,
+			  chunksize=None,
+			  normalize=True,
+			  copy_graphs=True, # make sure it is a full deep copy. and faster!
+			  verbose=2):
 		"""`__init__` for `GraphKernel` object."""
 		# @todo: the default settings of the parameters are different from those in the self.compute method.
 # 		self._graphs = None
@@ -40,6 +46,7 @@ class GraphKernel(BaseEstimator): #, ABC):
 		self.n_jobs = n_jobs
 		self.chunksize = chunksize
 		self.normalize = normalize
+		self.copy_graphs = copy_graphs
 		self.verbose = verbose
 # 		self._run_time = 0
 # 		self._gram_matrix = None
@@ -90,7 +97,7 @@ class GraphKernel(BaseEstimator): #, ABC):
 		return self
 
 
-	def transform(self, X):
+	def transform(self, X=None, load_gm_train=False):
 		"""Compute the graph kernel matrix between given and fitted data.
 
 		Parameters
@@ -108,6 +115,12 @@ class GraphKernel(BaseEstimator): #, ABC):
 		None.
 
 		"""
+		# If `load_gm_train`, load Gram matrix of training data.
+		if load_gm_train:
+			check_is_fitted(self, '_gm_train')
+			self._is_transformed = True
+			return self._gm_train # @todo: copy or not?
+
 		# Check if method "fit" had been called.
 		check_is_fitted(self, '_graphs')
 
@@ -133,8 +146,7 @@ class GraphKernel(BaseEstimator): #, ABC):
 		return kernel_matrix
 
 
-
-	def fit_transform(self, X):
+	def fit_transform(self, X, save_gm_train=False):
 		"""Fit and transform: compute Gram matrix on the same data.
 
 		Parameters
@@ -163,6 +175,9 @@ class GraphKernel(BaseEstimator): #, ABC):
 				raise
 			finally:
 				np.seterr(**old_settings)
+
+		if save_gm_train:
+			self._gm_train = gram_matrix
 
 		return gram_matrix
 
@@ -260,7 +275,9 @@ class GraphKernel(BaseEstimator): #, ABC):
 				kernel_matrix = self._compute_kernel_matrix_imap_unordered(Y)
 
 			elif self.parallel is None:
-				kernel_matrix = self._compute_kernel_matrix_series(Y)
+				Y_copy = ([g.copy() for g in Y] if self.copy_graphs else Y)
+				graphs_copy = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
+				kernel_matrix = self._compute_kernel_matrix_series(Y_copy, graphs_copy)
 
 			self._run_time = time.time() - start_time
 			if self.verbose:
@@ -270,26 +287,25 @@ class GraphKernel(BaseEstimator): #, ABC):
 		return kernel_matrix
 
 
-	def _compute_kernel_matrix_series(self, Y):
-		"""Compute the kernel matrix between a given target graphs (Y) and
-		the fitted graphs (X / self._graphs) without parallelization.
+	def _compute_kernel_matrix_series(self, X, Y):
+		"""Compute the kernel matrix between two sets of graphs (X and Y) without parallelization.
 
 		Parameters
 		----------
-		Y : list of graphs, optional
-			The target graphs.
+		X, Y : list of graphs
+			The input graphs.
 
 		Returns
 		-------
-		kernel_matrix : numpy array, shape = [n_targets, n_inputs]
+		kernel_matrix : numpy array, shape = [n_X, n_Y]
 			The computed kernel matrix.
 
 		"""
-		kernel_matrix = np.zeros((len(Y), len(self._graphs)))
+		kernel_matrix = np.zeros((len(X), len(Y)))
 
-		for i_y, g_y in enumerate(Y):
-			for i_x, g_x in enumerate(self._graphs):
-				kernel_matrix[i_y, i_x] = self.pairwise_kernel(g_y, g_x)
+		for i_x, g_x in enumerate(X):
+			for i_y, g_y in enumerate(Y):
+				kernel_matrix[i_x, i_y] = self.pairwise_kernel(g_x, g_y)
 
 		return kernel_matrix
 
@@ -335,14 +351,16 @@ class GraphKernel(BaseEstimator): #, ABC):
 		except NotFittedError:
 			# Compute diagonals of X.
 			self._X_diag = np.empty(shape=(len(self._graphs),))
-			for i, x in enumerate(self._graphs):
+			graphs = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
+			for i, x in enumerate(graphs):
 				self._X_diag[i] = self.pairwise_kernel(x, x) # @todo: parallel?
 
 		try:
             # If transform has happened, return both diagonals.
 			check_is_fitted(self, ['_Y'])
 			self._Y_diag = np.empty(shape=(len(self._Y),))
-			for (i, y) in enumerate(self._Y):
+			Y = ([g.copy() for g in self._Y] if self.copy_graphs else self._Y)
+			for (i, y) in enumerate(Y):
 				self._Y_diag[i] = self.pairwise_kernel(y, y) # @todo: parallel?
 
 			return self._X_diag, self._Y_diag
@@ -484,7 +502,8 @@ class GraphKernel(BaseEstimator): #, ABC):
 		if self.parallel == 'imap_unordered':
 			gram_matrix = self._compute_gm_imap_unordered()
 		elif self.parallel is None:
-			gram_matrix = self._compute_gm_series()
+			graphs = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
+			gram_matrix = self._compute_gm_series(graphs)
 		else:
 			raise Exception('Parallel mode is not set correctly.')
 
@@ -496,11 +515,11 @@ class GraphKernel(BaseEstimator): #, ABC):
 		return gram_matrix
 
 
-	def _compute_gm_series(self):
+	def _compute_gm_series(self, graphs):
 		pass
 
 
-	def _compute_gm_imap_unordered(self):
+	def _compute_gm_imap_unordered(self, graphs):
 		pass
 
 

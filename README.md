@@ -1,5 +1,6 @@
 # graphkit-learn
-[![Build Status](https://travis-ci.com/jajupmochi/graphkit-learn.svg?branch=master)](https://travis-ci.com/jajupmochi/graphkit-learn)
+
+[![Build Status](https://app.travis-ci.com/jajupmochi/graphkit-learn.svg?branch=master)](https://app.travis-ci.com/jajupmochi/graphkit-learn)
 [![Build status](https://ci.appveyor.com/api/projects/status/bdxsolk0t1uji9rd?svg=true)](https://ci.appveyor.com/project/jajupmochi/graphkit-learn)
 [![codecov](https://codecov.io/gh/jajupmochi/graphkit-learn/branch/master/graph/badge.svg)](https://codecov.io/gh/jajupmochi/graphkit-learn)
 [![Documentation Status](https://readthedocs.org/projects/graphkit-learn/badge/?version=master)](https://graphkit-learn.readthedocs.io/en/master/?badge=master)

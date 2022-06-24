@@ -64,10 +64,12 @@ def pairwise_ged(g1, g2, options={}, sort=True, repeats=1, parallel=False, verbo
 	g = listID[0]
 	h = listID[1]
 	dis_min = np.inf
+# 	print('------------------------------------------')
 	for i in range(0, repeats):
 		ged_env.run_method(g, h)
 		upper = ged_env.get_upper_bound(g, h)
 		dis = upper
+# 		print(dis)
 		if dis < dis_min:
 			dis_min = dis
 			pi_forward = ged_env.get_forward_map(g, h)
@@ -169,12 +171,100 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False, verbose=True
 	return ged_vec, ged_mat, n_edit_operations
 
 
-def compute_geds(graphs, options={}, sort=True, repeats=1, parallel=False, n_jobs=None, verbose=True):
+#%%
+
+
+def compute_geds(graphs,
+				 options={},
+				 sort=True,
+				 repeats=1,
+				 permute_nodes=False,
+				 random_state=None,
+				 parallel=False,
+				 n_jobs=None,
+				 verbose=True):
+	"""Compute graph edit distance matrix using GEDLIB.
+	"""
+	if permute_nodes:
+		return _compute_geds_with_permutation(graphs,
+										options=options,
+										sort=sort,
+										repeats=repeats,
+										random_state=random_state,
+										parallel=parallel,
+										n_jobs=n_jobs,
+										verbose=verbose)
+	else:
+		return _compute_geds_without_permutation(graphs,
+										options=options,
+										sort=sort,
+										repeats=repeats,
+										parallel=parallel,
+										n_jobs=n_jobs,
+										verbose=verbose)
+
+
+#%%
+
+
+def _compute_geds_with_permutation(graphs,
+								   options={},
+								   sort=True,
+								   repeats=1,
+								   random_state=None,
+								   parallel=False,
+								   n_jobs=None,
+								   verbose=True):
+
+	from gklearn.utils.utils import nx_permute_nodes
+
+	# Initialze variables.
+	ged_mat_optim = np.full((len(graphs), len(graphs)), np.inf)
+	np.fill_diagonal(ged_mat_optim, 0)
+	len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
+	ged_vec = [0] * len_itr
+	n_edit_operations = [0] * len_itr
+
+	# for each repeats:
+	for i in range(0, repeats):
+		# Permutate nodes.
+		graphs_pmut = [nx_permute_nodes(g, random_state=random_state) for g in graphs]
+
+		out = _compute_geds_without_permutation(graphs_pmut,
+										  options=options,
+										  sort=sort,
+										  repeats=1,
+										  parallel=parallel,
+										  n_jobs=n_jobs,
+										  verbose=verbose)
+
+		# Compare current results with the best one.
+		idx_cnt = 0
+		for i in range(len(graphs)):
+			for j in range(i + 1, len(graphs)):
+				if out[1][i, j] < ged_mat_optim[i ,j]:
+					ged_mat_optim[i, j] = out[1][i, j]
+					ged_mat_optim[j, i] = out[1][j, i]
+					ged_vec[idx_cnt] = out[0][idx_cnt]
+					n_edit_operations[idx_cnt] = out[2][idx_cnt]
+				idx_cnt += 1
+
+	return ged_vec, ged_mat_optim, n_edit_operations
+
+
+def _compute_geds_without_permutation(graphs,
+									  options={},
+									  sort=True,
+									  repeats=1,
+									  parallel=False,
+									  n_jobs=None,
+									  verbose=True):
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(options['edit_cost'], edit_cost_constant=options['edit_cost_constants'])
+
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()
@@ -266,6 +356,11 @@ def _compute_ged(env, gid1, gid2, g1, g2, repeats):
 		dis = upper
 
 		# make the map label correct (label remove map as np.inf)
+		# Attention: using node indices instead of NetworkX node labels (as
+		# implemented here) may cause several issues:
+		# - Fail if NetworkX node labels are not consecutive integers;
+		# - Return wrong mappings if nodes are permutated (e.g., by using
+		# `gklearn.utis.utils.nx_permute_nodes()`.)
 		nodes1 = [n for n in g1.nodes()]
 		nodes2 = [n for n in g2.nodes()]
 		nb1 = nx.number_of_nodes(g1)
@@ -278,46 +373,57 @@ def _compute_ged(env, gid1, gid2, g1, g2, repeats):
 			pi_forward_min = pi_forward
 			pi_backward_min = pi_backward
 
+# 	print('-----')
+# 	print(pi_forward_min)
+# 	print(pi_backward_min)
+
 	return dis_min, pi_forward_min, pi_backward_min
 
 
-def label_costs_to_matrix(costs, nb_labels):
-	"""Reform a label cost vector to a matrix.
-
-	Parameters
-	----------
-	costs : numpy.array
-		The vector containing costs between labels, in the order of node insertion costs, node deletion costs, node substitition costs, edge insertion costs, edge deletion costs, edge substitition costs.
-	nb_labels : integer
-		Number of labels.
-
-	Returns
-	-------
-	cost_matrix : numpy.array.
-		The reformed label cost matrix of size (nb_labels, nb_labels). Each row/column of cost_matrix corresponds to a label, and the first label is the dummy label. This is the same setting as in GEDData.
-	"""
-	# Initialize label cost matrix.
-	cost_matrix = np.zeros((nb_labels + 1, nb_labels + 1))
-	i = 0
-	# Costs of insertions.
-	for col in range(1, nb_labels + 1):
-		cost_matrix[0, col] = costs[i]
-		i += 1
-	# Costs of deletions.
-	for row in range(1, nb_labels + 1):
-		cost_matrix[row, 0] = costs[i]
-		i += 1
-	# Costs of substitutions.
-	for row in range(1, nb_labels + 1):
-		for col in range(row + 1, nb_labels + 1):
-			cost_matrix[row, col] = costs[i]
-			cost_matrix[col, row] = costs[i]
-			i += 1
-
-	return cost_matrix
+#%%
 
 
 def get_nb_edit_operations(g1, g2, forward_map, backward_map, edit_cost=None, is_cml=False, **kwargs):
+	"""Calculate the numbers of the occurence of each edit operation in a given
+	edit path.
+
+	Parameters
+	----------
+	g1 : TYPE
+		DESCRIPTION.
+	g2 : TYPE
+		DESCRIPTION.
+	forward_map : TYPE
+		DESCRIPTION.
+	backward_map : TYPE
+		DESCRIPTION.
+	edit_cost : TYPE, optional
+		DESCRIPTION. The default is None.
+	is_cml : TYPE, optional
+		DESCRIPTION. The default is False.
+	**kwargs : TYPE
+		DESCRIPTION.
+
+	Raises
+	------
+	Exception
+		DESCRIPTION.
+
+	Returns
+	-------
+	TYPE
+		DESCRIPTION.
+
+	Notes
+	-----
+	Attention: when implementing a function to get the numbers of edit
+	operations, make sure that:
+		- It does not fail if NetworkX node labels are not consecutive integers;
+		- It returns correct results if nodes are permutated (e.g., by using
+		`gklearn.utis.utils.nx_permute_nodes()`.)
+	Generally speaking, it means you need to distinguish the NetworkX label of
+	a node from the position (index) of that node in the node list.
+	"""
 	if is_cml:
 		if edit_cost == 'CONSTANT':
 			node_labels = kwargs.get('node_labels', [])
@@ -609,6 +715,48 @@ def get_nb_edit_operations_nonsymbolic(g1, g2, forward_map, backward_map,
 	n_ei = nx.number_of_edges(g2) - n_es
 
 	return n_vi, n_vr, sod_vs, n_ei, n_er, sod_es
+
+
+#%%
+
+
+def label_costs_to_matrix(costs, nb_labels):
+	"""Reform a label cost vector to a matrix.
+
+	Parameters
+	----------
+	costs : numpy.array
+		The vector containing costs between labels, in the order of node insertion costs, node deletion costs, node substitition costs, edge insertion costs, edge deletion costs, edge substitition costs.
+	nb_labels : integer
+		Number of labels.
+
+	Returns
+	-------
+	cost_matrix : numpy.array.
+		The reformed label cost matrix of size (nb_labels, nb_labels). Each row/column of cost_matrix corresponds to a label, and the first label is the dummy label. This is the same setting as in GEDData.
+	"""
+	# Initialize label cost matrix.
+	cost_matrix = np.zeros((nb_labels + 1, nb_labels + 1))
+	i = 0
+	# Costs of insertions.
+	for col in range(1, nb_labels + 1):
+		cost_matrix[0, col] = costs[i]
+		i += 1
+	# Costs of deletions.
+	for row in range(1, nb_labels + 1):
+		cost_matrix[row, 0] = costs[i]
+		i += 1
+	# Costs of substitutions.
+	for row in range(1, nb_labels + 1):
+		for col in range(row + 1, nb_labels + 1):
+			cost_matrix[row, col] = costs[i]
+			cost_matrix[col, row] = costs[i]
+			i += 1
+
+	return cost_matrix
+
+
+#%%
 
 
 def ged_options_to_string(options):

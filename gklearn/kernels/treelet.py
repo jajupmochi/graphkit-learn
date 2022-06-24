@@ -28,16 +28,16 @@ from gklearn.kernels import GraphKernel
 
 class Treelet(GraphKernel):
 
-	def __init__(self, parallel=None, n_jobs=None, chunksize=None, normalize=True, verbose=2, precompute_canonkeys=True, save_canonkeys=False, **kwargs):
+	def __init__(self, **kwargs):
 		"""Initialise a treelet kernel.
 		"""
-		super().__init__(parallel=parallel, n_jobs=n_jobs, chunksize=chunksize, normalize=normalize, verbose=verbose)
+		GraphKernel.__init__(self, **{k: kwargs.get(k) for k in ['parallel', 'n_jobs', 'chunksize', 'normalize', 'copy_graphs', 'verbose'] if k in kwargs})
 		self.node_labels = kwargs.get('node_labels', [])
 		self.edge_labels = kwargs.get('edge_labels', [])
 		self.sub_kernel = kwargs.get('sub_kernel', None)
 		self.ds_infos = kwargs.get('ds_infos', {})
-		self.precompute_canonkeys = precompute_canonkeys
-		self.save_canonkeys = save_canonkeys
+		self.precompute_canonkeys = kwargs.get('precompute_canonkeys', True)
+		self.save_canonkeys = kwargs.get('save_canonkeys', True)
 
 
 	##########################################################################
@@ -71,7 +71,7 @@ class Treelet(GraphKernel):
 			raise ValueError('Sub-kernel not set.')
 
 
-	def _compute_kernel_matrix_series(self, Y):
+	def _compute_kernel_matrix_series(self, Y, X=None, load_canonkeys=True):
 		"""Compute the kernel matrix between a given target graphs (Y) and
 		the fitted graphs (X / self._graphs) without parallelization.
 
@@ -86,36 +86,45 @@ class Treelet(GraphKernel):
 			The computed kernel matrix.
 
 		"""
+		if_comp_X_canonkeys = True
 
-		# self._add_dummy_labels will modify the input in place.
-		self._add_dummy_labels() # For self._graphs
-# 		Y = [g.copy() for g in Y] # @todo: ?
-		self._add_dummy_labels(Y)
+		# if load saved canonkeys of X from the instance:
+		if load_canonkeys:
+			# Canonical keys for self._graphs.
+			try:
+				check_is_fitted(self, ['_canonkeys'])
+				canonkeys_list1 = self._canonkeys
+				if_comp_X_canonkeys = False
+			except NotFittedError:
+				import warnings
+				warnings.warn('The canonkeys of self._graphs are not computed/saved. The keys of `X` is computed instead.')
+				if_comp_X_canonkeys = True
+
 
 		# get all canonical keys of all graphs before computing kernels to save
 		# time, but this may cost a lot of memory for large dataset.
 
-		# Canonical keys for self._graphs.
-		try:
-			check_is_fitted(self, ['_canonkeys'])
-			canonkeys_list1 = self._canonkeys
-		except NotFittedError:
+		# Compute the canonical keys of X.
+		if if_comp_X_canonkeys:
+			if X is None:
+				raise('X can not be None.')
+			# self._add_dummy_labels will modify the input in place.
+			self._add_dummy_labels(X) # for X
 			canonkeys_list1 = []
-			iterator = get_iters(self._graphs, desc='getting canonkeys for X', file=sys.stdout, verbose=(self.verbose >= 2))
+			iterator = get_iters(self._graphs, desc='Getting canonkeys for X', file=sys.stdout, verbose=(self.verbose >= 2))
 			for g in iterator:
 				canonkeys_list1.append(self._get_canonkeys(g))
 
-			if self.save_canonkeys:
-				self._canonkeys = canonkeys_list1
-
 		# Canonical keys for Y.
+# 		Y = [g.copy() for g in Y] # @todo: ?
+		self._add_dummy_labels(Y)
 		canonkeys_list2 = []
-		iterator = get_iters(Y, desc='getting canonkeys for Y', file=sys.stdout, verbose=(self.verbose >= 2))
+		iterator = get_iters(Y, desc='Getting canonkeys for Y', file=sys.stdout, verbose=(self.verbose >= 2))
 		for g in iterator:
 			canonkeys_list2.append(self._get_canonkeys(g))
 
-		if self.save_canonkeys:
-			self._Y_canonkeys = canonkeys_list2
+# 		if self.save_canonkeys:
+# 			self._Y_canonkeys = canonkeys_list2
 
 		# compute kernel matrix.
 		kernel_matrix = np.zeros((len(Y), len(canonkeys_list1)))
@@ -235,13 +244,13 @@ class Treelet(GraphKernel):
 	##########################################################################
 
 
-	def _compute_gm_series(self):
-		self._add_dummy_labels(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._add_dummy_labels(graphs)
 
 		# get all canonical keys of all graphs before computing kernels to save
 		# time, but this may cost a lot of memory for large dataset.
 		canonkeys = []
-		iterator = get_iters(self._graphs, desc='getting canonkeys', file=sys.stdout,
+		iterator = get_iters(graphs, desc='getting canonkeys', file=sys.stdout,
 					   verbose=(self.verbose >= 2))
 		for g in iterator:
 			canonkeys.append(self._get_canonkeys(g))
@@ -250,11 +259,11 @@ class Treelet(GraphKernel):
 			self._canonkeys = canonkeys
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		from itertools import combinations_with_replacement
-		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr = combinations_with_replacement(range(0, len(graphs)), 2)
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
 					length=len_itr, verbose=(self.verbose >= 2))
 		for i, j in iterator:
@@ -390,6 +399,9 @@ class Treelet(GraphKernel):
 			Treelet kernel between 2 graphs.
 		"""
 		keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
+		if len(keys) == 0: # There is nothing in common...
+			return 0
+
 		vector1 = np.array([(canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys])
 		vector2 = np.array([(canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys])
 
