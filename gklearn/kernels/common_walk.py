@@ -34,31 +34,31 @@ class CommonWalk(GraphKernel):
 		self._compute_method = self._compute_method.lower()
 
 
-	def _compute_gm_series(self):
-		self._check_graphs(self._graphs)
-		self._add_dummy_labels(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._check_graphs(graphs)
+		self._add_dummy_labels(graphs)
 		if not self._ds_infos['directed']:  #  convert
-			self._graphs = [G.to_directed() for G in self._graphs]
+			graphs = [G.to_directed() for G in graphs]
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		from itertools import combinations_with_replacement
-		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr = combinations_with_replacement(range(0, len(graphs)), 2)
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
 					length=len_itr, verbose=(self.verbose >= 2))
 
 		# direct product graph method - exponential
 		if self._compute_method == 'exp':
 			for i, j in iterator:
-				kernel = self._kernel_do_exp(self._graphs[i], self._graphs[j], self._weight)
+				kernel = self._kernel_do_exp(graphs[i], graphs[j], self._weight)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 		# direct product graph method - geometric
 		elif self._compute_method == 'geo':
 			for i, j in iterator:
-				kernel = self._kernel_do_geo(self._graphs[i], self._graphs[j], self._weight)
+				kernel = self._kernel_do_geo(graphs[i], graphs[j], self._weight)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 
@@ -254,7 +254,7 @@ class CommonWalk(GraphKernel):
 		A = nx.adjacency_matrix(gp).todense()
 		mat = np.identity(len(A)) - gamma * A
 	#	try:
-		return mat.I.sum()
+		return np.linalg.inv(mat).sum()
 	#	except np.linalg.LinAlgError:
 	#		return np.nan
 

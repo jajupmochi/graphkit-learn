@@ -111,17 +111,25 @@ def test_CommonWalk(ds_name, weight, compute_method):
 		dataset.load_graphs([g for g in dataset.graphs if nx.number_of_nodes(g) > 1])
 
 		try:
-			graph_kernel = CommonWalk(node_labels=dataset.node_labels,
-						edge_labels=dataset.edge_labels,
-						ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						weight=weight,
-						compute_method=compute_method)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			graph_kernel = CommonWalk(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				weight=weight,
+				compute_method=compute_method
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0], dataset.graphs[1:],
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0], dataset.graphs[1],
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -129,7 +137,7 @@ def test_CommonWalk(ds_name, weight, compute_method):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
@@ -496,16 +504,24 @@ def test_Treelet(ds_name):
 
 		pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
 		try:
-			graph_kernel = Treelet(node_labels=dataset.node_labels,
-						 edge_labels=dataset.edge_labels,
-						 ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						 sub_kernel=pkernel)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			graph_kernel = Treelet(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				sub_kernel=pkernel
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0], dataset.graphs[1:],
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0], dataset.graphs[1],
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -556,12 +572,13 @@ if __name__ == "__main__":
 # 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
  	# test_StructuralSP('Acyclic')
 # 	test_StructuralSP('Cuneiform', None)
- 	test_WLSubtree('MAO') # 'Alkane_unlabeled', 'Acyclic', 'AIDS'
+#  	test_WLSubtree('MAO') # 'Alkane_unlabeled', 'Acyclic', 'AIDS'
 #	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
 #	test_RandomWalk('Acyclic', 'fp', None, None)
 #	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
  	# test_CommonWalk('Acyclic', 0.01, 'geo')
+	test_CommonWalk('Alkane_unlabeled', 0.01, 'geo')
     # test_Marginalized('Acyclic', False)
  	# test_ShortestPath('Acyclic')
 # 	 test_PathUpToH('Acyclic', 'MinMax')
