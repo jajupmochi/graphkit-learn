@@ -11,17 +11,25 @@ from gklearn.ged.util import  pairwise_ged, get_nb_edit_operations
 from gklearn.utils import get_iters
 
 
-def compute_ged(Gi, Gj, edit_cost, method='BIPARTITE', **kwargs):
+def compute_ged(
+		Gi, Gj, edit_cost, edit_cost_fun='CONSTANT', method='BIPARTITE',
+		repeats=10, **kwargs
+):
 	"""
-	Compute GED between two graph according to edit_cost
+	Compute GED between two graph according to edit_cost.
 	"""
-	ged_options = {'edit_cost': 'CONSTANT',
-				'method': method,
-				'edit_cost_constants': edit_cost}
+	ged_options = {
+		'edit_cost': edit_cost_fun,
+		'method': method,
+		'edit_cost_constants': edit_cost
+	}
 	node_labels = kwargs.get('node_labels', [])
 	edge_labels = kwargs.get('edge_labels', [])
-	dis, pi_forward, pi_backward = pairwise_ged(Gi, Gj, ged_options, repeats=10)
-	n_eo_tmp = get_nb_edit_operations(Gi, Gj, pi_forward, pi_backward, edit_cost='CONSTANT', node_labels=node_labels, edge_labels=edge_labels)
+	dis, pi_forward, pi_backward = pairwise_ged(
+		Gi, Gj, ged_options, repeats=repeats)
+	n_eo_tmp = get_nb_edit_operations(
+		Gi, Gj, pi_forward, pi_backward, edit_cost=edit_cost_fun,
+		node_labels=node_labels, edge_labels=edge_labels)
 	return dis, n_eo_tmp
 
 
@@ -34,17 +42,25 @@ def compute_ged_all_dataset(Gn, edit_cost, ed_method, **kwargs):
 	return compute_geds(G_pairs, Gn, edit_cost, ed_method, **kwargs)
 
 
-def compute_geds(G_pairs, Gn, edit_cost, ed_method, verbose=True, **kwargs):
+def compute_geds(
+		G_pairs, Gn, edit_cost, ed_method, edit_cost_fun='CONSTANT',
+        verbose=True, **kwargs
+):
 	"""
 	Compute GED between all indexes in G_pairs given edit_cost
 	:return: ged_vec : the list of computed distances, n_edit_operations : the list of edit operations
 	"""
 	ged_vec = []
 	n_edit_operations = []
-	for k in get_iters(range(len(G_pairs)), desc='Computing GED', file=sys.stdout, length=len(G_pairs), verbose=verbose):
+	for k in get_iters(
+			range(len(G_pairs)), desc='Computing GED', file=sys.stdout,
+			length=len(G_pairs), verbose=verbose
+	):
 		[i, j] = G_pairs[k]
 		dis, n_eo_tmp = compute_ged(
-			Gn[i], Gn[j], edit_cost=edit_cost, method=ed_method, **kwargs)
+			Gn[i], Gn[j], edit_cost=edit_cost, edit_cost_fun=edit_cost_fun,
+			method=ed_method, **kwargs
+		)
 		ged_vec.append(dis)
 		n_edit_operations.append(n_eo_tmp)
 
