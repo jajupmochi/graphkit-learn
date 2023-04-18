@@ -60,17 +60,17 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-#          pip install Cython pytest
-#          pip install codecov coverage pytest-cov
-#          sudo apt-get -y install gfortran liblapack-dev
-#          pip install -r requirements.txt
-#          pip install wheel
-#
-#      - name: Build and test
-#        run: |
-#          python setup.py bdist_wheel
-#          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py
-#
-#      - name: Run code coverage
-#        run: |
-#          codecov
+          pip install Cython pytest
+          pip install codecov coverage pytest-cov
+          sudo apt-get -y install gfortran liblapack-dev
+          pip install -r requirements.txt
+          pip install wheel
+
+      - name: Build and test
+        run: |
+          python setup.py bdist_wheel
+          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py
+
+      - name: Run code coverage
+        run: |
+          codecov
