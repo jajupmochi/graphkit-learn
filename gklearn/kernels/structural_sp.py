@@ -38,10 +38,10 @@ class StructuralSP(GraphKernel):
 		self._ds_infos = kwargs.get('ds_infos', {})
 
 
-	def _compute_gm_series(self):
+	def _compute_gm_series(self, graphs):
 		# get shortest paths of each graph in the graphs.
 		splist = []
-		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
+		iterator = get_iters(graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for g in iterator:
 				splist.append(self._get_sps_as_trie(g))
@@ -50,21 +50,21 @@ class StructuralSP(GraphKernel):
 				splist.append(get_shortest_paths(g, self._edge_weight, self._ds_infos['directed']))
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		from itertools import combinations_with_replacement
-		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr = combinations_with_replacement(range(0, len(graphs)), 2)
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
 					   length=len_itr, verbose=(self.verbose >= 2))
 		if self._compute_method == 'trie':
 			for i, j in iterator:
-				kernel = self._ssp_do_trie(self._graphs[i], self._graphs[j], splist[i], splist[j])
+				kernel = self._ssp_do_trie(graphs[i], graphs[j], splist[i], splist[j])
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 		else:
 			for i, j in iterator:
-				kernel = self._ssp_do_naive(self._graphs[i], self._graphs[j], splist[i], splist[j])
+				kernel = self._ssp_do_naive(graphs[i], graphs[j], splist[i], splist[j])
 		#		if(kernel > 1):
 		#			print("error here ")
 				gram_matrix[i][j] = kernel

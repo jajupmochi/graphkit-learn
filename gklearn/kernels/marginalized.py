@@ -42,24 +42,24 @@ class Marginalized(GraphKernel):
 		self._n_iteration = int(self._n_iteration)
 
 
-	def _compute_gm_series(self):
-		self._add_dummy_labels(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._add_dummy_labels(graphs)
 
 		if self._remove_totters:
-			iterator = get_iters(self._graphs, desc='removing tottering', file=sys.stdout, verbose=(self.verbose >= 2))
+			iterator = get_iters(graphs, desc='removing tottering', file=sys.stdout, verbose=(self.verbose >= 2))
 			# @todo: this may not work.
-			self._graphs = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
+			graphs = [untotterTransformation(G, self._node_labels, self._edge_labels) for G in iterator]
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		from itertools import combinations_with_replacement
-		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr = combinations_with_replacement(range(0, len(graphs)), 2)
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout,
 					length=len_itr, verbose=(self.verbose >= 2))
 		for i, j in iterator:
-			kernel = self._kernel_do(self._graphs[i], self._graphs[j])
+			kernel = self._kernel_do(graphs[i], graphs[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel # @todo: no directed graph considered?
 

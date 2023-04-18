@@ -27,21 +27,21 @@ class SpectralDecomposition(RandomWalkMeta):
 		self._sub_kernel = kwargs.get('sub_kernel', None)
 
 
-	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self.verbose)
-		self._check_graphs(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._check_edge_weight(graphs, self.verbose)
+		self._check_graphs(graphs)
 		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored. Only works for undirected graphs.')
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		if self._q is None:
 			# precompute the spectral decomposition of each graph.
 			P_list = []
 			D_list = []
-			iterator = get_iters(self._graphs, desc='spectral decompose', file=sys.stdout, verbose=(self.verbose >= 2))
+			iterator = get_iters(graphs, desc='spectral decompose', file=sys.stdout, verbose=(self.verbose >= 2))
 			for G in iterator:
 				# don't normalize adjacency matrices if q is a uniform vector. Note
 				# A actually is the transpose of the adjacency matrix.
@@ -52,12 +52,12 @@ class SpectralDecomposition(RandomWalkMeta):
 #		P_inv_list = [p.T for p in P_list] # @todo: also works for directed graphs?
 
 			if self._p is None: # p is uniform distribution as default.
-				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in self._graphs]
+				q_T_list = [np.full((1, nx.number_of_nodes(G)), 1 / nx.number_of_nodes(G)) for G in graphs]
 #			q_T_list = [q.T for q in q_list]
 
 				from itertools import combinations_with_replacement
-				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-				len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+				itr = combinations_with_replacement(range(0, len(graphs)), 2)
+				len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 				for i, j in iterator:

@@ -35,22 +35,22 @@ class ShortestPath(GraphKernel):
 		self._ds_infos = kwargs.get('ds_infos', {})
 
 
-	def _compute_gm_series(self):
-		self._all_graphs_have_edges(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._all_graphs_have_edges(graphs)
 		# get shortest path graph of each graph.
-		iterator = get_iters(self._graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
-		self._graphs = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
+		iterator = get_iters(graphs, desc='getting sp graphs', file=sys.stdout, verbose=(self.verbose >= 2))
+		graphs = [getSPGraph(g, edge_weight=self._edge_weight) for g in iterator]
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		from itertools import combinations_with_replacement
-		itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr = combinations_with_replacement(range(0, len(graphs)), 2)
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator = get_iters(itr, desc='Computing kernels',
 					length=len_itr, file=sys.stdout,verbose=(self.verbose >= 2))
 		for i, j in iterator:
-			kernel = self._sp_do(self._graphs[i], self._graphs[j])
+			kernel = self._sp_do(graphs[i], graphs[j])
 			gram_matrix[i][j] = kernel
 			gram_matrix[j][i] = kernel
 

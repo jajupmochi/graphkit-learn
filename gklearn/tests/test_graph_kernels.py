@@ -1,9 +1,11 @@
 """Tests of graph kernels.
 """
 
-import pytest
 import multiprocessing
+
 import numpy as np
+import pytest
+
 
 ##############################################################################
 
@@ -50,7 +52,8 @@ def chooseDataset(ds_name):
 	elif ds_name == 'MAO':
 		dataset = Dataset('MAO', root=root)
 		dataset.trim_dataset(edge_required=True)
-		irrelevant_labels = {'node_labels': ['atom_symbol'], 'node_attrs': ['x', 'y']}
+		irrelevant_labels = {'node_labels': ['atom_symbol'],
+		                     'node_attrs': ['x', 'y']}
 		dataset.remove_labels(**irrelevant_labels)
 	# edge non-symbolic labels only.
 	elif ds_name == 'Fingerprint_edge':
@@ -103,12 +106,14 @@ def assert_equality(compute_fun, **kwargs):
 def test_CommonWalk(ds_name, weight, compute_method):
 	"""Test common walk kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import CommonWalk
 		import networkx as nx
 
 		dataset = chooseDataset(ds_name)
-		dataset.load_graphs([g for g in dataset.graphs if nx.number_of_nodes(g) > 1])
+		dataset.load_graphs(
+			[g for g in dataset.graphs if nx.number_of_nodes(g) > 1])
 
 		try:
 			graph_kernel = CommonWalk(
@@ -120,15 +125,18 @@ def test_CommonWalk(ds_name, weight, compute_method):
 			)
 			gram_matrix, run_time = graph_kernel.compute(
 				dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 			kernel_list, run_time = graph_kernel.compute(
 				dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 			kernel, run_time = graph_kernel.compute(
 				dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 
 		except Exception as exception:
@@ -141,29 +149,48 @@ def test_CommonWalk(ds_name, weight, compute_method):
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
-@pytest.mark.parametrize('remove_totters', [False]) #[True, False])
+@pytest.mark.parametrize('remove_totters', [False])  # [True, False])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_Marginalized(ds_name, remove_totters):
 	"""Test marginalized kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import Marginalized
 
 		dataset = chooseDataset(ds_name)
 
 		try:
-			graph_kernel = Marginalized(node_labels=dataset.node_labels,
-						edge_labels=dataset.edge_labels,
-						ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						p_quit=0.5,
-						n_iteration=2,
-						remove_totters=remove_totters)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			graph_kernel = Marginalized(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				ds_infos=dataset.get_dataset_infos(
+					keys=['directed']
+				),
+				p_quit=0.5,
+				n_iteration=2,
+				remove_totters=remove_totters
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -179,6 +206,7 @@ def test_Marginalized(ds_name, remove_totters):
 def test_SylvesterEquation(ds_name):
 	"""Test sylvester equation kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import SylvesterEquation
 
@@ -186,17 +214,32 @@ def test_SylvesterEquation(ds_name):
 
 		try:
 			graph_kernel = SylvesterEquation(
-								ds_infos=dataset.get_dataset_infos(keys=['directed']),
-								weight=1e-3,
-								p=None,
-								q=None,
-								edge_weight=None)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				weight=1e-3,
+				p=None,
+				q=None,
+				edge_weight=None
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -204,7 +247,7 @@ def test_SylvesterEquation(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 @pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
@@ -212,35 +255,56 @@ def test_SylvesterEquation(ds_name):
 def test_ConjugateGradient(ds_name):
 	"""Test conjugate gradient kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import ConjugateGradient
-		from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+		from gklearn.utils.kernels import kronecker_delta_kernel, gaussian_kernel, \
+			kernelproduct
 		import functools
 
 		dataset = chooseDataset(ds_name)
 
-		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-		sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+		mixkernel = functools.partial(
+			kernelproduct, kronecker_delta_kernel,
+			gaussian_kernel)
+		sub_kernels = {
+			'symb': kronecker_delta_kernel, 'nsymb': gaussian_kernel,
+			'mix': mixkernel}
 
 		try:
 			graph_kernel = ConjugateGradient(
-								node_labels=dataset.node_labels,
-								node_attrs=dataset.node_attrs,
-								edge_labels=dataset.edge_labels,
-								edge_attrs=dataset.edge_attrs,
-								ds_infos=dataset.get_dataset_infos(keys=['directed']),
-								weight=1e-3,
-								p=None,
-								q=None,
-								edge_weight=None,
-								node_kernels=sub_kernels,
-								edge_kernels=sub_kernels)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+				node_labels=dataset.node_labels,
+				node_attrs=dataset.node_attrs,
+				edge_labels=dataset.edge_labels,
+				edge_attrs=dataset.edge_attrs,
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				weight=1e-3,
+				p=None,
+				q=None,
+				edge_weight=None,
+				node_kernels=sub_kernels,
+				edge_kernels=sub_kernels
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -256,35 +320,56 @@ def test_ConjugateGradient(ds_name):
 def test_FixedPoint(ds_name):
 	"""Test fixed point kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import FixedPoint
-		from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+		from gklearn.utils.kernels import deltakernel, gaussiankernel, \
+			kernelproduct
 		import functools
 
 		dataset = chooseDataset(ds_name)
 
-		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-		sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+		mixkernel = functools.partial(
+			kernelproduct, deltakernel,
+			gaussiankernel)
+		sub_kernels = {
+			'symb': deltakernel, 'nsymb': gaussiankernel,
+			'mix': mixkernel}
 
 		try:
 			graph_kernel = FixedPoint(
-								node_labels=dataset.node_labels,
-								node_attrs=dataset.node_attrs,
-								edge_labels=dataset.edge_labels,
-								edge_attrs=dataset.edge_attrs,
-								ds_infos=dataset.get_dataset_infos(keys=['directed']),
-								weight=1e-3,
-								p=None,
-								q=None,
-								edge_weight=None,
-								node_kernels=sub_kernels,
-								edge_kernels=sub_kernels)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+				node_labels=dataset.node_labels,
+				node_attrs=dataset.node_attrs,
+				edge_labels=dataset.edge_labels,
+				edge_attrs=dataset.edge_attrs,
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				weight=1e-3,
+				p=None,
+				q=None,
+				edge_weight=None,
+				node_kernels=sub_kernels,
+				edge_kernels=sub_kernels
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -301,6 +386,7 @@ def test_FixedPoint(ds_name):
 def test_SpectralDecomposition(ds_name, sub_kernel):
 	"""Test spectral decomposition kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import SpectralDecomposition
 
@@ -308,18 +394,33 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 
 		try:
 			graph_kernel = SpectralDecomposition(
-								ds_infos=dataset.get_dataset_infos(keys=['directed']),
-								weight=1e-3,
-								p=None,
-								q=None,
-								edge_weight=None,
-								sub_kernel=sub_kernel)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+				ds_infos=dataset.get_dataset_infos(keys=['directed']),
+				weight=1e-3,
+				p=None,
+				q=None,
+				edge_weight=None,
+				sub_kernel=sub_kernel
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -379,106 +480,59 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 #		assert False, exception
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
+@pytest.mark.parametrize(
+	'ds_name',
+	['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint']
+)
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_ShortestPath(ds_name):
 	"""Test shortest path kernel.
 	"""
+
 	def compute(parallel=None, fcsp=None):
 		from gklearn.kernels import ShortestPath
-		from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
+		from gklearn.utils.kernels import deltakernel, gaussiankernel, \
+			kernelproduct
 		import functools
 
 		dataset = chooseDataset(ds_name)
 
-		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-		sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
+		mixkernel = functools.partial(
+			kernelproduct, deltakernel,
+			gaussiankernel)
+		sub_kernels = {
+			'symb': deltakernel, 'nsymb': gaussiankernel,
+			'mix': mixkernel}
 		try:
-			graph_kernel = ShortestPath(node_labels=dataset.node_labels,
-						node_attrs=dataset.node_attrs,
-						ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						fcsp=fcsp,
-						node_kernels=sub_kernels)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			graph_kernel = ShortestPath(
+				node_labels=dataset.node_labels,
+				node_attrs=dataset.node_attrs,
+				ds_infos=dataset.get_dataset_infos(
+					keys=['directed']
+				),
+				fcsp=fcsp,
+				node_kernels=sub_kernels)
 
-		except Exception as exception:
-			print(repr(exception))
-			assert False, exception
-		else:
-			return gram_matrix, kernel_list, kernel
-
-	assert_equality(compute, parallel=['imap_unordered', None], fcsp=[True, False])
-
-
-#@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
-@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint', 'Fingerprint_edge', 'Cuneiform'])
-# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-def test_StructuralSP(ds_name):
-	"""Test structural shortest path kernel.
-	"""
-	def compute(parallel=None, fcsp=None):
-		from gklearn.kernels import StructuralSP
-		from gklearn.utils.kernels import deltakernel, gaussiankernel, kernelproduct
-		import functools
-
-		dataset = chooseDataset(ds_name)
-
-		mixkernel = functools.partial(kernelproduct, deltakernel, gaussiankernel)
-		sub_kernels = {'symb': deltakernel, 'nsymb': gaussiankernel, 'mix': mixkernel}
-		try:
-			graph_kernel = StructuralSP(node_labels=dataset.node_labels,
-						 edge_labels=dataset.edge_labels,
-						 node_attrs=dataset.node_attrs,
-						 edge_attrs=dataset.edge_attrs,
-						 ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						 fcsp=fcsp,
-						 node_kernels=sub_kernels,
-						 edge_kernels=sub_kernels)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-	 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-	 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-	 			parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-
-		except Exception as exception:
-			print(repr(exception))
-			assert False, exception
-		else:
-			return gram_matrix, kernel_list, kernel
-
-	assert_equality(compute, parallel=['imap_unordered', None], fcsp=[True, False])
-
-
-@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
-# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
-#@pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto', None])
-@pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto'])
-# @pytest.mark.parametrize('compute_method', ['trie', 'naive'])
-def test_PathUpToH(ds_name, k_func):
-	"""Test path kernel up to length $h$.
-	"""
-	def compute(parallel=None, compute_method=None):
-		from gklearn.kernels import PathUpToH
-
-		dataset = chooseDataset(ds_name)
-
-		try:
-			graph_kernel = PathUpToH(node_labels=dataset.node_labels,
-						 edge_labels=dataset.edge_labels,
-						 ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						 depth=2, k_func=k_func, compute_method=compute_method)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -487,7 +541,132 @@ def test_PathUpToH(ds_name, k_func):
 			return gram_matrix, kernel_list, kernel
 
 	assert_equality(compute, parallel=['imap_unordered', None],
-				 compute_method=['trie', 'naive'])
+	                fcsp=[True, False])
+
+
+# @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
+@pytest.mark.parametrize(
+	'ds_name',
+	['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS',
+	 'Fingerprint', 'Fingerprint_edge', 'Cuneiform']
+)
+# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
+def test_StructuralSP(ds_name):
+	"""Test structural shortest path kernel.
+	"""
+
+	def compute(parallel=None, fcsp=None):
+		from gklearn.kernels import StructuralSP
+		from gklearn.utils.kernels import deltakernel, gaussiankernel, \
+			kernelproduct
+		import functools
+
+		dataset = chooseDataset(ds_name)
+
+		mixkernel = functools.partial(
+			kernelproduct, deltakernel,
+			gaussiankernel)
+		sub_kernels = {
+			'symb': deltakernel, 'nsymb': gaussiankernel,
+			'mix': mixkernel}
+		try:
+			graph_kernel = StructuralSP(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				node_attrs=dataset.node_attrs,
+				edge_attrs=dataset.edge_attrs,
+				ds_infos=dataset.get_dataset_infos(
+					keys=['directed']
+				),
+				fcsp=fcsp,
+				node_kernels=sub_kernels,
+				edge_kernels=sub_kernels
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+
+		except Exception as exception:
+			print(repr(exception))
+			assert False, exception
+		else:
+			return gram_matrix, kernel_list, kernel
+
+	assert_equality(
+		compute, parallel=['imap_unordered', None], fcsp=[True, False]
+	)
+
+
+@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
+# @pytest.mark.parametrize('parallel', ['imap_unordered', None])
+# @pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto', None])
+@pytest.mark.parametrize('k_func', ['MinMax', 'tanimoto'])
+# @pytest.mark.parametrize('compute_method', ['trie', 'naive'])
+def test_PathUpToH(ds_name, k_func):
+	"""Test path kernel up to length $h$.
+	"""
+
+	def compute(parallel=None, compute_method=None):
+		from gklearn.kernels import PathUpToH
+
+		dataset = chooseDataset(ds_name)
+
+		try:
+			graph_kernel = PathUpToH(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				ds_infos=dataset.get_dataset_infos(
+					keys=['directed']
+				),
+				depth=2, k_func=k_func,
+				compute_method=compute_method
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+
+		except Exception as exception:
+			print(repr(exception))
+			assert False, exception
+		else:
+			return gram_matrix, kernel_list, kernel
+
+	assert_equality(compute, parallel=['imap_unordered', None],
+	                compute_method=['trie', 'naive'])
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
@@ -495,6 +674,7 @@ def test_PathUpToH(ds_name, k_func):
 def test_Treelet(ds_name):
 	"""Test treelet kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import Treelet
 		from gklearn.utils.kernels import polynomialkernel
@@ -512,15 +692,18 @@ def test_Treelet(ds_name):
 			)
 			gram_matrix, run_time = graph_kernel.compute(
 				dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 			kernel_list, run_time = graph_kernel.compute(
 				dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 			kernel, run_time = graph_kernel.compute(
 				dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True
+				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
+				verbose=True
 			)
 
 		except Exception as exception:
@@ -532,13 +715,15 @@ def test_Treelet(ds_name):
 	assert_equality(compute, parallel=['imap_unordered', None])
 
 
-@pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'MAO', 'AIDS'])
-#@pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
+@pytest.mark.parametrize('ds_name',
+                         ['Alkane_unlabeled', 'Acyclic', 'MAO', 'AIDS'])
+# @pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
 # @pytest.mark.parametrize('base_kernel', ['subtree'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_WLSubtree(ds_name):
 	"""Test Weisfeiler-Lehman subtree kernel.
 	"""
+
 	def compute(parallel=None):
 		from gklearn.kernels import WLSubtree
 
@@ -546,15 +731,24 @@ def test_WLSubtree(ds_name):
 
 		try:
 			graph_kernel = WLSubtree(node_labels=dataset.node_labels,
-						 edge_labels=dataset.edge_labels,
-						 ds_infos=dataset.get_dataset_infos(keys=['directed']),
-						 height=2)
+			                         edge_labels=dataset.edge_labels,
+			                         ds_infos=dataset.get_dataset_infos(
+				                         keys=['directed']),
+			                         height=2)
 			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1:],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0], dataset.graphs[1],
-				parallel=parallel, n_jobs=multiprocessing.cpu_count(), verbose=True)
+			                                             parallel=parallel,
+			                                             n_jobs=multiprocessing.cpu_count(),
+			                                             verbose=True)
+			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0],
+			                                             dataset.graphs[1:],
+			                                             parallel=parallel,
+			                                             n_jobs=multiprocessing.cpu_count(),
+			                                             verbose=True)
+			kernel, run_time = graph_kernel.compute(dataset.graphs[0],
+			                                        dataset.graphs[1],
+			                                        parallel=parallel,
+			                                        n_jobs=multiprocessing.cpu_count(),
+			                                        verbose=True)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -566,23 +760,23 @@ def test_WLSubtree(ds_name):
 
 
 if __name__ == "__main__":
- 	# test_list_graph_kernels()
-#	test_spkernel('Alkane_unlabeled', 'imap_unordered')
- 	# test_ShortestPath('Alkane_unlabeled')
-# 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
- 	# test_StructuralSP('Acyclic')
-# 	test_StructuralSP('Cuneiform', None)
-#  	test_WLSubtree('MAO') # 'Alkane_unlabeled', 'Acyclic', 'AIDS'
-#	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
-#	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
-#	test_RandomWalk('Acyclic', 'fp', None, None)
-#	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
- 	# test_CommonWalk('Acyclic', 0.01, 'geo')
+	# test_list_graph_kernels()
+	#	test_spkernel('Alkane_unlabeled', 'imap_unordered')
+	# test_ShortestPath('Alkane_unlabeled')
+	# 	test_StructuralSP('Fingerprint_edge', 'imap_unordered')
+	# test_StructuralSP('Acyclic')
+	# 	test_StructuralSP('Cuneiform', None)
+	#  	test_WLSubtree('MAO') # 'Alkane_unlabeled', 'Acyclic', 'AIDS'
+	#	test_RandomWalk('Acyclic', 'sylvester', None, 'imap_unordered')
+	#	test_RandomWalk('Acyclic', 'conjugate', None, 'imap_unordered')
+	#	test_RandomWalk('Acyclic', 'fp', None, None)
+	#	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
+	# test_CommonWalk('Acyclic', 0.01, 'geo')
 	test_CommonWalk('Alkane_unlabeled', 0.01, 'geo')
-    # test_Marginalized('Acyclic', False)
- 	# test_ShortestPath('Acyclic')
+# test_Marginalized('Acyclic', False)
+# test_ShortestPath('Acyclic')
 # 	 test_PathUpToH('Acyclic', 'MinMax')
- 	# test_Treelet('AIDS')
+# test_Treelet('AIDS')
 # 	test_SylvesterEquation('Acyclic')
 # 	test_ConjugateGradient('Acyclic')
 # 	test_FixedPoint('Acyclic')

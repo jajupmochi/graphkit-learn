@@ -26,9 +26,9 @@ class SylvesterEquation(RandomWalkMeta):
 		super().__init__(**kwargs)
 
 
-	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self.verbose)
-		self._check_graphs(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._check_edge_weight(graphs, self.verbose)
+		self._check_graphs(graphs)
 		if self.verbose >= 2:
 			import warnings
 			warnings.warn('All labels are ignored.')
@@ -36,12 +36,12 @@ class SylvesterEquation(RandomWalkMeta):
 		lmda = self._weight
 
 		# compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		if self._q is None:
 			# don't normalize adjacency matrices if q is a uniform vector. Note
 			# A_wave_list actually contains the transposes of the adjacency matrices.
-			iterator = get_iters(self._graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
+			iterator = get_iters(graphs, desc='compute adjacency matrices', file=sys.stdout, verbose=(self.verbose >= 2))
 			A_wave_list = [nx.adjacency_matrix(G, self._edge_weight).todense().transpose() for G in iterator]
 	#		# normalized adjacency matrices
 	#		A_wave_list = []
@@ -53,8 +53,8 @@ class SylvesterEquation(RandomWalkMeta):
 
 			if self._p is None: # p is uniform distribution as default.
 				from itertools import combinations_with_replacement
-				itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-				len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+				itr = combinations_with_replacement(range(0, len(graphs)), 2)
+				len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 				iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 				for i, j in iterator:
