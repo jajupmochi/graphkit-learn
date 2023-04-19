@@ -109,7 +109,7 @@ class Treelet(GraphKernel):
 			if X is None:
 				raise('X can not be None.')
 			# self._add_dummy_labels will modify the input in place.
-			self._add_dummy_labels(X) # for X
+			self._add_dummy_labels(X)  # for X
 			canonkeys_list1 = []
 			iterator = get_iters(self._graphs, desc='Getting canonkeys for X', file=sys.stdout, verbose=(self.verbose >= 2))
 			for g in iterator:
@@ -379,7 +379,8 @@ class Treelet(GraphKernel):
 
 
 	def _compute_single_kernel_series(self, g1, g2):
-# 		self._add_dummy_labels([g1] + [g2])
+		# @TODO: Why this is commented out before?
+		self._add_dummy_labels([g1] + [g2])
 		canonkeys_1 = self._get_canonkeys(g1)
 		canonkeys_2 = self._get_canonkeys(g2)
 		kernel = self._kernel_do(canonkeys_1, canonkeys_2)
