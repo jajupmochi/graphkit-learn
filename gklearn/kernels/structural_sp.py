@@ -319,8 +319,9 @@ class StructuralSP(GraphKernel):
 					kn = self._node_kernels['mix']
 					n1_labels = [g1.nodes[n1][nl] for nl in self._node_labels]
 					n2_labels = [g2.nodes[n2][nl] for nl in self._node_labels]
-					n1_attrs = [g1.nodes[n1][na] for na in self._node_attrs]
-					n2_attrs = [g2.nodes[n2][na] for na in self._node_attrs]
+					# @TODO: reformat attrs during data processing a priori to save time.
+					n1_attrs = np.array([g1.nodes[n1][na] for na in self._node_attrs]).astype(float)
+					n2_attrs = np.array([g2.nodes[n2][na] for na in self._node_attrs]).astype(float)
 					return kn(n1_labels, n2_labels, n1_attrs, n2_attrs)
 			# node symb labeled
 			else:
@@ -334,8 +335,8 @@ class StructuralSP(GraphKernel):
 			if len(self._node_attrs) > 0:
 				def compute_vk(n1, n2):
 					kn = self._node_kernels['nsymb']
-					n1_attrs = [g1.nodes[n1][na] for na in self._node_attrs]
-					n2_attrs = [g2.nodes[n2][na] for na in self._node_attrs]
+					n1_attrs = np.array([g1.nodes[n1][na] for na in self._node_attrs]).astype(float)
+					n2_attrs = np.array([g2.nodes[n2][na] for na in self._node_attrs]).astype(float)
 					return kn(n1_attrs, n2_attrs)
 # 			# node unlabeled
 # 			else:
@@ -352,8 +353,9 @@ class StructuralSP(GraphKernel):
 					ke = self._edge_kernels['mix']
 					e1_labels = [g1.edges[e1][el] for el in self._edge_labels]
 					e2_labels = [g2.edges[e2][el] for el in self._edge_labels]
-					e1_attrs = [g1.edges[e1][ea] for ea in self._edge_attrs]
-					e2_attrs = [g2.edges[e2][ea] for ea in self._edge_attrs]
+					# @TODO: reformat attrs during data processing a priori to save time.
+					e1_attrs = np.array([g1.edges[e1][ea] for ea in self._edge_attrs]).astype(float)
+					e2_attrs = np.array([g2.edges[e2][ea] for ea in self._edge_attrs]).astype(float)
 					return ke(e1_labels, e2_labels, e1_attrs, e2_attrs)
 			# edge symb labeled
 			else:
@@ -367,8 +369,8 @@ class StructuralSP(GraphKernel):
 			if len(self._edge_attrs) > 0:
 				def compute_ek(e1, e2):
 					ke = self._edge_kernels['nsymb']
-					e1_attrs = [g1.edges[e1][ea] for ea in self._edge_attrs]
-					e2_attrs = [g2.edges[e2][ea] for ea in self._edge_attrs]
+					e1_attrs = np.array([g1.edges[e1][ea] for ea in self._edge_attrs]).astype(float)
+					e2_attrs = np.array([g2.edges[e2][ea] for ea in self._edge_attrs]).astype(float)
 					return ke(e1_attrs, e2_attrs)
 
 
@@ -447,8 +449,9 @@ class StructuralSP(GraphKernel):
 				for e1, e2 in product(g1.edges(data=True), g2.edges(data=True)):
 					e1_labels = [e1[2][el] for el in self._edge_labels]
 					e2_labels = [e2[2][el] for el in self._edge_labels]
-					e1_attrs = [e1[2][ea] for ea in self._edge_attrs]
-					e2_attrs = [e2[2][ea] for ea in self._edge_attrs]
+					# @TODO: reformat attrs during data processing a priori to save time.
+					e1_attrs = np.array([e1[2][ea] for ea in self._edge_attrs]).astype(float)
+					e2_attrs = np.array([e2[2][ea] for ea in self._edge_attrs]).astype(float)
 					ek_temp = ke(e1_labels, e2_labels, e1_attrs, e2_attrs)
 					ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
 					ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp
@@ -472,8 +475,8 @@ class StructuralSP(GraphKernel):
 				ke = self._edge_kernels['nsymb']
 				for e1 in g1.edges(data=True):
 					for e2 in g2.edges(data=True):
-						e1_attrs = [e1[2][ea] for ea in self._edge_attrs]
-						e2_attrs = [e2[2][ea] for ea in self._edge_attrs]
+						e1_attrs = np.array([e1[2][ea] for ea in self._edge_attrs]).astype(float)
+						e2_attrs = np.array([e2[2][ea] for ea in self._edge_attrs]).astype(float)
 						ek_temp = ke(e1_attrs, e2_attrs)
 						ek_dict[((e1[0], e1[1]), (e2[0], e2[1]))] = ek_temp
 						ek_dict[((e1[1], e1[0]), (e2[0], e2[1]))] = ek_temp

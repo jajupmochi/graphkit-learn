@@ -198,7 +198,7 @@ def test_Marginalized(ds_name, remove_totters):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
@@ -312,7 +312,7 @@ def test_ConjugateGradient(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 @pytest.mark.parametrize('ds_name', ['Acyclic', 'AIDS'])
@@ -377,7 +377,7 @@ def test_FixedPoint(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 @pytest.mark.parametrize('ds_name', ['Acyclic'])
@@ -428,7 +428,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
 # @pytest.mark.parametrize(
@@ -540,15 +540,17 @@ def test_ShortestPath(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None],
-	                fcsp=[True, False])
+	assert_equality(
+		compute, parallel=[None, 'imap_unordered'], fcsp=[True, False]
+	)
 
 
 # @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS', 'Fingerprint'])
 @pytest.mark.parametrize(
-	'ds_name',
-	['Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS',
-	 'Fingerprint', 'Fingerprint_edge', 'Cuneiform']
+	'ds_name', [
+		'Alkane_unlabeled', 'Acyclic', 'Letter-med', 'AIDS',
+		'Fingerprint', 'Fingerprint_edge', 'Cuneiform'
+	]
 )
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
 def test_StructuralSP(ds_name):
@@ -610,7 +612,7 @@ def test_StructuralSP(ds_name):
 			return gram_matrix, kernel_list, kernel
 
 	assert_equality(
-		compute, parallel=['imap_unordered', None], fcsp=[True, False]
+		compute, parallel=[None, 'imap_unordered'], fcsp=[True, False]
 	)
 
 
@@ -665,8 +667,9 @@ def test_PathUpToH(ds_name, k_func):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None],
-	                compute_method=['trie', 'naive'])
+	assert_equality(
+		compute, parallel=[None, 'imap_unordered'], compute_method=['trie', 'naive']
+	)
 
 
 @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
@@ -712,11 +715,12 @@ def test_Treelet(ds_name):
 		else:
 			return gram_matrix, kernel_list, kernel
 
-	assert_equality(compute, parallel=['imap_unordered', None])
+	assert_equality(compute, parallel=[None, 'imap_unordered'])
 
 
-@pytest.mark.parametrize('ds_name',
-                         ['Alkane_unlabeled', 'Acyclic', 'MAO', 'AIDS'])
+@pytest.mark.parametrize(
+	'ds_name', ['Alkane_unlabeled', 'Acyclic', 'MAO', 'AIDS']
+)
 # @pytest.mark.parametrize('base_kernel', ['subtree', 'sp', 'edge'])
 # @pytest.mark.parametrize('base_kernel', ['subtree'])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -730,25 +734,34 @@ def test_WLSubtree(ds_name):
 		dataset = chooseDataset(ds_name)
 
 		try:
-			graph_kernel = WLSubtree(node_labels=dataset.node_labels,
-			                         edge_labels=dataset.edge_labels,
-			                         ds_infos=dataset.get_dataset_infos(
-				                         keys=['directed']),
-			                         height=2)
-			gram_matrix, run_time = graph_kernel.compute(dataset.graphs,
-			                                             parallel=parallel,
-			                                             n_jobs=multiprocessing.cpu_count(),
-			                                             verbose=True)
-			kernel_list, run_time = graph_kernel.compute(dataset.graphs[0],
-			                                             dataset.graphs[1:],
-			                                             parallel=parallel,
-			                                             n_jobs=multiprocessing.cpu_count(),
-			                                             verbose=True)
-			kernel, run_time = graph_kernel.compute(dataset.graphs[0],
-			                                        dataset.graphs[1],
-			                                        parallel=parallel,
-			                                        n_jobs=multiprocessing.cpu_count(),
-			                                        verbose=True)
+			graph_kernel = WLSubtree(
+				node_labels=dataset.node_labels,
+				edge_labels=dataset.edge_labels,
+				ds_infos=dataset.get_dataset_infos(
+					keys=['directed']
+				),
+				height=2
+			)
+			gram_matrix, run_time = graph_kernel.compute(
+				dataset.graphs,
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel_list, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1:],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
+			kernel, run_time = graph_kernel.compute(
+				dataset.graphs[0],
+				dataset.graphs[1],
+				parallel=parallel,
+				n_jobs=multiprocessing.cpu_count(),
+				verbose=True
+			)
 
 		except Exception as exception:
 			print(repr(exception))
