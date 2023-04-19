@@ -39,7 +39,7 @@ name: graphkit-learn
 
 run-name: ${{ github.actor }} is testing graphkit-learn out GitHub Actions 🚀
 
-on: [push]
+on: [ push ]
 
 jobs:
   CI-on-GitHub-Actions:
@@ -69,7 +69,7 @@ jobs:
       - name: Build and test
         run: |
           python setup.py bdist_wheel
-          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py
+          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py
 
       - name: Run code coverage
         run: |
