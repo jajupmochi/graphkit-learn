@@ -396,8 +396,9 @@ def compute_vertex_kernels(g1, g2, node_kernels, node_labels=[], node_attrs=[]):
 				for n2 in g2.nodes(data=True):
 					n1_labels = [n1[1][nl] for nl in node_labels]
 					n2_labels = [n2[1][nl] for nl in node_labels]
-					n1_attrs = [n1[1][na] for na in node_attrs]
-					n2_attrs = [n2[1][na] for na in node_attrs]
+					# @TODO: reformat attrs during data processing a priori to save time.
+					n1_attrs = np.array([n1[1][na] for na in node_attrs]).astype(float)
+					n2_attrs = np.array([n2[1][na] for na in node_attrs]).astype(float)
 					vk_dict[(n1[0], n2[0])] = kn(n1_labels, n2_labels, n1_attrs, n2_attrs)
 		# node symb labeled
 		else:
@@ -413,12 +414,12 @@ def compute_vertex_kernels(g1, g2, node_kernels, node_labels=[], node_attrs=[]):
 			kn = node_kernels['nsymb']
 			for n1 in g1.nodes(data=True):
 				for n2 in g2.nodes(data=True):
-					n1_attrs = [n1[1][na] for na in node_attrs]
-					n2_attrs = [n2[1][na] for na in node_attrs]
+					n1_attrs = np.array([n1[1][na] for na in node_attrs]).astype(float)
+					n2_attrs = np.array([n2[1][na] for na in node_attrs]).astype(float)
 					vk_dict[(n1[0], n2[0])] = kn(n1_attrs, n2_attrs)
 		# node unlabeled
 		else:
-			pass # @todo: add edge weights.
+			pass  # @todo: add edge weights.
 # 			for e1 in g1.edges(data=True):
 # 				for e2 in g2.edges(data=True):
 # 					if e1[2]['cost'] == e2[2]['cost']:

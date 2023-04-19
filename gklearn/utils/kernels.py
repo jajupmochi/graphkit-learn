@@ -27,7 +27,7 @@ def kronecker_delta_kernel(x, y):
 
 
 def delta_kernel(x, y):
-	return x == y  #(1 if condition else 0)
+	return x == y  # (1 if condition else 0)
 
 
 def deltakernel(x, y):
@@ -58,12 +58,12 @@ def gaussian_kernel(x, y, gamma=None):
 
 	# xt = np.array([float(itm) for itm in x]) # @todo: move this to dataset or datafile to speed up.
 	# yt = np.array([float(itm) for itm in y])
-# 	kernel = xt - yt
-# 	kernel = kernel ** 2
-# 	kernel = np.sum(kernel)
-# 	kernel *= -gamma
-# 	kernel = np.exp(kernel)
-# 	return kernel
+	# 	kernel = xt - yt
+	# 	kernel = kernel ** 2
+	# 	kernel = np.sum(kernel)
+	# 	kernel *= -gamma
+	# 	kernel = np.exp(kernel)
+	# 	return kernel
 
 	return np.exp((np.sum(np.subtract(x, y) ** 2)) * -gamma)
 
@@ -143,7 +143,7 @@ def sigmoid_kernel(x, y, gamma=None, coef0=1):
 	k *= gamma
 	k += coef0
 	k = np.tanh(k)
-# 	k = np.tanh(k, k) # compute tanh in-place
+	# 	k = np.tanh(k, k) # compute tanh in-place
 	return k
 
 
@@ -203,7 +203,7 @@ def kernelsum(k1, k2, d11, d12, d21=None, d22=None, lamda1=1, lamda2=1):
 	kernel : integer
 
 	"""
-	if d21 == None or d22 == None:
+	if d21 is None or d22 is None:
 		kernel = lamda1 * k1(d11, d12) + lamda2 * k2(d11, d12)
 	else:
 		kernel = lamda1 * k1(d11, d12) + lamda2 * k2(d21, d22)
@@ -230,7 +230,7 @@ def kernelproduct(k1, k2, d11, d12, d21=None, d22=None, lamda=1):
 	------
 	kernel : integer
 	"""
-	if d21 == None or d22 == None:
+	if d21 is None or d22 is None:
 		kernel = lamda * k1(d11, d12) * k2(d11, d12)
 	else:
 		kernel = lamda * k1(d11, d12) * k2(d21, d22)

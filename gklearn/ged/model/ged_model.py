@@ -38,30 +38,32 @@ class GEDModel(BaseEstimator): #, ABC):
 	https://ysig.github.io/GraKeL/0.1a8/_modules/grakel/kernels/kernel.html#Kernel.
 	"""
 
-	def __init__(self,
-			  ed_method='BIPARTITE',
-			  edit_cost_fun='CONSTANT',
-			  init_edit_cost_constants=[3, 3, 1, 3, 3, 1],
-			  optim_method='init',
-			  optim_options={'y_distance': euclid_d, 'mode': 'reg'},
-			  node_labels=[],
-			  edge_labels=[],
-			  parallel=None,
-			  n_jobs=None,
-			  chunksize=None,
-#			  normalize=True,
-			  copy_graphs=True, # make sure it is a full deep copy. and faster!
-			  verbose=2):
+	def __init__(
+			self,
+			ed_method='BIPARTITE',
+			edit_cost_fun='CONSTANT',
+			init_edit_cost_constants=[3, 3, 1, 3, 3, 1],
+			optim_method='init',
+			optim_options={'y_distance': euclid_d, 'mode': 'reg'},
+			node_labels=[],
+			edge_labels=[],
+			parallel=None,
+			n_jobs=None,
+			chunksize=None,
+			#			  normalize=True,
+			copy_graphs=True,  # make sure it is a full deep copy. and faster!
+			verbose=2
+	):
 		"""`__init__` for `GEDModel` object."""
 		# @todo: the default settings of the parameters are different from those in the self.compute method.
-#		self._graphs = None
+		#		self._graphs = None
 		self.ed_method = ed_method
 		self.edit_cost_fun = edit_cost_fun
 		self.init_edit_cost_constants = init_edit_cost_constants
-		self.optim_method=optim_method
-		self.optim_options=optim_options
-		self.node_labels=node_labels
-		self.edge_labels=edge_labels
+		self.optim_method = optim_method
+		self.optim_options = optim_options
+		self.node_labels = node_labels
+		self.edge_labels = edge_labels
 		self.parallel = parallel
 		self.n_jobs = n_jobs
 		self.chunksize = chunksize
@@ -79,7 +81,7 @@ class GEDModel(BaseEstimator): #, ABC):
 	##########################################################################
 
 
-	def fit(self, X, y=None):
+	def fit(self, X, y=None, **kwargs):
 		"""Fit a graph dataset for a transformer.
 
 		Parameters
@@ -111,6 +113,9 @@ class GEDModel(BaseEstimator): #, ABC):
  			self._targets = y
  			# self._targets = self.validate_input(y)
 
+		# Compute edit cost constants.
+		self.compute_edit_costs(**kwargs)
+
 #		self._X = X
 #		self._kernel = self._get_kernel_instance()
 
@@ -118,7 +123,13 @@ class GEDModel(BaseEstimator): #, ABC):
 		return self
 
 
-	def transform(self, X=None, return_dm_train=False):
+	def transform(
+			self, X=None,
+			return_dm_train=False,
+			save_dm_test=False,
+			return_dm_test=False,
+			**kwargs
+	):
 		"""Compute the graph kernel matrix between given and fitted data.
 
 		Parameters
@@ -140,7 +151,11 @@ class GEDModel(BaseEstimator): #, ABC):
 		if return_dm_train:
 			check_is_fitted(self, '_dm_train')
 			self._is_transformed = True
-			return self._dm_train # @todo: copy or not?
+			return self._dm_train # @TODO: copy or not?
+
+		if return_dm_test:
+			check_is_fitted(self, '_dm_test')
+			return self._dm_test # @TODO: copy or not?
 
 		# Check if method "fit" had been called.
 		check_is_fitted(self, '_graphs')
@@ -149,11 +164,11 @@ class GEDModel(BaseEstimator): #, ABC):
 		Y = self.validate_input(X)
 
 		# Transform: compute the graph kernel matrix.
-		dis_matrix = self.compute_distance_matrix(Y)
+		dis_matrix = self.compute_distance_matrix(Y, **kwargs)
 		self._Y = Y
 
-		# Self transform must appear before the diagonal call on normilization.
-		self._is_transformed = True
+		# Self transform must appear before the diagonal call on normalization.
+		self._is_transformed = True  # @TODO: When to set this to True? When return dm test?
 # 		if self.normalize:
 # 			X_diag, Y_diag = self.diagonals()
 # 			old_settings = np.seterr(invalid='raise') # Catch FloatingPointError: invalid value encountered in sqrt.
@@ -164,10 +179,18 @@ class GEDModel(BaseEstimator): #, ABC):
 # 			finally:
 # 				np.seterr(**old_settings)
 
+		if save_dm_test:
+			self._dm_test = dis_matrix
+		# If the model is retransformed and the `save_dm_test` flag is not set,
+		# then remove the previously computed dm_test to prevent conflicts.
+		else:
+			if hasattr(self, '_dm_test'):
+				delattr(self, '_dm_test')
+
 		return dis_matrix
 
 
-	def fit_transform(self, X, y=None, save_dm_train=False):
+	def fit_transform(self, X, y=None, save_dm_train=False, **kwargs):
 		"""Fit and transform: compute GED distance matrix on the same data.
 
 		Parameters
@@ -181,13 +204,10 @@ class GEDModel(BaseEstimator): #, ABC):
 			The distance matrix of X.
 
 		"""
-		self.fit(X, y)
-
-		# Compute edit cost constants.
-		self.compute_edit_costs()
+		self.fit(X, y, **kwargs)
 
 		# Transform: compute Gram matrix.
-		dis_matrix = self.compute_distance_matrix()
+		dis_matrix = self.compute_distance_matrix(**kwargs)
 
 #		# Normalize.
 #		if self.normalize:
@@ -202,6 +222,11 @@ class GEDModel(BaseEstimator): #, ABC):
 
 		if save_dm_train:
 			self._dm_train = dis_matrix
+		# If the model is refitted and the `save_dm_train` flag is not set, then
+		# remove the previously computed dm_train to prevent conflicts.
+		else:
+			if hasattr(self, '_dm_train'):
+				delattr(self, '_dm_train')
 
 		return dis_matrix
 
@@ -269,7 +294,7 @@ class GEDModel(BaseEstimator): #, ABC):
 		return X
 
 
-	def compute_distance_matrix(self, Y=None):
+	def compute_distance_matrix(self, Y=None, **kwargs):
 		"""Compute the distance matrix between a given target graphs (Y) and
 		the fitted graphs (X / self._graphs) or the distance matrix for the fitted
 		graphs (X / self._graphs).
@@ -288,7 +313,7 @@ class GEDModel(BaseEstimator): #, ABC):
 		"""
 		if Y is None:
 			# Compute Gram matrix for self._graphs (X).
-			dis_matrix = self._compute_X_distance_matrix()
+			dis_matrix = self._compute_X_distance_matrix(**kwargs)
 #			self._gram_matrix_unnorm = np.copy(self._gram_matrix)
 
 		else:
@@ -301,7 +326,8 @@ class GEDModel(BaseEstimator): #, ABC):
 			elif self.parallel is None:
 				Y_copy = ([g.copy() for g in Y] if self.copy_graphs else Y)
 				graphs_copy = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
-				dis_matrix = self._compute_distance_matrix_series(Y_copy, graphs_copy)
+				dis_matrix = self._compute_distance_matrix_series(
+					Y_copy, graphs_copy, **kwargs)
 
 			self._run_time = time.time() - start_time
 			if self.verbose:
@@ -311,7 +337,7 @@ class GEDModel(BaseEstimator): #, ABC):
 		return dis_matrix
 
 
-	def _compute_distance_matrix_series(self, X, Y):
+	def _compute_distance_matrix_series(self, X, Y, **kwargs):
 		"""Compute the GED distance matrix between two sets of graphs (X and Y)
 		without parallelization.
 
@@ -330,7 +356,7 @@ class GEDModel(BaseEstimator): #, ABC):
 
 		for i_x, g_x in enumerate(X):
 			for i_y, g_y in enumerate(Y):
-				dis_matrix[i_x, i_y], _ = self.compute_ged(g_x, g_y)
+				dis_matrix[i_x, i_y], _ = self.compute_ged(g_x, g_y, **kwargs)
 
 		return dis_matrix
 
@@ -417,7 +443,7 @@ class GEDModel(BaseEstimator): #, ABC):
 
 
 
-	def compute_edit_costs(self, Y=None, Y_targets=None):
+	def compute_edit_costs(self, Y=None, Y_targets=None, **kwargs):
 		"""Compute edit cost constants. When optimizing method is `fiited`,
 		apply Jia2021's metric learning method by using a given target graphs (Y)
 		the fitted graphs (X / self._graphs).
@@ -459,13 +485,20 @@ class GEDModel(BaseEstimator): #, ABC):
 			node_labels = self.node_labels
 			edge_labels = self.edge_labels
 			unlabeled = (len(node_labels) == 0 and len(edge_labels) == 0)
+			repeats = kwargs.get('repeats', 1)
 			from gklearn.ged.model.optim_costs import compute_optimal_costs
 			self._edit_cost_constants = compute_optimal_costs(
 				graphs, targets,
 				node_labels=node_labels, edge_labels=edge_labels,
-				unlabeled=unlabeled, ed_method=self.ed_method,
+				unlabeled=unlabeled,
+				init_costs=self.init_edit_cost_constants,
+				ed_method=self.ed_method,
+				edit_cost_fun=self.edit_cost_fun,
+				repeats=repeats,
+				rescue_optim_failure=False,
 				verbose=(self.verbose >= 2),
-				**self.optim_options)
+				**self.optim_options
+			)
 
 
 	##########################################################################
@@ -573,14 +606,14 @@ class GEDModel(BaseEstimator): #, ABC):
 #		return dis_mat, dis_max, dis_min, dis_mean
 
 
-	def _compute_X_distance_matrix(self):
+	def _compute_X_distance_matrix(self, **kwargs):
 		start_time = time.time()
 
 		if self.parallel == 'imap_unordered':
 			dis_matrix = self._compute_X_dm_imap_unordered()
 		elif self.parallel is None:
 			graphs = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
-			dis_matrix = self._compute_X_dm_series(graphs)
+			dis_matrix = self._compute_X_dm_series(graphs, **kwargs)
 		else:
 			raise Exception('Parallel mode is not set correctly.')
 
@@ -592,13 +625,18 @@ class GEDModel(BaseEstimator): #, ABC):
 		return dis_matrix
 
 
-	def _compute_X_dm_series(self, graphs):
+	def _compute_X_dm_series(self, graphs, **kwargs):
 		N = len(graphs)
 		dis_matrix = np.zeros((N, N))
 
-		for i, G1 in get_iters(enumerate(graphs), desc='Computing distance matrix', file=sys.stdout, verbose=(self.verbose >= 2)):
+		if self.verbose:
+			print('Graphs in total: %d.' % len(graphs))
+		for i, G1 in get_iters(
+				enumerate(graphs), desc='Computing distance matrix',
+				file=sys.stdout, verbose=(self.verbose >= 2), length=len(graphs)
+		):
 			for j, G2 in enumerate(graphs[i+1:], i+1):
-				dis_matrix[i, j], _ = self.compute_ged(G1, G2)
+				dis_matrix[i, j], _ = self.compute_ged(G1, G2, **kwargs)
 				dis_matrix[j, i] = dis_matrix[i, j]
 		return dis_matrix
 
@@ -611,14 +649,20 @@ class GEDModel(BaseEstimator): #, ABC):
 		"""
 		Compute GED between two graph according to edit_cost.
 		"""
-		ged_options = {'edit_cost': self.edit_cost_fun,
-				 'method': self.ed_method,
-				 'edit_cost_constants': self._edit_cost_constants}
-		dis, pi_forward, pi_backward = pairwise_ged(Gi, Gj, ged_options, repeats=10)
-		n_eo_tmp = get_nb_edit_operations(Gi, Gj, pi_forward, pi_backward,
-									 edit_cost=self.edit_cost_fun,
-									 node_labels=self.node_labels,
-									 edge_labels=self.edge_labels)
+		ged_options = {
+			'edit_cost': self.edit_cost_fun,
+			'method': self.ed_method,
+			'edit_cost_constants': self._edit_cost_constants
+		}
+		repeats = kwargs.get('repeats', 1)
+		dis, pi_forward, pi_backward = pairwise_ged(
+			Gi, Gj, ged_options, repeats=repeats
+		)
+		n_eo_tmp = get_nb_edit_operations(
+			Gi, Gj, pi_forward, pi_backward,
+			edit_cost=self.edit_cost_fun,
+			node_labels=self.node_labels, edge_labels=self.edge_labels
+		)
 		return dis, n_eo_tmp
 
 
@@ -713,6 +757,11 @@ class GEDModel(BaseEstimator): #, ABC):
 	@dis_matrix.setter
 	def dis_matrix(self, value):
 		self._dis_matrix = value
+
+
+	@property
+	def edit_cost_constants(self):
+		return self._edit_cost_constants
 
 
 # 	@property

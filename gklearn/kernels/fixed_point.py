@@ -34,28 +34,28 @@ class FixedPoint(RandomWalkMeta):
 		self._edge_attrs = kwargs.get('edge_attrs', [])
 
 
-	def _compute_gm_series(self):
-		self._check_edge_weight(self._graphs, self.verbose)
-		self._check_graphs(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._check_edge_weight(graphs, self.verbose)
+		self._check_graphs(graphs)
 
 		lmda = self._weight
 
 		# Compute Gram matrix.
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		# Reindex nodes using consecutive integers for the convenience of kernel computation.
-		iterator = get_iters(self._graphs, desc='Reindex vertices', file=sys.stdout,verbose=(self.verbose >= 2))
-		self._graphs = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
+		iterator = get_iters(graphs, desc='Reindex vertices', file=sys.stdout,verbose=(self.verbose >= 2))
+		graphs = [nx.convert_node_labels_to_integers(g, first_label=0, label_attribute='label_orignal') for g in iterator]
 
 		if self._p is None and self._q is None: # p and q are uniform distributions as default.
 
 			from itertools import combinations_with_replacement
-			itr = combinations_with_replacement(range(0, len(self._graphs)), 2)
-			len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+			itr = combinations_with_replacement(range(0, len(graphs)), 2)
+			len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 			iterator = get_iters(itr, desc='Computing kernels', file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
 			for i, j in iterator:
-				kernel = self._kernel_do(self._graphs[i], self._graphs[j], lmda)
+				kernel = self._kernel_do(graphs[i], graphs[j], lmda)
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 

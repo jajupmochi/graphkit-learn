@@ -36,26 +36,26 @@ class PathUpToH(GraphKernel): # @todo: add function for k_func is None
 		self._ds_infos = kwargs.get('ds_infos', {})
 
 
-	def _compute_gm_series(self):
-		self._add_dummy_labels(self._graphs)
+	def _compute_gm_series(self, graphs):
+		self._add_dummy_labels(graphs)
 
 		from itertools import combinations_with_replacement
-		itr_kernel = combinations_with_replacement(range(0, len(self._graphs)), 2)
-		iterator_ps = get_iters(range(0, len(self._graphs)), desc='getting paths', file=sys.stdout, length=len(self._graphs), verbose=(self.verbose >= 2))
-		len_itr = int(len(self._graphs) * (len(self._graphs) + 1) / 2)
+		itr_kernel = combinations_with_replacement(range(0, len(graphs)), 2)
+		iterator_ps = get_iters(range(0, len(graphs)), desc='getting paths', file=sys.stdout, length=len(graphs), verbose=(self.verbose >= 2))
+		len_itr = int(len(graphs) * (len(graphs) + 1) / 2)
 		iterator_kernel = get_iters(itr_kernel, desc='Computing kernels',
 						   file=sys.stdout, length=len_itr, verbose=(self.verbose >= 2))
 
-		gram_matrix = np.zeros((len(self._graphs), len(self._graphs)))
+		gram_matrix = np.zeros((len(graphs), len(graphs)))
 
 		if self._compute_method == 'trie':
-			all_paths = [self._find_all_path_as_trie(self._graphs[i]) for i in iterator_ps]
+			all_paths = [self._find_all_path_as_trie(graphs[i]) for i in iterator_ps]
 			for i, j in iterator_kernel:
 				kernel = self._kernel_do_trie(all_paths[i], all_paths[j])
 				gram_matrix[i][j] = kernel
 				gram_matrix[j][i] = kernel
 		else:
-			all_paths = [self._find_all_paths_until_length(self._graphs[i]) for i in iterator_ps]
+			all_paths = [self._find_all_paths_until_length(graphs[i]) for i in iterator_ps]
 			for i, j in iterator_kernel:
 				kernel = self._kernel_do_naive(all_paths[i], all_paths[j])
 				gram_matrix[i][j] = kernel
