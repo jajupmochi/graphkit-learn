@@ -18,10 +18,10 @@ def install(package):
 		subprocess.call(['pip', 'install', package])
 
 
-install('progressbar')
+install('tqdm')
 
 import urllib.request
-import progressbar
+from tqdm import tqdm
 import zipfile
 
 print('Downloading and unpacking GEDLIB from GitHub...')
@@ -29,21 +29,15 @@ print('Downloading and unpacking GEDLIB from GitHub...')
 url = 'https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip'
 filename = 'gedlib-master.zip'
 
-
-def show_progress(block_num, block_size, total_size):
-	progress = block_num * block_size
-	if total_size > 0:
-		percent = progress / total_size * 100
-		bar.update(percent)
-	else:
-		bar.update(100)
-
-
-with urllib.request.urlopen(url) as response:
-	total_size = int(response.info().get('Content-Length', 0))
-	bar = progressbar.ProgressBar(maxval=total_size).start()
-	urllib.request.urlretrieve(url, filename, show_progress)
-	bar.finish()
+with tqdm(
+		unit='B', unit_scale=True, unit_divisor=1024, miniters=1, desc=filename
+) as t:
+	urllib.request.urlretrieve(
+		url, filename=filename,
+		reporthook=lambda blocknum, blocksize, totalsize: t.update(
+			blocknum * blocksize - t.n
+		)
+	)
 
 with zipfile.ZipFile(filename, 'r') as zip_ref:
 	zip_ref.extractall('include/')
