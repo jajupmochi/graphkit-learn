@@ -46,11 +46,33 @@ extensions = [
 	)
 ]
 
+with open("README.md", "r") as fh:
+	long_description = fh.read()
+
 setup(
 	ext_modules=cythonize(
 		extensions,
 		compiler_directives={'language_level': '3'}
 	),
+	name="gedlibpy",
+	author="Lambert Natacha and Linlin Jia",
+	author_email="linlin.jia@unibe.ch",
+	description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
+	long_description=long_description,
+	long_description_content_type="text/markdown",
+	project_urls={
+		# 'Documentation': 'https://graphkit-learn.readthedocs.io',
+		'Source': 'https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib',
+		'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
+	},
+	url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
+	classifiers=[
+		"Programming Language :: Python :: 3",
+		"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+		"Operating System :: OS Independent",
+		'Intended Audience :: Science/Research',
+		'Intended Audience :: Developers',
+	],
 	include_dirs=[numpy.get_include()]
 )
 # setup(ext_modules=cythonize(extensions))

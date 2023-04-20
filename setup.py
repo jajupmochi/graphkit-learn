@@ -12,7 +12,7 @@ setuptools.setup(
 	name="graphkit-learn",
 	version=version,
 	author="Linlin Jia",
-	author_email="linlin.jia@insa-rouen.fr",
+	author_email="linlin.jia@unibe.ch",
 	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
