@@ -1,6 +1,15 @@
 import setuptools
 from datetime import datetime
 
+# Compile GEDLIBPY module:
+import subprocess
+
+gedlib_dir = 'gklearn/gedlib/'
+subprocess.call(
+	['python', 'setup.py', 'build_ext', '--inplace'], cwd=gedlib_dir
+)
+
+# Install graphkit-learn:
 with open("README.md", "r") as fh:
 	long_description = fh.read()
 
