@@ -3,10 +3,10 @@ from distutils.core import setup
 from Cython.Build import cythonize
 
 import os
+import sys
 import shutil
 import numpy
 
-# Download GEDLIB and unpack it.
 import importlib
 
 
@@ -15,38 +15,58 @@ def install(package):
 		importlib.import_module(package)
 	except ImportError:
 		import subprocess
-		subprocess.call(['pip', 'install', package])
+		cur_python = sys.executable
+		subprocess.call([cur_python, '-m', 'pip', 'install', package])
 
 
-install('tqdm')
+def get_gedlib():
+	install('tqdm')
 
-import urllib.request
-from tqdm import tqdm
-import zipfile
+	import urllib.request
+	from tqdm import tqdm
+	import zipfile
 
-print('Downloading and unpacking GEDLIB from GitHub...')
+	print('Downloading and unpacking GEDLIB from GitHub...')
 
-url = 'https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip'
-filename = 'gedlib-master.zip'
+	url = 'https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip'
+	filename = 'gedlib-master.zip'
 
-with tqdm(
-		unit='B', unit_scale=True, unit_divisor=1024, miniters=1, desc=filename
-) as t:
-	urllib.request.urlretrieve(
-		url, filename=filename,
-		reporthook=lambda blocknum, blocksize, totalsize: t.update(
-			blocknum * blocksize - t.n
+	with tqdm(
+			unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
+			desc=filename
+	) as t:
+		urllib.request.urlretrieve(
+			url, filename=filename,
+			reporthook=lambda blocknum, blocksize, totalsize: t.update(
+				blocknum * blocksize - t.n
+			)
 		)
+
+	with zipfile.ZipFile(filename, 'r') as zip_ref:
+		for member in tqdm(zip_ref.infolist(), desc='Extracting'):
+			try:
+				zip_ref.extract(member, path='include/')
+			except zipfile.error as e:
+				pass
+	# zip_ref.extractall('include/')
+	print('Done!')
+
+
+def install_gedlib():
+	import subprocess
+	cur_python = sys.executable
+	subprocess.call([cur_python, '--version'])
+	subprocess.call(['which', cur_python])
+	gedlib_dir = 'include/gedlib-master/'
+	subprocess.call(
+		[cur_python, 'install.py'], cwd=gedlib_dir
 	)
 
-with zipfile.ZipFile(filename, 'r') as zip_ref:
-	for member in tqdm(zip_ref.infolist(), desc='Extracting'):
-		try:
-			zip_ref.extract(member, path='include/')
-		except zipfile.error as e:
-			pass
-# zip_ref.extractall('include/')
-print('Done!')
+
+# Download GEDLIB and unpack it.
+get_gedlib()
+# Install GEDLIB:
+install_gedlib()
 
 # clean previous build
 print('Cleaning previous build...')
