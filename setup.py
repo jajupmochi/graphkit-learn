@@ -1,4 +1,5 @@
 import setuptools
+from datetime import datetime
 
 with open("README.md", "r") as fh:
 	long_description = fh.read()
@@ -6,9 +7,10 @@ with open("README.md", "r") as fh:
 with open('requirements_pypi.txt') as fp:
 	install_requires = fp.read()
 
+version = '0.2.1.post' + datetime.now().strftime('%Y%m%d%H%M%S')
 setuptools.setup(
 	name="graphkit-learn",
-	version="0.2.1",
+	version=version,
 	author="Linlin Jia",
 	author_email="linlin.jia@insa-rouen.fr",
 	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
@@ -18,7 +20,7 @@ setuptools.setup(
 		'Documentation': 'https://graphkit-learn.readthedocs.io',
 		'Source': 'https://github.com/jajupmochi/graphkit-learn',
 		'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
-		},
+	},
 	url="https://github.com/jajupmochi/graphkit-learn",
 	packages=setuptools.find_packages(),
 	classifiers=[
