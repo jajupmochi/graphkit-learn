@@ -1,0 +1,5 @@
+gedlibpy*.so
+gedlibpy.cpp
+build/
+__pycache__/
+include/gedlib-master/median/collections/

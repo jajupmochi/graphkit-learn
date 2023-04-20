@@ -58,7 +58,7 @@ gklearn/gedlib/build/__pycache__/
 gklearn/gedlib/collections/
 gklearn/gedlib/Median_Example/
 gklearn/gedlib/build/include/gedlib-master/median/collections/
-gklearn/gedlib/include/
+#gklearn/gedlib/include/
 gklearn/gedlib/libgxlgedlib.so
 
 # misc
