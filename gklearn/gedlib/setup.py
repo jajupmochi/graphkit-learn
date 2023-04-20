@@ -45,7 +45,7 @@ with zipfile.ZipFile(filename, 'r') as zip_ref:
 			zip_ref.extract(member, path='include/')
 		except zipfile.error as e:
 			pass
-	# zip_ref.extractall('include/')
+# zip_ref.extractall('include/')
 print('Done!')
 
 # clean previous build
@@ -108,6 +108,14 @@ setup(
 	],
 	include_dirs=[numpy.get_include()]
 )
+
+# List generated files:
+print('The following files are generated:')
+for name in os.listdir():
+	if (name.startswith('gedlibpy') and not (
+			name.endswith('.pyx') or name.endswith('.pxd'))):
+		print(name)
+
 print('Build completed!')
 
 # Commande Bash : python setup.py build_ext --inplace
