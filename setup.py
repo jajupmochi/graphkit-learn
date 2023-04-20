@@ -1,12 +1,16 @@
+import sys
 import setuptools
 from datetime import datetime
 
 # Compile GEDLIBPY module:
 import subprocess
 
+cur_python = sys.executable
+subprocess.call([cur_python, '--version'])
+subprocess.call(['which', cur_python])
 gedlib_dir = 'gklearn/gedlib/'
 subprocess.call(
-	['python', 'setup.py', 'build_ext', '--inplace'], cwd=gedlib_dir
+	[cur_python, 'setup.py', 'build_ext', '--inplace'], cwd=gedlib_dir
 )
 
 # Install graphkit-learn:
