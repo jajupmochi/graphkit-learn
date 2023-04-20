@@ -40,7 +40,12 @@ with tqdm(
 	)
 
 with zipfile.ZipFile(filename, 'r') as zip_ref:
-	zip_ref.extractall('include/')
+	for member in tqdm(zip_ref.infolist(), desc='Extracting'):
+		try:
+			zip_ref.extract(member, path='include/')
+		except zipfile.error as e:
+			pass
+	# zip_ref.extractall('include/')
 print('Done!')
 
 # clean previous build
