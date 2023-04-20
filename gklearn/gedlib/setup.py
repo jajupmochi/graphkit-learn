@@ -7,17 +7,46 @@ import shutil
 import numpy
 
 # Download GEDLIB and unpack it.
+import importlib
+
+
+def install(package):
+	try:
+		importlib.import_module(package)
+	except ImportError:
+		import subprocess
+		subprocess.call(['pip', 'install', package])
+
+
+install('progressbar')
+
 import urllib.request
+import progressbar
 import zipfile
 
 print('Downloading and unpacking GEDLIB from GitHub...')
+
 url = 'https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip'
 filename = 'gedlib-master.zip'
 
-urllib.request.urlretrieve(url, filename)
+
+def show_progress(block_num, block_size, total_size):
+	progress = block_num * block_size
+	if total_size > 0:
+		percent = progress / total_size * 100
+		bar.update(percent)
+	else:
+		bar.update(100)
+
+
+with urllib.request.urlopen(url) as response:
+	total_size = int(response.info().get('Content-Length', 0))
+	bar = progressbar.ProgressBar(maxval=total_size).start()
+	urllib.request.urlretrieve(url, filename, show_progress)
+	bar.finish()
 
 with zipfile.ZipFile(filename, 'r') as zip_ref:
-    zip_ref.extractall('include/')
+	zip_ref.extractall('include/')
 print('Done!')
 
 # clean previous build
@@ -51,7 +80,7 @@ extensions = [
 	)
 ]
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
 	long_description = fh.read()
 
 setup(
@@ -81,6 +110,5 @@ setup(
 	include_dirs=[numpy.get_include()]
 )
 print('Build completed!')
-
 
 # Commande Bash : python setup.py build_ext --inplace
