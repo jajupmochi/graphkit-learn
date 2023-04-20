@@ -10,6 +10,7 @@ import numpy
 import urllib.request
 import zipfile
 
+print('Downloading and unpacking GEDLIB from GitHub...')
 url = 'https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip'
 filename = 'gedlib-master.zip'
 
@@ -17,15 +18,19 @@ urllib.request.urlretrieve(url, filename)
 
 with zipfile.ZipFile(filename, 'r') as zip_ref:
     zip_ref.extractall('include/')
+print('Done!')
 
 # clean previous build
+print('Cleaning previous build...')
 for name in os.listdir():
 	if (name.startswith('gedlibpy') and not (
 			name.endswith('.pyx') or name.endswith('.pxd'))):
 		os.remove(name)
 	if name == 'build':
 		shutil.rmtree(name)
+print('Done!')
 
+print('Start building...')
 extensions = [
 	Extension(
 		"gedlibpy",
@@ -75,7 +80,7 @@ setup(
 	],
 	include_dirs=[numpy.get_include()]
 )
-# setup(ext_modules=cythonize(extensions))
+print('Build completed!')
 
 
 # Commande Bash : python setup.py build_ext --inplace
