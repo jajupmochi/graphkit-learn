@@ -42,6 +42,7 @@ jobs:
           #%% lsb-core is required for actions/setup-python@v4:
           printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
+          yum install -y git
 
       - name: Upgrade glibc
         run: |
