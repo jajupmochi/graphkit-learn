@@ -32,7 +32,7 @@ jobs:
         run: |
           pwd
           ls /
-          ls ${{ github.workspace }}
+          ls $GITHUB_WORKSPACE
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
       - name: Set up Python ${{ matrix.python-version }}
