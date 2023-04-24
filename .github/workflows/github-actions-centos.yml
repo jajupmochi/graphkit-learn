@@ -110,6 +110,7 @@ jobs:
           echo "Current work directory:"
           pwd
           wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.27.tar.gz
+          tar -xzvf glibc-2.27.tar.gz
           #          git clone https://sourceware.org/git/glibc.git
           cd glibc-2.27
           #          git checkout master
