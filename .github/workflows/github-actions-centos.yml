@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ "3.8", "3.9", "3.10" ]
+        python-version: [ "3.8" ] # , "3.9", "3.10" ]
         container: [ "centos:7" ]
 
     container:
@@ -43,13 +43,13 @@ jobs:
           printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
 
-#      - name: Upgrade glibc
-#        run: |
-#          #%% Install a higher version of glibc: (The latest version on CentOS 7
-#          #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
-#          # Determine the current version of glibc that is installed:
-#          printf "\nCurrent version of glibc installed:\n"
-#          rpm -q glibc
+      - name: Upgrade glibc
+        run: |
+          #%% Install a higher version of glibc: (The latest version on CentOS 7
+          #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
+          # Determine the current version of glibc that is installed:
+          printf "\nCurrent version of glibc installed:\n"
+          rpm -q glibc
 #
 #          # Check if a newer version of glibc is available in the official CentOS
 #          # repositories:
