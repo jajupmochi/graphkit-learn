@@ -110,26 +110,26 @@ jobs:
           echo "Current work directory:"
           pwd
           wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.34.tar.gz
-#          git clone https://sourceware.org/git/glibc.git
-          cd glibc-2.34
-#          git checkout master
-          mkdir build
-          cd build
-          ../configure --prefix=$HOME/installed/glibc-2.34
-#          ../configure --prefix=$HOME/installed/glibc-latest
-          make
-          make install
-          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.34/lib:$LD_LIBRARY_PATH
-#          export LD_LIBRARY_PATH=$HOME/installed/glibc-latest/lib:$LD_LIBRARY_PATH
-          printf "\n"
-          # Verify that glibc has been installed:
-          printf "\nThe new version of glibc installed:\n"
-          rpm -q glibc
-          printf "\n"
-          printf "\ncd back:\n"
-          cd $GITHUB_WORKSPACE
-          echo "Current work directory:"
-          pwd
+##          git clone https://sourceware.org/git/glibc.git
+#          cd glibc-2.34
+##          git checkout master
+#          mkdir build
+#          cd build
+#          ../configure --prefix=$HOME/installed/glibc-2.34
+##          ../configure --prefix=$HOME/installed/glibc-latest
+#          make
+#          make install
+#          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.34/lib:$LD_LIBRARY_PATH
+##          export LD_LIBRARY_PATH=$HOME/installed/glibc-latest/lib:$LD_LIBRARY_PATH
+#          printf "\n"
+#          # Verify that glibc has been installed:
+#          printf "\nThe new version of glibc installed:\n"
+#          rpm -q glibc
+#          printf "\n"
+#          printf "\ncd back:\n"
+#          cd $GITHUB_WORKSPACE
+#          echo "Current work directory:"
+#          pwd
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
