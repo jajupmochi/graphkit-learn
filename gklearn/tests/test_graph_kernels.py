@@ -18,7 +18,7 @@ def test_list_graph_kernels():
 
 ##############################################################################
 
-def chooseDataset(ds_name):
+def choose_dataset(ds_name):
 	"""Choose dataset according to name.
 	"""
 	from gklearn.dataset import Dataset
@@ -114,7 +114,7 @@ def test_CommonWalk(ds_name, weight, compute_method):
 		from gklearn.kernels import CommonWalk
 		import networkx as nx
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 		dataset.load_graphs(
 			[g for g in dataset.graphs if nx.number_of_nodes(g) > 1]
 		)
@@ -164,7 +164,7 @@ def test_Marginalized(ds_name, remove_totters):
 	def compute(parallel=None):
 		from gklearn.kernels import Marginalized
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		try:
 			graph_kernel = Marginalized(
@@ -218,7 +218,7 @@ def test_SylvesterEquation(ds_name):
 	def compute(parallel=None):
 		from gklearn.kernels import SylvesterEquation
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		try:
 			graph_kernel = SylvesterEquation(
@@ -273,7 +273,7 @@ def test_ConjugateGradient(ds_name):
 			kernelproduct
 		import functools
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		mixkernel = functools.partial(
 			kernelproduct, kronecker_delta_kernel,
@@ -342,7 +342,7 @@ def test_FixedPoint(ds_name):
 			kernelproduct
 		import functools
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		mixkernel = functools.partial(
 			kernelproduct, deltakernel,
@@ -409,7 +409,7 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 	def compute(parallel=None):
 		from gklearn.kernels import SpectralDecomposition
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		try:
 			graph_kernel = SpectralDecomposition(
@@ -516,7 +516,7 @@ def test_ShortestPath(ds_name):
 			kernelproduct
 		import functools
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		mixkernel = functools.partial(
 			kernelproduct, deltakernel,
@@ -589,7 +589,7 @@ def test_StructuralSP(ds_name):
 			kernelproduct
 		import functools
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		mixkernel = functools.partial(
 			kernelproduct, deltakernel,
@@ -658,7 +658,7 @@ def test_PathUpToH(ds_name, k_func):
 	def compute(parallel=None, compute_method=None):
 		from gklearn.kernels import PathUpToH
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		try:
 			graph_kernel = PathUpToH(
@@ -716,7 +716,7 @@ def test_Treelet(ds_name):
 		from gklearn.utils.kernels import polynomialkernel
 		import functools
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		pkernel = functools.partial(polynomialkernel, d=2, c=1e5)
 		try:
@@ -766,7 +766,7 @@ def test_WLSubtree(ds_name):
 	def compute(parallel=None):
 		from gklearn.kernels import WLSubtree
 
-		dataset = chooseDataset(ds_name)
+		dataset = choose_dataset(ds_name)
 
 		try:
 			graph_kernel = WLSubtree(
