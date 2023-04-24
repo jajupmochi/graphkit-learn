@@ -46,46 +46,46 @@ jobs:
           printf "\nInstalling dependencies for installing make and glibc:\n"
           yum install -y git gcc make wget which alias
 
-      - name: Upgrade make for installing glibc
-        run: |
-          #%% Install a higher version of make: (The latest version on CentOS 7
-          #%% is 3.82.)
-          # Determine the current version of make that is installed:
-          printf "\nCurrent version of make installed:\n"
-          rpm -q make
-          printf "\n"
-          # Check if a newer version of make is available in the official CentOS
-          # repositories:
-          printf "\nThe latest version of make available on the current system:\n"
-          yum list make
-          printf "\n"
-          printf "\nInstalling make 4.4 from source:\n"
-          cd /usr/local/
-          mkdir -p softwares
-          cd softwares
-          echo "Current work directory:"
-          pwd
-          wget --no-check-certificate https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
-          tar -xzvf make-4.4.tar.gz
-          cd make-4.4
-          ./configure --prefix=/usr/local/make-4.4
-          make && make install
-          echo 'export PATH=/usr/local/make-4.4/bin:$PATH' >> ~/.bashrc
-          source ~/.bashrc
-          echo "Current PATH:"
-          echo $PATH
-          printf "\n"
-          # Verify that make has been installed:
-          printf "\nThe new version of make installed:\n"
-          rpm -q make
-          which make
-          alias
-          ls -l $(which make)
-          printf "\n"
-          printf "\ncd back:\n"
-          cd $GITHUB_WORKSPACE
-          echo "Current work directory:"
-          pwd
+#      - name: Upgrade make for installing glibc
+#        run: |
+#          #%% Install a higher version of make: (The latest version on CentOS 7
+#          #%% is 3.82.)
+#          # Determine the current version of make that is installed:
+#          printf "\nCurrent version of make installed:\n"
+#          rpm -q make
+#          printf "\n"
+#          # Check if a newer version of make is available in the official CentOS
+#          # repositories:
+#          printf "\nThe latest version of make available on the current system:\n"
+#          yum list make
+#          printf "\n"
+#          printf "\nInstalling make 4.4 from source:\n"
+#          cd $HOME
+#          mkdir -p softwares
+#          cd softwares
+#          echo "Current work directory:"
+#          pwd
+#          wget --no-check-certificate https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
+#          tar -xzvf make-4.4.tar.gz
+#          cd make-4.4
+#          ./configure --prefix=$HOME/installed/make-4.4
+#          make && make install
+#          echo 'export PATH=$HOME/installed/make-4.4/bin:$PATH' >> ~/.bashrc
+#          source ~/.bashrc
+#          echo "Current PATH:"
+#          echo $PATH
+#          printf "\n"
+#          # Verify that make has been installed:
+#          printf "\nThe new version of make installed:\n"
+#          rpm -q make
+#          which make
+#          alias
+#          ls -l $(which make)
+#          printf "\n"
+#          printf "\ncd back:\n"
+#          cd $GITHUB_WORKSPACE
+#          echo "Current work directory:"
+#          pwd
 
       - name: Upgrade glibc
         run: |
@@ -104,20 +104,23 @@ jobs:
           yum install -y bison flex gawk gettext-devel texinfo
           printf "\n"
           printf "\nInstalling the latest version of glibc from source:\n"
-          cd /usr/local/
+          cd $HOME/
           mkdir -p softwares
           cd softwares
           echo "Current work directory:"
           pwd
-          git clone https://sourceware.org/git/glibc.git
-          cd glibc
-          git checkout master
+          wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.34.tar.gz
+#          git clone https://sourceware.org/git/glibc.git
+          cd glibc-2.34
+#          git checkout master
           mkdir build
           cd build
-          ../configure --prefix=/usr/local/glibc-latest
+          ../configure --prefix=$HOME/installed/glibc-2.34
+#          ../configure --prefix=$HOME/installed/glibc-latest
           make
           make install
-          export LD_LIBRARY_PATH=/usr/local/glibc-latest/lib:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.34/lib:$LD_LIBRARY_PATH
+#          export LD_LIBRARY_PATH=$HOME/installed/glibc-latest/lib:$LD_LIBRARY_PATH
           printf "\n"
           # Verify that glibc has been installed:
           printf "\nThe new version of glibc installed:\n"
