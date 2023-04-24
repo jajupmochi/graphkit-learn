@@ -38,10 +38,22 @@ jobs:
 
       - name: Install system-level dependencies
         run: |
+          #%% lsb-core is required for actions/setup-python@v4:
           yum install -y redhat-lsb-core
+          #%% Install a higher version of glibc: (The latest version on CentOS 7 
+          #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
+          # Determine the current version of glibc that is installed:
           rpm -q glibc
+          # Check if a newer version of glibc is available in the official CentOS 
+          # repositories:
           yum list glibc
+          # Installing it from a third-party repository such as the Fedora EPEL:
+          yum install epel-release
           yum install glibc
+          # Update the system's linker cache to include the new version of glibc:
+          ldconfig
+          # Verify that glibc has been installed:
+          rpm -q glibc
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
