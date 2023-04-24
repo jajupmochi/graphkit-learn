@@ -50,35 +50,32 @@ jobs:
           # Determine the current version of glibc that is installed:
           printf "\nCurrent version of glibc installed:\n"
           rpm -q glibc
+          printf "\n"
           # Check if a newer version of glibc is available in the official CentOS
           # repositories:
           printf "\nThe latest version of glibc available on the current system:\n"
           yum list glibc
-#
-##          # Installing it from a third-party repository such as the Fedora EPEL:
-##          printf "\nInstalling Fedora EPEL:\n"
-##          yes y | yum install epel-release
-#
-#          printf "\nInstalling the latest version of glibc from source:\n"
-#          cd /usr/local/
-#          mkdir softwares
-#          cd softwares
-#          pwd
-#          git clone https://sourceware.org/git/glibc.git
-#          cd glibc
-#          git checkout master
-#          mkdir build
-#          cd build
-#          ../configure --prefix=/usr/local/glibc-latest
-#          make
-#          make install
-#          export LD_LIBRARY_PATH=/usr/local/glibc-latest/lib:$LD_LIBRARY_PATH
-#          cd $GITHUB_WORKSPACE
-#          pwd
-#
-#          # Verify that glibc has been installed:
-#          printf "\nThe new version of glibc installed:\n"
-#          rpm -q glibc
+          printf "\n"
+          printf "\nInstalling the latest version of glibc from source:\n"
+          cd /usr/local/
+          mkdir softwares
+          cd softwares
+          pwd
+          git clone https://sourceware.org/git/glibc.git
+          cd glibc
+          git checkout master
+          mkdir build
+          cd build
+          ../configure --prefix=/usr/local/glibc-latest
+          make
+          make install
+          export LD_LIBRARY_PATH=/usr/local/glibc-latest/lib:$LD_LIBRARY_PATH
+          cd $GITHUB_WORKSPACE
+          pwd
+          printf "\n"
+          # Verify that glibc has been installed:
+          printf "\nThe new version of glibc installed:\n"
+          rpm -q glibc
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
