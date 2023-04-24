@@ -27,7 +27,8 @@ jobs:
 
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - run: echo "🪵 The root directory of the checked-out repository is $GITHUB_WORKSPACE."
+      - run: echo "🪵 The root directory of the checked-out repository is:"
+      - run: echo $GITHUB_WORKSPACE
       - name: List files in the repository
         run: |
           pwd
@@ -41,7 +42,9 @@ jobs:
           #%% lsb-core is required for actions/setup-python@v4:
           printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
-          
+
+      - name: Upgrade glibc
+        run: |               
           #%% Install a higher version of glibc: (The latest version on CentOS 7 
           #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
           # Determine the current version of glibc that is installed:
@@ -53,15 +56,26 @@ jobs:
           printf "\nThe latest version of glibc available on the current system:\n"
           yum list glibc
           
-          # Installing it from a third-party repository such as the Fedora EPEL:
-          printf "\nInstalling Fedora EPEL:\n"
-          yes y | yum install epel-release
+#          # Installing it from a third-party repository such as the Fedora EPEL:
+#          printf "\nInstalling Fedora EPEL:\n"
+#          yes y | yum install epel-release
           
-          printf "\nInstalling new version of glibc:\n"
-          yes y | yum install glibc
-          
-          # Update the system's linker cache to include the new version of glibc:
-          ldconfig
+          printf "\nInstalling the latest version of glibc from source:\n"
+          cd /usr/local/
+          mkdir softwares
+          cd softwares
+          pwd
+          git clone https://sourceware.org/git/glibc.git
+          cd glibc
+          git checkout master
+          mkdir build
+          cd build
+          ../configure --prefix=/usr/local/glibc-latest
+          make
+          make install
+          export LD_LIBRARY_PATH=/usr/local/glibc-latest/lib:$LD_LIBRARY_PATH
+          cd $GITHUB_WORKSPACE             
+          pwd
           
           # Verify that glibc has been installed:
           printf "\nThe new version of glibc installed:\n"
