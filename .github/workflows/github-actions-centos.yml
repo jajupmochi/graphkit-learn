@@ -44,7 +44,7 @@ jobs:
           yum install -y redhat-lsb-core
           printf "\n"
           printf "\nInstalling dependencies for installing make and glibc:\n"
-          yum install -y git gcc make wget
+          yum install -y git gcc make wget which alias
 
       - name: Upgrade make for installing glibc
         run: |
