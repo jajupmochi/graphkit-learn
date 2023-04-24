@@ -50,11 +50,10 @@ jobs:
           # Determine the current version of glibc that is installed:
           printf "\nCurrent version of glibc installed:\n"
           rpm -q glibc
-#
-#          # Check if a newer version of glibc is available in the official CentOS
-#          # repositories:
-#          printf "\nThe latest version of glibc available on the current system:\n"
-#          yum list glibc
+          # Check if a newer version of glibc is available in the official CentOS
+          # repositories:
+          printf "\nThe latest version of glibc available on the current system:\n"
+          yum list glibc
 #
 ##          # Installing it from a third-party repository such as the Fedora EPEL:
 ##          printf "\nInstalling Fedora EPEL:\n"
