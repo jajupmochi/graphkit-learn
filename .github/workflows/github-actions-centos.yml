@@ -52,7 +52,7 @@ jobs:
           yum list glibc
           # Installing it from a third-party repository such as the Fedora EPEL:
           echo "Installing Fedora EPEL:"
-          yum install epel-release
+          yes y | yum install epel-release
           echo "Installing new version of glibc:"
           yum install glibc
           # Update the system's linker cache to include the new version of glibc:
