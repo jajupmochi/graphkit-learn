@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ "3.8"]
+        python-version: [ "3.8", "3.9", "3.10" ]
         container: [ "centos:7" ]
 
     container:
@@ -39,6 +39,9 @@ jobs:
       - name: Install system-level dependencies
         run: |
           yum install -y redhat-lsb-core
+          rpm -q glibc
+          yum list glibc
+          yum install glibc
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
