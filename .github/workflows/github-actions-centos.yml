@@ -109,7 +109,7 @@ jobs:
           cd softwares
           echo "Current work directory:"
           pwd
-          wget --no-check-certificate https://ftp.gnu.org/gnu/gcc/gcc-7.4.0.tar.gz
+          wget --no-check-certificate https://ftp.gnu.org/gnu/gcc/gcc-7.4.0/gcc-7.4.0.tar.gz
           tar -xzvf gcc-7.4.0.tar.gz
           cd gcc-7.4.0
           mkdir build
