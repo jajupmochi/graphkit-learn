@@ -32,39 +32,39 @@ jobs:
         run: |
           pwd
           ls /
-          printf "\nThe files contained in the repository (GITHUB_WORKSPACE):"
+          printf "\nThe files contained in the repository (GITHUB_WORKSPACE):\n"
           ls $GITHUB_WORKSPACE
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
       - name: Install system-level dependencies
         run: |
           #%% lsb-core is required for actions/setup-python@v4:
-          printf "\nInstalling redhat-lsb-core:"
+          printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
           
           #%% Install a higher version of glibc: (The latest version on CentOS 7 
           #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
           # Determine the current version of glibc that is installed:
-          printf "\nCurrent version of glibc installed:"
+          printf "\nCurrent version of glibc installed:\n"
           rpm -q glibc
           
           # Check if a newer version of glibc is available in the official CentOS 
           # repositories:
-          printf "\nThe latest version of glibc available on the current system:"
+          printf "\nThe latest version of glibc available on the current system:\n"
           yum list glibc
           
           # Installing it from a third-party repository such as the Fedora EPEL:
-          printf "\nInstalling Fedora EPEL:"
+          printf "\nInstalling Fedora EPEL:\n"
           yes y | yum install epel-release
           
-          printf "\nInstalling new version of glibc:"
-          yum install glibc
+          printf "\nInstalling new version of glibc:\n"
+          yes y | yum install glibc
           
           # Update the system's linker cache to include the new version of glibc:
           ldconfig
           
           # Verify that glibc has been installed:
-          printf "\nThe new version of glibc installed:"
+          printf "\nThe new version of glibc installed:\n"
           rpm -q glibc
 
       - name: Set up Python ${{ matrix.python-version }}
