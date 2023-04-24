@@ -41,6 +41,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip' # caching pip dependencies
+        run: |
+          yum install -y redhat-lsb-core
 
       - name: Install dependencies
         run: |
