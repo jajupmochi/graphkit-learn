@@ -65,7 +65,7 @@ jobs:
           cd softwares
           echo "Current work directory:"
           pwd
-          wget -no-check-certificate https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
+          wget --no-check-certificate https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
           tar -xzvf make-4.4.tar.gz
           cd make-4.4
           ./configure --prefix=/usr/local/make-4.4
