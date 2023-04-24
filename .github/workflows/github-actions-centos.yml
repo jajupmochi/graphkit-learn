@@ -101,7 +101,7 @@ jobs:
           yum list gcc
           printf "\n"
           printf "\nInstalling the required dependencies for installing gcc:\n"
-          yum install -y bzip2
+          yum install -y bzip2 gcc-c++ gmp-devel mpfr-devel libmpc-devel
           printf "\n"
           printf "\nInstalling the latest version of gcc from source:\n"
           cd $HOME/
@@ -112,7 +112,7 @@ jobs:
           wget --no-check-certificate https://ftp.gnu.org/gnu/gcc/gcc-7.4.0/gcc-7.4.0.tar.gz
           tar -xzvf gcc-7.4.0.tar.gz
           cd gcc-7.4.0
-          ./contrib/download_prerequisites # Solve the gmp, mpfr, mpc problems.
+#          ./contrib/download_prerequisites # Solve the gmp, mpfr, mpc problems.
           mkdir build
           cd build
           ../configure --prefix=$HOME/installed/gcc-7.4.0 -enable-languages=c,c++ -disable-multilib
