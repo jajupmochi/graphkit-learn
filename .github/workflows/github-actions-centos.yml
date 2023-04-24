@@ -70,7 +70,10 @@ jobs:
           cd make-4.4
           ./configure --prefix=/usr/local/make-4.4
           make && make install
-          export PATH=/usr/local/make-4.4/bin:$PATH
+          echo 'export PATH=/usr/local/make-4.4/bin:$PATH' >> ~/.bashrc
+          source ~/.bashrc
+          echo "Current PATH:"
+          echo $PATH
           printf "\n"
           # Verify that make has been installed:
           printf "\nThe new version of make installed:\n"
