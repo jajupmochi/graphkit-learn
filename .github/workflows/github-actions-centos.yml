@@ -78,6 +78,9 @@ jobs:
           # Verify that make has been installed:
           printf "\nThe new version of make installed:\n"
           rpm -q make
+          which make
+          alias
+          ls -l $(which make)
           printf "\n"
           printf "\ncd back:\n"
           cd $GITHUB_WORKSPACE
