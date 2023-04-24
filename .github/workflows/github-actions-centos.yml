@@ -90,7 +90,7 @@ jobs:
       - name: Upgrade glibc
         run: |
           #%% Install a higher version of glibc: (The latest version on CentOS 7
-          #%% is 2.17, while at least 2.27 is required for the latest Python 3.8.)
+          #%% is 2.17, while at least 2.34 is required for the latest Python 3.8.)
           # Determine the current version of glibc that is installed:
           printf "\nCurrent version of glibc installed:\n"
           rpm -q glibc
@@ -109,18 +109,18 @@ jobs:
           cd softwares
           echo "Current work directory:"
           pwd
-          wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.27.tar.gz
-          tar -xzvf glibc-2.27.tar.gz
+          wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.34.tar.gz
+          tar -xzvf glibc-2.34.tar.gz
           #          git clone https://sourceware.org/git/glibc.git
-          cd glibc-2.27
+          cd glibc-2.34
           #          git checkout master
           mkdir build
           cd build
-          ../configure --prefix=$HOME/installed/glibc-2.27
+          ../configure --prefix=$HOME/installed/glibc-2.34
           #          ../configure --prefix=$HOME/installed/glibc-latest
           make
           make install
-          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.27/lib:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.34/lib:$LD_LIBRARY_PATH
           #          export LD_LIBRARY_PATH=$HOME/installed/glibc-latest/lib:$LD_LIBRARY_PATH
           printf "\n"
           # Verify that glibc has been installed:
