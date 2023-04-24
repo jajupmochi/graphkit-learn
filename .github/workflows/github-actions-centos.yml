@@ -42,7 +42,8 @@ jobs:
           #%% lsb-core is required for actions/setup-python@v4:
           printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
-          yum install -y git
+          printf "\nInstalling dependencies for installing glibc:\n"
+          yum install -y git gcc make
 
       - name: Upgrade glibc
         run: |
@@ -61,6 +62,7 @@ jobs:
           cd /usr/local/
           mkdir softwares
           cd softwares
+          echo "Current work directory:"
           pwd
           git clone https://sourceware.org/git/glibc.git
           cd glibc
@@ -71,12 +73,15 @@ jobs:
           make
           make install
           export LD_LIBRARY_PATH=/usr/local/glibc-latest/lib:$LD_LIBRARY_PATH
-          cd $GITHUB_WORKSPACE
-          pwd
           printf "\n"
           # Verify that glibc has been installed:
           printf "\nThe new version of glibc installed:\n"
           rpm -q glibc
+          printf "\n"
+          printf "\ncd back:\n"
+          cd $GITHUB_WORKSPACE
+          echo "Current work directory:"
+          pwd
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
