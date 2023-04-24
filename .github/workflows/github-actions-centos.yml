@@ -112,11 +112,11 @@ jobs:
           wget --no-check-certificate https://ftp.gnu.org/gnu/gcc/gcc-7.4.0/gcc-7.4.0.tar.gz
           tar -xzvf gcc-7.4.0.tar.gz
           cd gcc-7.4.0
-          ./contrib/download_prerequisites
+          ./contrib/download_prerequisites # Solve the gmp, mpfr, mpc problems.
           mkdir build
           cd build
-          ../configure --prefix=$HOME/installed/gcc-7.4.0 -enable-checking=release -enable-languages=c,c++ -disable-multilib
-          make -j 4
+          ../configure --prefix=$HOME/installed/gcc-7.4.0 -enable-languages=c,c++ -disable-multilib
+          make -j$(nproc)
           make install
           export PATH=$HOME/installed/gcc-7.4.0/bin:$PATH
           export LD_LIBRARY_PATH=$HOME/installed/gcc-7.4.0/lib64:$HOME/installed/gcc-7.4.0/lib:$LD_LIBRARY_PATH
