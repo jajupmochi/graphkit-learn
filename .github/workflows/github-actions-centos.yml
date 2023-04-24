@@ -46,6 +46,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip' # caching pip dependencies
 
+      - name: Check installed Python and pip
+        run: |
+          python --version
+          pip --version
+          find / -name pip 2>/dev/null
 
       - name: Install dependencies
         run: |
