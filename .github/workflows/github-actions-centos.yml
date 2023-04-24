@@ -11,8 +11,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-        container: ["centos:7"]
+        python-version: [ "3.8", "3.9", "3.10" ]
+        container: [ "centos:7" ]
 
     container:
       image: ${{ matrix.container }}
@@ -36,13 +36,16 @@ jobs:
           ls $GITHUB_WORKSPACE
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
+      - name: Install system-level dependencies
+        run: |
+          yum install -y redhat-lsb-core
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip' # caching pip dependencies
-        run: |
-          yum install -y redhat-lsb-core
+
 
       - name: Install dependencies
         run: |
@@ -57,7 +60,7 @@ jobs:
         run: |
           python setup.py bdist_wheel
           pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ged/
-#          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py
+      #          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py
 
       - name: Run code coverage
         run: |
