@@ -61,7 +61,7 @@ jobs:
           printf "\n"
           printf "\nInstalling make 4.4 from source:\n"
           cd /usr/local/
-          mkdir softwares
+          mkdir -p softwares
           cd softwares
           echo "Current work directory:"
           pwd
@@ -99,7 +99,7 @@ jobs:
           printf "\n"
           printf "\nInstalling the latest version of glibc from source:\n"
           cd /usr/local/
-          mkdir softwares
+          mkdir -p softwares
           cd softwares
           echo "Current work directory:"
           pwd
