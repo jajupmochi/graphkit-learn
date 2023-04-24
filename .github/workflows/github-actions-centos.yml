@@ -2,7 +2,7 @@ name: graphkit-learn
 
 run-name: ${{ github.actor }} is testing graphkit-learn out GitHub Actions 🚀
 
-on: [ push, pull-request ]
+on: [ push, pull_request ]
 
 jobs:
   CI-CentOS:
