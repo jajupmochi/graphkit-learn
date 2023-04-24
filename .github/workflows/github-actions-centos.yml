@@ -42,6 +42,7 @@ jobs:
           #%% lsb-core is required for actions/setup-python@v4:
           printf "\nInstalling redhat-lsb-core:\n"
           yum install -y redhat-lsb-core
+          printf "\n"
           printf "\nInstalling dependencies for installing glibc:\n"
           yum install -y git gcc make
 
@@ -57,6 +58,9 @@ jobs:
           # repositories:
           printf "\nThe latest version of glibc available on the current system:\n"
           yum list glibc
+          printf "\n"
+          printf "\nInstalling the required dependencies for installing glibc:\n"
+          yum install -y bison flex gawk gettext-devel texinfo
           printf "\n"
           printf "\nInstalling the latest version of glibc from source:\n"
           cd /usr/local/
