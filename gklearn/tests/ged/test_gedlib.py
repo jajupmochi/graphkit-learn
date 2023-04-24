@@ -28,7 +28,7 @@ def choose_dataset(ds_name):
 
 def test_gedlib():
 	"""**1. Get dataset.**"""
-	graphs = choose_dataset('MUTAG')
+	graphs = choose_dataset('MUTAG').graphs
 
 	"""**2. Compute graph edit distance.**"""
 	try:
