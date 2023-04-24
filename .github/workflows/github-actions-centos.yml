@@ -101,7 +101,7 @@ jobs:
           yum list gcc
           printf "\n"
           printf "\nInstalling the required dependencies for installing gcc:\n"
-          yum install -y bzip2
+          yum install -y bzip2 gmp mpfr mpc
           printf "\n"
           printf "\nInstalling the latest version of gcc from source:\n"
           cd $HOME/
