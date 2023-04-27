@@ -1,0 +1,16 @@
+
+wpython:S1192ý"RDefine a constant instead of duplicating this literal 'getting canonkeys' 4 times.(üùÈìûÿÿÿÿ8¶¹ªíù0
+rpython:S1192‡"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(¦°ðž8¶¹ªíù0
+kpython:S117J"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(²Ü¦©8¶¹ªíù0
+kpython:S117J"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(²Ü¦©8¶¹ªíù0
+‚python:S117Y"dRename this local variable "if_comp_X_canonkeys" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ÚÐ˜8¶¹ªíù0
+hpython:S5632n"IChange this code so that it raises an object deriving from BaseException.(ÆÜ€Ù8¶¹ªíù0
+qpython:S117"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ðíýÿÿÿÿ8¶¹ªíù0
+]python:S112Ÿ">Replace this generic exception class with a more specific one.(îûÚ¿8¶¹ªíù0
+>python:S125¨"Remove this commented out code.(…ºªÿ8¶¹ªíù0
+qpython:S117´"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(®úƒŽþÿÿÿÿ8¶¹ªíù0
+zpython:S3776´"URefactor this function to reduce its Cognitive Complexity from 167 to the 15 allowed.(®úƒŽþÿÿÿÿ8·¹ªíù0
+=python:S125…"Remove this commented out code.(ŒÒ»H8·¹ªíù0
+rpython:S117Ñ"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤“îÅþÿÿÿÿ8·¹ªíù0
+ypython:S3776Ñ"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(¤“îÅþÿÿÿÿ8·¹ªíù0
+rpython:S117Ò"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(«±Ã÷þÿÿÿÿ8·¹ªíù0

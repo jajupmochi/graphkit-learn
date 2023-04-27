@@ -1,0 +1,13 @@
+
+jpython:S1192;"RDefine a constant instead of duplicating this literal 'Computing kernels' 3 times.(¦°ðž
+kpython:S11921"SDefine a constant instead of duplicating this literal 'removing tottering' 4 times.(¯ãñú
+npython:S117ð"VRename this local variable "R_inf" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ð¡ï¯
+rpython:S117—"ZRename this local variable "R_inf_old" to match the regular expression ^[_a-z][a-z0-9_]*$.(àˆÉ
+zpython:S117»"]Rename this local variable "num_nodes_G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤Ø°Ðüÿÿÿÿ
+zpython:S117¼"]Rename this local variable "num_nodes_G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ð’¨”þÿÿÿÿ
+rpython:S117¿"ZRename this local variable "p_init_G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(üñÎÀ
+wpython:S117À"ZRename this local variable "p_init_G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(´Ó˜“ýÿÿÿÿ
+>python:S1481–"%Remove the unused local variable "i".(å‹¨À
+mpython:S3776¬"TRefactor this function to reduce its Cognitive Complexity from 74 to the 15 allowed.(è®àß
+<python:S125ô"Remove this commented out code.(¬ÌËÓûÿÿÿÿ
+fpython:S117¼"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ƒ¨Æ

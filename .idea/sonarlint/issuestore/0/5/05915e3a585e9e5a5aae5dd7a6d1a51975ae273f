@@ -1,0 +1,13 @@
+
+6python:S125"Remove this commented out code.(¦ÀÑ¹
+;python:S125"Remove this commented out code.(‚×£ìùÿÿÿÿ
+ipython:S117%"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ğ¡úàıÿÿÿÿ
+6python:S125."Remove this commented out code.(Ùß¹ä
+;python:S1250"Remove this commented out code.(‚×£ìùÿÿÿÿ
+dpython:S117;"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(àĞ¡Ä
+;python:S125B"Remove this commented out code.(‚×£ìùÿÿÿÿ
+Bpython:S1481o"%Remove the unused local variable "e".(âéÄêşÿÿÿÿ
+ipython:S117|"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(è˜ô¾úÿÿÿÿ
+upython:S117ˆ"XRename this local variable "G_pairs" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ä²“Öûÿÿÿÿ
+lpython:S3776{"TRefactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.(íÔƒÆ
+vpython:S1542Â"^Rename function "get_optimal_costs_GH2020" to match the regular expression ^[a-z_][a-z0-9_]*$.(âÇW

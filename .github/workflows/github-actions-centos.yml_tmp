@@ -1,0 +1,230 @@
+name: graphkit-learn
+
+run-name: ${{ github.actor }} is testing graphkit-learn out GitHub Actions 🚀
+
+on: [ push, pull_request ]
+
+jobs:
+  CI-CentOS:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [ "3.8.6" ] # , "3.9", "3.10" ]
+        container: [ "centos:latest" ] # [ "centos:7" ]
+
+    container:
+      image: ${{ matrix.container }}
+
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - run: echo "🪵 The root directory of the checked-out repository is:"
+      - run: echo $GITHUB_WORKSPACE
+      - name: List files in the repository
+        run: |
+          pwd
+          ls /
+          printf "\nThe files contained in the repository (GITHUB_WORKSPACE):\n"
+          ls $GITHUB_WORKSPACE
+      - run: echo "🍏 This job's status is ${{ job.status }}."
+
+      - name: Install Python
+        run: | 
+          yum -y install python38
+
+#      - name: Install system-level dependencies
+#        run: |
+#          #%% lsb-core is required for actions/setup-python@v4:
+#          printf "\nInstalling redhat-lsb-core:\n"
+#          yum install -y redhat-lsb-core
+#          printf "\n"
+#          printf "\nInstalling dependencies for installing make and glibc:\n"
+#          yum install -y git gcc make wget which alias
+
+#      - name: Upgrade make for installing glibc
+#        run: |
+#          #%% Install a higher version of make: (The latest version on CentOS 7
+#          #%% is 3.82.)
+#          # Determine the current version of make that is installed:
+#          printf "\nCurrent version of make installed:\n"
+#          rpm -q make
+#          printf "\n"
+#          # Check if a newer version of make is available in the official CentOS
+#          # repositories:
+#          printf "\nThe latest version of make available on the current system:\n"
+#          yum list make
+#          printf "\n"
+#          printf "\nInstalling make 4.4 from source:\n"
+#          cd $HOME
+#          mkdir -p softwares
+#          cd softwares
+#          echo "Current work directory:"
+#          pwd
+#          wget --no-check-certificate https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
+#          tar -xzvf make-4.4.tar.gz
+#          cd make-4.4
+#          ./configure --prefix=$HOME/installed/make-4.4
+#          make && make install
+#          echo 'export PATH=$HOME/installed/make-4.4/bin:$PATH' >> ~/.bashrc
+#          source ~/.bashrc
+#          echo "Current PATH:"
+#          echo $PATH
+#          printf "\n"
+#          # Verify that make has been installed:
+#          printf "\nThe new version of make installed:\n"
+#          rpm -q make
+#          which make
+#          alias
+#          ls -l $(which make)
+#          printf "\n"
+#          printf "\ncd back:\n"
+#          cd $GITHUB_WORKSPACE
+#          echo "Current work directory:"
+#          pwd
+
+#      - name: Upgrade gcc for installing glibc
+#        run: |
+#          #%% Install a higher version of gcc: (The latest version on CentOS 7
+#          #%% is 4.8.5.)
+#          # Determine the current version of gcc that is installed:
+#          printf "\nCurrent version of gcc installed:\n"
+#          rpm -q gcc
+#          printf "\n"
+#          # Check if a newer version of gcc is available in the official CentOS
+#          # repositories:
+#          printf "\nThe latest version of gcc available on the current system:\n"
+#          yum list gcc
+#          printf "\n"
+#          printf "\nInstalling the required dependencies for installing gcc:\n"
+#          yum install -y bzip2 gcc-c++ gmp-devel mpfr-devel libmpc-devel
+#          printf "\n"
+#          printf "\nInstalling the latest version of gcc from source:\n"
+#          cd $HOME/
+#          mkdir -p softwares
+#          cd softwares
+#          echo "Current work directory:"
+#          pwd
+#          wget --no-check-certificate https://ftp.gnu.org/gnu/gcc/gcc-7.4.0/gcc-7.4.0.tar.gz
+#          tar -xzvf gcc-7.4.0.tar.gz
+#          cd gcc-7.4.0
+#          #          ./contrib/download_prerequisites # Solve the gmp, mpfr, mpc problems.
+#          mkdir build
+#          cd build
+#          ../configure --prefix=$HOME/installed/gcc-7.4.0 -enable-languages=c,c++ -disable-multilib
+#          make -j$(nproc)
+#          make install
+#          export PATH=$HOME/installed/gcc-7.4.0/bin:$PATH
+#          export LD_LIBRARY_PATH=$HOME/installed/gcc-7.4.0/lib64:$HOME/installed/gcc-7.4.0/lib:$LD_LIBRARY_PATH
+#          export LIBRARY_PATH=$HOME/installed/gcc-7.4.0/lib64:$HOME/installed/gcc-7.4.0/lib:$LIBRARY_PATH
+#          printf "\n"
+#          # Verify that gcc has been installed:
+#          printf "\nThe new version of gcc installed:\n"
+#          rpm -q gcc
+#          gcc -v
+#          which gcc
+#          ls -l $(which gcc)
+#          printf "\n"
+#          printf "\ncd back:\n"
+#          cd $GITHUB_WORKSPACE
+#          echo "Current work directory:"
+#          pwd
+#
+#      - name: Upgrade glibc
+#        run: |
+#          #%% Install a higher version of glibc: (The latest version on CentOS 7
+#          #%% is 2.17, while at least 2.27 is required for the latest Python 3.8.)
+#          # Determine the current version of glibc that is installed:
+#          printf "\nCurrent version of glibc installed:\n"
+#          rpm -q glibc
+#          printf "\n"
+#          # Check if a newer version of glibc is available in the official CentOS
+#          # repositories:
+#          printf "\nThe latest version of glibc available on the current system:\n"
+#          yum list glibc
+#          printf "\n"
+#          printf "\nInstalling the required dependencies for installing glibc:\n"
+#          yum install -y bison flex gawk gettext-devel texinfo
+#          printf "\n"
+#          printf "\nInstalling the latest version of glibc from source:\n"
+#          cd $HOME/
+#          mkdir -p softwares
+#          cd softwares
+#          echo "Current work directory:"
+#          pwd
+#          wget --no-check-certificate https://ftp.gnu.org/gnu/glibc/glibc-2.27.tar.gz
+#          tar -xzvf glibc-2.27.tar.gz
+#          #          git clone https://sourceware.org/git/glibc.git
+#          cd glibc-2.27
+#          #          git checkout master
+#          mkdir build
+#          cd build
+#          ../configure --prefix=$HOME/installed/glibc-2.27
+#          #          ../configure --prefix=$HOME/installed/glibc-latest
+#          make
+#          make install
+#          export LD_LIBRARY_PATH=$HOME/installed/glibc-2.27/lib:$LD_LIBRARY_PATH
+#          #          export LD_LIBRARY_PATH=$HOME/installed/glibc-latest/lib:$LD_LIBRARY_PATH
+#          printf "\n"
+#          # Verify that glibc has been installed:
+#          printf "\nThe new version of glibc installed:\n"
+#          rpm -q glibc
+#          printf "\n"
+#          printf "\ncd back:\n"
+#          cd $GITHUB_WORKSPACE
+#          echo "Current work directory:"
+#          pwd
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: '/usr/local/bin/python3.8'
+      #          python-version: ${{ matrix.python-version }}
+#          cache: 'pip' # caching pip dependencies
+
+      - name: Check installed Python and pip
+        run: |
+          python --version
+          pip --version
+          find / -name pip 2>/dev/null
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install Cython pytest
+          pip install codecov coverage pytest-cov
+          sudo apt-get -y install gfortran liblapack-dev
+          pip install -r requirements.txt
+          pip install wheel
+
+      - name: Build and test
+        run: |
+          python setup.py bdist_wheel
+          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ged/
+      #          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py
+
+      - name: Run code coverage
+        run: |
+          codecov
+
+#      - name: Publish distribution 📦 to Test PyPI
+#        if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest'
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+#          repository-url: https://test.pypi.org/legacy/
+#
+#      - name: Publish distribution 📦 to PyPI
+#        if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest'
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          user: __token__
+#          password: ${{ secrets.PYPI_API_TOKEN }}

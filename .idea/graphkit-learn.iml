@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/.pytest_cache/v" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/build" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/backups" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/boost.1.69.0" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/eigen.3.3.4" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/fann.2.2.0" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/gedlib-master" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/lsape.5" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include/nomad.3.8.1" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/lib/backups" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/lib/fann.2.2.0" />
+      <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/lib/nomad.3.8.1" />
+      <excludeFolder url="file://$MODULE_DIR$/graphkit_learn.egg-info" />
+      <excludeFolder url="file://$MODULE_DIR$/virtualenv" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.8 virtualenv at /media/linlin/832acd65-7396-480e-aa76-dca6765861b0/research-repo/codes/Linlin/graphkit-learn/virtualenv/python3.8.16_20230224v1" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="PLAIN" />
+    <option name="myDocStringFormat" value="Plain" />
+    <option name="renderExternalDocumentation" value="true" />
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="py.test" />
+  </component>
+</module>

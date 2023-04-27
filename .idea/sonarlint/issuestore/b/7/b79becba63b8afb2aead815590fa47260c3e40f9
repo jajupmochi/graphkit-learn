@@ -1,0 +1,18 @@
+
+opython:S1192:"RDefine a constant instead of duplicating this literal 'Computing kernels' 3 times.(Û‘Ê’şÿÿÿÿ
+xpython:S1192,"[Define a constant instead of duplicating this literal 'compute adjacency matrices' 4 times.(Ü—ßàúÿÿÿÿ
+ppython:S1192""XDefine a constant instead of duplicating this literal 'All labels are ignored.' 5 times.(§ãÂ
+xpython:S117-"\Rename this local variable "A_wave_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(üôÚšıÿÿÿÿ
+xpython:S117W"\Rename this local variable "A_wave_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(úë´…ÿÿÿÿÿ
+vpython:S117Z"_Rename this parameter "A_wave_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(×ªÿ
+upython:S117z"YRename this local variable "A_wave_1" to match the regular expression ^[_a-z][a-z0-9_]*$.(†áËÈùÿÿÿÿ
+xpython:S117|"\Rename this local variable "A_wave_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(üôÚšıÿÿÿÿ
+vpython:S117š"YRename this local variable "A_wave_1" to match the regular expression ^[_a-z][a-z0-9_]*$.(†áËÈùÿÿÿÿ
+ypython:S117œ"\Rename this local variable "A_wave_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(úë´…ÿÿÿÿÿ
+tpython:S117Ÿ"\Rename this parameter "A_wave_1_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Öéï
+wpython:S117Ÿ"_Rename this parameter "A_wave_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Öéï
+vpython:S117Æ"YRename this local variable "A_wave_1" to match the regular expression ^[_a-z][a-z0-9_]*$.(†áËÈùÿÿÿÿ
+vpython:S117Ç"YRename this local variable "A_wave_2" to match the regular expression ^[_a-z][a-z0-9_]*$.(œšèŒıÿÿÿÿ
+ppython:S117Ò"SRename this parameter "A_wave1" to match the regular expression ^[_a-z][a-z0-9_]*$.(òÿëŸøÿÿÿÿ
+ppython:S117Ò"SRename this parameter "A_wave2" to match the regular expression ^[_a-z][a-z0-9_]*$.(òÿëŸøÿÿÿÿ
+qpython:S117Õ"TRename this local variable "T_t" to match the regular expression ^[_a-z][a-z0-9_]*$.(“ªÈÉşÿÿÿÿ
