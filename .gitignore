@@ -1,6 +1,9 @@
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Datasets.
 datasets/*
+# The following datasets are required for tests.
 !datasets/ds.py
 !datasets/Alkane/
 !datasets/acyclic/
@@ -29,28 +32,12 @@ gklearn/kernels/*_sym.py
 *.dat
 *.pyc
 
+
+# preimage.
 gklearn/preimage/*
 !gklearn/preimage/*.py
 !gklearn/preimage/experiments/*.py
 !gklearn/preimage/experiments/tools/*.py
-
-__pycache__
-##*#
-
-docs/build/*
-!docs/build/latex/*.pdf
-docs/log*
-
-*.egg-info
-dist/
-build/
-
-.coverage
-htmlcov
-
-virtualenv
-
-.vscode/
 
 # gedlibpy
 gklearn/gedlib/build/
@@ -71,20 +58,40 @@ gklearn/kernels/else/
 gklearn/kernels/unfinished/
 gklearn/kernels/.tags
 
+# tests.
+gklearn/tests/datasets/
+
+# Experiments.
+gklearn/experiments/datasets/
+
+# Docs.
+docs/build/*
+!docs/build/latex/*.pdf
+docs/log*
+
+# outputs.
+outputs/
+
+__pycache__
+##*#
+
+*.egg-info
+dist/
+build/
+
+.coverage
+htmlcov
+
+virtualenv
+
+.vscode/
+
 # pyenv
 .python-version
 
 # docker travis debug.
 ci.sh
 
-# outputs.
-outputs/
+# PyCharm.
+#.idea/
 
-# pyCharm.
-.idea/
-
-# tests.
-gklearn/tests/datasets/
-
-# Experiments.
-gklearn/experiments/datasets/
