@@ -52,6 +52,21 @@ def test_gedlib():
 		dis_mat_train = ged_model.fit_transform(
 			graphs, save_dm_train=False, repeats=1
 		)
+	except OSError as exception:
+		if 'GLIBC_2.23' in exception.args[0]:
+			msg = \
+				'This error is very likely due to the low version of GLIBC ' \
+				'on your system. ' \
+				'The required version of GLIBC is 2.23. This may happen on the ' \
+				'CentOS 7 system, where the highest version of GLIBC is 2.17. ' \
+				'You may check your CLIBC version by bash command `rpm -q glibc`. ' \
+				'The `graphkit-learn` library comes with GLIBC_2.23, which you can ' \
+				'install by enable the `--build-gedlib` option: ' \
+				'`python3 setup.py install --build-gedlib`. This will compile the C++ ' \
+				'module `gedlib`, which requires a C++ compiler and CMake.'
+			raise AssertionError(msg) from exception
+		else:
+			assert False, exception
 	except Exception as exception:
 		assert False, exception
 
