@@ -53,6 +53,17 @@ def get_gedlib():
 
 
 def install_gedlib():
+	"""
+	Notes
+	-----
+	The followings are done during this installation:
+		- Build files in `ext/fann.2.2.0/lib/`;
+		- Clean obj files in `ext/nomad.3.8.1/ext/sgtelib/src/`;
+		- Build files in `ext/nomad.3.8.1/ext/sgtelib/lib/`;
+		- Generate executable files in `ext/nomad.3.8.1/ext/sgtelib/bin/`;
+		- Build files in `ext/nomad.3.8.1/lib/`;
+		- Generate `ext/libsvm.3.22/libsvm.so`;
+	"""
 	import subprocess
 	cur_python = sys.executable
 	subprocess.call([cur_python, '--version'])
@@ -85,11 +96,16 @@ extensions = [
 		# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
 		sources=["gedlibpy.pyx"],
 		include_dirs=[
-			"src", "include", "include/lsape", "include/Eigen",
-			"include/nomad", "include/sgtelib", "include/libsvm.3.22",
-			"include/fann", "include/boost_1_69_0"
+			"src", "include", "include/lsape.5/include",
+			"include/eigen.3.3.4/Eigen",
+			"include/nomad.3.8.1/src", "include/nomad.3.8.1/ext/sgtelib/src",
+			"include/libsvm.3.22",
+			"include/fann.2.2.0/include", "include/boost.1.69.0"
 		],
-		library_dirs=["lib/fann", "lib/gedlib", "lib/libsvm.3.22", "lib/nomad"],
+		library_dirs=[
+			"lib/fann.2.2.0", "lib/libsvm.3.22", # "lib/gedlib",
+			"lib/nomad.3.8.1"
+		],
 		libraries=["doublefann", "sgtelib", "svm", "nomad"],
 		# library_dirs=["."],
 		# libraries=["gxlgedlib"],
