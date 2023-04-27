@@ -9,8 +9,6 @@ import numpy
 
 import importlib
 
-from jupyter_core.migrate import src
-
 
 def install(package):
 	try:
@@ -179,9 +177,7 @@ def clean_previous_build():
 	print()
 
 
-def build_gedlibpy():
-	print()
-	print('Start building...')
+def get_extensions():
 	extensions = [
 		Extension(
 			"gedlibpy",
@@ -207,7 +203,28 @@ def build_gedlibpy():
 			extra_link_args=["-std=c++11"]
 		)
 	]
+	return extensions
 
+
+def remove_includes():
+	pass
+
+
+if __name__ == '__main__':
+
+	# Download GEDLIB and unpack it:
+	get_gedlib()
+	# Install GEDLIB:
+	install_gedlib()
+	# Copy-Paste includes and libs of GEDLIB:
+	copy_gedlib_includes_and_libs()
+	# clean previous build:
+	clean_previous_build()
+
+	print()
+	print('Start building...')
+	# Build gedlibpy:
+	extensions = ()
 	with open("README.rst", "r") as fh:
 		long_description = fh.read()
 
@@ -250,22 +267,7 @@ def build_gedlibpy():
 	print('Build completed!')
 	print()
 
-
-def remove_includes():
-	pass
-
-
-# Download GEDLIB and unpack it:
-get_gedlib()
-# Install GEDLIB:
-install_gedlib()
-# Copy-Paste includes and libs of GEDLIB:
-copy_gedlib_includes_and_libs()
-# clean previous build:
-clean_previous_build()
-# Build gedlibpy:
-build_gedlibpy()
-# Remove GEDLIB include files:
-remove_includes()
+	# Remove GEDLIB include files:
+	remove_includes()
 
 # Commande Bash : python setup.py build_ext --inplace
