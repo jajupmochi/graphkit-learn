@@ -60,6 +60,7 @@ gklearn/kernels/.tags
 
 # tests.
 gklearn/tests/datasets/
+.pytest_cache/
 
 # Experiments.
 gklearn/experiments/datasets/
