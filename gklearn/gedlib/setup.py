@@ -255,18 +255,17 @@ def remove_includes():
 	pass
 
 
-if __name__ == '__main__':
-	# Download GEDLIB and unpack it:
-	get_gedlib()
-	# Install GEDLIB:
-	install_gedlib()
-	# Copy-Paste includes and libs of GEDLIB:
-	copy_gedlib_includes_and_libs()
-	# clean previous build:
-	clean_previous_build()
-	# Build gedlibpy:
-	build_gedlibpy()
-	# Remove GEDLIB include files:
-	remove_includes()
+# Download GEDLIB and unpack it:
+get_gedlib()
+# Install GEDLIB:
+install_gedlib()
+# Copy-Paste includes and libs of GEDLIB:
+copy_gedlib_includes_and_libs()
+# clean previous build:
+clean_previous_build()
+# Build gedlibpy:
+build_gedlibpy()
+# Remove GEDLIB include files:
+remove_includes()
 
 # Commande Bash : python setup.py build_ext --inplace
