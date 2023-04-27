@@ -59,6 +59,7 @@ gklearn/gedlib/collections/
 gklearn/gedlib/Median_Example/
 gklearn/gedlib/build/include/gedlib-master/median/collections/
 gklearn/gedlib/include/
+gklearn/gedlib/lib/
 #gklearn/gedlib/include/gedlib-master/
 gklearn/gedlib/gedlib-master.zip
 gklearn/gedlib/libgxlgedlib.so
