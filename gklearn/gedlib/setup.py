@@ -178,7 +178,7 @@ def clean_previous_build():
 
 
 def get_extensions():
-	extensions = [
+	exts = [
 		Extension(
 			"gedlibpy",
 			# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
@@ -203,7 +203,7 @@ def get_extensions():
 			extra_link_args=["-std=c++11"]
 		)
 	]
-	return extensions
+	return exts
 
 
 def remove_includes():
@@ -224,10 +224,11 @@ if __name__ == '__main__':
 	print()
 	print('Start building...')
 	# Build gedlibpy:
-	extensions = ()
+	extensions = get_extensions()
 	with open("README.rst", "r") as fh:
 		long_description = fh.read()
 
+	# Attention: setup function can not be put inside a function!
 	setup(
 		ext_modules=cythonize(
 			extensions,
