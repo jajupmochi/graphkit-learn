@@ -13,6 +13,7 @@ import importlib
 
 
 def parse_args():
+	# @TODO: This may not work with bdist_wheel/PyPI installation.
 	import argparse
 	parser = argparse.ArgumentParser()
 
@@ -48,7 +49,7 @@ def parse_args():
 		help='Whether in development mode. If true, the include files in the `gedlibpy` module will be deleted after installation.'
 	)
 
-	args = parser.parse_args()
+	args, unknown = parser.parse_known_args()
 	return args
 
 

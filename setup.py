@@ -54,7 +54,7 @@ def parse_args():
 		     'default value is `true`.'
 	)
 
-	args = parser.parse_args()
+	args, unknown = parser.parse_known_args()
 	return args
 
 
@@ -71,9 +71,9 @@ if args.build_gedlibpy == 'true':
 	subprocess.call(
 		[
 			cur_python, 'setup.py',
-			'--use-existing-gedlib', args.use_existing_gedlib,
-			'--build-gedlib', args.build_gedlib,
-			'--develop-mode', args.develop_mode,
+			# '--use-existing-gedlib', args.use_existing_gedlib,
+			# '--build-gedlib', args.build_gedlib,
+			# '--develop-mode', args.develop_mode,
 			'build_ext', '--inplace'
 		], cwd=gedlib_dir
 	)
