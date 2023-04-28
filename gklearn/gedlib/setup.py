@@ -269,65 +269,65 @@ def remove_includes():
 
 
 if __name__ == '__main__':
-	# # Download GEDLIB and unpack it:
-	# get_gedlib()
-	# # Install GEDLIB:
-	# install_gedlib()
-	# # Copy-Paste includes and libs of GEDLIB:
-	# copy_gedlib_includes_and_libs()
-	# # Deal with GLIBC library:
+	# Download GEDLIB and unpack it:
+	get_gedlib()
+	# Install GEDLIB:
+	install_gedlib()
+	# Copy-Paste includes and libs of GEDLIB:
+	copy_gedlib_includes_and_libs()
+	# Deal with GLIBC library:
 	include_glibc = check_and_include_glibc()
-# # clean previous build:
-# clean_previous_build()
-#
-# print()
-# print('Start building...')
-# # Build gedlibpy:
-# extensions = get_extensions(include_glibc)
-# with open("README.rst", "r") as fh:
-# 	long_description = fh.read()
-#
-# # Attention: setup function can not be put inside a function!
-# setup(
-# 	ext_modules=cythonize(
-# 		extensions,
-# 		compiler_directives={'language_level': '3'}
-# 	),
-# 	name="gedlibpy",
-# 	author="Lambert Natacha and Linlin Jia",
-# 	author_email="linlin.jia@unibe.ch",
-# 	description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
-# 	long_description=long_description,
-# 	long_description_content_type="text/markdown",
-# 	project_urls={
-# 		# 'Documentation': 'https://graphkit-learn.readthedocs.io',
-# 		'Source': 'https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib',
-# 		'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
-# 	},
-# 	url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
-# 	classifiers=[
-# 		"Programming Language :: Python :: 3",
-# 		"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-# 		"Operating System :: OS Independent",
-# 		'Intended Audience :: Science/Research',
-# 		'Intended Audience :: Developers',
-# 	],
-# 	include_dirs=[numpy.get_include()]
-# )
-#
-# # List generated files:
-# print()
-# print('The following files are generated:')
-# for name in os.listdir():
-# 	if (name.startswith('gedlibpy') and not (
-# 			name.endswith('.pyx') or name.endswith('.pxd'))):
-# 		print(name)
-#
-# print()
-# print('Build completed!')
-# print()
-#
-# # Remove GEDLIB include files:
-# remove_includes()
+	# clean previous build:
+	clean_previous_build()
+
+	print()
+	print('Start building...')
+	# Build gedlibpy:
+	extensions = get_extensions(include_glibc)
+	with open("README.rst", "r") as fh:
+		long_description = fh.read()
+
+	# Attention: setup function can not be put inside a function!
+	setup(
+		ext_modules=cythonize(
+			extensions,
+			compiler_directives={'language_level': '3'}
+		),
+		name="gedlibpy",
+		author="Lambert Natacha and Linlin Jia",
+		author_email="linlin.jia@unibe.ch",
+		description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
+		long_description=long_description,
+		long_description_content_type="text/markdown",
+		project_urls={
+			# 'Documentation': 'https://graphkit-learn.readthedocs.io',
+			'Source': 'https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib',
+			'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
+		},
+		url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
+		classifiers=[
+			"Programming Language :: Python :: 3",
+			"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+			"Operating System :: OS Independent",
+			'Intended Audience :: Science/Research',
+			'Intended Audience :: Developers',
+		],
+		include_dirs=[numpy.get_include()]
+	)
+
+	# List generated files:
+	print()
+	print('The following files are generated:')
+	for name in os.listdir():
+		if (name.startswith('gedlibpy') and not (
+				name.endswith('.pyx') or name.endswith('.pxd'))):
+			print(name)
+
+	print()
+	print('Build completed!')
+	print()
+
+	# Remove GEDLIB include files:
+	remove_includes()
 
 # Commande Bash : python setup.py build_ext --inplace
