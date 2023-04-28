@@ -12,6 +12,45 @@ import numpy
 import importlib
 
 
+def parse_args():
+	import argparse
+	parser = argparse.ArgumentParser()
+
+	parser.add_argument(
+		'--use-existing-gedlib',
+		dest='use_existing_gedlib',
+		type=str,
+		choices=['true', 'false'],
+		default='false',
+		help='Whether to use an existing GEDLIB C++ library. This will avoid '
+		     'downloading the library from GitHub and extracting it. If no library '
+		     'is found, the installation will stop and an error will be raised. '
+		     'Does not have effect when `--build-gedlibpy` is set to `false`. It may help '
+		     'when you have problem accessing GitHub or it takes too long time to '
+		     'extract the file (which is my case on CentOS (I hate this system!)). '
+	)
+
+	parser.add_argument(
+		'--build-gedlib',
+		dest='build_gedlib',
+		type=str,
+		choices=['true', 'false'],
+		default='true',
+		help='Whether to build GEDLIB C++.'
+	)
+
+	parser.add_argument(
+		'--develop-mode',
+		dest='develop_mode',
+		type=str,
+		choices=['true', 'false'],
+		default='true',
+		help='Whether in development mode. If true, the include files in the `gedlibpy` module will be deleted after installation.'
+	)
+
+	return args
+
+
 def install(package):
 	try:
 		importlib.import_module(package)
@@ -67,6 +106,26 @@ def get_gedlib():
 	os.remove(filename)
 	print('The .zip file of GEDLIB is deleted.')
 
+	print('Done!')
+	print()
+
+
+def check_gedlib():
+	print()
+	print('Checking if GEDLIB is already downloaded...')
+	path_gedlib = os.path.join(os.getcwd(), 'include/gedlib-master/')
+	if not os.path.exists(path_gedlib):
+		raise ModuleError(
+			'The C++ library `GEDLIB` is not found, which is required to build the '
+			'`gedlibpy` module. You have to install several ways to fix this error:'
+			'\n-- 1. Download GEDLIB from '
+			'`https://github.com/jajupmochi/gedlib/archive/refs/heads/master.zip`, '
+			'and extract it into `include/gedlib-master/`.'
+			'\n-- 2. Set `use-existing-gedlib` to `false` or the default value.'
+			'\n-- 3. Set `--build-gedlibpy` to `false`. Notice, it '
+			'is possible that the module would not work when it is incompatible '
+			'with the system (libraries).'
+		)
 	print('Done!')
 	print()
 
@@ -265,18 +324,30 @@ def get_extensions(include_glibc):
 
 
 def remove_includes():
-	pass
+	print()
+	print('Deleting includes...')
+	name = os.path.join(os.getcwd(), 'include/')
+	shutil.rmtree(name)
+	print('Done!')
+	print()
 
 
 if __name__ == '__main__':
-	# Download GEDLIB and unpack it:
-	get_gedlib()
-	# Install GEDLIB:
-	install_gedlib()
+	args = parse_args()
+	if args.use_existing_gedlib == 'false':
+		# Download GEDLIB and unpack it:
+		get_gedlib()
+	else:
+		# Check if GEDLIB already exists:
+		check_gedlib()
+	if args.build_gedlib == 'true':
+		# Install GEDLIB:
+		install_gedlib()
 	# Copy-Paste includes and libs of GEDLIB:
 	copy_gedlib_includes_and_libs()
 	# Deal with GLIBC library:
 	include_glibc = check_and_include_glibc()
+
 	# clean previous build:
 	clean_previous_build()
 
@@ -327,7 +398,8 @@ if __name__ == '__main__':
 	print('Build completed!')
 	print()
 
-	# Remove GEDLIB include files:
-	remove_includes()
+	if args.develop_mode == 'false':
+		# Remove GEDLIB include files:
+		remove_includes()
 
 # Commande Bash : python setup.py build_ext --inplace
