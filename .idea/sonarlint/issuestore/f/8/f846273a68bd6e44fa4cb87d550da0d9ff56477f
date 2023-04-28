@@ -1,0 +1,38 @@
+
+ppython:S1192,"SDefine a constant instead of duplicating this literal 'spectral decompose' 4 times.(ìÛ®ƒúÿÿÿÿ
+opython:S1192="RDefine a constant instead of duplicating this literal 'Computing kernels' 3 times.(Û‘Ê’şÿÿÿÿ
+’python:S1192#"zDefine a constant instead of duplicating this literal 'All labels are ignored. Only works for undirected graphs.' 5 times.(×ğœ
+npython:S117+"WRename this local variable "D_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æ‹ˆÕ
+npython:S117*"WRename this local variable "P_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(º„´¸
+upython:S1177"YRename this local variable "q_T_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(°Ó¬Âşÿÿÿÿ
+;python:S1254"Remove this commented out code.(ëÎ¹êÿÿÿÿÿ
+;python:S1258"Remove this commented out code.(®¤®ıÿÿÿÿ
+npython:S117Y"WRename this local variable "D_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æ‹ˆÕ
+npython:S117X"WRename this local variable "P_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(º„´¸
+ppython:S117d"YRename this local variable "q_T_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(øè¿ì
+vpython:S117f"ZRename this parameter "D_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(İŞ ”úÿÿÿÿ
+vpython:S117f"ZRename this parameter "P_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(İŞ ”úÿÿÿÿ
+xpython:S117f"\Rename this parameter "q_T_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(İŞ ”úÿÿÿÿ
+opython:S117‡"WRename this local variable "D_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æ‹ˆÕ
+opython:S117†"WRename this local variable "P_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(º„´¸
+rpython:S117’"URename this local variable "q_T1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÃØƒîúÿÿÿÿ
+qpython:S117“"YRename this local variable "q_T_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(¸Àôõ
+opython:S117±"WRename this local variable "D_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æ‹ˆÕ
+opython:S117°"WRename this local variable "P_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(º„´¸
+rpython:S117¿"URename this local variable "q_T1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÃØƒîúÿÿÿÿ
+qpython:S117À"YRename this local variable "q_T_list" to match the regular expression ^[_a-z][a-z0-9_]*$.(©—×ş
+npython:S117Â"VRename this parameter "D1_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+rpython:S117Â"ZRename this parameter "D_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+npython:S117Â"VRename this parameter "P1_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+rpython:S117Â"ZRename this parameter "P_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+ppython:S117Â"XRename this parameter "q_T1_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+tpython:S117Â"\Rename this parameter "q_T_list_toshare" to match the regular expression ^[_a-z][a-z0-9_]*$.(Çµ°û
+rpython:S117ï"URename this local variable "q_T1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÃØƒîúÿÿÿÿ
+mpython:S117ğ"URename this local variable "q_T2" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÜÆûğ
+fpython:S117ú"NRename this parameter "D1" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½
+fpython:S117ú"NRename this parameter "D2" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½
+tpython:S117€"WRename this local variable "D_diag" to match the regular expression ^[_a-z][a-z0-9_]*$.(è¬Ò¿ıÿÿÿÿ
+fpython:S117ú"NRename this parameter "P1" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½
+fpython:S117ú"NRename this parameter "P2" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½
+hpython:S117ú"PRename this parameter "q_T1" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½
+hpython:S117ú"PRename this parameter "q_T2" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ‚¶½

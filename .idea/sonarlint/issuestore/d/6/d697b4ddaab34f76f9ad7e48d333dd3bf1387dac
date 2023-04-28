@@ -1,0 +1,37 @@
+
+vpython:S1192ρ"VDefine a constant instead of duplicating this literal 'Cannot detect graphs.' 4 times.(ρ•χΓ8Υµªνω0
+„python:S1192Υ"dDefine a constant instead of duplicating this literal 'Parallel mode is not set correctly.' 3 times.(¶ª‘Ξ8Υµªνω0
+Bpython:S125"Remove this commented out code.(αιΎΌϋÿÿÿÿ8Υµªνω0
+kpython:S117@"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(©Ρ 8Υµªνω0
+Bpython:S125R"Remove this commented out code.(φΎϊÿÿÿÿ8Υµªνω0
+ppython:S117d"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(ηΓίύÿÿÿÿ8Υµªνω0
+vpython:S117‰"WRename this local variable "X_diag" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ψ§Χπ8Υµªνω0
+vpython:S117‰"WRename this local variable "Y_diag" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ψ§Χπ8Υµªνω0
+xpython:S2737"XAdd logic to this except clause or eliminate it and rethrow the exception automatically.(€³Ά»8Υµªνω0
+lpython:S117•"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(΄Γ‹Ώ8Υµªνω0
+xpython:S2737―"XAdd logic to this except clause or eliminate it and rethrow the exception automatically.(€³Ά»8Φµªνω0
+~python:S1186Ή"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ψ¬ ώÿÿÿÿ8Χµªνω0
+ypython:S1186½"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ρν«ο8Χµªνω0
+lpython:S117Ϋ"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(΄ÒΪ8Ψµªνω0
+qpython:S117ψ"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(τΝΝ«ύÿÿÿÿ8Ψµªνω0
+vpython:S117–"WRename this local variable "Y_copy" to match the regular expression ^[_a-z][a-z0-9_]*$.(δόγψ8Ψµªνω0
+>python:S125"Remove this commented out code.(ύϋÿ8Ψµªνω0
+lpython:S117Ά"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΥΆ“ΐ8Ψµªνω0
+lpython:S117Ά"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΥΆ“ΐ8Ψµªνω0
+qpython:S117Ή"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«πνύÿÿÿÿ8Ψµªνω0
+]python:S112Θ">Replace this generic exception class with a more specific one.(ξϋΪΏ8Ψµªνω0
+ypython:S3776"TRefactor this function to reduce its Cognitive Complexity from 39 to the 15 allowed.(Α—ϊϊÿÿÿÿ8Ψµªνω0
+]python:S112">Replace this generic exception class with a more specific one.(¨·Τ›8Ψµªνω0
+]python:S112">Replace this generic exception class with a more specific one.(ΐΝΛΏ8Ψµªνω0
+]python:S112Κ">Replace this generic exception class with a more specific one.(¨·Τ›8Ψµªνω0
+]python:S112Ν">Replace this generic exception class with a more specific one.(…Ξ8Ωµªνω0
+]python:S112Π">Replace this generic exception class with a more specific one.(¨·Τ›8Ωµªνω0
+]python:S112α">Replace this generic exception class with a more specific one.(†ΤΫ¦8Ωµªνω0
+tpython:S930χ"UAdd 1 missing arguments; '_compute_gm_imap_unordered' expects 1 positional arguments.(‡Ύ”8Ωµªνω0
+bpython:S112ό">Replace this generic exception class with a more specific one.(ΦµΰΪώÿÿÿÿ8Ωµªνω0
+xpython:S1186†"YAdd a nested comment explaining why this method is empty, or complete the implementation.(γƒν28Ωµªνω0
+xpython:S1186"YAdd a nested comment explaining why this method is empty, or complete the implementation.(Ν‘™8Ωµªνω0
+bpython:S112–">Replace this generic exception class with a more specific one.(ΦµΰΪώÿÿÿÿ8Ωµªνω0
+~python:S1186 "YAdd a nested comment explaining why this method is empty, or complete the implementation.(½Ωόρϊÿÿÿÿ8Ωµªνω0
+~python:S1186¤"YAdd a nested comment explaining why this method is empty, or complete the implementation.(Ϊϊÿÿÿÿ8Ϊµªνω0
+ypython:S1186΄"YAdd a nested comment explaining why this method is empty, or complete the implementation.(―αΎ8Ϊµªνω0

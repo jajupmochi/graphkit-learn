@@ -1,0 +1,24 @@
+
+lpython:S1192\"ODefine a constant instead of duplicating this literal "Upper Bound = " 3 times.(ÎÄåÂøÿÿÿÿ
+npython:S1192\"QDefine a constant instead of duplicating this literal ", Lower Bound = " 3 times.(ÎÄåÂøÿÿÿÿ
+ipython:S1192Y"LDefine a constant instead of duplicating this literal "Node Map : " 3 times.(¨“—šúÿÿÿÿ
+jpython:S1192\"MDefine a constant instead of duplicating this literal ", Runtime = " 3 times.(ÎÄåÂøÿÿÿÿ
+ppython:S1542"SRename function "afficheMatrix" to match the regular expression ^[a-z_][a-z0-9_]*$.(äÀëÛùÿÿÿÿ
+ppython:S1542#"SRename function "createNxGraph" to match the regular expression ^[a-z_][a-z0-9_]*$.(üÌğãıÿÿÿÿ
+6python:S125."Remove this commented out code.(“”Ï¥
+ppython:S1174"ZRename this local variable "currentID" to match the regular expression ^[_a-z][a-z0-9_]*$.(—¹
+spython:S117;"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(Œ¶Ûúúÿÿÿÿ
+jpython:S15420"RRename function "addGraphTest" to match the regular expression ^[a-z_][a-z0-9_]*$.(óğÆÀ
+spython:S117L"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(Œ¶Ûúúÿÿÿÿ
+gpython:S1542F"ORename function "shortTest" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ì›Óà
+vpython:S117f"ZRename this local variable "afficheId" to match the regular expression ^[_a-z][a-z0-9_]*$.(ãºÉÅşÿÿÿÿ
+spython:S117d"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(Œ¶Ûúúÿÿÿÿ
+jpython:S1542`"SRename function "classiqueTest" to match the regular expression ^[a-z_][a-z0-9_]*$.(œÿ¾T
+Apython:S1481v")Remove the unused local variable "liste".(Ä³ÄØ
+tpython:S117ƒ"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(Œ¶Ûúúÿÿÿÿ
+ipython:S1542}"LRename function "nxTest" to match the regular expression ^[a-z_][a-z0-9_]*$.(äıü»ùÿÿÿÿ
+<python:S125’"Remove this commented out code.(Ÿñ¸Úùÿÿÿÿ
+npython:S117•"VRename this parameter "matrixCost" to match the regular expression ^[_a-z][a-z0-9_]*$.(³¡µê
+hpython:S1542•"ORename function "LSAPETest" to match the regular expression ^[a-z_][a-z0-9_]*$.(³¡µê
+npython:S117›"VRename this parameter "matrixCost" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ğ—©
+gpython:S1542›"NRename function "LSAPTest" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ğ—©

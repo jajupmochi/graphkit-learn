@@ -1,0 +1,12 @@
+
+qpython:S1186"YAdd a nested comment explaining why this method is empty, or complete the implementation.(›¢
+ppython:S1186""YAdd a nested comment explaining why this method is empty, or complete the implementation.(ÌË›
+vpython:S1186&"YAdd a nested comment explaining why this method is empty, or complete the implementation.(½Ùüñúÿÿÿÿ
+vpython:S1186*"YAdd a nested comment explaining why this method is empty, or complete the implementation.(œÚúÿÿÿÿ
+qpython:S1186."YAdd a nested comment explaining why this method is empty, or complete the implementation.(¯á˜¾
+epython:S1172"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ñ¯ıë
+Zpython:S1127">Replace this generic exception class with a more specific one.(ÿ™ı„ûÿÿÿÿ
+epython:S117:"NRename this parameter "G0" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ëûÿ
+lpython:S3776:"TRefactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.(Ëûÿ
+Tpython:S5754G"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+epython:S117N"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ƒ¨Æ

@@ -1,0 +1,4 @@
+
+zpython:S117""WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(ªÿ€…øÿÿÿÿ8‹ÎË“û0
+upython:S1542"QRename function "test_GEDEnv" to match the regular expression ^[a-z_][a-z0-9_]*$.(Çë¤ÿÿÿÿÿ8‹ÎË“û0
+Kpython:S14818"'Remove the unused local variable "dis".(ïÖêÿÿÿÿÿ8‹ÎË“û0

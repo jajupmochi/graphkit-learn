@@ -1,0 +1,26 @@
+
+epython:S117"NRename this parameter "Gi" to match the regular expression ^[_a-z][a-z0-9_]*$.(Úè×ð
+epython:S117"NRename this parameter "Gj" to match the regular expression ^[_a-z][a-z0-9_]*$.(Úè×ð
+tpython:S117&"XRename this local variable "G_pairs" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ä²“Öûÿÿÿÿ
+jpython:S117$"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(Õñô˜ûÿÿÿÿ
+jpython:S117."SRename this parameter "G_pairs" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÒÊÄ²
+epython:S117."NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÒÊÄ²
+mpython:S117I"VRename this local variable "D_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ú¢ëç
+spython:S117R"WRename this local variable "D_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ç¬ØÎùÿÿÿÿ
+ipython:S117K"SRename this local variable "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ø™ó0
+opython:S117L"SRename this local variable "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ï¨ã©üÿÿÿÿ
+mpython:S117F"QRename this parameter "G_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æªø²þÿÿÿÿ
+npython:S117F"RRename this parameter "G_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(Æªø²þÿÿÿÿ
+lpython:S1542F"ORename function "compute_D" to match the regular expression ^[a-z_][a-z0-9_]*$.(Æªø²þÿÿÿÿ
+mpython:S117Y"QRename this parameter "G_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(éÔ½ùÿÿÿÿÿ
+npython:S117Y"RRename this parameter "G_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(éÔ½ùÿÿÿÿÿ
+spython:S1542Y"VRename function "compute_D_random" to match the regular expression ^[a-z_][a-z0-9_]*$.(éÔ½ùÿÿÿÿÿ
+mpython:S117_"QRename this parameter "G_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÁÞŠ‰ýÿÿÿÿ
+npython:S117_"RRename this parameter "G_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÁÞŠ‰ýÿÿÿÿ
+spython:S1542_"VRename function "compute_D_expert" to match the regular expression ^[a-z_][a-z0-9_]*$.(ÁÞŠ‰ýÿÿÿÿ
+hpython:S117d"QRename this parameter "G_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(Áƒ‚›
+ipython:S117d"RRename this parameter "G_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(Áƒ‚›
+npython:S1542d"VRename function "compute_D_fitted" to match the regular expression ^[a-z_][a-z0-9_]*$.(Áƒ‚›
+hpython:S117n"QRename this parameter "G_app" to match the regular expression ^[_a-z][a-z0-9_]*$.(ð„ýù
+ipython:S117n"RRename this parameter "G_test" to match the regular expression ^[_a-z][a-z0-9_]*$.(ð„ýù
+npython:S1542n"VRename function "compute_D_GH2020" to match the regular expression ^[a-z_][a-z0-9_]*$.(ð„ýù

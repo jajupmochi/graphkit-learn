@@ -1,0 +1,5 @@
+
+opython:S11927"RDefine a constant instead of duplicating this literal 'Computing kernels' 3 times.(Û‘Ê’þÿÿÿÿ
+npython:S1192/"QDefine a constant instead of duplicating this literal 'Reindex vertices' 4 times.(è‰¢úýÿÿÿÿ
+Wpython:S5720Ò"9Rename "x" to "self" or add the missing "self" parameter.(½ÉÒíüÿÿÿÿ
+rpython:S3776á"TRefactor this function to reduce its Cognitive Complexity from 44 to the 15 allowed.(Â³†Ðøÿÿÿÿ
