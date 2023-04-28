@@ -1,0 +1,13 @@
+
+ypython:S1542l"URename function "test_CommonWalk" to match the regular expression ^[a-z_][a-z0-9_]*$.(³ ϊ“ψÿÿÿÿ8Θ΄ªνω0
+|python:S1542"WRename function "test_Marginalized" to match the regular expression ^[a-z_][a-z0-9_]*$.(‚νξΞωÿÿÿÿ8Ι΄ªνω0
+|python:S1542Υ"\Rename function "test_SylvesterEquation" to match the regular expression ^[a-z_][a-z0-9_]*$.(ϊρ‰χ8Ι΄ªνω0
+|python:S1542"\Rename function "test_ConjugateGradient" to match the regular expression ^[a-z_][a-z0-9_]*$.(ω’°8Ι΄ªνω0
+upython:S1542Ξ"URename function "test_FixedPoint" to match the regular expression ^[a-z_][a-z0-9_]*$.(©ό8Ι΄ªνω0
+€python:S1542”"`Rename function "test_SpectralDecomposition" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ζτ 8Ι΄ªνω0
+Cpython:S125Ζ"Remove this commented out code.(ΈΞΓ¦ύÿÿÿÿ8Ι΄ªνω0
+|python:S1542ό"WRename function "test_ShortestPath" to match the regular expression ^[a-z_][a-z0-9_]*$.(ÿ½ώÿÿÿÿ8Ι΄ªνω0
+|python:S1542Ε"WRename function "test_StructuralSP" to match the regular expression ^[a-z_][a-z0-9_]*$.(ωΟϊΉόÿÿÿÿ8Ι΄ªνω0
+ypython:S1542"TRename function "test_PathUpToH" to match the regular expression ^[a-z_][a-z0-9_]*$.(γ―όÿÿÿÿ8Ι΄ªνω0
+wpython:S1542Ε"RRename function "test_Treelet" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ο®‘ÿÿÿÿÿ8Ι΄ªνω0
+tpython:S1542ω"TRename function "test_WLSubtree" to match the regular expression ^[a-z_][a-z0-9_]*$.(…“άξ8Ι΄ªνω0
