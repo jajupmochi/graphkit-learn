@@ -50,9 +50,11 @@ def parse_args():
 		default='true',
 		help='Whether in development mode. If true, the include files in the '
 		     '`gedlibpy` module will be deleted after installation.  Does not '
-		     'have effect when `--build-gedlibpy` is set to `false`.'
+		     'have effect when `--build-gedlibpy` is set to `false`. Notice, the '
+		     'default value is `true`.'
 	)
 
+	args = parser.parse_args()
 	return args
 
 

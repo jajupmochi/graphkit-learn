@@ -48,6 +48,7 @@ def parse_args():
 		help='Whether in development mode. If true, the include files in the `gedlibpy` module will be deleted after installation.'
 	)
 
+	args = parser.parse_args()
 	return args
 
 
