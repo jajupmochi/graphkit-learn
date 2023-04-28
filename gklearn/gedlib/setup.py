@@ -5,8 +5,10 @@ from Cython.Build import cythonize
 import os
 import sys
 import shutil
-import numpy
+import subprocess
+import platform
 
+import numpy
 import importlib
 
 
@@ -163,6 +165,64 @@ def copy_gedlib_includes_and_libs():
 	print()
 
 
+def check_and_include_glibc():
+	def get_glibc_version():
+		"""
+		Authors
+		-------
+		Linlin Jia, ChatGPT 3.5 (2023.04.27)
+		"""
+		# Get the operating system name
+		os_name = platform.system()
+
+		# Command to get the version of glibc
+		if os_name == 'Linux':
+			# Linux (Ubuntu, CentOS)
+			cmd = 'ldd --version | head -n 1'
+		elif os_name == 'Darwin':
+			# macOS
+			cmd = 'otool -L /usr/lib/libc.dylib | head -n 1'
+		elif os_name == 'Windows':
+			# Windows
+			cmd = 'dumpbin /dependents C:\\Windows\\System32\\msvcrt.dll | findstr /C:"msvcrt.dll"'
+		else:
+			raise SystemError('Unsupported OS: %s.' % os_name)
+
+		# Run the command and capture the output
+		try:
+			output = subprocess.check_output(cmd, shell=True)
+		except subprocess.CalledProcessError:
+			print('glibc is not installed.')
+			return None
+
+		# Extract the version number from the output
+		output_str = output.decode('utf-8')
+		if os_name == 'Linux':
+			# Linux (Ubuntu, CentOS)
+			version_str = output_str.split()[-1]
+		elif os_name == 'Darwin':
+			# macOS
+			version_str = output_str.split()[0].split('.')[0]
+		elif os_name == 'Windows':
+			# Windows
+			version_str = output_str.split()[2]
+		else:
+			raise SystemError('Unsupported OS: %s.' % os_name)
+
+		return version_str
+
+
+	# Check the current version of glibc:
+	glibc_version = get_glibc_version()
+	print(f"glibc version: {glibc_version}")
+
+	if glibc_version is None or float(glibc_version) < 2.27:
+		# Include the glibc 2.27 coming along with GEDLIB:
+		return True
+	else:
+		return False
+
+
 def clean_previous_build():
 	# clean previous build
 	print()
@@ -177,7 +237,7 @@ def clean_previous_build():
 	print()
 
 
-def get_extensions():
+def get_extensions(include_glibc):
 	exts = [
 		Extension(
 			"gedlibpy",
@@ -196,8 +256,6 @@ def get_extensions():
 				"lib/nomad.3.8.1"
 			],
 			libraries=["doublefann", "sgtelib", "svm", "nomad"],
-			# library_dirs=["."],
-			# libraries=["gxlgedlib"],
 			language="c++",
 			extra_compile_args=["-std=c++11"],
 			extra_link_args=["-std=c++11"]
@@ -211,64 +269,65 @@ def remove_includes():
 
 
 if __name__ == '__main__':
-
-	# Download GEDLIB and unpack it:
-	get_gedlib()
-	# Install GEDLIB:
-	install_gedlib()
-	# Copy-Paste includes and libs of GEDLIB:
-	copy_gedlib_includes_and_libs()
-	# clean previous build:
-	clean_previous_build()
-
-	print()
-	print('Start building...')
-	# Build gedlibpy:
-	extensions = get_extensions()
-	with open("README.rst", "r") as fh:
-		long_description = fh.read()
-
-	# Attention: setup function can not be put inside a function!
-	setup(
-		ext_modules=cythonize(
-			extensions,
-			compiler_directives={'language_level': '3'}
-		),
-		name="gedlibpy",
-		author="Lambert Natacha and Linlin Jia",
-		author_email="linlin.jia@unibe.ch",
-		description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
-		long_description=long_description,
-		long_description_content_type="text/markdown",
-		project_urls={
-			# 'Documentation': 'https://graphkit-learn.readthedocs.io',
-			'Source': 'https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib',
-			'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
-		},
-		url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
-		classifiers=[
-			"Programming Language :: Python :: 3",
-			"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-			"Operating System :: OS Independent",
-			'Intended Audience :: Science/Research',
-			'Intended Audience :: Developers',
-		],
-		include_dirs=[numpy.get_include()]
-	)
-
-	# List generated files:
-	print()
-	print('The following files are generated:')
-	for name in os.listdir():
-		if (name.startswith('gedlibpy') and not (
-				name.endswith('.pyx') or name.endswith('.pxd'))):
-			print(name)
-
-	print()
-	print('Build completed!')
-	print()
-
-	# Remove GEDLIB include files:
-	remove_includes()
+	# # Download GEDLIB and unpack it:
+	# get_gedlib()
+	# # Install GEDLIB:
+	# install_gedlib()
+	# # Copy-Paste includes and libs of GEDLIB:
+	# copy_gedlib_includes_and_libs()
+	# # Deal with GLIBC library:
+	include_glibc = check_and_include_glibc()
+# # clean previous build:
+# clean_previous_build()
+#
+# print()
+# print('Start building...')
+# # Build gedlibpy:
+# extensions = get_extensions(include_glibc)
+# with open("README.rst", "r") as fh:
+# 	long_description = fh.read()
+#
+# # Attention: setup function can not be put inside a function!
+# setup(
+# 	ext_modules=cythonize(
+# 		extensions,
+# 		compiler_directives={'language_level': '3'}
+# 	),
+# 	name="gedlibpy",
+# 	author="Lambert Natacha and Linlin Jia",
+# 	author_email="linlin.jia@unibe.ch",
+# 	description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
+# 	long_description=long_description,
+# 	long_description_content_type="text/markdown",
+# 	project_urls={
+# 		# 'Documentation': 'https://graphkit-learn.readthedocs.io',
+# 		'Source': 'https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib',
+# 		'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
+# 	},
+# 	url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
+# 	classifiers=[
+# 		"Programming Language :: Python :: 3",
+# 		"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+# 		"Operating System :: OS Independent",
+# 		'Intended Audience :: Science/Research',
+# 		'Intended Audience :: Developers',
+# 	],
+# 	include_dirs=[numpy.get_include()]
+# )
+#
+# # List generated files:
+# print()
+# print('The following files are generated:')
+# for name in os.listdir():
+# 	if (name.startswith('gedlibpy') and not (
+# 			name.endswith('.pyx') or name.endswith('.pxd'))):
+# 		print(name)
+#
+# print()
+# print('Build completed!')
+# print()
+#
+# # Remove GEDLIB include files:
+# remove_includes()
 
 # Commande Bash : python setup.py build_ext --inplace

@@ -199,3 +199,10 @@ N
 gklearn/ged/model/ged_model.py,0/a/0aa36dd3888601b15ef73b970692ae7db93a2f8f
 O
 gklearn/kernels/graph_kernel.py,d/6/d697b4ddaab34f76f9ad7e48d333dd3bf1387dac
+:
+
+.gitignore,a/5/a5cc2925ca8258af241be7e5b0381edf30266302
+Q
+!gklearn/tests/ged/test_ged_env.py,b/9/b91493f829def88046c375e8f0935b15572991fe
+S
+#gklearn/tests/test_graph_kernels.py,1/f/1fcfed8fc62ee1400a5f1866aa8afc2ff52b5251
