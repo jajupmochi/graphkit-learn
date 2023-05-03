@@ -83,3 +83,30 @@ def parallel_gm(
 		init_worker=init_worker, glbv=glbv, method=method, n_jobs=n_jobs,
 		chunksize=chunksize, itr_desc='Computing kernels', verbose=verbose
 	)
+
+
+def parallel_ged_mat(
+		func, ged_mat, Gn, init_worker=None, glbv=None,
+		method='imap_unordered', n_jobs=None, chunksize=None,
+		verbose=True
+):
+	"""Parallel computing graph edit distance matrix.
+
+	Notes
+	-----
+	This is equivalent to the function `parallel_gm`.
+	"""
+	# @todo: Gn seems not necessary.
+	from itertools import combinations_with_replacement
+
+	def func_assign(result, var_to_assign):
+		var_to_assign[result[0]][result[1]] = result[2]
+		var_to_assign[result[1]][result[0]] = result[2]
+
+	itr = combinations_with_replacement(range(0, len(Gn)), 2)
+	len_itr = int(len(Gn) * (len(Gn) + 1) / 2)
+	parallel_me(
+		func, func_assign, ged_mat, itr, len_itr=len_itr,
+		init_worker=init_worker, glbv=glbv, method=method, n_jobs=n_jobs,
+		chunksize=chunksize, itr_desc='Computing GED matrix', verbose=verbose
+	)

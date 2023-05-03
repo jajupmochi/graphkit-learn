@@ -10,6 +10,9 @@ import multiprocessing
 import time
 import numpy as np
 import networkx as nx
+from itertools import combinations
+import multiprocessing
+from multiprocessing import Pool
 
 # from abc import ABC, abstractmethod
 from sklearn.base import BaseEstimator  # , TransformerMixin
@@ -22,6 +25,7 @@ from gklearn.ged.util import pairwise_ged, get_nb_edit_operations
 from gklearn.utils import get_iters
 
 
+# @TODO: it should be faster if creating a global env variable.
 class GEDModel(BaseEstimator):  # , ABC):
 	"""The graph edit distance model class compatible with `scikit-learn`.
 
@@ -32,6 +36,10 @@ class GEDModel(BaseEstimator):  # , ABC):
 		Default format of the list objects is `NetworkX` graphs.
 		**We don't guarantee that the input graphs remain unchanged during the
 		computation.**
+
+	Notes
+	-----
+	This class uses the `gedlibpy` module to compute the graph edit distance.
 
 	References
 	----------
@@ -66,7 +74,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 		self.node_labels = node_labels
 		self.edge_labels = edge_labels
 		self.parallel = parallel
-		self.n_jobs = n_jobs
+		self.n_jobs = ((multiprocessing.cpu_count() - 1) if n_jobs is None else n_jobs)
 		self.chunksize = chunksize
 		#		self.normalize = normalize
 		self.copy_graphs = copy_graphs
@@ -613,11 +621,11 @@ class GEDModel(BaseEstimator):  # , ABC):
 	def _compute_X_distance_matrix(self, **kwargs):
 		start_time = time.time()
 
+		graphs = ([g.copy() for g in
+		           self._graphs] if self.copy_graphs else self._graphs)
 		if self.parallel == 'imap_unordered':
-			dis_matrix = self._compute_X_dm_imap_unordered()
+			dis_matrix = self._compute_X_dm_imap_unordered(graphs, **kwargs)
 		elif self.parallel is None:
-			graphs = ([g.copy() for g in
-			           self._graphs] if self.copy_graphs else self._graphs)
 			dis_matrix = self._compute_X_dm_series(graphs, **kwargs)
 		else:
 			raise Exception('Parallel mode is not set correctly.')
@@ -633,24 +641,70 @@ class GEDModel(BaseEstimator):  # , ABC):
 
 
 	def _compute_X_dm_series(self, graphs, **kwargs):
-		N = len(graphs)
-		dis_matrix = np.zeros((N, N))
+		n = len(graphs)
+		dis_matrix = np.zeros((n, n))
 
+		iterator = combinations(range(n), 2)
+		len_itr = int(n * (n + 1) / 2)
 		if self.verbose:
 			print('Graphs in total: %d.' % len(graphs))
-		for i, G1 in get_iters(
-				enumerate(graphs), desc='Computing distance matrix',
-				file=sys.stdout, verbose=(self.verbose >= 2), length=len(graphs)
+			print('The total # of pairs is %d.' % len_itr)
+		for i, j in get_iters(
+				iterator, desc='Computing distance matrix',
+				file=sys.stdout, verbose=(self.verbose >= 2), length=len_itr
 		):
-			for j, G2 in enumerate(graphs[i + 1:], i + 1):
-				dis_matrix[i, j], _ = self.compute_ged(G1, G2, **kwargs)
-				dis_matrix[j, i] = dis_matrix[i, j]
+			g1, g2 = graphs[i], graphs[j]
+			dis_matrix[i, j], _ = self.compute_ged(g1, g2, **kwargs)
+			dis_matrix[j, i] = dis_matrix[i, j]
 		return dis_matrix
 
 
-	def _compute_X_dm_imap_unordered(self, graphs):
-		pass
+	def _compute_X_dm_imap_unordered(self, graphs, **kwargs):
+		"""Compute GED distance matrix in parallel using imap_unordered.
+		"""
+		# This is very slow, maybe because of the Cython is involved.
+		from gklearn.utils.parallel import parallel_ged_mat
+		n = len(graphs)
+		dis_matrix = np.zeros((n, n))
+		if self.verbose:
+			print('Graphs in total: %d.' % len(graphs))
+			print('The total # of pairs is %d.' % int(n * (n + 1) / 2))
 
+		do_fun = self._wrapper_compute_ged
+		parallel_ged_mat(
+			do_fun, dis_matrix, graphs, init_worker=_init_worker_ged_mat,
+			glbv=(graphs,), n_jobs=self.n_jobs, verbose=self.verbose
+		)
+
+
+	def _wrapper_compute_ged(self, itr):
+		i = itr[0]
+		j = itr[1]
+		# @TODO: repeats are not considered here.
+		dis, _ = self.compute_ged(G_gn[i], G_gn[j])
+		return i, j, dis
+
+
+	# # imap_unordered returns an iterator of the results in the order
+	# # in which the function calls are started.
+	# # Note that imap_unordered may end up consuming all of the
+	# # available memory if the iterable is too large.
+	# n = len(graphs)
+	# dis_matrix = np.zeros((n, n))
+	# iterator = combinations(range(n), 2)
+	# len_itr = int(n * (n + 1) / 2)
+	# pool = Pool(processes=self.n_jobs)
+	# for i, j in get_iters(
+	# 		iterator, desc='Computing distance matrix',
+	# 		file=sys.stdout, verbose=(self.verbose >= 2), length=len_itr
+	# ):
+	# 	g1, g2 = graphs[i], graphs[j]
+	# 	dis_matrix[i, j], _ = pool.apply_async(
+	# 		self.compute_ged, (g1, g2)
+	# 	).get()
+	# 	dis_matrix[j, i] = dis_matrix[i, j]
+	# pool.close()
+	# return dis_matrix
 
 	def compute_ged(self, Gi, Gj, **kwargs):
 		"""
@@ -665,12 +719,17 @@ class GEDModel(BaseEstimator):  # , ABC):
 		dis, pi_forward, pi_backward = pairwise_ged(
 			Gi, Gj, ged_options, repeats=repeats
 		)
-		n_eo_tmp = get_nb_edit_operations(
-			Gi, Gj, pi_forward, pi_backward,
-			edit_cost=self.edit_cost_fun,
-			node_labels=self.node_labels, edge_labels=self.edge_labels
-		)
-		return dis, n_eo_tmp
+		# @TODO: Better to have a if here.
+		# if self.compute_n_eo:
+		# 	n_eo_tmp = get_nb_edit_operations(
+		# 		Gi, Gj, pi_forward, pi_backward,
+		# 		edit_cost=self.edit_cost_fun,
+		# 		node_labels=self.node_labels, edge_labels=self.edge_labels
+		# 	)
+		# else:
+		# 	n_eo_tmp = None
+		# return dis, n_eo_tmp
+		return dis, None
 
 
 	# 	def _compute_kernel_list(self, g1, g_list):
@@ -762,6 +821,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 	def edit_cost_constants(self):
 		return self._edit_cost_constants
 
+
 # 	@property
 # 	def gram_matrix_unnorm(self):
 # 		return self._gram_matrix_unnorm
@@ -769,3 +829,8 @@ class GEDModel(BaseEstimator):  # , ABC):
 # 	@gram_matrix_unnorm.setter
 # 	def gram_matrix_unnorm(self, value):
 # 		self._gram_matrix_unnorm = value
+
+
+def _init_worker_ged_mat(gn_toshare):
+	global G_gn
+	G_gn = gn_toshare

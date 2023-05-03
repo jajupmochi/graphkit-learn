@@ -20,6 +20,11 @@ from gklearn.utils import get_iters
 def compute_ged(g1, g2, options):
 	"""The simplest function to compute the graph edit distance between two graphs
 	using the gedlib library.
+
+	Notes
+	-----
+		- # of edit operations are not computed in this method.
+
 	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
@@ -63,7 +68,8 @@ def pairwise_ged(
 
 	Notes
 	-----
-	- For methods such as BIPARTITE, the repeats may result same results.
+		- For methods such as BIPARTITE, the repeats may result same results.
+		- # of edit operations are not computed in this method.
 	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
@@ -77,7 +83,7 @@ def pairwise_ged(
 	listID = ged_env.get_all_graph_ids()
 	ged_env.init(
 		init_option=(options[
-			'init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES')
+			             'init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES')
 	)
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
@@ -260,9 +266,9 @@ def compute_geds(
 
 	Notes
 	-----
-	- With `permute_nodes=True`, the GEDs are computed by permuting the nodes a
-	priori.
-	- When `permute_nodes=False`, the GEDs can be computed with parallelization.
+		- With `permute_nodes=True`, the GEDs are computed by permuting the nodes a priori.
+		- When `permute_nodes=False`, the GEDs can be computed with parallelization.
+		- # of edit operations are computed in this method.
 	"""
 	if permute_nodes:
 		return _compute_geds_with_permutation(
@@ -302,6 +308,10 @@ def _compute_geds_with_permutation(
 ):
 	"""Compute graph edit distance matrix for a list of graphs using GEDLIB, where
 	the nodes are permuted a priori over different repeats.
+
+	Notes
+	-----
+		- # of edit operations are computed in this method.
 	"""
 	from gklearn.utils.utils import nx_permute_nodes
 
@@ -353,6 +363,10 @@ def _compute_geds_without_permutation(
 ):
 	"""Compute graph edit distance matrix for a list of graphs using GEDLIB.
 	Possible parallelization with joblib, no permutation of nodes.
+
+	Notes
+	-----
+		- # of edit operations are computed in this method.
 	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
