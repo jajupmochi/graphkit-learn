@@ -18,6 +18,9 @@ from gklearn.utils import get_iters
 
 
 def compute_ged(g1, g2, options):
+	"""The simplest function to compute the graph edit distance between two graphs
+	using the gedlib library.
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	ged_env = gedlibpy.GEDEnv()
@@ -55,6 +58,13 @@ def compute_ged(g1, g2, options):
 def pairwise_ged(
 		g1, g2, options={}, sort=True, repeats=1, parallel=False, verbose=True
 ):
+	"""Compute the graph edit distance between two graphs using the gedlib library
+	with repeats.
+
+	Notes
+	-----
+	- For methods such as BIPARTITE, the repeats may result same results.
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	ged_env = gedlibpy.GEDEnv()
@@ -246,7 +256,13 @@ def compute_geds(
 		n_jobs=None,
 		verbose=True
 ):
-	"""Compute graph edit distance matrix using GEDLIB.
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB.
+
+	Notes
+	-----
+	- With `permute_nodes=True`, the GEDs are computed by permuting the nodes a
+	priori.
+	- When `permute_nodes=False`, the GEDs can be computed with parallelization.
 	"""
 	if permute_nodes:
 		return _compute_geds_with_permutation(
@@ -284,6 +300,9 @@ def _compute_geds_with_permutation(
 		n_jobs=None,
 		verbose=True
 ):
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB, where
+	the nodes are permuted a priori over different repeats.
+	"""
 	from gklearn.utils.utils import nx_permute_nodes
 
 	# Initialize variables.
@@ -293,8 +312,8 @@ def _compute_geds_with_permutation(
 	ged_vec = [0] * len_itr
 	n_edit_operations = [0] * len_itr
 
-	# for each repeats:
-	for i in range(0, repeats):
+	# for each repeat:
+	for repeat in range(0, repeats):
 		# Permute nodes.
 		graphs_pmut = [nx_permute_nodes(g, random_state=random_state) for g in
 		               graphs]
@@ -332,6 +351,9 @@ def _compute_geds_without_permutation(
 		n_jobs=None,
 		verbose=True
 ):
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB.
+	Possible parallelization with joblib, no permutation of nodes.
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	# initialize ged env.
