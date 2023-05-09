@@ -12,6 +12,21 @@ import networkx as nx
 def set_median_graph(graphs, dist_mat=None):
 	"""Compute the set median of a set of graphs.
 
+	Parameters
+	----------
+	graphs : list of networkx.Graph
+		A set of graphs.
+	dist_mat : numpy.matrix, optional
+		The distance matrix of the graphs. If None, it will be computed using
+		networkx.graph_edit_distance.
+
+	Returns
+	-------
+	networkx.Graph
+		The set median of the graphs.
+	int
+		The index of the set median in the input list.
+
 	Authors
 	-------
 	Linlin Jia, Github Copilot (2023.05.03)
@@ -26,6 +41,12 @@ def set_median_graph(graphs, dist_mat=None):
 			for j in range(i + 1, len(graphs)):
 				dist_mat[i][j] = nx.graph_edit_distance(graphs[i], graphs[j])
 				dist_mat[j][i] = dist_mat[i][j]
+	else:
+		if len(graphs) != len(dist_mat):
+			raise ValueError(
+				'The number of graphs and the distance matrix do not match.'
+			)
+	# print(dist_mat) # @TODO: remove
 	dist_vec = [sum(v) for v in dist_mat]
 
 	idx = dist_vec.index(min(dist_vec))
