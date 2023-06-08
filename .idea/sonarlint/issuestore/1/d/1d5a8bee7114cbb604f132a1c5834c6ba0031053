@@ -1,0 +1,13 @@
+
+wpython:S1192å"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(ˇÍ∞˘ˇˇˇˇ8÷Ò„ÛÑ1
+ppython:S117H"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(¯≈øê¯ˇˇˇˇ8ŸÒ„ÛÑ1
+ppython:S117H"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(¯≈øê¯ˇˇˇˇ8⁄Ò„ÛÑ1
+Åpython:S117W"cRename this local variable "if_comp_X_sp_lists" to match the regular expression ^[_a-z][a-z0-9_]*$.(œ–Çë8ŒùÁÛÑ1
+hpython:S5632n"IChange this code so that it raises an object deriving from BaseException.(∆‹ÄŸ8€Ò„ÛÑ1
+qpython:S117ò"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(â´Ì˝ˇˇˇˇ8€Ò„ÛÑ1
+ypython:S3776‚"TRefactor this function to reduce its Cognitive Complexity from 92 to the 15 allowed.(¬–√≈˚ˇˇˇˇ8€Ò„ÛÑ1
+\python:S112ù">Replace this generic exception class with a more specific one.(åÂﬂ%8€Ò„ÛÑ1
+upython:S3776æ"URefactor this function to reduce its Cognitive Complexity from 109 to the 15 allowed.(å°¥ü8‹Ò„ÛÑ1
+\python:S112ƒ">Replace this generic exception class with a more specific one.(åÂﬂ%8‹Ò„ÛÑ1
+tpython:S3776÷"TRefactor this function to reduce its Cognitive Complexity from 25 to the 15 allowed.(ÄÛåí8‹Ò„ÛÑ1
+Hpython:S108ç")Either remove or fill this block of code.(„ë€æ8‹Ò„ÛÑ1

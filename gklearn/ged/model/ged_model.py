@@ -74,7 +74,8 @@ class GEDModel(BaseEstimator):  # , ABC):
 		self.node_labels = node_labels
 		self.edge_labels = edge_labels
 		self.parallel = parallel
-		self.n_jobs = ((multiprocessing.cpu_count() - 1) if n_jobs is None else n_jobs)
+		self.n_jobs = (
+			(multiprocessing.cpu_count() - 1) if n_jobs is None else n_jobs)
 		self.chunksize = chunksize
 		#		self.normalize = normalize
 		self.copy_graphs = copy_graphs

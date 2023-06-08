@@ -3,38 +3,39 @@ lpython:S117"NRename this parameter "G1" to match the regular expression ^[_
 qpython:S1542"RRename function "getSPLengths" to match the regular expression ^[a-z_][a-z0-9_]*$.(’‘σ8ξ·ªνω0
 Bpython:S125"Remove this commented out code.(Ρ“λÿÿÿÿÿ8ξ·ªνω0
 Bpython:S125"Remove this commented out code.(ÒοΤφώÿÿÿÿ8ο·ªνω0
-kpython:S117"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Κψƒ¶8ο·ªνω0
-opython:S1542"PRename function "getSPGraph" to match the regular expression ^[a-z_][a-z0-9_]*$.(Κψƒ¶8ο·ªνω0
-kpython:S1170"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΈΫ»8ο·ªνω0
-|python:S117C"YRename this local variable "spMatrix" to match the regular expression ^[_a-z][a-z0-9_]*$.(θΝµ¤ωÿÿÿÿ8ο·ªνω0
-xpython:S15420"YRename function "floydTransformation" to match the regular expression ^[a-z_][a-z0-9_]*$.(ΈΫ»8ο·ªνω0
-ppython:S117N"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Γ‰›‰ϊÿÿÿÿ8ο·ªνω0
-kpython:S117q"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Φ•“Ο8ο·ªνω0
-{python:S1542q"\Rename function "untotterTransformation" to match the regular expression ^[a-z_][a-z0-9_]*$.(Φ•“Ο8ο·ªνω0
-=python:S125"Remove this commented out code.(Ώ=8ο·ªνω0
-mpython:S117£"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ω°Αΐ8ο·ªνω0
-mpython:S117£"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ω°Αΐ8ο·ªνω0
->python:S125Ύ"Remove this commented out code.(Τ«Π…8ο·ªνω0
-mpython:S117δ"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΩΰƒΏ8ο·ªνω0
-mpython:S117δ"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΩΰƒΏ8ο·ªνω0
->python:S125ÿ"Remove this commented out code.(Τ«Π…8ο·ªνω0
-lpython:S117¤"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(πΚ’«8ο·ªνω0
-qpython:S117½"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤ύψωÿÿÿÿ8ο·ªνω0
-tpython:S3776ΰ"TRefactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed.(”όσυ8ο·ªνω0
-tpython:S3776³"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(ΰϋΞ¬8π·ªνω0
-]python:S112’">Replace this generic exception class with a more specific one.(ωνΓή8π·ªνω0
-Rpython:S1940 "-Use the opposite operator ("is not") instead.(ΪέΥ»όÿÿÿÿ8π·ªνω0
-kpython:S117ο"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ϊ“k8π·ªνω0
-{python:S117ώ"WRename this local variable "G_copy" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΔΩ½Τϊÿÿÿÿ8π·ªνω0
-rpython:S117“"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
-rpython:S117“"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
-|python:S1542“"WRename function "graph_isIdentical" to match the regular expression ^[a-z_][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
-Npython:S1940 ")Use the opposite operator ("!=") instead.(ώΗ‰ρψÿÿÿÿ8π·ªνω0
-Ipython:S1940¥")Use the opposite operator ("!=") instead.(¥»νΐ8π·ªνω0
-mpython:S117¬"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(να΅8π·ªνω0
-rpython:S117µ"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΑΫΚΞωÿÿÿÿ8π·ªνω0
-qpython:S117Ύ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(όΎΦύύÿÿÿÿ8π·ªνω0
-kpython:S117Ε"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ά©΅#8π·ªνω0
-qpython:S117Μ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(”’υ¬ϋÿÿÿÿ8π·ªνω0
-zpython:S117ε"VRename this local variable "G_new" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ν£ΆΨωÿÿÿÿ8π·ªνω0
->python:S125―"Remove this commented out code.(™λίζ8π·ªνω0
+ppython:S117"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Òνΰ„ϋÿÿÿÿ8ο·ªνω0
+kpython:S1170"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Κψƒ¶8ο·ªνω0
+opython:S15420"PRename function "getSPGraph" to match the regular expression ^[a-z_][a-z0-9_]*$.(Κψƒ¶8‡ΚΉπ„1
+kpython:S117M"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΈΫ»8ο·ªνω0
+|python:S117`"YRename this local variable "spMatrix" to match the regular expression ^[_a-z][a-z0-9_]*$.(θΝµ¤ωÿÿÿÿ8ο·ªνω0
+xpython:S1542M"YRename function "floydTransformation" to match the regular expression ^[a-z_][a-z0-9_]*$.(ΈΫ»8ο·ªνω0
+ppython:S117k"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Γ‰›‰ϊÿÿÿÿ8ο·ªνω0
+lpython:S117"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Φ•“Ο8ο·ªνω0
+|python:S1542"\Rename function "untotterTransformation" to match the regular expression ^[a-z_][a-z0-9_]*$.(Φ•“Ο8ο·ªνω0
+=python:S125·"Remove this commented out code.(Ώ=8ο·ªνω0
+mpython:S117ΐ"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ω°Αΐ8ο·ªνω0
+mpython:S117ΐ"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ω°Αΐ8ο·ªνω0
+>python:S125Ϋ"Remove this commented out code.(Τ«Π…8ο·ªνω0
+mpython:S117"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΩΰƒΏ8ο·ªνω0
+mpython:S117"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΩΰƒΏ8ο·ªνω0
+>python:S125"Remove this commented out code.(Τ«Π…8ο·ªνω0
+lpython:S117Α"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(πΚ’«8ο·ªνω0
+qpython:S117Ϊ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤ύψωÿÿÿÿ8π·ªνω0
+tpython:S3776ύ"TRefactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed.(”όσυ8ο·ªνω0
+tpython:S3776Π"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(ΰϋΞ¬8π·ªνω0
+]python:S112―">Replace this generic exception class with a more specific one.(ωνΓή8π·ªνω0
+Rpython:S1940½"-Use the opposite operator ("is not") instead.(ΪέΥ»όÿÿÿÿ8π·ªνω0
+kpython:S117"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ϊ“k8π·ªνω0
+{python:S117›"WRename this local variable "G_copy" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΔΩ½Τϊÿÿÿÿ8π·ªνω0
+rpython:S117°"NRename this parameter "G1" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
+rpython:S117°"NRename this parameter "G2" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
+|python:S1542°"WRename function "graph_isIdentical" to match the regular expression ^[a-z_][a-z0-9_]*$.(ΧΎ¦ύÿÿÿÿ8π·ªνω0
+Npython:S1940½")Use the opposite operator ("!=") instead.(ώΗ‰ρψÿÿÿÿ8π·ªνω0
+Ipython:S1940Β")Use the opposite operator ("!=") instead.(¥»νΐ8π·ªνω0
+mpython:S117Ι"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(να΅8π·ªνω0
+rpython:S117Ò"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(ΑΫΚΞωÿÿÿÿ8π·ªνω0
+qpython:S117Ϋ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(όΎΦύύÿÿÿÿ8π·ªνω0
+kpython:S117β"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ά©΅#8π·ªνω0
+qpython:S117ι"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(”’υ¬ϋÿÿÿÿ8‡ΚΉπ„1
+zpython:S117‚"VRename this local variable "G_new" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ν£ΆΨωÿÿÿÿ8π·ªνω0
+>python:S125Μ"Remove this commented out code.(™λίζ8π·ªνω0

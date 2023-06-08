@@ -1,21 +1,27 @@
 
-opython:S1192."RDefine a constant instead of duplicating this literal 'Computing kernels' 3 times.(ìè£ıÿÿÿÿ
-kpython:S1192,"NDefine a constant instead of duplicating this literal 'getting paths' 4 times.(×Ï¾ıÿÿÿÿ
-mpython:S3776Ò"TRefactor this function to reduce its Cognitive Complexity from 78 to the 15 allowed.(“¬áá
-rpython:S1542å"TRename function "traverseTrie1t" to match the regular expression ^[a-z_][a-z0-9_]*$.(ÒÑ”üÿÿÿÿ
-rpython:S1542÷"TRename function "traverseTrie2t" to match the regular expression ^[a-z_][a-z0-9_]*$.(˜Æ„½ÿÿÿÿÿ
-lpython:S1542’"TRename function "traverseTrie1m" to match the regular expression ^[a-z_][a-z0-9_]*$.(©òr
-rpython:S1542¤"TRename function "traverseTrie2m" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ê¸€Êıÿÿÿÿ
-[python:S112¼">Replace this generic exception class with a more specific one.(ÃìÌ…ıÿÿÿÿ
-[python:S112ù">Replace this generic exception class with a more specific one.(Ç¶äûÿÿÿÿ
-jpython:S117„"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ü…­»ùÿÿÿÿ
-jpython:S117§"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¥Ë‚ ÿÿÿÿÿ
-qpython:S1542§"SRename function "traverseGraph" to match the regular expression ^[a-z_][a-z0-9_]*$.(¥Ë‚ ÿÿÿÿÿ
-epython:S117İ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(´Â²
-Cpython:S1481†"%Remove the unused local variable "l".(ÛßøÇüÿÿÿÿ
-7python:S125ö"Remove this commented out code.(Ï·çï
-jpython:S117¤"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¸ÑÕîùÿÿÿÿ
-rpython:S3776¤"TRefactor this function to reduce its Cognitive Complexity from 35 to the 15 allowed.(¸ÑÕîùÿÿÿÿ
-Fpython:S1481Ä"(Remove the unused local variable "node".(Ã½“›şÿÿÿÿ
-<python:S125Å"Remove this commented out code.(€ÂŒ‘şÿÿÿÿ
-fpython:S117È"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ƒ¨Æ
+wpython:S1192–"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(ğÿê°ùÿÿÿÿ8„»¾ó„1
+spython:S1192™"NDefine a constant instead of duplicating this literal 'getting paths' 4 times.(ñÙöıùÿÿÿÿ8»¾ó„1
+Bpython:S125I"Remove this commented out code.(ë¢ ªıÿÿÿÿ8»¾ó„1
+ppython:S117Q"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(àÍ‰‡úÿÿÿÿ8»¾ó„1
+ppython:S117Q"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(àÍ‰‡úÿÿÿÿ8»¾ó„1
+ƒpython:S117`"`Rename this local variable "if_comp_X_paths" to match the regular expression ^[_a-z][a-z0-9_]*$.(éëô­ûÿÿÿÿ8»¾ó„1
+hpython:S5632v"IChange this code so that it raises an object deriving from BaseException.(ÆÜ€Ù8»¾ó„1
+qpython:S117¢"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8»¾ó„1
+mpython:S3776ã"TRefactor this function to reduce its Cognitive Complexity from 78 to the 15 allowed.(“¬áá
+tpython:S1542ö"TRename function "traverseTrie1t" to match the regular expression ^[a-z_][a-z0-9_]*$.(œ©¶±8»¾ó„1
+rpython:S1542Š"TRename function "traverseTrie2t" to match the regular expression ^[a-z_][a-z0-9_]*$.(˜Æ„½ÿÿÿÿÿ
+lpython:S1542¦"TRename function "traverseTrie1m" to match the regular expression ^[a-z_][a-z0-9_]*$.(©òr
+rpython:S1542¹"TRename function "traverseTrie2m" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ê¸€Êıÿÿÿÿ
+]python:S112Ò">Replace this generic exception class with a more specific one.(’‹â±8»¾ó„1
+]python:S112‘">Replace this generic exception class with a more specific one.(’‹â±8»¾ó„1
+jpython:S117"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ü…­»ùÿÿÿÿ
+jpython:S117À"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¥Ë‚ ÿÿÿÿÿ
+qpython:S1542À"SRename function "traverseGraph" to match the regular expression ^[a-z_][a-z0-9_]*$.(¥Ë‚ ÿÿÿÿÿ
+epython:S117õ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(´Â²
+Cpython:S1481"%Remove the unused local variable "l".(ÛßøÇüÿÿÿÿ
+7python:S125"Remove this commented out code.(Ï·çï
+jpython:S117½"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(¸ÑÕîùÿÿÿÿ
+rpython:S3776½"TRefactor this function to reduce its Cognitive Complexity from 35 to the 15 allowed.(¸ÑÕîùÿÿÿÿ
+Fpython:S1481í"(Remove the unused local variable "node".(Ã½“›şÿÿÿÿ
+<python:S125ğ"Remove this commented out code.(€ÂŒ‘şÿÿÿÿ
+fpython:S117ò"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ƒ¨Æ

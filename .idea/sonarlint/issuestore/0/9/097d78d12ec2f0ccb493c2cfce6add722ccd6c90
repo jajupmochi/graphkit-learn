@@ -1,0 +1,36 @@
+
+Mpython:S1172"0Remove the unused function parameter "parallel".(ÌŸ„øÿÿÿÿ
+Lpython:S1172"/Remove the unused function parameter "verbose".(ÌŸ„øÿÿÿÿ
+Ipython:S1172",Remove the unused function parameter "sort".(ÌŸ„øÿÿÿÿ
+npython:S117%"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(×í¨­
+=python:S14811"%Remove the unused local variable "i".(…èìÄ
+6python:S125:"Remove this commented out code.(ÒæãÅ
+gpython:S1763"GDelete this unreachable code or refactor the code to make it reachable.(ÌÛŠ8Í‘‡ğ„1
+bpython:S112€">Replace this generic exception class with a more specific one.(ßÆÛİûÿÿÿÿ8Î‘‡ğ„1
+>python:S125‘"Remove this commented out code.(êúÉ8Ï‘‡ğ„1
+Ypython:S1135—"4Complete the task associated to this "TODO" comment.(¨Èí¼úÿÿÿÿ8Ğ‘‡ğ„1
+bpython:S112œ">Replace this generic exception class with a more specific one.(ßÆÛİûÿÿÿÿ8Ñ‘‡ğ„1
+bpython:S112à">Replace this generic exception class with a more specific one.(¸ã±Æüÿÿÿÿ8Ò‘‡ğ„1
+Spython:S1172–"3Remove the unused function parameter "node_labels".(«‰Ç“8Ó‘‡ğ„1
+jpython:S1854¶"KRemove this assignment to local variable 'nodes1'; the value is never used.(ö½¡58Õ‘‡ğ„1
+lpython:S1763¾"GDelete this unreachable code or refactor the code to make it reachable.(½òğıÿÿÿÿ8×‘‡ğ„1
+>python:S125É"Remove this commented out code.(Ş»Ø‚8Ø‘‡ğ„1
+Ypython:S1172â"9Remove the unused function parameter "n_ori_node_labels".(±å¨Ó8Ù‘‡ğ„1
+Rpython:S1172á"2Remove the unused function parameter "edit_costs".(Ö‚Ğ€8Ú‘‡ğ„1
+Spython:S1172á"3Remove the unused function parameter "node_labels".(Ö‚Ğ€8Û‘‡ğ„1
+Spython:S1172±"3Remove the unused function parameter "edge_labels".(„Ï‘Â8Ü‘‡ğ„1
+Tpython:S1172±"4Remove the unused function parameter "backward_map".(„Ï‘Â8İ‘‡ğ„1
+gpython:S1763ğ"GDelete this unreachable code or refactor the code to make it reachable.(Û¨Ò›8à‘‡ğ„1
+gpython:S1763ç"GDelete this unreachable code or refactor the code to make it reachable.(Û¨Ò›8â‘‡ğ„1
+Bpython:S1110è"#Remove those redundant parentheses.(›Óà.8ä‘‡ğ„1
+Hpython:S1110ñ"#Remove those redundant parentheses.(Ğ–ƒ¥úÿÿÿÿ8æ‘‡ğ„1
+Cpython:S125ÿ"Remove this commented out code.(¾Ëâ¡ÿÿÿÿÿ8ç‘‡ğ„1
+Rpython:S1172«"3Remove the unused function parameter "edge_labels".(Ûù‘8é‘‡ğ„1
+Ypython:S1172¨"4Remove the unused function parameter "backward_map".(£¸Œ‰üÿÿÿÿ8ê‘‡ğ„1
+_python:S1172®":Remove the unused function parameter "n_ori_edges_labels".(‹Şß­ıÿÿÿÿ8ë‘‡ğ„1
+Wpython:S1172­"2Remove the unused function parameter "edit_costs".(èë„ûÿÿÿÿ8ì‘‡ğ„1
+ypython:S3776¦"TRefactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed.(¿ìÄƒıÿÿÿÿ8í‘‡ğ„1
+ƒpython:S1871‰"cEither merge this branch with the identical one on line "614" or change one of the implementations.(„Œ€—8í‘‡ğ„1
+Cpython:S1110ñ"#Remove those redundant parentheses.(Ï¾Ê¿8í‘‡ğ„1
+Ypython:S1135ó"4Complete the task associated to this "TODO" comment.(á¤¿¼şÿÿÿÿ8í‘‡ğ„1
+Cpython:S1110ÿ"#Remove those redundant parentheses.(ÁĞ¥8í‘‡ğ„1

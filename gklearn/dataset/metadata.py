@@ -10,8 +10,7 @@ DATABASES = {
 	'greyc': 'https://brunl01.users.greyc.fr/CHEMISTRY/',
 	'iam': 'https://iapr-tc15.greyc.fr/IAM/',
 	'tudataset': 'http://graphlearning.io/docs/datasets/',
-	}
-
+}
 
 ### -------- database greyc -------- ###
 GREYC_META = {
@@ -69,7 +68,8 @@ GREYC_META = {
 		'edge_attr_dim': None,
 		'url': 'https://iapr-tc15.greyc.fr/IAM/AIDS.zip',
 		'domain': 'small molecules',
-		'train_valid_test': ['data/train.cxl', 'data/valid.cxl', 'data/test.cxl',],
+		'train_valid_test': ['data/train.cxl', 'data/valid.cxl',
+		                     'data/test.cxl', ],
 		'stereoisomerism': False,
 		'load_files': ['data/'],
 	},
@@ -231,7 +231,6 @@ GREYC_META = {
 	},
 }
 
-
 ### -------- database iam -------- ###
 # @todo: several datasets in this database are included in TUDataset. However they do not include train/valid/test sets.
 IAM_META = {
@@ -250,8 +249,9 @@ IAM_META = {
 		'edge_attr_dim': None,
 		'url': 'https://iapr-tc15.greyc.fr/IAM/GREC.zip',
 		'domain': None,
-		'train_valid_test': ['data/test.cxl','data/train.cxl', 'data/valid.cxl'],
-		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
+		'train_valid_test': ['data/test.cxl', 'data/train.cxl',
+		                     'data/valid.cxl'],
+		'load_files': [['data/test.cxl', 'data/train.cxl', 'data/valid.cxl']],
 	},
 	'Web': {
 		'database': 'iam',
@@ -268,11 +268,11 @@ IAM_META = {
 		'edge_attr_dim': None,
 		'url': 'https://iapr-tc15.greyc.fr/IAM/Web.zip',
 		'domain': None,
-		'train_valid_test': ['data/test.cxl', 'data/train.cxl', 'data/valid.cxl'],
-		'load_files': [['data/test.cxl','data/train.cxl', 'data/valid.cxl']],
+		'train_valid_test': ['data/test.cxl', 'data/train.cxl',
+		                     'data/valid.cxl'],
+		'load_files': [['data/test.cxl', 'data/train.cxl', 'data/valid.cxl']],
 	},
 }
-
 
 ### -------- database tudataset -------- ###
 TUDataset_META = {
@@ -2462,7 +2462,6 @@ TUDataset_META = {
 		'domain': 'synthetic',
 	},
 }
-
 
 DATASET_META = {**GREYC_META, **IAM_META, **TUDataset_META}
 

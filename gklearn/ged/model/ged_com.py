@@ -7,7 +7,7 @@ Created on Thu May  5 14:02:17 2022
 """
 import sys
 from gklearn.ged.model.distances import euclid_d
-from gklearn.ged.util import  pairwise_ged, get_nb_edit_operations
+from gklearn.ged.util import pairwise_ged, get_nb_edit_operations
 from gklearn.utils import get_iters
 
 
@@ -26,10 +26,12 @@ def compute_ged(
 	node_labels = kwargs.get('node_labels', [])
 	edge_labels = kwargs.get('edge_labels', [])
 	dis, pi_forward, pi_backward = pairwise_ged(
-		Gi, Gj, ged_options, repeats=repeats)
+		Gi, Gj, ged_options, repeats=repeats
+	)
 	n_eo_tmp = get_nb_edit_operations(
 		Gi, Gj, pi_forward, pi_backward, edit_cost=edit_cost_fun,
-		node_labels=node_labels, edge_labels=edge_labels)
+		node_labels=node_labels, edge_labels=edge_labels
+	)
 	return dis, n_eo_tmp
 
 
@@ -44,7 +46,7 @@ def compute_ged_all_dataset(Gn, edit_cost, ed_method, **kwargs):
 
 def compute_geds(
 		G_pairs, Gn, edit_cost, ed_method, edit_cost_fun='CONSTANT',
-        verbose=True, **kwargs
+		verbose=True, **kwargs
 ):
 	"""
 	Compute GED between all indexes in G_pairs given edit_cost
@@ -72,17 +74,27 @@ def compute_D(G_app, edit_cost, G_test=None, ed_method='BIPARTITE', **kwargs):
 	N = len(G_app)
 	D_app = np.zeros((N, N))
 
-	for i, G1 in get_iters(enumerate(G_app), desc='Computing D - app', file=sys.stdout, length=N):
-		for j, G2 in enumerate(G_app[i+1:], i+1):
-			D_app[i, j], _ = compute_ged(G1, G2, edit_cost, method=ed_method, **kwargs)
+	for i, G1 in get_iters(
+			enumerate(G_app), desc='Computing D - app', file=sys.stdout,
+			length=N
+	):
+		for j, G2 in enumerate(G_app[i + 1:], i + 1):
+			D_app[i, j], _ = compute_ged(
+				G1, G2, edit_cost, method=ed_method, **kwargs
+			)
 			D_app[j, i] = D_app[i, j]
 	if (G_test is None):
 		return D_app, edit_cost
 	else:
 		D_test = np.zeros((len(G_test), N))
-		for i, G1 in get_iters(enumerate(G_test), desc='Computing D - test', file=sys.stdout, length=len(G_test)):
+		for i, G1 in get_iters(
+				enumerate(G_test), desc='Computing D - test', file=sys.stdout,
+				length=len(G_test)
+		):
 			for j, G2 in enumerate(G_app):
-				D_test[i, j], _ = compute_ged(G1, G2, edit_cost, method=ed_method, **kwargs)
+				D_test[i, j], _ = compute_ged(
+					G1, G2, edit_cost, method=ed_method, **kwargs
+				)
 		return D_app, D_test, edit_cost
 
 
@@ -97,13 +109,16 @@ def compute_D_expert(G_app, G_test=None, ed_method='BIPARTITE', **kwargs):
 	return compute_D(G_app, edit_cost, G_test, ed_method=ed_method, **kwargs)
 
 
-def compute_D_fitted(G_app, y_app, G_test=None, y_distance=euclid_d,
-					 mode='reg', unlabeled=False, ed_method='BIPARTITE', **kwargs):
+def compute_D_fitted(
+		G_app, y_app, G_test=None, y_distance=euclid_d,
+		mode='reg', unlabeled=False, ed_method='BIPARTITE', **kwargs
+):
 	from gklearn.ged.models.optim_costs import compute_optimal_costs
 
 	costs_optim = compute_optimal_costs(
 		G_app, y_app, y_distance=y_distance,
-		mode=mode, unlabeled=unlabeled, ed_method=ed_method, **kwargs)
+		mode=mode, unlabeled=unlabeled, ed_method=ed_method, **kwargs
+	)
 	return compute_D(G_app, costs_optim, G_test, ed_method=ed_method, **kwargs)
 
 

@@ -1,0 +1,11 @@
+
+wpython:S1192"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(ğÿê°ùÿÿÿÿ8°È±ğ„1
+rpython:S1192"RDefine a constant instead of duplicating this literal 'getting sp graphs' 4 times.(æîà8ÀÈ±ğ„1
+Bpython:S125B"Remove this commented out code.(ë¢ ªıÿÿÿÿ8ÀÈ±ğ„1
+ppython:S117J"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(šÙµ¦ÿÿÿÿÿ8ÀÈ±ğ„1
+ppython:S117J"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(šÙµ¦ÿÿÿÿÿ8ÀÈ±ğ„1
+‚python:S117Y"dRename this local variable "if_comp_X_sp_graphs" to match the regular expression ^[_a-z][a-z0-9_]*$.(˜½äŞ8şÅÆğ„1
+hpython:S5632p"IChange this code so that it raises an object deriving from BaseException.(ÆÜ€Ù8ÀÈ±ğ„1
+qpython:S117œ"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8ÀÈ±ğ„1
+ypython:S3776»"TRefactor this function to reduce its Cognitive Complexity from 44 to the 15 allowed.(—ä¥éøÿÿÿÿ8ÀÈ±ğ„1
+tpython:S3776§"TRefactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed.(ØøÚ8ÀÈ±ğ„1

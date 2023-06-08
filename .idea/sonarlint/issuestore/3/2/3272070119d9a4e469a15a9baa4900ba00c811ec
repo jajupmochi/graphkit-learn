@@ -1,0 +1,86 @@
+
+npython:S1192>"JDefine a constant instead of duplicating this literal 'K-MEANS++' 4 times.(âğòÉøÿÿÿÿ8ˆ˜®ş0
+kpython:S1192²"FDefine a constant instead of duplicating this literal 'done.' 5 times.(´ßìÏüÿÿÿÿ8‹˜®ş0
+python:S1192Ú"~Define a constant instead of duplicating this literal '===========================================================\n' 3 times.(ß¡¨8‹˜®ş0
+£python:S1192ô"~Define a constant instead of duplicating this literal '\n===========================================================' 5 times.(£úæ™üÿÿÿÿ8‹˜®ş0
+xpython:S1192j"TDefine a constant instead of duplicating this literal 'Invalid argument "' 17 times.(ˆ ùÀüÿÿÿÿ8Œ˜®ş0
+Tpython:S1066œ"/Merge this if statement with the enclosing one.(ÇØ¹ıÿÿÿÿ8Œ˜®ş0
+Tpython:S1066"/Merge this if statement with the enclosing one.(‘âê½úÿÿÿÿ8Œ˜®ş0
+Ypython:S5720Ğ"9Rename "g" to "self" or add the missing "self" parameter.(Äõ¤8Œ˜®ş0
+[python:S112Q">Replace this generic exception class with a more specific one.(˜±•8Œ˜®ş0
+apython:S112S">Replace this generic exception class with a more specific one.(©Ø­Äüÿÿÿÿ8Œ˜®ş0
+spython:S3776V"TRefactor this function to reduce its Cognitive Complexity from 91 to the 15 allowed.(é¶ãƒ8˜®ş0
+apython:S112d">Replace this generic exception class with a more specific one.(ÒÌºõşÿÿÿÿ8˜®ş0
+[python:S5754i"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+apython:S112j">Replace this generic exception class with a more specific one.(ˆ ùÀüÿÿÿÿ8˜®ş0
+apython:S112m">Replace this generic exception class with a more specific one.(ˆ ùÀüÿÿÿÿ8˜®ş0
+apython:S112w">Replace this generic exception class with a more specific one.(†ÌÌ¿şÿÿÿÿ8˜®ş0
+bpython:S112„">Replace this generic exception class with a more specific one.(ûöÙùÿÿÿÿ8˜®ş0
+bpython:S112">Replace this generic exception class with a more specific one.(™ûïœÿÿÿÿÿ8˜®ş0
+bpython:S112˜">Replace this generic exception class with a more specific one.(²üùòıÿÿÿÿ8˜®ş0
+bpython:S112¢">Replace this generic exception class with a more specific one.(Ûí±Òúÿÿÿÿ8˜®ş0
+bpython:S112¬">Replace this generic exception class with a more specific one.(‰áğ­øÿÿÿÿ8˜®ş0
+\python:S5754²"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+]python:S112³">Replace this generic exception class with a more specific one.(¦ÑêÉ8˜®ş0
+\python:S5754¹"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+]python:S112º">Replace this generic exception class with a more specific one.(áÃö8˜®ş0
+\python:S5754À"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+bpython:S112Á">Replace this generic exception class with a more specific one.(óø¢•úÿÿÿÿ8˜®ş0
+\python:S5754Ç"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+]python:S112È">Replace this generic exception class with a more specific one.(şĞ÷´8˜®ş0
+\python:S5754Î"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+]python:S112Ï">Replace this generic exception class with a more specific one.(™Ûğƒ8˜®ş0
+]python:S112Ò">Replace this generic exception class with a more specific one.(™Ûğƒ8˜®ş0
+\python:S5754Ø"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+]python:S112Ù">Replace this generic exception class with a more specific one.(ùú˜”8˜®ş0
+]python:S112Ü">Replace this generic exception class with a more specific one.(ùú˜”8˜®ş0
+bpython:S112á">Replace this generic exception class with a more specific one.(¡ì•¬ùÿÿÿÿ8˜®ş0
+\python:S5754ç"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8˜®ş0
+\python:S112è">Replace this generic exception class with a more specific one.(º®ó8˜®ş0
+bpython:S112î">Replace this generic exception class with a more specific one.(áµ„éüÿÿÿÿ8˜®ş0
+Lpython:S1481€"'Remove the unused local variable "xxx".(¨˜¨¥üÿÿÿÿ8˜®ş0
+Gpython:S1481‚"'Remove the unused local variable "yyy".(©şßÜ8˜®ş0
+tpython:S3776ª"TRefactor this function to reduce its Cognitive Complexity from 73 to the 15 allowed.(©Äá“8˜®ş0
+bpython:S112»">Replace this generic exception class with a more specific one.(ü÷×Éøÿÿÿÿ8˜®ş0
+\python:S112Â">Replace this generic exception class with a more specific one.(åÕÊN8˜®ş0
+Rpython:S1172š"-Remove the unused function parameter "timer".(Ã€³¦úÿÿÿÿ8˜®ş0
+ypython:S3776š"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(Ã€³¦úÿÿÿÿ8˜®ş0
+bpython:S112Ï">Replace this generic exception class with a more specific one.(Ğ©Ó‰ıÿÿÿÿ8˜®ş0
+\python:S112á">Replace this generic exception class with a more specific one.(çÉ•8˜®ş0
+bpython:S112ë">Replace this generic exception class with a more specific one.(«ª·Çùÿÿÿÿ8˜®ş0
+bpython:S112õ">Replace this generic exception class with a more specific one.( ßÃçùÿÿÿÿ8˜®ş0
+]python:S112û">Replace this generic exception class with a more specific one.(Ë’Šå8˜®ş0
+]python:S112">Replace this generic exception class with a more specific one.(€ãØÿ8˜®ş0
+bpython:S112‡">Replace this generic exception class with a more specific one.(¥÷¹ûÿÿÿÿ8˜®ş0
+zpython:S1854à"ZRemove this assignment to local variable 'best_sum_of_distances'; the value is never used.(—¢´Ö8‘˜®ş0
+ypython:S3776Á"TRefactor this function to reduce its Cognitive Complexity from 34 to the 15 allowed.(èˆ«òûÿÿÿÿ8‘˜®ş0
+ypython:S3776"TRefactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed.(‡ öıøÿÿÿÿ8‘˜®ş0
+>python:S125®"Remove this commented out code.(†èÎ“8‘˜®ş0
+>python:S125ƒ"Remove this commented out code.(ì²ªå8‘˜®ş0
+ypython:S3776‰"TRefactor this function to reduce its Cognitive Complexity from 38 to the 15 allowed.(Üİºúÿÿÿÿ8‘˜®ş0
+ypython:S3776·"TRefactor this function to reduce its Cognitive Complexity from 35 to the 15 allowed.(ååŠ®úÿÿÿÿ8’˜®ş0
+>python:S125¼"Remove this commented out code.(ë–©˜8’˜®ş0
+>python:S125Ö"Remove this commented out code.(öƒ±ë8’˜®ş0
+>python:S125å"Remove this commented out code.(õí†ğ8’˜®ş0
+tpython:S3776œ"TRefactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed.(Ç÷”8’˜®ş0
+=python:S125¶"Remove this commented out code.(ğÑ´N8’˜®ş0
+ypython:S3776»"TRefactor this function to reduce its Cognitive Complexity from 25 to the 15 allowed.(Ï–õøÿÿÿÿ8’˜®ş0
+Rpython:S1172	"2Remove the unused function parameter "best_label".(”å©»8“˜®ş0
+tpython:S3776 	"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(À¯ÒÒ8“˜®ş0
+Ipython:S1940Å	")Use the opposite operator ("!=") instead.(ÑÁÙÒ8“˜®ş0
+tpython:S3776Ğ	"TRefactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed.(åßğ8“˜®ş0
+tpython:S3776„
+"TRefactor this function to reduce its Cognitive Complexity from 47 to the 15 allowed.(Õå­ß8“˜®ş0
+spython:S1854é
+"NRemove this assignment to local variable 'best_cost'; the value is never used.(àˆÇ·ûÿÿÿÿ8“˜®ş0
+Npython:S1940À")Use the opposite operator ("!=") instead.(ĞŒµïıÿÿÿÿ8”˜®ş0
+Npython:S1940Å")Use the opposite operator ("!=") instead.(şÇ‰ñøÿÿÿÿ8”˜®ş0
+Ipython:S1940Ê")Use the opposite operator ("!=") instead.(¥»íÀ8”˜®ş0
+Ipython:S1172Ğ")Remove the unused function parameter "h".(Äõ¤8”˜®ş0
+Ppython:S1172Ğ"0Remove the unused function parameter "node_map".(Äõ¤8”˜®ş0
+Hpython:S1481Ñ"(Remove the unused local variable "cost".(òçÇ¹8”˜®ş0
+Mpython:S1481Ó"(Remove the unused local variable "cost".(ì§‚Šıÿÿÿÿ8”˜®ş0
+Mpython:S1481Ò"(Remove the unused local variable "node".(’Õ³²øÿÿÿÿ8”˜®ş0
+bpython:S112á">Replace this generic exception class with a more specific one.(ç—ÿ¦üÿÿÿÿ8”˜®ş0
+]python:S112ê">Replace this generic exception class with a more specific one.(« Ä8”˜®ş0
+ypython:S3776‚"TRefactor this function to reduce its Cognitive Complexity from 43 to the 15 allowed.( š©™ûÿÿÿÿ8”˜®ş0
