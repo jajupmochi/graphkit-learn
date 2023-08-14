@@ -298,7 +298,8 @@ def clean_previous_build():
 	print()
 
 
-def get_extensions(include_glibc):
+# def get_extensions(include_glibc):
+def get_extensions():
 	exts = [
 		Extension(
 			"gedlibpy",
@@ -347,8 +348,8 @@ if __name__ == '__main__':
 		install_gedlib()
 	# Copy-Paste includes and libs of GEDLIB:
 	copy_gedlib_includes_and_libs()
-	# Deal with GLIBC library:
-	include_glibc = check_and_include_glibc()
+	# # Deal with GLIBC library:
+	# include_glibc = check_and_include_glibc()
 
 	# clean previous build:
 	clean_previous_build()
@@ -356,7 +357,8 @@ if __name__ == '__main__':
 	print()
 	print('Start building...')
 	# Build gedlibpy:
-	extensions = get_extensions(include_glibc)
+	# extensions = get_extensions(include_glibc)
+	extensions = get_extensions()
 	with open("README.rst", "r") as fh:
 		long_description = fh.read()
 
