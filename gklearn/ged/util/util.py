@@ -18,6 +18,14 @@ from gklearn.utils import get_iters
 
 
 def compute_ged(g1, g2, options):
+	"""The simplest function to compute the graph edit distance between two graphs
+	using the gedlib library.
+
+	Notes
+	-----
+		- # of edit operations are not computed in this method.
+
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	ged_env = gedlibpy.GEDEnv()
@@ -55,6 +63,14 @@ def compute_ged(g1, g2, options):
 def pairwise_ged(
 		g1, g2, options={}, sort=True, repeats=1, parallel=False, verbose=True
 ):
+	"""Compute the graph edit distance between two graphs using the gedlib library
+	with repeats.
+
+	Notes
+	-----
+		- For methods such as BIPARTITE, the repeats may result same results.
+		- # of edit operations are not computed in this method.
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	ged_env = gedlibpy.GEDEnv()
@@ -66,7 +82,9 @@ def pairwise_ged(
 	ged_env.add_nx_graph(g2, '')
 	listID = ged_env.get_all_graph_ids()
 	ged_env.init(
-		init_option=(options['init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES'))
+		init_option=(options[
+			             'init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES')
+	)
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
@@ -97,23 +115,30 @@ def pairwise_ged(
 	return dis, pi_forward, pi_backward
 
 
-def compute_geds_cml(graphs, options={}, sort=True, parallel=False,
-                     verbose=True
-                     ):
+def compute_geds_cml(
+		graphs, options={}, sort=True, parallel=False,
+		verbose=True
+):
 	# initialize ged env.
 	ged_env = GEDEnv()
-	ged_env.set_edit_cost(options['edit_cost'],
-	                      edit_cost_constants=options['edit_cost_constants'])
+	ged_env.set_edit_cost(
+		options['edit_cost'],
+		edit_cost_constants=options['edit_cost_constants']
+	)
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
 	listID = ged_env.get_all_graph_ids()
 
 	node_labels = ged_env.get_all_node_labels()
 	edge_labels = ged_env.get_all_edge_labels()
-	node_label_costs = label_costs_to_matrix(options['node_label_costs'],
-	                                         len(node_labels)) if 'node_label_costs' in options else None
-	edge_label_costs = label_costs_to_matrix(options['edge_label_costs'],
-	                                         len(edge_labels)) if 'edge_label_costs' in options else None
+	node_label_costs = label_costs_to_matrix(
+		options['node_label_costs'],
+		len(node_labels)
+	) if 'node_label_costs' in options else None
+	edge_label_costs = label_costs_to_matrix(
+		options['edge_label_costs'],
+		len(edge_labels)
+	) if 'edge_label_costs' in options else None
 	ged_env.set_label_costs(node_label_costs, edge_label_costs)
 	ged_env.init(init_type=options['init_option'])
 	if parallel:
@@ -124,17 +149,21 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False,
 	# compute ged.
 	# options used to compute numbers of edit operations.
 	if node_label_costs is None and edge_label_costs is None:
-		neo_options = {'edit_cost': options['edit_cost'],
-		               'is_cml': False,
-		               'node_labels': options['node_labels'],
-		               'edge_labels': options['edge_labels'],
-		               'node_attrs': options['node_attrs'],
-		               'edge_attrs': options['edge_attrs']}
+		neo_options = {
+			'edit_cost': options['edit_cost'],
+			'is_cml': False,
+			'node_labels': options['node_labels'],
+			'edge_labels': options['edge_labels'],
+			'node_attrs': options['node_attrs'],
+			'edge_attrs': options['edge_attrs']
+		}
 	else:
-		neo_options = {'edit_cost': options['edit_cost'],
-		               'is_cml': True,
-		               'node_labels': node_labels,
-		               'edge_labels': edge_labels}
+		neo_options = {
+			'edit_cost': options['edit_cost'],
+			'is_cml': True,
+			'node_labels': node_labels,
+			'edge_labels': edge_labels
+		}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
 		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
@@ -147,18 +176,24 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False,
 		else:
 			chunksize = 100
 
+
 		def init_worker(graphs_toshare, ged_env_toshare, listID_toshare):
 			global G_graphs, G_ged_env, G_listID
 			G_graphs = graphs_toshare
 			G_ged_env = ged_env_toshare
 			G_listID = listID_toshare
 
+
 		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort)
-		pool = Pool(processes=n_jobs, initializer=init_worker,
-		            initargs=(graphs, ged_env, listID))
-		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize),
-		                     desc='computing GEDs', file=sys.stdout,
-		                     length=len_itr, verbose=verbose)
+		pool = Pool(
+			processes=n_jobs, initializer=init_worker,
+			initargs=(graphs, ged_env, listID)
+		)
+		iterator = get_iters(
+			pool.imap_unordered(do_partial, itr, chunksize),
+			desc='computing GEDs', file=sys.stdout,
+			length=len_itr, verbose=verbose
+		)
 		#		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -174,31 +209,40 @@ def compute_geds_cml(graphs, options={}, sort=True, parallel=False,
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		iterator = get_iters(range(len(graphs)), desc='computing GEDs',
-		                     file=sys.stdout, length=len(graphs),
-		                     verbose=verbose)
+		iterator = get_iters(
+			range(len(graphs)), desc='computing GEDs',
+			file=sys.stdout, length=len(graphs),
+			verbose=verbose
+		)
 		for i in iterator:
 			#		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
 				if nx.number_of_nodes(graphs[i]) <= nx.number_of_nodes(
-						graphs[j]) or not sort:
-					dis, pi_forward, pi_backward = _compute_ged(ged_env,
-					                                            listID[i],
-					                                            listID[j],
-					                                            graphs[i],
-					                                            graphs[j])
+						graphs[j]
+				) or not sort:
+					dis, pi_forward, pi_backward = _compute_ged(
+						ged_env,
+						listID[i],
+						listID[j],
+						graphs[i],
+						graphs[j]
+					)
 				else:
-					dis, pi_backward, pi_forward = _compute_ged(ged_env,
-					                                            listID[j],
-					                                            listID[i],
-					                                            graphs[j],
-					                                            graphs[i])
+					dis, pi_backward, pi_forward = _compute_ged(
+						ged_env,
+						listID[j],
+						listID[i],
+						graphs[j],
+						graphs[i]
+					)
 				ged_vec.append(dis)
 				ged_mat[i][j] = dis
 				ged_mat[j][i] = dis
-				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j],
-				                                  pi_forward, pi_backward,
-				                                  **neo_options)
+				n_eo_tmp = get_nb_edit_operations(
+					graphs[i], graphs[j],
+					pi_forward, pi_backward,
+					**neo_options
+				)
 				n_edit_operations.append(n_eo_tmp)
 
 	return ged_vec, ged_mat, n_edit_operations
@@ -218,7 +262,13 @@ def compute_geds(
 		n_jobs=None,
 		verbose=True
 ):
-	"""Compute graph edit distance matrix using GEDLIB.
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB.
+
+	Notes
+	-----
+		- With `permute_nodes=True`, the GEDs are computed by permuting the nodes a priori.
+		- When `permute_nodes=False`, the GEDs can be computed with parallelization.
+		- # of edit operations are computed in this method.
 	"""
 	if permute_nodes:
 		return _compute_geds_with_permutation(
@@ -246,37 +296,47 @@ def compute_geds(
 # %%
 
 
-def _compute_geds_with_permutation(graphs,
-                                   options={},
-                                   sort=True,
-                                   repeats=1,
-                                   random_state=None,
-                                   parallel=False,
-                                   n_jobs=None,
-                                   verbose=True
-                                   ):
+def _compute_geds_with_permutation(
+		graphs,
+		options={},
+		sort=True,
+		repeats=1,
+		random_state=None,
+		parallel=False,
+		n_jobs=None,
+		verbose=True
+):
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB, where
+	the nodes are permuted a priori over different repeats.
+
+	Notes
+	-----
+		- # of edit operations are computed in this method.
+	"""
 	from gklearn.utils.utils import nx_permute_nodes
 
-	# Initialze variables.
+	# Initialize variables.
 	ged_mat_optim = np.full((len(graphs), len(graphs)), np.inf)
 	np.fill_diagonal(ged_mat_optim, 0)
 	len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
 	ged_vec = [0] * len_itr
 	n_edit_operations = [0] * len_itr
 
-	# for each repeats:
-	for i in range(0, repeats):
-		# Permutate nodes.
+	# for each repeat:
+	for repeat in range(0, repeats):
+		# Permute nodes.
 		graphs_pmut = [nx_permute_nodes(g, random_state=random_state) for g in
 		               graphs]
 
-		out = _compute_geds_without_permutation(graphs_pmut,
-		                                        options=options,
-		                                        sort=sort,
-		                                        repeats=1,
-		                                        parallel=parallel,
-		                                        n_jobs=n_jobs,
-		                                        verbose=verbose)
+		out = _compute_geds_without_permutation(
+			graphs_pmut,
+			options=options,
+			sort=sort,
+			repeats=1,
+			parallel=parallel,
+			n_jobs=n_jobs,
+			verbose=verbose
+		)
 
 		# Compare current results with the best one.
 		idx_cnt = 0
@@ -292,20 +352,30 @@ def _compute_geds_with_permutation(graphs,
 	return ged_vec, ged_mat_optim, n_edit_operations
 
 
-def _compute_geds_without_permutation(graphs,
-                                      options={},
-                                      sort=True,
-                                      repeats=1,
-                                      parallel=False,
-                                      n_jobs=None,
-                                      verbose=True
-                                      ):
+def _compute_geds_without_permutation(
+		graphs,
+		options={},
+		sort=True,
+		repeats=1,
+		parallel=False,
+		n_jobs=None,
+		verbose=True
+):
+	"""Compute graph edit distance matrix for a list of graphs using GEDLIB.
+	Possible parallelization with joblib, no permutation of nodes.
+
+	Notes
+	-----
+		- # of edit operations are computed in this method.
+	"""
 	from gklearn.gedlib import librariesImport, gedlibpy
 
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
-	ged_env.set_edit_cost(options['edit_cost'],
-	                      edit_cost_constant=options['edit_cost_constants'])
+	ged_env.set_edit_cost(
+		options['edit_cost'],
+		edit_cost_constant=options['edit_cost_constants']
+	)
 
 	for g in graphs:
 		ged_env.add_nx_graph(g, '')
@@ -317,11 +387,13 @@ def _compute_geds_without_permutation(graphs,
 	ged_env.init_method()
 
 	# compute ged.
-	neo_options = {'edit_cost': options['edit_cost'],
-	               'node_labels': options['node_labels'],
-	               'edge_labels': options['edge_labels'],
-	               'node_attrs': options['node_attrs'],
-	               'edge_attrs': options['edge_attrs']}
+	neo_options = {
+		'edit_cost': options['edit_cost'],
+		'node_labels': options['node_labels'],
+		'edge_labels': options['edge_labels'],
+		'node_attrs': options['node_attrs'],
+		'edge_attrs': options['edge_attrs']
+	}
 	ged_mat = np.zeros((len(graphs), len(graphs)))
 	if parallel:
 		len_itr = int(len(graphs) * (len(graphs) - 1) / 2)
@@ -335,19 +407,27 @@ def _compute_geds_without_permutation(graphs,
 		else:
 			chunksize = 100
 
+
 		def init_worker(graphs_toshare, ged_env_toshare, listID_toshare):
 			global G_graphs, G_ged_env, G_listID
 			G_graphs = graphs_toshare
 			G_ged_env = ged_env_toshare
 			G_listID = listID_toshare
 
-		do_partial = partial(_wrapper_compute_ged_parallel, neo_options, sort,
-		                     repeats)
-		pool = Pool(processes=n_jobs, initializer=init_worker,
-		            initargs=(graphs, ged_env, listID))
-		iterator = get_iters(pool.imap_unordered(do_partial, itr, chunksize),
-		                     desc='computing GEDs', file=sys.stdout,
-		                     length=len_itr, verbose=verbose)
+
+		do_partial = partial(
+			_wrapper_compute_ged_parallel, neo_options, sort,
+			repeats
+		)
+		pool = Pool(
+			processes=n_jobs, initializer=init_worker,
+			initargs=(graphs, ged_env, listID)
+		)
+		iterator = get_iters(
+			pool.imap_unordered(do_partial, itr, chunksize),
+			desc='computing GEDs', file=sys.stdout,
+			length=len_itr, verbose=verbose
+		)
 		#		iterator = pool.imap_unordered(do_partial, itr, chunksize)
 		for i, j, dis, n_eo_tmp in iterator:
 			idx_itr = int(len(graphs) * i + j - (i + 1) * (i + 2) / 2)
@@ -363,33 +443,42 @@ def _compute_geds_without_permutation(graphs,
 	else:
 		ged_vec = []
 		n_edit_operations = []
-		iterator = get_iters(range(len(graphs)), desc='computing GEDs',
-		                     file=sys.stdout, length=len(graphs),
-		                     verbose=verbose)
+		iterator = get_iters(
+			range(len(graphs)), desc='computing GEDs',
+			file=sys.stdout, length=len(graphs),
+			verbose=verbose
+		)
 		for i in iterator:
 			#		for i in range(len(graphs)):
 			for j in range(i + 1, len(graphs)):
 				if nx.number_of_nodes(graphs[i]) <= nx.number_of_nodes(
-						graphs[j]) or not sort:
-					dis, pi_forward, pi_backward = _compute_ged(ged_env,
-					                                            listID[i],
-					                                            listID[j],
-					                                            graphs[i],
-					                                            graphs[j],
-					                                            repeats)
+						graphs[j]
+				) or not sort:
+					dis, pi_forward, pi_backward = _compute_ged(
+						ged_env,
+						listID[i],
+						listID[j],
+						graphs[i],
+						graphs[j],
+						repeats
+					)
 				else:
-					dis, pi_backward, pi_forward = _compute_ged(ged_env,
-					                                            listID[j],
-					                                            listID[i],
-					                                            graphs[j],
-					                                            graphs[i],
-					                                            repeats)
+					dis, pi_backward, pi_forward = _compute_ged(
+						ged_env,
+						listID[j],
+						listID[i],
+						graphs[j],
+						graphs[i],
+						repeats
+					)
 				ged_vec.append(dis)
 				ged_mat[i][j] = dis
 				ged_mat[j][i] = dis
-				n_eo_tmp = get_nb_edit_operations(graphs[i], graphs[j],
-				                                  pi_forward, pi_backward,
-				                                  **neo_options)
+				n_eo_tmp = get_nb_edit_operations(
+					graphs[i], graphs[j],
+					pi_forward, pi_backward,
+					**neo_options
+				)
 				n_edit_operations.append(n_eo_tmp)
 
 	return ged_vec, ged_mat, n_edit_operations
@@ -398,21 +487,29 @@ def _compute_geds_without_permutation(graphs,
 def _wrapper_compute_ged_parallel(options, sort, repeats, itr):
 	i = itr[0]
 	j = itr[1]
-	dis, n_eo_tmp = _compute_ged_parallel(G_ged_env, G_listID[i], G_listID[j],
-	                                      G_graphs[i], G_graphs[j], options,
-	                                      sort, repeats)
+	dis, n_eo_tmp = _compute_ged_parallel(
+		G_ged_env, G_listID[i], G_listID[j],
+		G_graphs[i], G_graphs[j], options,
+		sort, repeats
+	)
 	return i, j, dis, n_eo_tmp
 
 
 def _compute_ged_parallel(env, gid1, gid2, g1, g2, options, sort, repeats):
 	if nx.number_of_nodes(g1) <= nx.number_of_nodes(g2) or not sort:
-		dis, pi_forward, pi_backward = _compute_ged(env, gid1, gid2, g1, g2,
-		                                            repeats)
+		dis, pi_forward, pi_backward = _compute_ged(
+			env, gid1, gid2, g1, g2,
+			repeats
+		)
 	else:
-		dis, pi_backward, pi_forward = _compute_ged(env, gid2, gid1, g2, g1,
-		                                            repeats)
-	n_eo_tmp = get_nb_edit_operations(g1, g2, pi_forward, pi_backward,
-	                                  **options)  # [0,0,0,0,0,0]
+		dis, pi_backward, pi_forward = _compute_ged(
+			env, gid2, gid1, g2, g1,
+			repeats
+		)
+	n_eo_tmp = get_nb_edit_operations(
+		g1, g2, pi_forward, pi_backward,
+		**options
+	)  # [0,0,0,0,0,0]
 	return dis, n_eo_tmp
 
 
@@ -509,8 +606,10 @@ def get_nb_edit_operations(
 			raise Exception('Edit cost "', edit_cost, '" is not supported.')
 	else:
 		if edit_cost == 'LETTER' or edit_cost == 'LETTER2':
-			return get_nb_edit_operations_letter(g1, g2, forward_map,
-			                                     backward_map)
+			return get_nb_edit_operations_letter(
+				g1, g2, forward_map,
+				backward_map
+			)
 		elif edit_cost == 'NON_SYMBOLIC':
 			# Use node_labels and edge_labels if node_attrs and edge_attrs are
 			# not specified. Otherwise, set them to [].
@@ -528,8 +627,10 @@ def get_nb_edit_operations(
 				node_labels=node_labels, edge_labels=edge_labels
 			)
 		else:
-			return get_nb_edit_operations_symbolic(g1, g2, forward_map,
-			                                       backward_map)
+			return get_nb_edit_operations_symbolic(
+				g1, g2, forward_map,
+				backward_map
+			)
 
 
 def get_nb_edit_operations_symbolic(
@@ -667,7 +768,7 @@ def get_nb_edit_operations_symbolic_cml(
 	# insertions.
 	for nt, nf in g2.edges():
 		if (nt, nf) not in edges2_marked and (
-		nf, nt) not in edges2_marked:  # @todo: for directed.
+				nf, nt) not in edges2_marked:  # @todo: for directed.
 			label = tuple(g2.edges[(nt, nf)].items())
 			idx_label = edge_labels.index(label)  # @todo: faster
 			nb_ops_edge[0, idx_label + 1] += 1
@@ -715,9 +816,11 @@ def get_nb_edit_operations_letter(g1, g2, forward_map, backward_map):
 		else:
 			n_vs += 1
 			diff_x = float(g1.nodes[nodes1[i]]['x']) - float(
-				g2.nodes[map_i]['x'])
+				g2.nodes[map_i]['x']
+			)
 			diff_y = float(g1.nodes[nodes1[i]]['y']) - float(
-				g2.nodes[map_i]['y'])
+				g2.nodes[map_i]['y']
+			)
 			sod_vs += np.sqrt(np.square(diff_x) + np.square(diff_y))
 	for map_i in backward_map:
 		if map_i == np.inf:
@@ -768,7 +871,8 @@ def get_nb_edit_operations_nonsymbolic(
 			sum_squares = 0
 			for a_name in node_attrs:
 				diff = float(g1.nodes[nodes1[i]][a_name]) - float(
-					g2.nodes[map_i][a_name])
+					g2.nodes[map_i][a_name]
+				)
 				sum_squares += np.square(diff)
 			sod_vs += np.sqrt(sum_squares)
 	for map_i in backward_map:
@@ -792,7 +896,8 @@ def get_nb_edit_operations_nonsymbolic(
 			sum_squares = 0
 			for a_name in edge_attrs:
 				diff = float(g1.edges[n1, n2][a_name]) - float(
-					g2.edges[n1_g2, n2_g2][a_name])
+					g2.edges[n1_g2, n2_g2][a_name]
+				)
 				sum_squares += np.square(diff)
 			sod_es += np.sqrt(sum_squares)
 		elif (n2_g2, n1_g2) in g2.edges():
@@ -800,7 +905,8 @@ def get_nb_edit_operations_nonsymbolic(
 			sum_squares = 0
 			for a_name in edge_attrs:
 				diff = float(g1.edges[n2, n1][a_name]) - float(
-					g2.edges[n2_g2, n1_g2][a_name])
+					g2.edges[n2_g2, n1_g2][a_name]
+				)
 				sum_squares += np.square(diff)
 			sod_es += np.sqrt(sum_squares)
 		# corresponding nodes are in g2, however the edge is removed.

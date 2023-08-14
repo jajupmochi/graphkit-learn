@@ -19,13 +19,13 @@ def getSPLengths(G1):
 	return distances
 
 
-def getSPGraph(G, edge_weight=None):
+def get_sp_graph(G, edge_weight=None):
 	"""Transform graph G to its corresponding shortest-paths graph.
 
 	Parameters
 	----------
 	G : NetworkX graph
-		The graph to be tramsformed.
+		The graph to be transformed.
 	edge_weight : string
 		edge attribute corresponding to the edge weight.
 
@@ -42,6 +42,35 @@ def getSPGraph(G, edge_weight=None):
 	----------
 	.. [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
 	"""
+	return floydTransformation(G, edge_weight=edge_weight)
+
+
+def getSPGraph(G, edge_weight=None):
+	"""Transform graph G to its corresponding shortest-paths graph.
+
+	Parameters
+	----------
+	G : NetworkX graph
+		The graph to be transformed.
+	edge_weight : string
+		edge attribute corresponding to the edge weight.
+
+	Return
+	------
+	S : NetworkX graph
+		The shortest-paths graph corresponding to G.
+
+	Notes
+	------
+	For an input graph G, its corresponding shortest-paths graph S contains the same set of nodes as G, while there exists an edge between all nodes in S which are connected by a walk in G. Every edge in S between two nodes is labeled by the shortest distance between these two nodes.
+
+	References
+	----------
+	.. [1] Borgwardt KM, Kriegel HP. Shortest-path kernels on graphs. InData Mining, Fifth IEEE International Conference on 2005 Nov 27 (pp. 8-pp). IEEE.
+	"""
+	# Raise deprecated warning:
+	import warnings
+	warnings.warn("getSPGraph is deprecated, use get_sp_graph instead.", DeprecationWarning)
 	return floydTransformation(G, edge_weight=edge_weight)
 
 

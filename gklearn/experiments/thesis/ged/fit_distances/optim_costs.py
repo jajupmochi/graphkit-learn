@@ -4,6 +4,8 @@ import numpy as np
 # from tqdm import tqdm
 
 import sys
+
+
 # sys.path.insert(0, "../")
 
 
@@ -28,7 +30,9 @@ def optimize_costs_unlabeled(nb_cost_mat, dis_k_vec):
 	sub_sample = sub_sample[:MAX_SAMPLE]
 
 	x = cp.Variable(nb_cost_mat_m.shape[1])
-	cost = cp.sum_squares((nb_cost_mat_m[sub_sample, :] @ x) - dis_k_vec[sub_sample])
+	cost = cp.sum_squares(
+		(nb_cost_mat_m[sub_sample, :] @ x) - dis_k_vec[sub_sample]
+	)
 	prob = cp.Problem(cp.Minimize(cost), [x >= 0])
 	prob.solve()
 	edit_costs_new = [x.value[0], x.value[1], 0, x.value[2], x.value[3], 0]
@@ -50,8 +54,10 @@ def optimize_costs_classif_unlabeled(nb_cost_mat, Y):
 	from ml import reg_log
 	# import pickle
 	# pickle.dump([nb_cost_mat, Y], open('debug', 'wb'))
-	nb_cost_mat_m = np.array([[x[0], x[1], x[3], x[4]]
-							  for x in nb_cost_mat])
+	nb_cost_mat_m = np.array(
+		[[x[0], x[1], x[3], x[4]]
+		 for x in nb_cost_mat]
+	)
 	w, J, _ = reg_log(nb_cost_mat_m, Y, pos_contraint=True)
 	edit_costs_new = [w[0], w[1], 0, w[2], w[3], 0]
 	residual = J[-1]
@@ -66,7 +72,7 @@ def optimize_costs_classif(nb_cost_mat, Y):
 		:param nb_cost_mat: \in \mathbb{N}^{N x 6} encoding the number of edit operations for each pair of graph
 		:param dis_k_vec: {-1,1}^N vector of common classes
 	"""
-	#import pickle
+	# import pickle
 	# pickle.dump([nb_cost_mat, Y], open("test.pickle", "wb"))
 	from ml import reg_log
 	w, J, _ = reg_log(nb_cost_mat, Y, pos_contraint=True)
@@ -83,9 +89,11 @@ def optimize_costs(nb_cost_mat, dis_k_vec):
 	import cvxpy as cp
 	x = cp.Variable(nb_cost_mat.shape[1])
 	cost = cp.sum_squares((nb_cost_mat @ x) - dis_k_vec)
-	constraints = [x >= [0.01 for i in range(nb_cost_mat.shape[1])],
-				   np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T@x >= 0.0,
-				   np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T@x >= 0.0]
+	constraints = [
+		x >= [0.01 for i in range(nb_cost_mat.shape[1])],
+		np.array([1.0, 1.0, -1.0, 0.0, 0.0, 0.0]).T @ x >= 0.0,
+		np.array([0.0, 0.0, 0.0, 1.0, 1.0, -1.0]).T @ x >= 0.0
+	]
 	prob = cp.Problem(cp.Minimize(cost), constraints)
 	prob.solve()
 	edit_costs_new = x.value
@@ -94,21 +102,25 @@ def optimize_costs(nb_cost_mat, dis_k_vec):
 	return edit_costs_new, residual
 
 
-def compute_optimal_costs(G, y, init_costs=[3, 3, 1, 3, 3, 1],
-						  y_distance=euclid_d,
-						  mode='reg', unlabeled=False,
-						  ed_method='BIPARTITE',
-						  **kwargs):
+def compute_optimal_costs(
+		G, y, init_costs=[3, 3, 1, 3, 3, 1],
+		y_distance=euclid_d,
+		mode='reg', unlabeled=False,
+		ed_method='BIPARTITE',
+		**kwargs
+):
 	N = len(y)
 
 	G_pairs = []
 	distances_vec = []
 
 	for i in range(N):
-		for j in range(i+1, N):
+		for j in range(i + 1, N):
 			G_pairs.append([i, j])
 			distances_vec.append(y_distance(y[i], y[j]))
-	ged_vec_init, n_edit_operations = compute_geds(G_pairs, G, init_costs, ed_method, **kwargs)
+	ged_vec_init, n_edit_operations = compute_geds(
+		G_pairs, G, init_costs, ed_method, **kwargs
+	)
 
 	residual_list = [sum_squares(ged_vec_init, distances_vec)]
 
@@ -129,8 +141,11 @@ def compute_optimal_costs(G, y, init_costs=[3, 3, 1, 3, 3, 1],
 		print('ite', i + 1, '/', ite_max, ':')
 		# compute GEDs and numbers of edit operations.
 		edit_costs_new, residual = method_optim(
-			np.array(n_edit_operations), distances_vec)
-		ged_vec, n_edit_operations = compute_geds(G_pairs, G, edit_costs_new, ed_method, **kwargs)
+			np.array(n_edit_operations), distances_vec
+		)
+		ged_vec, n_edit_operations = compute_geds(
+			G_pairs, G, edit_costs_new, ed_method, **kwargs
+		)
 		residual_list.append(sum_squares(ged_vec, distances_vec))
 
 	return edit_costs_new

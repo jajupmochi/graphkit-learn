@@ -2,3 +2,4 @@
 spython:S3776"TRefactor this function to reduce its Cognitive Complexity from 32 to the 15 allowed.(ÿØëÖ8 ·ªíù0
 lpython:S117E"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(©ôæ³8 ·ªíù0
 qpython:S117E"SRename this parameter "Kmatrix" to match the regular expression ^[_a-z][a-z0-9_]*$.(©ôæ³8 ·ªíù0
+lpython:S117Y"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‘’ÅÝ8÷ÎªŽþ0

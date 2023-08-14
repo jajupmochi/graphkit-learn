@@ -26,17 +26,21 @@ def evaluate_D(D_app, y_app, D_test, y_test, mode='reg'):
 		'n_neighbors': [3, 5, 7, 9, 11]
 	}
 
-	clf = GridSearchCV(knn, param_grid=grid_params,
-					   scoring=scoring,
-					   cv=5, return_train_score=True, refit=True)
+	clf = GridSearchCV(
+		knn, param_grid=grid_params,
+		scoring=scoring,
+		cv=5, return_train_score=True, refit=True
+	)
 	clf.fit(D_app, y_app)
 	y_pred_app = clf.predict(D_app)
 	y_pred_test = clf.predict(D_test)
 	return perf_eval(y_pred_app, y_app), perf_eval(y_pred_test, y_test), clf
 
 
-def xp_knn(Gn, y_all, y_distance=euclid_d,
-		   mode='reg', unlabeled=False, ed_method='BIPARTITE', **kwargs):
+def xp_knn(
+		Gn, y_all, y_distance=euclid_d,
+		mode='reg', unlabeled=False, ed_method='BIPARTITE', **kwargs
+):
 	'''
 	Perform a knn regressor on given dataset
 	'''
@@ -66,21 +70,28 @@ def xp_knn(Gn, y_all, y_distance=euclid_d,
 		i = i + 1
 		cur_results = {}
 		# Get splitted data
-		G_app, G_test, y_app, y_test = split_data(Gn, y_all,
-												  train_index, test_index)
+		G_app, G_test, y_app, y_test = split_data(
+			Gn, y_all,
+			train_index, test_index
+		)
 
 		cur_results['y_app'] = y_app
 		cur_results['y_test'] = y_test
 
 		# Feed distances will all methods to compare
 		distances = {}
-		distances['random'] = compute_D_random(G_app, G_test, ed_method, **kwargs)
-		distances['expert'] = compute_D_expert(G_app, G_test, ed_method, **kwargs)
+		distances['random'] = compute_D_random(
+			G_app, G_test, ed_method, **kwargs
+		)
+		distances['expert'] = compute_D_expert(
+			G_app, G_test, ed_method, **kwargs
+		)
 		distances['fitted'] = compute_D_fitted(
 			G_app, y_app, G_test,
 			y_distance=y_distance,
 			mode=mode, unlabeled=unlabeled, ed_method=ed_method,
-			**kwargs)
+			**kwargs
+		)
 
 		for setup in distances.keys():
 			print("{0} Mode".format(setup))
@@ -91,7 +102,8 @@ def xp_knn(Gn, y_all, y_distance=euclid_d,
 			setup_results['edit_costs'] = edit_costs
 			print(edit_costs)
 			perf_app, perf_test, clf = evaluate_D(
-				D_app, y_app, D_test, y_test, mode)
+				D_app, y_app, D_test, y_test, mode
+			)
 
 			setup_results['perf_app'] = perf_app
 			setup_results['perf_test'] = perf_test
@@ -99,10 +111,14 @@ def xp_knn(Gn, y_all, y_distance=euclid_d,
 
 			print(
 				"Learning performance with {1} costs : {0:.2f}".format(
-					perf_app, setup))
+					perf_app, setup
+				)
+			)
 			print(
 				"Test performance with {1} costs : {0:.2f}".format(
-					perf_test, setup))
+					perf_test, setup
+				)
+			)
 			cur_results[setup] = setup_results
 		results.append(cur_results)
 	return results

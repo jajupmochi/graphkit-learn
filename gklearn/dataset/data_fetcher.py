@@ -12,7 +12,6 @@ Created on Tue Oct 20 14:25:49 2020
 """
 import os
 import os.path as osp
-import urllib
 import tarfile
 from zipfile import ZipFile
 # from gklearn.utils.graphfiles import loadDataset
@@ -27,7 +26,7 @@ import re
 from gklearn.dataset import DATABASES, DATASET_META
 
 
-class DataFetcher():
+class DataFetcher(object):
 
 	def __init__(self, name=None, root='datasets', reload=False, verbose=False):
 		self._name = name
@@ -36,39 +35,49 @@ class DataFetcher():
 			os.makedirs(self._root)
 		self._reload = reload
 		self._verbose = verbose
-# 		self.has_train_valid_test = {
-# 			"Coil_Del" : ('COIL-DEL/data/test.cxl','COIL-DEL/data/train.cxl','COIL-DEL/data/valid.cxl'),
-# 			"Coil_Rag" : ('COIL-RAG/data/test.cxl','COIL-RAG/data/train.cxl','COIL-RAG/data/valid.cxl'),
-# 			"Fingerprint" : ('Fingerprint/data/test.cxl','Fingerprint/data/train.cxl','Fingerprint/data/valid.cxl'),
-# # 			"Grec" : ('GREC/data/test.cxl','GREC/data/train.cxl','GREC/data/valid.cxl'),
-# 			"Letter" : {'HIGH' : ('Letter/HIGH/test.cxl','Letter/HIGH/train.cxl','Letter/HIGH/validation.cxl'),
-# 						'MED' : ('Letter/MED/test.cxl','Letter/MED/train.cxl','Letter/MED/validation.cxl'),
-# 						'LOW' : ('Letter/LOW/test.cxl','Letter/LOW/train.cxl','Letter/LOW/validation.cxl')
-# 					   },
-# 			"Mutagenicity" : ('Mutagenicity/data/test.cxl','Mutagenicity/data/train.cxl','Mutagenicity/data/validation.cxl'),
-# # 			"Pah" : ['PAH/testset_0.ds','PAH/trainset_0.ds'],
-# 			"Protein" : ('Protein/data/test.cxl','Protein/data/train.cxl','Protein/data/valid.cxl'),
-# # 			"Web" : ('Web/data/test.cxl','Web/data/train.cxl','Web/data/valid.cxl')
-# 		}
+		# 		self.has_train_valid_test = {
+		# 			"Coil_Del" : ('COIL-DEL/data/test.cxl','COIL-DEL/data/train.cxl','COIL-DEL/data/valid.cxl'),
+		# 			"Coil_Rag" : ('COIL-RAG/data/test.cxl','COIL-RAG/data/train.cxl','COIL-RAG/data/valid.cxl'),
+		# 			"Fingerprint" : ('Fingerprint/data/test.cxl','Fingerprint/data/train.cxl','Fingerprint/data/valid.cxl'),
+		# # 			"Grec" : ('GREC/data/test.cxl','GREC/data/train.cxl','GREC/data/valid.cxl'),
+		# 			"Letter" : {'HIGH' : ('Letter/HIGH/test.cxl','Letter/HIGH/train.cxl','Letter/HIGH/validation.cxl'),
+		# 						'MED' : ('Letter/MED/test.cxl','Letter/MED/train.cxl','Letter/MED/validation.cxl'),
+		# 						'LOW' : ('Letter/LOW/test.cxl','Letter/LOW/train.cxl','Letter/LOW/validation.cxl')
+		# 					   },
+		# 			"Mutagenicity" : ('Mutagenicity/data/test.cxl','Mutagenicity/data/train.cxl','Mutagenicity/data/validation.cxl'),
+		# # 			"Pah" : ['PAH/testset_0.ds','PAH/trainset_0.ds'],
+		# 			"Protein" : ('Protein/data/test.cxl','Protein/data/train.cxl','Protein/data/valid.cxl'),
+		# # 			"Web" : ('Web/data/test.cxl','Web/data/train.cxl','Web/data/valid.cxl')
+		# 		}
 
 		if self._name is None:
 			if self._verbose:
-				print('No dataset name entered. All possible datasets will be loaded.')
+				print(
+					'No dataset name entered. All possible datasets will be loaded.'
+				)
 			self._name, self._path = [], []
 			for idx, ds_name in enumerate(DATASET_META):
 				if self._verbose:
-					print(str(idx + 1), '/', str(len(DATASET_META)), 'Fetching', ds_name, end='... ')
+					print(
+						str(idx + 1), '/', str(len(DATASET_META)), 'Fetching',
+						ds_name, end='... '
+					)
 				self._name.append(ds_name)
 				success = self.write_archive_file(ds_name)
 				if success:
 					self._path.append(self.open_files(ds_name))
 				else:
 					self._path.append(None)
-				if self._verbose and self._path[-1] is not None and not self._reload:
+				if self._verbose and self._path[
+					-1] is not None and not self._reload:
 					print('Fetched.')
 
 			if self._verbose:
-				print('Finished.', str(sum(v is not None for v in self._path)), 'of', str(len(self._path)), 'datasets are successfully fetched.')
+				print(
+					'Finished.', str(sum(v is not None for v in self._path)),
+					'of', str(len(self._path)),
+					'datasets are successfully fetched.'
+				)
 
 		elif self._name not in DATASET_META:
 			message = 'Invalid dataset name "' + self._name + '".'
@@ -81,45 +90,50 @@ class DataFetcher():
 			self.write_archive_file(self._name)
 			self._path = self.open_files(self._name)
 
-# 		self.max_for_letter = 0
-# 		if mode == 'Pytorch':
-# 			if self._name in self.data_to_use_in_datasets :
-# 				Gs,y = self.dataset
-# 				inputs,adjs,y = self.from_networkx_to_pytorch(Gs,y)
-# 				#print(inputs,adjs)
-# 				self.pytorch_dataset = inputs,adjs,y
-# 			elif self._name == "Pah":
-# 				self.pytorch_dataset = []
-# 				test,train = self.dataset
-# 				Gs_test,y_test = test
-# 				Gs_train,y_train = train
-# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
-# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
-# 			elif self._name in self.has_train_valid_test:
-# 				self.pytorch_dataset = []
-# 				#[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])
-# 				test,train,valid = self.dataset
-# 				Gs_test,y_test = test
-#
-# 				Gs_train,y_train = train
-# 				Gs_valid,y_valid = valid
-# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
-# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
-# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_valid,y_valid))
-# 			#############
-# 			"""
-# 			for G in Gs :
-# 				for e in G.edges():
-# 					print(G[e[0]])
-# 			"""
-# 			##############
 
+	# 		self.max_for_letter = 0
+	# 		if mode == 'Pytorch':
+	# 			if self._name in self.data_to_use_in_datasets :
+	# 				Gs,y = self.dataset
+	# 				inputs,adjs,y = self.from_networkx_to_pytorch(Gs,y)
+	# 				#print(inputs,adjs)
+	# 				self.pytorch_dataset = inputs,adjs,y
+	# 			elif self._name == "Pah":
+	# 				self.pytorch_dataset = []
+	# 				test,train = self.dataset
+	# 				Gs_test,y_test = test
+	# 				Gs_train,y_train = train
+	# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
+	# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
+	# 			elif self._name in self.has_train_valid_test:
+	# 				self.pytorch_dataset = []
+	# 				#[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])
+	# 				test,train,valid = self.dataset
+	# 				Gs_test,y_test = test
+	#
+	# 				Gs_train,y_train = train
+	# 				Gs_valid,y_valid = valid
+	# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_test,y_test))
+	# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_train,y_train))
+	# 				self.pytorch_dataset.append(self.from_networkx_to_pytorch(Gs_valid,y_valid))
+	# 			#############
+	# 			"""
+	# 			for G in Gs :
+	# 				for e in G.edges():
+	# 					print(G[e[0]])
+	# 			"""
+	# 			##############
 
 	def download_file(self, url):
-		try :
+		import urllib.request
+		import urllib.error
+		try:
 			response = urllib.request.urlopen(url)
 		except urllib.error.HTTPError:
-			print('"', url.split('/')[-1], '" is not available or incorrect http link.')
+			print(
+				'"', url.split('/')[-1],
+				'" is not available or incorrect http link.'
+			)
 			return
 		except urllib.error.URLError:
 			print('Network is unreachable.')
@@ -129,7 +143,7 @@ class DataFetcher():
 
 	def write_archive_file(self, ds_name):
 		path = osp.join(self._root, ds_name)
-# 		filename_dir = osp.join(path,filename)
+		# 		filename_dir = osp.join(path,filename)
 		if not osp.exists(path) or self._reload:
 			url = DATASET_META[ds_name]['url']
 			response = self.download_file(url)
@@ -144,7 +158,8 @@ class DataFetcher():
 
 	def open_files(self, ds_name=None):
 		if ds_name is None:
-			ds_name = (self._name if isinstance(self._name, str) else self._name[0])
+			ds_name = (
+				self._name if isinstance(self._name, str) else self._name[0])
 		filename = DATASET_META[ds_name]['url'].split('/')[-1]
 		path = osp.join(self._root, ds_name)
 		filename_archive = osp.join(path, filename)
@@ -154,9 +169,11 @@ class DataFetcher():
 				with tarfile.open(filename_archive, 'r:gz') as tar:
 					if self._reload and self._verbose:
 						print(filename + ' Downloaded.')
-					subpath = os.path.join(path, tar.getnames()[0].split('/')[0])
+					subpath = os.path.join(
+						path, tar.getnames()[0].split('/')[0]
+					)
 					if not osp.exists(subpath) or self._reload:
-						tar.extractall(path = path)
+						tar.extractall(path=path)
 					return subpath
 		elif filename.endswith('.tar'):
 			if tarfile.is_tarfile(filename_archive):
@@ -165,7 +182,7 @@ class DataFetcher():
 						print(filename + ' Downloaded.')
 					subpath = os.path.join(path, tar.getnames()[0])
 					if not osp.exists(subpath) or self._reload:
-						tar.extractall(path = path)
+						tar.extractall(path=path)
 					return subpath
 		elif filename.endswith('.zip'):
 			with ZipFile(filename_archive, 'r') as zip_ref:
@@ -212,12 +229,17 @@ class DataFetcher():
 		-------
 		None.
 		"""
+		import urllib.request
+		import urllib.error
 		from lxml import etree
 
 		try:
 			response = urllib.request.urlopen(DATABASES['tudataset'])
 		except urllib.error.HTTPError:
-			print('The URL of the database "TUDataset" is not available:\n' + DATABASES['tudataset'])
+			print(
+				'The URL of the database "TUDataset" is not available:\n' +
+				DATABASES['tudataset']
+				)
 
 		infos = {}
 
@@ -284,14 +306,16 @@ class DataFetcher():
 					'task_type': task_type,
 					'ave_node_num': float(td_node[4].text.strip()),
 					'ave_edge_num': float(td_node[5].text.strip()),
-					'node_labeled': True if td_node[6].text.strip() == '+' else False,
-					'edge_labeled': True if td_node[7].text.strip() == '+' else False,
+					'node_labeled': True if td_node[
+						                        6].text.strip() == '+' else False,
+					'edge_labeled': True if td_node[
+						                        7].text.strip() == '+' else False,
 					'node_attr_dim': node_attr_dim,
 					'geometry': geometry,
 					'edge_attr_dim': edge_attr_dim,
 					'url': url,
 					'domain': domain
-					}
+				}
 
 		return infos
 
@@ -329,27 +353,9 @@ class DataFetcher():
 		return self._path
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	def dataset(self):
 		if self.mode == "Tensorflow":
-			return #something
+			return  # something
 		if self.mode == "Pytorch":
 			return self.pytorch_dataset
 		return self.dataset
@@ -359,72 +365,108 @@ class DataFetcher():
 		print(self.info_dataset[self._name])
 
 
-	def iter_load_dataset(self,data):
+	def iter_load_dataset(self, data):
 		results = []
-		for datasets in data :
-			results.append(loadDataset(osp.join(self._root,self._name,datasets)))
+		for datasets in data:
+			results.append(
+				loadDataset(osp.join(self._root, self._name, datasets))
+			)
 		return results
 
 
-	def load_dataset(self,list_files):
+	def load_dataset(self, list_files):
 		if self._name == "Ptc":
-			if type(self.option) != str or self.option.upper() not in ['FR','FM','MM','MR']:
-				raise ValueError('option for Ptc dataset needs to be one of : \n fr fm mm mr')
+			if type(self.option) != str or self.option.upper() not in ['FR',
+			                                                           'FM',
+			                                                           'MM',
+			                                                           'MR']:
+				raise ValueError(
+					'option for Ptc dataset needs to be one of : \n fr fm mm mr'
+				)
 			results = []
-			results.append(loadDataset(osp.join(self.root,self._name,'PTC/Test',self.gender + '.ds')))
-			results.append(loadDataset(osp.join(self.root,self._name,'PTC/Train',self.gender + '.ds')))
+			results.append(
+				loadDataset(
+					osp.join(
+						self.root, self._name, 'PTC/Test', self.gender + '.ds'
+					                                       )
+				)
+			)
+			results.append(
+				loadDataset(
+					osp.join(
+						self.root, self._name, 'PTC/Train', self.gender + '.ds'
+					                                        )
+				)
+			)
 			return results
 		if self.name == "Pah":
 			maximum_sets = 0
 			for file in list_files:
 				if file.endswith('ds'):
-					maximum_sets = max(maximum_sets,int(file.split('_')[1].split('.')[0]))
+					maximum_sets = max(
+						maximum_sets, int(file.split('_')[1].split('.')[0])
+					)
 			self.max_for_letter = maximum_sets
-			if not type(self.option) == int or self.option > maximum_sets or self.option < 0:
-				raise ValueError('option needs to be an integer between 0 and ' + str(maximum_sets))
+			if not type(
+					self.option
+			) == int or self.option > maximum_sets or self.option < 0:
+				raise ValueError(
+					'option needs to be an integer between 0 and ' + str(
+						maximum_sets
+					)
+					)
 			data = self.has_train_valid_test["Pah"]
-			data[0] = self.has_train_valid_test["Pah"][0].split('_')[0] + '_' + str(self.option) + '.ds'
-			data[1] = self.has_train_valid_test["Pah"][1].split('_')[0] + '_' + str(self.option) + '.ds'
+			data[0] = self.has_train_valid_test["Pah"][0].split('_')[
+				          0] + '_' + str(self.option) + '.ds'
+			data[1] = self.has_train_valid_test["Pah"][1].split('_')[
+				          0] + '_' + str(self.option) + '.ds'
 			return self.iter_load_dataset(data)
 		if self.name == "Letter":
-			if type(self.option) == str and self.option.upper() in self.has_train_valid_test["Letter"]:
+			if type(self.option) == str and self.option.upper() in \
+					self.has_train_valid_test["Letter"]:
 				data = self.has_train_valid_test["Letter"][self.option.upper()]
 			else:
 				message = "The parameter for letter is incorrect choose between : "
 				message += "\nhigh  med  low"
 				raise ValueError(message)
 			return self.iter_load_dataset(data)
-		if self.name in self.has_train_valid_test : #common IAM dataset with train, valid and test
+		if self.name in self.has_train_valid_test:  # common IAM dataset with train, valid and test
 			data = self.has_train_valid_test[self.name]
 			return self.iter_load_dataset(data)
-		else:  #common dataset without train,valid and test, only dataset.ds file
+		else:  # common dataset without train,valid and test, only dataset.ds file
 			data = self.data_to_use_in_datasets[self.name]
-			if len(data) > 1 and data[0] in list_files and data[1] in list_files: #case for Alkane
-				return loadDataset(osp.join(self.root,self.name,data[0]),filename_y = osp.join(self.root,self.name,data[1]))
+			if len(data) > 1 and data[0] in list_files and data[
+				1] in list_files:  # case for Alkane
+				return loadDataset(
+					osp.join(self.root, self.name, data[0]),
+					filename_y=osp.join(self.root, self.name, data[1])
+				)
 			if data in list_files:
-				return loadDataset(osp.join(self.root,self.name,data))
+				return loadDataset(osp.join(self.root, self.name, data))
 
 
-	def build_dictionary(self,Gs):
+	def build_dictionary(self, Gs):
 		labels = set()
-		#next line : from DeepGraphWithNNTorch
-		#bond_type_number_maxi = int(max(max([[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])))
+		# next line : from DeepGraphWithNNTorch
+		# bond_type_number_maxi = int(max(max([[G[e[0]][e[1]]['bond_type'] for e in G.edges()] for G in Gs])))
 		sizes = set()
-		for G in Gs :
-			for _,node in G.nodes(data = True): # or for node in nx.nodes(G)
-				#print(_,node)
-				labels.add(node["label"][0]) # labels.add(G.nodes[node]["label"][0])   #what do we use for IAM datasets (they don't have bond_type or event label) ?
+		for G in Gs:
+			for _, node in G.nodes(data=True):  # or for node in nx.nodes(G)
+				# print(_,node)
+				labels.add(
+					node["label"][0]
+				)  # labels.add(G.nodes[node]["label"][0])   #what do we use for IAM datasets (they don't have bond_type or event label) ?
 			sizes.add(G.order())
 		label_dict = {}
-		#print("labels : ", labels, bond_type_number_maxi)
-		for i,label in enumerate(labels):
-			label_dict[label] = [0.]*len(labels)
+		# print("labels : ", labels, bond_type_number_maxi)
+		for i, label in enumerate(labels):
+			label_dict[label] = [0.] * len(labels)
 			label_dict[label][i] = 1.
 		return label_dict
 
 
-	def from_networkx_to_pytorch(self,Gs,y):
-		#exemple for MAO: atom_to_onehot = {'C': [1., 0., 0.], 'N': [0., 1., 0.], 'O': [0., 0., 1.]}
+	def from_networkx_to_pytorch(self, Gs, y):
+		# exemple for MAO: atom_to_onehot = {'C': [1., 0., 0.], 'N': [0., 1., 0.], 'O': [0., 0., 1.]}
 		# code from https://github.com/bgauzere/pygnn/blob/master/utils.py
 		atom_to_onehot = self.build_dictionary(Gs)
 		max_size = 30
@@ -432,47 +474,51 @@ class DataFetcher():
 		inputs = []
 		for i, G in enumerate(Gs):
 			I = torch.eye(G.order(), G.order())
-			#A = torch.Tensor(nx.adjacency_matrix(G).todense())
-			#A = torch.Tensor(nx.to_numpy_matrix(G))
-			A = torch.tensor(nx.to_scipy_sparse_matrix(G,dtype = int,weight = 'bond_type').todense(),dtype = torch.int)  #what do we use for IAM datasets (they don't have bond_type or event label) ?
-			adj = F.pad(A, pad=(0, max_size-G.order(), 0, max_size-G.order()))  #add I now ? if yes : F.pad(A + I,pad = (...))
+			# A = torch.Tensor(nx.adjacency_matrix(G).todense())
+			# A = torch.Tensor(nx.to_numpy_matrix(G))
+			A = torch.tensor(
+				nx.to_scipy_sparse_matrix(
+					G, dtype=int, weight='bond_type'
+				).todense(), dtype=torch.int
+			)  # what do we use for IAM datasets (they don't have bond_type or event label) ?
+			adj = F.pad(
+				A, pad=(0, max_size - G.order(), 0, max_size - G.order())
+			)  # add I now ? if yes : F.pad(A + I,pad = (...))
 			adjs.append(adj)
 
 			f_0 = []
 			for _, label in G.nodes(data=True):
-				#print(_,label)
+				# print(_,label)
 				cur_label = atom_to_onehot[label['label'][0]].copy()
 				f_0.append(cur_label)
 
-			X = F.pad(torch.Tensor(f_0), pad=(0, 0, 0, max_size-G.order()))
+			X = F.pad(torch.Tensor(f_0), pad=(0, 0, 0, max_size - G.order()))
 			inputs.append(X)
-		return inputs,adjs,y
+		return inputs, adjs, y
 
 
-	def from_pytorch_to_tensorflow(self,batch_size):
+	def from_pytorch_to_tensorflow(self, batch_size):
 		seed = random.randrange(sys.maxsize)
 		random.seed(seed)
-		tf_inputs = random.sample(self.pytorch_dataset[0],batch_size)
+		tf_inputs = random.sample(self.pytorch_dataset[0], batch_size)
 		random.seed(seed)
-		tf_y = random.sample(self.pytorch_dataset[2],batch_size)
+		tf_y = random.sample(self.pytorch_dataset[2], batch_size)
 
 
-	def from_networkx_to_tensor(self,G,dict):
-		A=nx.to_numpy_matrix(G)
-		lab=[dict[G.nodes[v]['label'][0]] for v in nx.nodes(G)]
-		return (torch.tensor(A).view(1,A.shape[0]*A.shape[1]),torch.tensor(lab))
+	def from_networkx_to_tensor(self, G, dict):
+		A = nx.to_numpy_matrix(G)
+		lab = [dict[G.nodes[v]['label'][0]] for v in nx.nodes(G)]
+		return (
+		torch.tensor(A).view(1, A.shape[0] * A.shape[1]), torch.tensor(lab))
 
+# dataset= selfopen_files()
+# print(build_dictionary(Gs))
+# dic={'C':0,'N':1,'O':2}
+# A,labels=from_networkx_to_tensor(Gs[13],dic)
+# print(nx.to_numpy_matrix(Gs[13]),labels)
+# print(A,labels)
 
-
-
-	#dataset= selfopen_files()
-	#print(build_dictionary(Gs))
-	#dic={'C':0,'N':1,'O':2}
-	#A,labels=from_networkx_to_tensor(Gs[13],dic)
-	#print(nx.to_numpy_matrix(Gs[13]),labels)
-	#print(A,labels)
-
-	#@todo : from_networkx_to_tensorflow
+# @todo : from_networkx_to_tensorflow
 
 
 # dataloader = DataLoader('Acyclic',root = "database",option = 'high',mode = "Pytorch")
@@ -501,35 +547,6 @@ class DataFetcher():
 # #print(from_networkx_to_tensor(Gs[7],{'C': [1., 0., 0.], 'N': [0., 1., 0.], 'O': [0., 0., 1.]}))
 
 # #dataset.open_files()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # import os
@@ -926,45 +943,6 @@ class DataFetcher():
 # """
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # from pathlib import Path
 
 # DATA_PATH = Path("data")
@@ -1057,35 +1035,6 @@ class DataFetcher():
 # 				write_archive_file(database)
 # 		print('Finished')
 # import_datasets()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # class GraphFetcher(object):

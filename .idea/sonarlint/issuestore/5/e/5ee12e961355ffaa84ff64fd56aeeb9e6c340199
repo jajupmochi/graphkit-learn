@@ -1,0 +1,27 @@
+
+upython:S1192Â"PDefine a constant instead of duplicating this literal 'solver status: ' 4 times.(Ìˆò÷ùÿÿÿÿ8²”®ş0
+apython:S112l">Replace this generic exception class with a more specific one.(·â• úÿÿÿÿ8³”®ş0
+Cpython:S125º"Remove this commented out code.(õÁœæúÿÿÿÿ8³”®ş0
+ypython:S3776¾"TRefactor this function to reduce its Cognitive Complexity from 49 to the 15 allowed.(êĞòÆùÿÿÿÿ8³”®ş0
+Hpython:S108ú")Either remove or fill this block of code.(ã‘Û¾8¸”®ş0
+tpython:S3776ı"TRefactor this function to reduce its Cognitive Complexity from 38 to the 15 allowed.(Öª»ï8¹”®ş0
+gpython:S1763ş"GDelete this unreachable code or refactor the code to make it reachable.(ã‘Û¾8¹”®ş0
+lpython:S1763«"GDelete this unreachable code or refactor the code to make it reachable.(¹‹ûÀıÿÿÿÿ8¹”®ş0
+ypython:S3776ú"TRefactor this function to reduce its Cognitive Complexity from 70 to the 15 allowed.(¾¦ÉŞúÿÿÿÿ8º”®ş0
+<python:S2772ş"Remove this unneeded "pass".(ã‘Û¾8»”®ş0
+bpython:S112ı">Replace this generic exception class with a more specific one.(ş—Ä­ùÿÿÿÿ8»”®ş0
+Jpython:S1481ë"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Cpython:S125›"Remove this commented out code.(ÒÛÙÎıÿÿÿÿ8»”®ş0
+Jpython:S1481×"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481˜"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481¡"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481ª"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481³"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Jpython:S1481Ş"%Remove the unused local variable "i".(ı¿Úşÿÿÿÿ8»”®ş0
+Dpython:S1481ƒ"%Remove the unused local variable "i".(Áúàj8¼”®ş0
+bpython:S112“">Replace this generic exception class with a more specific one.(„Å°¹şÿÿÿÿ8¼”®ş0
+ypython:S3776»"TRefactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.(³×Œüÿÿÿÿ8¼”®ş0
+Rpython:S1940ğ"-Use the opposite operator ("not in") instead.(‘­Íùÿÿÿÿ8¼”®ş0
+qpython:S117¹"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(‘À´Ğÿÿÿÿÿ8¼”®ş0
+zpython:S117½"VRename this local variable "G_new" to match the regular expression ^[_a-z][a-z0-9_]*$.(±ßß£ûÿÿÿÿ8¼”®ş0
