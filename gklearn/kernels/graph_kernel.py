@@ -13,7 +13,7 @@ import time
 from sklearn.base import BaseEstimator  # , TransformerMixin
 from sklearn.utils.validation import check_is_fitted  # check_X_y, check_array,
 from sklearn.exceptions import NotFittedError
-from gklearn.utils import normalize_gram_matrix
+from gklearn.utils import normalize_gram_matrix, is_basic_python_type
 
 
 class GraphKernel(BaseEstimator):  # , ABC):
@@ -231,17 +231,22 @@ class GraphKernel(BaseEstimator):  # , ABC):
 				else:
 					continue
 
-			# if the attribute is a simple type, add it to dict:
-			if not hasattr(value, '__dict__'):
-				params[key] = value
-			# if the attribute is a function, add its name to dict:
+			# If the attribute is a function, add its name to dict:
 			elif hasattr(value, '__call__'):
 				params[key] = value.__name__
-			# if the attribute is a class, add its name and params to dict:
-			else:
+
+			# If the attribute is a class, add its name and params to dict:
+			elif hasattr(value, '__dict__'):
 				params[key] = dict()
 				params[key]['name'] = value.__class__.__name__
 				params[key]['params'] = value.get_params()
+
+			# If the attribute is a basic type, add it to dict:
+			elif is_basic_python_type(value, deep=True):
+				params[key] = value
+
+			# Otherwise, do nothing.
+
 		return params
 
 

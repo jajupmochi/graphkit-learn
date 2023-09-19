@@ -842,3 +842,83 @@ class SpecialLabel(Enum):
 	"""
 	DUMMY = 1 # The dummy label.
 	# DUMMY = auto # enum.auto does not exist in Python 3.5.
+
+
+#%%
+
+
+def check_json_serializable(
+		obj,
+		deep: bool = False,
+) -> bool:
+	"""Check if an object is JSON serializable.
+
+	Parameters
+	----------
+	obj : object
+		The object to be checked.
+
+	deep : bool, optional
+		Whether to check the object recursively when `obj` is iterable.
+		The default is False.
+
+	Returns
+	-------
+	bool
+		True if the object is JSON serializable, False otherwise.
+	"""
+	import json
+	try:
+		json.dumps(obj)
+	except TypeError:
+		return False
+	else:
+		if deep and hasattr(obj, '__iter__'):
+			for item in obj:
+				if not check_json_serializable(item, deep=True):
+					return False
+		return True
+
+
+def is_basic_python_type(
+		obj,
+		type_list: list = None,
+		deep: bool = False,
+) -> bool:
+	"""Check if an object is a basic type in Python.
+
+	Parameters
+	----------
+	obj : object
+		The object to be checked.
+
+	type_list : list, optional
+		The list of basic types in Python. The default is None, which means
+		the default basic types are used. The default basic types include
+		`int`, `float`, `complex`, `str`, `bool`, `NoneType`, `list`,
+		`tuple`, `dict`, `set`, `frozenset`, `range`, `slice`.
+
+	deep : bool, optional
+		Whether to check the object recursively when `obj` is iterable.
+		The default is False.
+
+	Returns
+	-------
+	bool
+		True if the object is a basic type in Python, False otherwise.
+	"""
+	if type_list is None:
+		type_list = [
+			int, float, complex, str, bool, type(None), list, tuple, dict,
+			set, frozenset, range, slice
+		]
+	if not hasattr(obj, '__iter__') or isinstance(obj, (str, bytes)):
+		return type(obj) in type_list
+	else:
+		if deep:
+			for item in obj:
+				if not is_basic_python_type(item, type_list=type_list, deep=True):
+					return False
+			return True
+		else:
+			return False
