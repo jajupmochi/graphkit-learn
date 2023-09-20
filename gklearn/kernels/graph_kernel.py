@@ -253,7 +253,7 @@ class GraphKernel(BaseEstimator):  # , ABC):
 					cur_params[key] = str(value)
 				# Otherwise, add its name to dict:
 				else:
-					cur_params[key] = value.__name__
+					cur_params[key] = value.__module__ + '.' + value.__name__
 
 			# If the attribute is a class, add its name and params to dict:
 			elif hasattr(value, '__dict__'):
