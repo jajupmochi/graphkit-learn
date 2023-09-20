@@ -5,14 +5,18 @@ Created on Mon Mar 30 11:52:47 2020
 
 @author: ljia
 """
+import time
+import functools
+import multiprocessing
+
 import numpy as np
 import networkx as nx
-import multiprocessing
-import time
 # from abc import ABC, abstractmethod
+
 from sklearn.base import BaseEstimator  # , TransformerMixin
 from sklearn.utils.validation import check_is_fitted  # check_X_y, check_array,
 from sklearn.exceptions import NotFittedError
+
 from gklearn.utils import normalize_gram_matrix, is_basic_python_type
 
 
@@ -192,7 +196,8 @@ class GraphKernel(BaseEstimator):  # , ABC):
 	def get_params(
 			self,
 			with_graphs: bool = False,
-			with_ndarray: bool = False
+			with_ndarray: bool = False,
+			check_json_serializable: bool = True
 	):
 		"""Get parameters for this estimator.
 
@@ -204,48 +209,77 @@ class GraphKernel(BaseEstimator):  # , ABC):
 		with_ndarray : bool, optional
 			Whether to include the ndarray. Default: False.
 
+		check_json_serializable : bool, optional
+			Whether to check if the parameters are JSON serializable. Default: True.
+			todo: maybe this needs to be checked in case some important attributes are
+			removed.
+
 		Returns
 		-------
 		params : dict
 			Parameter names mapped to their values.
+
+		Todos
+		-----
+		It may be better to seperate this method with the __str__ method.
 		"""
 		# loop over attributes in the object:
 		params = dict()
 		for key, value in self.__dict__.items():
+			cur_params = dict()
 			# if the attribute is a list of graphs or a graph:
 			if (isinstance(value, list) and len(value) > 0 and \
 			    isinstance(value[0], nx.Graph)) or \
 					isinstance(value, nx.Graph):
 				if with_graphs:
-				# add the name(s) and params to dict:
-					params[key] = dict()
-					params[key]['name'] = value[0].__class__.__name__
-					params[key]['params'] = value[0].get_params()
+					# add the name(s) and params to dict:
+					cur_params[key] = dict()
+					cur_params[key]['name'] = value[0].__class__.__name__
+					cur_params[key]['params'] = value[0].get_params()
 				else:
 					continue
 
 			# if the attribute is a numpy array:
 			elif isinstance(value, np.ndarray):
 				if with_ndarray:
-					params[key] = value
+					cur_params[key] = value
 				else:
 					continue
 
-			# If the attribute is a function, add its name to dict:
+			# If the attribute is a function:
 			elif hasattr(value, '__call__'):
-				params[key] = value.__name__
+				# If it is a partial function, add its `__str__()`:
+				if isinstance(value, functools.partial):
+					cur_params[key] = str(value)
+				# Otherwise, add its name to dict:
+				else:
+					cur_params[key] = value.__name__
 
 			# If the attribute is a class, add its name and params to dict:
 			elif hasattr(value, '__dict__'):
-				params[key] = dict()
-				params[key]['name'] = value.__class__.__name__
-				params[key]['params'] = value.get_params()
+				cur_params[key] = dict()
+				cur_params[key]['name'] = value.__class__.__name__
+				cur_params[key]['params'] = value.get_params()
 
 			# If the attribute is a basic type, add it to dict:
 			elif is_basic_python_type(value, deep=True):
-				params[key] = value
+				cur_params[key] = value
 
 			# Otherwise, do nothing.
+			else:
+				continue
+
+			# todo: SpecialLabel.DUMMY (e.g., COX2 + Path)
+
+			if check_json_serializable:
+				# If the current params is serializable, add it to params:
+				try:
+					import json
+					json.dumps(cur_params)
+				except TypeError:
+					continue
+
+			params[key] = cur_params[key]
 
 		return params
 
@@ -604,7 +638,7 @@ class GraphKernel(BaseEstimator):  # , ABC):
 				 self._graphs] if self.copy_graphs else self._graphs)
 			start_time = time.time()
 			gram_matrix = self._compute_gm_series(graphs)
-			
+
 		else:
 			raise Exception('Parallel mode is not set correctly.')
 
