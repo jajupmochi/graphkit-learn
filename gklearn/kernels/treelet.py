@@ -524,11 +524,11 @@ class Treelet(GraphKernel):
 
 		# n-star patterns
 		patterns['3star'] = [[node] + [neighbor for neighbor in G[node]] for
-		                     node in G.nodes() if G.degree(node) == 3]
+		                     node in G.nodes() if len(G[node]) == 3]
 		patterns['4star'] = [[node] + [neighbor for neighbor in G[node]] for
-		                     node in G.nodes() if G.degree(node) == 4]
+		                     node in G.nodes() if len(G[node]) == 4]
 		patterns['5star'] = [[node] + [neighbor for neighbor in G[node]] for
-		                     node in G.nodes() if G.degree(node) == 5]
+		                     node in G.nodes() if len(G[node]) == 5]
 		# n-star patterns
 		canonkey['6'] = len(patterns['3star'])
 		canonkey['8'] = len(patterns['4star'])
@@ -538,7 +538,7 @@ class Treelet(GraphKernel):
 		patterns['7'] = []  # the 1st line of Table 1 in Ref [1]
 		for pattern in patterns['3star']:
 			for i in range(1, len(pattern)):  # for each neighbor of node 0
-				if G.degree(pattern[i]) >= 2:
+				if len(G[pattern[i]]) >= 2:
 					pattern_t = pattern[:]
 					# set the node with degree >= 2 as the 4th node
 					pattern_t[i], pattern_t[3] = pattern_t[3], pattern_t[i]
@@ -552,7 +552,7 @@ class Treelet(GraphKernel):
 		patterns['11'] = []  # the 4th line of Table 1 in Ref [1]
 		for pattern in patterns['4star']:
 			for i in range(1, len(pattern)):
-				if G.degree(pattern[i]) >= 2:
+				if len(G[pattern[i]]) >= 2:
 					pattern_t = pattern[:]
 					pattern_t[i], pattern_t[4] = pattern_t[4], pattern_t[i]
 					for neighborx in G[pattern[i]]:
@@ -569,7 +569,7 @@ class Treelet(GraphKernel):
 				0] not in rootlist:  # prevent to count the same pattern twice from each of the two root nodes
 				rootlist.append(pattern[0])
 				for i in range(1, len(pattern)):
-					if G.degree(pattern[i]) >= 3:
+					if len(G[pattern[i]]) >= 3:
 						rootlist.append(pattern[i])
 						pattern_t = pattern[:]
 						pattern_t[i], pattern_t[3] = pattern_t[3], pattern_t[i]
@@ -588,9 +588,9 @@ class Treelet(GraphKernel):
 		patterns['9'] = []  # the 2nd line of Table 1 in Ref [1]
 		for pattern in patterns['3star']:
 			for pairs in [[neighbor1, neighbor2] for neighbor1 in G[pattern[0]]
-			              if G.degree(neighbor1) >= 2 \
+			              if len(G[neighbor1]) >= 2 \
 			              for neighbor2 in G[pattern[0]] if
-			              G.degree(neighbor2) >= 2 if neighbor1 > neighbor2]:
+			              len(G[neighbor2]) >= 2 if neighbor1 > neighbor2]:
 				pattern_t = pattern[:]
 				# move nodes with extended labels 4 to specific position to correspond to their children
 				pattern_t[pattern_t.index(pairs[0])], pattern_t[2] = pattern_t[
@@ -610,9 +610,9 @@ class Treelet(GraphKernel):
 		patterns['10'] = []  # the 3rd line of Table 1 in Ref [1]
 		for pattern in patterns['3star']:
 			for i in range(1, len(pattern)):
-				if G.degree(pattern[i]) >= 2:
+				if len(G[pattern[i]]) >= 2:
 					for neighborx in G[pattern[i]]:
-						if neighborx != pattern[0] and G.degree(neighborx) >= 2:
+						if neighborx != pattern[0] and len(G[neighborx]) >= 2:
 							pattern_t = pattern[:]
 							pattern_t[i], pattern_t[3] = pattern_t[3], \
 							pattern_t[i]
