@@ -636,6 +636,14 @@ class GraphKernel(BaseEstimator):  # , ABC):
 			graphs = (
 				[g.copy() for g in
 				 self._graphs] if self.copy_graphs else self._graphs)
+
+			# todo: this is just a temporary fix for the self loop problem.
+			# Remove self loops from the graphs:
+			for g in graphs:
+				for node in g:
+					if g.has_edge(node, node):
+						g.remove_edge(node, node)
+
 			start_time = time.time()
 			gram_matrix = self._compute_gm_series(graphs)
 

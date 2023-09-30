@@ -585,6 +585,9 @@ class Treelet(GraphKernel):
 		canonkey['c'] = int(len(patterns['12']) / 2)
 
 		# pattern 9
+		# todo: this is not correct for self loops, but for now, we simply remove
+		# self loops from the graph at the beginning of the model,
+		# see GraphKernel._compute_gram_matrix().
 		patterns['9'] = []  # the 2nd line of Table 1 in Ref [1]
 		for pattern in patterns['3star']:
 			for pairs in [[neighbor1, neighbor2] for neighbor1 in G[pattern[0]]
