@@ -160,9 +160,9 @@ def _treeletkernel_do(canonkey1, canonkey2, sub_kernel):
 	kernel : float
 		Treelet Kernel between 2 graphs.
 	"""
-	keys = set(canonkey1.keys()) & set(canonkey2.keys()) # find same canonical keys in both graphs
-	vector1 = np.array([(canonkey1[key] if (key in canonkey1.keys()) else 0) for key in keys])
-	vector2 = np.array([(canonkey2[key] if (key in canonkey2.keys()) else 0) for key in keys]) 
+	keys = set(canonkey1.keys()) | set(canonkey2.keys()) # find union of canonical keys in both graphs
+	vector1 = np.array([canonkey1.get(key,0) for key in keys])
+	vector2 = np.array([canonkey2.get(key,0) for key in keys]) 
 	kernel = sub_kernel(vector1, vector2) 
 	return kernel
 
