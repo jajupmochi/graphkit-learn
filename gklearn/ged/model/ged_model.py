@@ -258,6 +258,8 @@ class GEDModel(BaseEstimator):  # , ABC):
 			delattr(self, '_Y')
 		if hasattr(self, '_run_time'):
 			delattr(self, '_run_time')
+		if hasattr(self, '_test_run_time'):
+			delattr(self, '_test_run_time')
 
 
 	def validate_parameters(self):
@@ -330,24 +332,26 @@ class GEDModel(BaseEstimator):  # , ABC):
 
 		else:
 			# Compute kernel matrix between Y and self._graphs (X).
+			Y_copy = ([g.copy() for g in Y] if self.copy_graphs else Y)
+			graphs_copy = ([g.copy() for g in
+			                self._graphs] if self.copy_graphs else self._graphs)
+
 			start_time = time.time()
 
 			if self.parallel == 'imap_unordered':
 				dis_matrix = self._compute_distance_matrix_imap_unordered(Y)
 
 			elif self.parallel is None:
-				Y_copy = ([g.copy() for g in Y] if self.copy_graphs else Y)
-				graphs_copy = ([g.copy() for g in
-				                self._graphs] if self.copy_graphs else self._graphs)
 				dis_matrix = self._compute_distance_matrix_series(
 					Y_copy, graphs_copy, **kwargs
 				)
 
-			self._run_time = time.time() - start_time
+			self._test_run_time = time.time() - start_time
+
 			if self.verbose:
 				print(
 					'Distance matrix of size (%d, %d) built in %s seconds.'
-					% (len(Y), len(self._graphs), self._run_time)
+					% (len(Y), len(self._graphs), self._test_run_time)
 				)
 
 		return dis_matrix
@@ -620,10 +624,11 @@ class GEDModel(BaseEstimator):  # , ABC):
 	#		return dis_mat, dis_max, dis_min, dis_mean
 
 	def _compute_X_distance_matrix(self, **kwargs):
-		start_time = time.time()
-
 		graphs = ([g.copy() for g in
 		           self._graphs] if self.copy_graphs else self._graphs)
+
+		start_time = time.time()
+
 		if self.parallel == 'imap_unordered':
 			dis_matrix = self._compute_X_dm_imap_unordered(graphs, **kwargs)
 		elif self.parallel is None:
@@ -632,6 +637,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			raise Exception('Parallel mode is not set correctly.')
 
 		self._run_time = time.time() - start_time
+
 		if self.verbose:
 			print(
 				'Distance matrix of size %d built in %s seconds.'
@@ -646,7 +652,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 		dis_matrix = np.zeros((n, n))
 
 		iterator = combinations(range(n), 2)
-		len_itr = int(n * (n + 1) / 2)
+		len_itr = int(n * (n - 1) / 2)
 		if self.verbose:
 			print('Graphs in total: %d.' % len(graphs))
 			print('The total # of pairs is %d.' % len_itr)
@@ -780,6 +786,26 @@ class GEDModel(BaseEstimator):  # , ABC):
 		if isinstance(graph, nx.MultiDiGraph):
 			return True
 		return False
+	
+	
+	def __repr__(self):
+		return (
+			f"{self.__class__.__name__}("
+			f"optim_method={self.optim_method}, "
+			f"ed_method={self.ed_method}, "
+			f"edit_cost_fun={self.edit_cost_fun}, "
+			f"node_labels={self.node_labels}, "
+			f"edge_labels={self.edge_labels}, "
+			f"optim_options={self.optim_options}, "
+			f"init_edit_cost_constants={self.init_edit_cost_constants}, "
+			f"copy_graphs={self.copy_graphs}, "
+			f"parallel={self.parallel}, "
+			f"n_jobs={self.n_jobs}, "
+			f"verbose={self.verbose}, "
+			f"normalize={self.normalize}, "
+			f"run_time={self.run_time}"
+			f")"
+		)
 
 
 	@property
@@ -807,15 +833,18 @@ class GEDModel(BaseEstimator):  # , ABC):
 	def run_time(self):
 		return self._run_time
 
+	@property
+	def test_run_time(self):
+		return self._test_run_time
 
 	@property
 	def dis_matrix(self):
-		return self._dis_matrix
+		return self._dm_train
 
 
 	@dis_matrix.setter
 	def dis_matrix(self, value):
-		self._dis_matrix = value
+		self._dm_train = value
 
 
 	@property

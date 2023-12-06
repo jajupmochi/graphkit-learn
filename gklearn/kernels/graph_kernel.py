@@ -5,15 +5,19 @@ Created on Mon Mar 30 11:52:47 2020
 
 @author: ljia
 """
+import time
+import functools
+import multiprocessing
+
 import numpy as np
 import networkx as nx
-import multiprocessing
-import time
 # from abc import ABC, abstractmethod
+
 from sklearn.base import BaseEstimator  # , TransformerMixin
 from sklearn.utils.validation import check_is_fitted  # check_X_y, check_array,
 from sklearn.exceptions import NotFittedError
-from gklearn.utils import normalize_gram_matrix
+
+from gklearn.utils import normalize_gram_matrix, is_basic_python_type
 
 
 class GraphKernel(BaseEstimator):  # , ABC):
@@ -189,8 +193,95 @@ class GraphKernel(BaseEstimator):  # , ABC):
 		return gram_matrix
 
 
-	def get_params(self):
-		pass
+	def get_params(
+			self,
+			with_graphs: bool = False,
+			with_ndarray: bool = False,
+			check_json_serializable: bool = True
+	):
+		"""Get parameters for this estimator.
+
+		Parameters
+		----------
+		with_graphs : bool, optional
+			Whether to include the graphs. Default: False.
+
+		with_ndarray : bool, optional
+			Whether to include the ndarray. Default: False.
+
+		check_json_serializable : bool, optional
+			Whether to check if the parameters are JSON serializable. Default: True.
+			todo: maybe this needs to be checked in case some important attributes are
+			removed.
+
+		Returns
+		-------
+		params : dict
+			Parameter names mapped to their values.
+
+		Todos
+		-----
+		It may be better to seperate this method with the __str__ method.
+		"""
+		# loop over attributes in the object:
+		params = dict()
+		for key, value in self.__dict__.items():
+			cur_params = dict()
+			# if the attribute is a list of graphs or a graph:
+			if (isinstance(value, list) and len(value) > 0 and \
+			    isinstance(value[0], nx.Graph)) or \
+					isinstance(value, nx.Graph):
+				if with_graphs:
+					# add the name(s) and params to dict:
+					cur_params[key] = dict()
+					cur_params[key]['name'] = value[0].__class__.__name__
+					cur_params[key]['params'] = value[0].get_params()
+				else:
+					continue
+
+			# if the attribute is a numpy array:
+			elif isinstance(value, np.ndarray):
+				if with_ndarray:
+					cur_params[key] = value
+				else:
+					continue
+
+			# If the attribute is a function:
+			elif hasattr(value, '__call__'):
+				# If it is a partial function, add its `__str__()`:
+				if isinstance(value, functools.partial):
+					cur_params[key] = str(value)
+				# Otherwise, add its name to dict:
+				else:
+					cur_params[key] = value.__module__ + '.' + value.__name__
+
+			# If the attribute is a class, add its name and params to dict:
+			elif hasattr(value, '__dict__'):
+				cur_params[key] = dict()
+				cur_params[key]['name'] = value.__class__.__name__
+				cur_params[key]['params'] = value.get_params()
+
+			# If the attribute is a basic type, add it to dict:
+			elif is_basic_python_type(value, deep=True):
+				cur_params[key] = value
+
+			# Otherwise, do nothing.
+			else:
+				continue
+
+			# todo: SpecialLabel.DUMMY (e.g., COX2 + Path)
+
+			if check_json_serializable:
+				# If the current params is serializable, add it to params:
+				try:
+					import json
+					json.dumps(cur_params)
+				except TypeError:
+					continue
+
+			params[key] = cur_params[key]
+
+		return params
 
 
 	def set_params(self):
@@ -206,6 +297,8 @@ class GraphKernel(BaseEstimator):  # , ABC):
 			delattr(self, '_Y')
 		if hasattr(self, '_run_time'):
 			delattr(self, '_run_time')
+		if hasattr(self, '_test_run_time'):
+			delattr(self, '_test_run_time')
 
 
 	def validate_parameters(self):
@@ -282,9 +375,8 @@ class GraphKernel(BaseEstimator):  # , ABC):
 
 		else:
 			# Compute kernel matrix between Y and self._graphs (X).
-			start_time = time.time()
-
 			if self.parallel == 'imap_unordered':
+				start_time = time.time()
 				kernel_matrix = self._compute_kernel_matrix_imap_unordered(Y)
 
 			elif self.parallel is None:
@@ -293,15 +385,16 @@ class GraphKernel(BaseEstimator):  # , ABC):
 					[g.copy() for g in
 					 self._graphs] if self.copy_graphs else self._graphs
 				)
+				start_time = time.time()
 				kernel_matrix = self._compute_kernel_matrix_series(
 					Y_copy, graphs_copy
 				)
 
-			self._run_time = time.time() - start_time
+			self._test_run_time = time.time() - start_time
 			if self.verbose:
 				print(
 					'Kernel matrix of size (%d, %d) built in %s seconds.'
-					% (len(Y), len(self._graphs), self._run_time)
+					% (len(Y), len(self._graphs), self._test_run_time)
 				)
 
 		return kernel_matrix
@@ -443,13 +536,13 @@ class GraphKernel(BaseEstimator):  # , ABC):
 						graphs[0]]  # @todo: might be very slow.
 				else:
 					self._graphs = graphs
-				self._gram_matrix = self._compute_gram_matrix()
+				self._gm_train = self._compute_gram_matrix()
 
 				if self.save_unnormed:
-					self._gram_matrix_unnorm = np.copy(self._gram_matrix)
+					self._gram_matrix_unnorm = np.copy(self._gm_train)
 				if self.normalize:
-					self._gram_matrix = normalize_gram_matrix(self._gram_matrix)
-				return self._gram_matrix, self._run_time
+					self._gm_train = normalize_gram_matrix(self._gm_train)
+				return self._gm_train, self._run_time
 
 		elif len(graphs) == 2:
 			# If the inputs are two graphs.
@@ -512,15 +605,15 @@ class GraphKernel(BaseEstimator):  # , ABC):
 
 
 	def compute_distance_matrix(self):
-		if self._gram_matrix is None:
+		if self._gm_train is None:
 			raise Exception(
 				'Please compute the Gram matrix before computing distance matrix.'
 			)
-		dis_mat = np.empty((len(self._gram_matrix), len(self._gram_matrix)))
-		for i in range(len(self._gram_matrix)):
-			for j in range(i, len(self._gram_matrix)):
-				dis = self._gram_matrix[i, i] + self._gram_matrix[j, j] - 2 * \
-				      self._gram_matrix[i, j]
+		dis_mat = np.empty((len(self._gm_train), len(self._gm_train)))
+		for i in range(len(self._gm_train)):
+			for j in range(i, len(self._gm_train)):
+				dis = self._gm_train[i, i] + self._gm_train[j, j] - 2 * \
+				      self._gm_train[i, j]
 				if dis < 0:
 					if dis > -1e-10:
 						dis = 0
@@ -535,15 +628,25 @@ class GraphKernel(BaseEstimator):  # , ABC):
 
 
 	def _compute_gram_matrix(self):
-		start_time = time.time()
-
 		if self.parallel == 'imap_unordered':
+			start_time = time.time()
 			gram_matrix = self._compute_gm_imap_unordered()
+
 		elif self.parallel is None:
 			graphs = (
 				[g.copy() for g in
 				 self._graphs] if self.copy_graphs else self._graphs)
+
+			# todo: this is just a temporary fix for the self loop problem.
+			# Remove self loops from the graphs:
+			for g in graphs:
+				for node in g:
+					if g.has_edge(node, node):
+						g.remove_edge(node, node)
+
+			start_time = time.time()
 			gram_matrix = self._compute_gm_series(graphs)
+
 		else:
 			raise Exception('Parallel mode is not set correctly.')
 
@@ -666,13 +769,18 @@ class GraphKernel(BaseEstimator):  # , ABC):
 
 
 	@property
+	def test_run_time(self):
+		return self._test_run_time
+
+
+	@property
 	def gram_matrix(self):
-		return self._gram_matrix
+		return self._gm_train
 
 
 	@gram_matrix.setter
 	def gram_matrix(self, value):
-		self._gram_matrix = value
+		self._gm_train = value
 
 
 	@property
