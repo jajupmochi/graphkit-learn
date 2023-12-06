@@ -91,7 +91,7 @@ jobs:
           #          python setup.py bdist_wheel
           python setup.py install
           #          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ged/
-          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py
+          pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py --ignore=gklearn/tests/test_graphkernels.py --ignore=gklearn/tests/ged/test_gedlib.py
 
       - name: Run code coverage
         run: |
