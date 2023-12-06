@@ -97,12 +97,12 @@ jobs:
         run: |
           codecov
 
-      - name: Publish distribution 📦 to Test PyPI
-        if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+#      - name: Publish distribution 📦 to Test PyPI
+#        if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest'
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+#          repository-url: https://test.pypi.org/legacy/
 
       - name: Publish distribution 📦 to PyPI
         if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest'
