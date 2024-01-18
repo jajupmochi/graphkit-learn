@@ -200,7 +200,13 @@ class GEDModel(BaseEstimator):  # , ABC):
 		return dis_matrix
 
 
-	def fit_transform(self, X, y=None, save_dm_train=False, **kwargs):
+	def fit_transform(
+			self,
+			X,
+			y=None,
+			save_dm_train=False,
+			save_mm_train: bool = False,
+			**kwargs):
 		"""Fit and transform: compute GED distance matrix on the same data.
 
 		Parameters
@@ -230,7 +236,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 		#			finally:
 		#				np.seterr(**old_settings)
 
-		if save_dm_train:
+		if save_mm_train or save_dm_train:
 			self._dm_train = dis_matrix
 		# If the model is refitted and the `save_dm_train` flag is not set, then
 		# remove the previously computed dm_train to prevent conflicts.
@@ -270,6 +276,10 @@ class GEDModel(BaseEstimator):  # , ABC):
 		None.
 
 		"""
+		if self.parallel == False:
+			self.parallel = None
+		elif self.parallel == True:
+			self.parallel = 'imap_unordered'
 		if self.parallel is not None and self.parallel != 'imap_unordered':
 			raise ValueError('Parallel mode is not set correctly.')
 
@@ -316,25 +326,27 @@ class GEDModel(BaseEstimator):  # , ABC):
 		Parameters
 		----------
 		Y : list of graphs, optional
-			The target graphs. The default is None. If None kernel is computed
+			The target graphs. The default is None. If None distance is computed
 			between X and itself.
 
 		Returns
 		-------
-		kernel_matrix : numpy array, shape = [n_targets, n_inputs]
-			The computed kernel matrix.
+		dis_matrix : numpy array, shape = [n_targets, n_inputs]
+			The computed distance matrix.
 
 		"""
 		if Y is None:
-			# Compute Gram matrix for self._graphs (X).
+			# Compute metric matrix for self._graphs (X).
 			dis_matrix = self._compute_X_distance_matrix(**kwargs)
 		#			self._gram_matrix_unnorm = np.copy(self._gram_matrix)
 
 		else:
-			# Compute kernel matrix between Y and self._graphs (X).
+			# Compute metric matrix between Y and self._graphs (X).
 			Y_copy = ([g.copy() for g in Y] if self.copy_graphs else Y)
-			graphs_copy = ([g.copy() for g in
-			                self._graphs] if self.copy_graphs else self._graphs)
+			graphs_copy = (
+				[g.copy() for g in self._graphs]
+				if self.copy_graphs else self._graphs
+			)
 
 			start_time = time.time()
 
@@ -786,8 +798,8 @@ class GEDModel(BaseEstimator):  # , ABC):
 		if isinstance(graph, nx.MultiDiGraph):
 			return True
 		return False
-	
-	
+
+
 	def __repr__(self):
 		return (
 			f"{self.__class__.__name__}("
@@ -833,17 +845,28 @@ class GEDModel(BaseEstimator):  # , ABC):
 	def run_time(self):
 		return self._run_time
 
+
 	@property
 	def test_run_time(self):
 		return self._test_run_time
+
 
 	@property
 	def dis_matrix(self):
 		return self._dm_train
 
-
 	@dis_matrix.setter
 	def dis_matrix(self, value):
+		self._dm_train = value
+
+
+	@property
+	def metric_matrix(self):
+		return self._dm_train
+
+
+	@metric_matrix.setter
+	def metric_matrix(self, value):
 		self._dm_train = value
 
 
@@ -859,6 +882,17 @@ class GEDModel(BaseEstimator):  # , ABC):
 # 	@gram_matrix_unnorm.setter
 # 	def gram_matrix_unnorm(self, value):
 # 		self._gram_matrix_unnorm = value
+
+	@property
+	def n_pairs(self):
+		"""
+		The number of pairs of graphs between which the GEDs are computed.
+		"""
+		try:
+			check_is_fitted(self, '_dm_train')
+			return len(self._dm_train) * (len(self._dm_train) - 1) / 2
+		except NotFittedError:
+			return None
 
 
 def _init_worker_ged_mat(gn_toshare):

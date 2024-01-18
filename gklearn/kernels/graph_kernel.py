@@ -154,7 +154,12 @@ class GraphKernel(BaseEstimator):  # , ABC):
 		return kernel_matrix
 
 
-	def fit_transform(self, X, save_gm_train=False):
+	def fit_transform(
+			self,
+			X,
+			save_gm_train: bool = False,
+			save_mm_train: bool = False,
+	):
 		"""Fit and transform: compute Gram matrix on the same data.
 
 		Parameters
@@ -187,7 +192,7 @@ class GraphKernel(BaseEstimator):  # , ABC):
 			finally:
 				np.seterr(**old_settings)
 
-		if save_gm_train:
+		if save_mm_train or save_gm_train:
 			self._gm_train = gram_matrix
 
 		return gram_matrix
@@ -784,6 +789,16 @@ class GraphKernel(BaseEstimator):  # , ABC):
 
 
 	@property
+	def metric_matrix(self):
+		return self._gm_train
+
+
+	@metric_matrix.setter
+	def metric_matrix(self, value):
+		self._gm_train = value
+
+
+	@property
 	def gram_matrix_unnorm(self):
 		return self._gram_matrix_unnorm
 
@@ -791,3 +806,15 @@ class GraphKernel(BaseEstimator):  # , ABC):
 	@gram_matrix_unnorm.setter
 	def gram_matrix_unnorm(self, value):
 		self._gram_matrix_unnorm = value
+
+
+	@property
+	def n_pairs(self):
+		"""
+		The number of pairs of graphs between which the kernels are computed.
+		"""
+		try:
+			check_is_fitted(self, '_gm_train')
+			return len(self._gm_train) * (len(self._gm_train) + 1) / 2
+		except NotFittedError:
+			return None
