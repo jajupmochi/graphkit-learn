@@ -102,6 +102,16 @@ def assert_equality(compute_fun, **kwargs):
 			assert np.array_equal(lst[i], lst[i + 1])
 
 
+def assert_semidefinite(gram_matrix):
+	"""Check if a matrix is positive semi-definite.
+	"""
+	eigvals = np.linalg.eigvals(gram_matrix)
+	assert np.all(eigvals >= 10e-9), "Gram matrix is not positive semi-definite."
+
+
+##############################################################################
+
+
 @pytest.mark.parametrize('ds_name', ['Alkane_unlabeled', 'AIDS'])
 @pytest.mark.parametrize('weight,compute_method', [(0.01, 'geo'), (1, 'exp')])
 # @pytest.mark.parametrize('parallel', ['imap_unordered', None])
@@ -142,6 +152,8 @@ def test_CommonWalk(ds_name, weight, compute_method):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
 				verbose=True
 			)
+
+			assert_semidefinite(gram_matrix)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -198,6 +210,8 @@ def test_Marginalized(ds_name, remove_totters):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -248,6 +262,8 @@ def test_SylvesterEquation(ds_name):
 				n_jobs=multiprocessing.cpu_count(),
 				verbose=True
 			)
+
+			assert_semidefinite(gram_matrix)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -319,6 +335,8 @@ def test_ConjugateGradient(ds_name):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -388,6 +406,8 @@ def test_FixedPoint(ds_name):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -440,6 +460,8 @@ def test_SpectralDecomposition(ds_name, sub_kernel):
 				n_jobs=multiprocessing.cpu_count(),
 				verbose=True
 			)
+
+			assert_semidefinite(gram_matrix)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -558,6 +580,8 @@ def test_ShortestPath(ds_name):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -633,6 +657,8 @@ def test_StructuralSP(ds_name):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -691,6 +717,8 @@ def test_PathUpToH(ds_name, k_func):
 				verbose=True
 			)
 
+			assert_semidefinite(gram_matrix)
+
 		except Exception as exception:
 			print(repr(exception))
 			assert False, exception
@@ -741,6 +769,8 @@ def test_Treelet(ds_name):
 				parallel=parallel, n_jobs=multiprocessing.cpu_count(),
 				verbose=True
 			)
+
+			assert_semidefinite(gram_matrix)
 
 		except Exception as exception:
 			print(repr(exception))
@@ -797,6 +827,8 @@ def test_WLSubtree(ds_name):
 				n_jobs=multiprocessing.cpu_count(),
 				verbose=True
 			)
+
+			assert_semidefinite(gram_matrix)
 
 		except Exception as exception:
 			print(repr(exception))
