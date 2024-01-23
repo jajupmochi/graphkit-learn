@@ -106,7 +106,9 @@ def assert_semidefinite(gram_matrix):
 	"""Check if a matrix is positive semi-definite.
 	"""
 	eigvals = np.linalg.eigvals(gram_matrix)
-	assert np.all(eigvals >= 10e-9), "Gram matrix is not positive semi-definite."
+	assert np.all(
+		eigvals >= -1e-9
+		), "Gram matrix is not positive semi-definite."
 
 
 ##############################################################################
@@ -838,7 +840,9 @@ def test_WLSubtree(ds_name):
 
 
 	# assert_equality(compute, parallel=[None, 'imap_unordered'])
-	assert_equality(compute, parallel=[None])  # @TODO: parallel returns different results.
+	assert_equality(
+		compute, parallel=[None]
+	)  # @TODO: parallel returns different results.
 
 
 if __name__ == "__main__":
@@ -854,10 +858,10 @@ if __name__ == "__main__":
 	#	test_RandomWalk('Acyclic', 'fp', None, None)
 	#	test_RandomWalk('Acyclic', 'spectral', 'exp', 'imap_unordered')
 	# test_CommonWalk('Acyclic', 0.01, 'geo')
-	test_CommonWalk('Alkane_unlabeled', 0.01, 'geo')
-# test_Marginalized('Acyclic', False)
-# test_ShortestPath('Acyclic')
-# 	 test_PathUpToH('Acyclic', 'MinMax')
+	# test_CommonWalk('Alkane_unlabeled', 0.01, 'geo')
+	# test_Marginalized('Acyclic', False)
+	# test_ShortestPath('Acyclic')
+	test_PathUpToH('Alkane_unlabeled', 'tanimoto')
 # test_Treelet('AIDS')
 # 	test_SylvesterEquation('Acyclic')
 # 	test_ConjugateGradient('Acyclic')
