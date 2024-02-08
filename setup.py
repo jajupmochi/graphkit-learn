@@ -109,9 +109,9 @@ setuptools.setup(
 		'Intended Audience :: Developers',
 	],
 	install_requires=install_requires,
-	package_dir={'': 'gklearn'},
+	# package_dir={'': 'gklearn'},
 	package_data={
-		'': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
+		# '': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
 		'gedlib': ['README.rst', 'gedlibpy.pyx', '*.hpp', '*.ipp'],
 	},
 )
