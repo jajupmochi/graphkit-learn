@@ -70,7 +70,7 @@ if args.build_gedlibpy == 'true':
 	gedlib_dir = 'gklearn/gedlib/'
 	subprocess.call(
 		[
-			cur_python, 'setup.py',
+			cur_python, 'setup_simple.py', # 'setup.py',
 			# '--use-existing-gedlib', args.use_existing_gedlib,
 			# '--build-gedlib', args.build_gedlib,
 			# '--develop-mode', args.develop_mode,
@@ -110,8 +110,8 @@ setuptools.setup(
 	],
 	install_requires=install_requires,
 	# package_dir={'': 'gklearn'},
-	package_data={
-		# '': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
-		'gedlib': ['README.rst', 'gedlibpy.pyx', '*.hpp', '*.ipp'],
-	},
+	# package_data={
+	# 	# '': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
+	# 	'gedlib': ['README.rst', 'gedlibpy.pyx', '*.hpp', '*.ipp'],
+	# },
 )
