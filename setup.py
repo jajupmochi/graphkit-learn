@@ -90,8 +90,8 @@ setuptools.setup(
 	name="graphkit-learn",
 	version=version,
 	author="Linlin Jia",
-	author_email="linlin.jia@unibe.ch",
-	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
+	author_email="jajupmochi@gmail.com",
+	description="A Python library for machine learning on graphs.",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	project_urls={
@@ -109,4 +109,9 @@ setuptools.setup(
 		'Intended Audience :: Developers',
 	],
 	install_requires=install_requires,
+	# package_dir={'': '.'},
+	package_data={
+		'': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
+		'gklearn/gedlib': ['README.rst', 'gedlibpy.pyx', '*.hpp', '*.ipp'],
+	},
 )

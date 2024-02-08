@@ -6,27 +6,30 @@ Bpython:S125"Remove this commented out code.(ê¬©Öùÿÿÿÿ8ÚµÅş0
 |python:S57179"]Change this default value to "None" and initialize this parameter inside the function/method.(èíÈ8ÚµÅş0
 {python:S5717:"]Change this default value to "None" and initialize this parameter inside the function/method.(€ü‘-8ÚµÅş0
 =python:S125>"Remove this commented out code.(ÀğÜ­8ÚµÅş0
-=python:S125O"Remove this commented out code.(¬ÅÃ±8ÚµÅş0
-ppython:S117]"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(Á÷”´øÿÿÿÿ8ÚµÅş0
-Bpython:S125o"Remove this commented out code.(ö¾Œúÿÿÿÿ8ÚµÅş0
-=python:S125{"Remove this commented out code.(÷ÂùĞ8ÚµÅş0
-qpython:S117ˆ"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ñ¯¹¶ıÿÿÿÿ8ÚµÅş0
-lpython:S117Ê"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(­‘á¢8ÚµÅş0
-~python:S1186ó"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ø¬ şÿÿÿÿ8ÚµÅş0
-ypython:S1186÷"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ñí«ï8ÚµÅş0
-lpython:S117•"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(´ÒŒÚ8ÚµÅş0
-qpython:S117´"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‚—õ˜úÿÿÿÿ8ÚµÅş0
-vpython:S117Ò"WRename this local variable "Y_copy" to match the regular expression ^[_a-z][a-z0-9_]*$.(äüãø8ÚµÅş0
->python:S125È"Remove this commented out code.(Œıûÿ8ÚµÅş0
-lpython:S117ã"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(¢óÍ¯8ÚµÅş0
-lpython:S117ã"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(¢óÍ¯8ÚµÅş0
-qpython:S117û"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8ÚµÅş0
-]python:S112Š">Replace this generic exception class with a more specific one.(îûÚ¿8ÚµÅş0
-lpython:S117Ï"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ã¦Ø8ÚµÅş0
-tpython:S117Ï"URename this parameter "Y_targets" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ã¦Ø8ÚµÅş0
-bpython:S112÷">Replace this generic exception class with a more specific one.(ÖµàÚşÿÿÿÿ8ÚµÅş0
-mpython:S117Å"NRename this parameter "Gi" to match the regular expression ^[_a-z][a-z0-9_]*$.(„ÔÚÃ8ÚµÅş0
-mpython:S117Å"NRename this parameter "Gj" to match the regular expression ^[_a-z][a-z0-9_]*$.(„ÔÚÃ8ÚµÅş0
-Cpython:S125î"Remove this commented out code.(¾ÇŸ­üÿÿÿÿ8ÚµÅş0
-Cpython:S125ù"Remove this commented out code.(Ç–¶±ûÿÿÿÿ8ÚµÅş0
-=python:S125ÿ"Remove this commented out code.(ßÀö8ÚµÅş0
+=python:S125P"Remove this commented out code.(¬ÅÃ±8ÚµÅş0
+ppython:S117^"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(Á÷”´øÿÿÿÿ8ÚµÅş0
+Bpython:S125p"Remove this commented out code.(ö¾Œúÿÿÿÿ8ÚµÅş0
+=python:S125|"Remove this commented out code.(÷ÂùĞ8ÚµÅş0
+qpython:S117‰"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ñ¯¹¶ıÿÿÿÿ8ÚµÅş0
+lpython:S117Í"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(’’¼¤8·Ùì„Ó1
+~python:S1186ú"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ø¬ şÿÿÿÿ8ÚµÅş0
+ypython:S1186ş"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ñí«ï8ÚµÅş0
+lpython:S117¢"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(´ÒŒÚ8ÚµÅş0
+qpython:S117Á"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‚—õ˜úÿÿÿÿ8ÚµÅş0
+vpython:S117Ù"WRename this local variable "Y_copy" to match the regular expression ^[_a-z][a-z0-9_]*$.(äüãø8ÚµÅş0
+>python:S125Õ"Remove this commented out code.(Œıûÿ8ÚµÅş0
+lpython:S117ô"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(¢óÍ¯8ÚµÅş0
+lpython:S117ô"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(¢óÍ¯8ÚµÅş0
+qpython:S117Œ"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8ÚµÅş0
+]python:S112›">Replace this generic exception class with a more specific one.(îûÚ¿8ÚµÅş0
+lpython:S117à"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ã¦Ø8ÚµÅş0
+tpython:S117à"URename this parameter "Y_targets" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹ã¦Ø8ÚµÅş0
+dpython:S6711ñ"DUse a "numpy.random.Generator" here instead of this legacy function.(—¹„õ8¸Ùì„Ó1
+bpython:S112‰">Replace this generic exception class with a more specific one.(ÖµàÚşÿÿÿÿ8ÚµÅş0
+mpython:S117Ø"NRename this parameter "Gi" to match the regular expression ^[_a-z][a-z0-9_]*$.(„ÔÚÃ8ÚµÅş0
+mpython:S117Ø"NRename this parameter "Gj" to match the regular expression ^[_a-z][a-z0-9_]*$.(„ÔÚÃ8ÚµÅş0
+Zpython:S1481â"5Replace unused local variable "pi_backward" with "_".(Ï”¼úÿÿÿÿ8êÆµ¿ 1
+Ypython:S1481â"4Replace unused local variable "pi_forward" with "_".(Ï”¼úÿÿÿÿ8êÆµ¿ 1
+Cpython:S125"Remove this commented out code.(¾ÇŸ­üÿÿÿÿ8ÚµÅş0
+Cpython:S125Œ"Remove this commented out code.(Ç–¶±ûÿÿÿÿ8ÚµÅş0
+=python:S125’"Remove this commented out code.(ßÀö8™Õíª1

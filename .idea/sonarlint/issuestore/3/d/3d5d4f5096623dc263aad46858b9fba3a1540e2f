@@ -1,0 +1,37 @@
+
+Bpython:S125"Remove this commented out code.(°»®ïûÿÿÿÿ8Öƒ»®1
+_python:S5720¸":Rename "Gn" to "self" or add the missing "self" parameter.(ïì×Äùÿÿÿÿ8‘Öƒ»®1
+_python:S5720•":Rename "Gn" to "self" or add the missing "self" parameter.(Ð€úðûÿÿÿÿ8“Öƒ»®1
+_python:S5720ë":Rename "Gn" to "self" or add the missing "self" parameter.(ÉÌÜ‡ýÿÿÿÿ8”Öƒ»®1
+rpython:S117ð"SRename this local variable "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰°íÑ8•Öƒ»®1
+Cpython:S125ï"Remove this commented out code.(Ç€¶Íýÿÿÿÿ8–Öƒ»®1
+rpython:S117“"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(„ýŸØùÿÿÿÿ8—Öƒ»®1
+Epython:S1481½"%Remove the unused local variable "h".(Ó£á8˜Öƒ»®1
+>python:S125À"Remove this commented out code.(üè£ö8™Öƒ»®1
+rpython:S117Ô"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(³†¯Áþÿÿÿÿ8›Öƒ»®1
+Epython:S1481˜"%Remove the unused local variable "h".(©þ¹™8œÖƒ»®1
+ypython:S3776Ô"TRefactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.(³†¯Áþÿÿÿÿ8«Öƒ»®1
+rpython:S117ª"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(¢˜²Žüÿÿÿÿ8¬Öƒ»®1
+Epython:S1481÷"%Remove the unused local variable "h".(©þ¹™8®Öƒ»®1
+ypython:S3776ª"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(¢˜²Žüÿÿÿÿ8¾Öƒ»®1
+rpython:S117‰"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(þ°òØúÿÿÿÿ8¿Öƒ»®1
+Epython:S1481À"%Remove the unused local variable "h".(©þ¹™8ÀÖƒ»®1
+qpython:S117Ó"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ËíÔ¤øÿÿÿÿ8ÂÖƒ»®1
+qpython:S117ý"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ËíÔ¤øÿÿÿÿ8ÃÖƒ»®1
+Cpython:S125ˆ"Remove this commented out code.(®å·‚þÿÿÿÿ8ÄÖƒ»®1
+qpython:S117«"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ËíÔ¤øÿÿÿÿ8ÅÖƒ»®1
+qpython:S117×"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(ËíÔ¤øÿÿÿÿ8ÇÖƒ»®1
+rpython:S117¸"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(ïì×Äùÿÿÿÿ8ÈÖƒ»®1
+Jpython:S1481â"%Remove the unused local variable "h".(ãç»ïûÿÿÿÿ8ÉÖƒ»®1
+ypython:S3776¸"TRefactor this function to reduce its Cognitive Complexity from 60 to the 15 allowed.(ïì×Äùÿÿÿÿ8ÑÖƒ»®1
+<python:S2772Ë"Remove this unneeded "pass".(ã‘Û¾8ÑÖƒ»®1
+rpython:S117•"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ð€úðûÿÿÿÿ8ÑÖƒ»®1
+Jpython:S1481¹"%Remove the unused local variable "h".(ãç»ïûÿÿÿÿ8ÑÖƒ»®1
+ypython:S3776•"TRefactor this function to reduce its Cognitive Complexity from 60 to the 15 allowed.(Ð€úðûÿÿÿÿ8ÑÖƒ»®1
+<python:S2772¨"Remove this unneeded "pass".(ã‘Û¾8ÑÖƒ»®1
+opython:S1854ƒ"PRemove this assignment to local variable 'gram_matrix'; the value is never used.(àšþ8ÑÖƒ»®1
+rpython:S117ë"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÉÌÜ‡ýÿÿÿÿ8ÑÖƒ»®1
+Jpython:S1481‰"%Remove the unused local variable "h".(ãç»ïûÿÿÿÿ8ÑÖƒ»®1
+ypython:S3776ë"TRefactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed.(ÉÌÜ‡ýÿÿÿÿ8ÒÖƒ»®1
+<python:S2772€"Remove this unneeded "pass".(ã‘Û¾8ÒÖƒ»®1
+mpython:S117³"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ñû˜Ù8ÒÖƒ»®1

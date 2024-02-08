@@ -7,10 +7,11 @@ kpython:S117N"MRename this parameter "Y" to match the regular expression ^[_a
 hpython:S5632s"IChange this code so that it raises an object deriving from BaseException.(Ζά€Ω8¶Ήªνω0
 qpython:S117"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«πνύÿÿÿÿ8¶Ήªνω0
 ]python:S112¬">Replace this generic exception class with a more specific one.(ξϋΪΏ8¶Ήªνω0
->python:S125δ"Remove this commented out code.(…Ίªÿ8¶Ήªνω0
-qpython:S117π"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(®ϊƒώÿÿÿÿ8¶Ήªνω0
-zpython:S3776π"URefactor this function to reduce its Cognitive Complexity from 167 to the 15 allowed.(®ϊƒώÿÿÿÿ8·Ήªνω0
-=python:S125Η"Remove this commented out code.(Ò»H8·Ήªνω0
-rpython:S117"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤“ξΕώÿÿÿÿ8·Ήªνω0
-ypython:S3776"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(¤“ξΕώÿÿÿÿ8·Ήªνω0
-rpython:S117™"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(«±Γχώÿÿÿÿ8·Ήªνω0
+>python:S125ά"Remove this commented out code.(…Ίªÿ8¶Ήªνω0
+qpython:S117θ"MRename this parameter "G" to match the regular expression ^[_a-z][a-z0-9_]*$.(®ϊƒώÿÿÿÿ8¶Ήªνω0
+zpython:S3776θ"URefactor this function to reduce its Cognitive Complexity from 167 to the 15 allowed.(®ϊƒώÿÿÿÿ8·Ήªνω0
+=python:S125Ώ"Remove this commented out code.(Ò»H8·Ήªνω0
+Ypython:S1135Δ"4Complete the task associated to this "TODO" comment.(ΝγΰΏώÿÿÿÿ8­θΣ1
+rpython:S117“"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(¤“ξΕώÿÿÿÿ8·Ήªνω0
+ypython:S3776“"TRefactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.(¤“ξΕώÿÿÿÿ8·Ήªνω0
+rpython:S117”"NRename this parameter "Gn" to match the regular expression ^[_a-z][a-z0-9_]*$.(«±Γχώÿÿÿÿ8·Ήªνω0
