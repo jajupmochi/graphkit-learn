@@ -21,6 +21,7 @@ A Python package for graph kernels, graph edit distances and graph pre-image pro
 * tqdm>=4.26.0
 * control>=0.8.2 (for generalized random walk kernels only)
 * slycot>=0.3.3 (for generalized random walk kernels only, which requires a fortran compiler (e.g., `gfortran`) and BLAS/LAPACK (e.g. `liblapack-dev`))
+* Cython~=0.29.33 (for GEDLIB only)
 
 ## How to use?
 

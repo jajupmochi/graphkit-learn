@@ -1,13 +1,13 @@
 
-wpython:S1192Œ"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(ğÿê°ùÿÿÿÿ8Öñãó„1
-ppython:S117H"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(øÅ¿øÿÿÿÿ8Ùñãó„1
-ppython:S117H"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(øÅ¿øÿÿÿÿ8Úñãó„1
-python:S117W"cRename this local variable "if_comp_X_sp_lists" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÏĞ‚‘8Îçó„1
-hpython:S5632n"IChange this code so that it raises an object deriving from BaseException.(ÆÜ€Ù8Ûñãó„1
-qpython:S117˜"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8Ûñãó„1
-ypython:S3776â"TRefactor this function to reduce its Cognitive Complexity from 92 to the 15 allowed.(ÂĞÃÅûÿÿÿÿ8Ûñãó„1
-\python:S112">Replace this generic exception class with a more specific one.(Œåß%8Ûñãó„1
-upython:S3776¾"URefactor this function to reduce its Cognitive Complexity from 109 to the 15 allowed.(Œ¡´Ÿ8Üñãó„1
-\python:S112Ä">Replace this generic exception class with a more specific one.(Œåß%8Üñãó„1
-tpython:S3776Ö"TRefactor this function to reduce its Cognitive Complexity from 25 to the 15 allowed.(€óŒ’8Üñãó„1
-Hpython:S108")Either remove or fill this block of code.(ã‘Û¾8Üñãó„1
+wpython:S1192Œ"RDefine a constant instead of duplicating this literal 'Computing kernels' 4 times.(ğÿê°ùÿÿÿÿ8Ïãó™Ÿ1
+ppython:S117H"MRename this parameter "X" to match the regular expression ^[_a-z][a-z0-9_]*$.(øÅ¿øÿÿÿÿ8Ïãó™Ÿ1
+ppython:S117H"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(øÅ¿øÿÿÿÿ8Ïãó™Ÿ1
+python:S117W"cRename this local variable "if_comp_X_sp_lists" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÏĞ‚‘8Ïãó™Ÿ1
+hpython:S5632n"IChange this code so that it raises an object deriving from BaseException.(ÆÜ€Ù8Ïãó™Ÿ1
+qpython:S117˜"MRename this parameter "Y" to match the regular expression ^[_a-z][a-z0-9_]*$.(‰«ğíıÿÿÿÿ8Ïãó™Ÿ1
+ypython:S3776â"TRefactor this function to reduce its Cognitive Complexity from 92 to the 15 allowed.(ÂĞÃÅûÿÿÿÿ8Ïãó™Ÿ1
+\python:S112">Replace this generic exception class with a more specific one.(Œåß%8Ïãó™Ÿ1
+upython:S3776¾"URefactor this function to reduce its Cognitive Complexity from 109 to the 15 allowed.(Œ¡´Ÿ8Ïãó™Ÿ1
+\python:S112Ä">Replace this generic exception class with a more specific one.(Œåß%8Ïãó™Ÿ1
+tpython:S3776Ö"TRefactor this function to reduce its Cognitive Complexity from 25 to the 15 allowed.(€óŒ’8Ïãó™Ÿ1
+Hpython:S108")Either remove or fill this block of code.(ã‘Û¾8Ïãó™Ÿ1

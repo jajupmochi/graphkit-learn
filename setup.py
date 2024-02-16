@@ -60,23 +60,52 @@ def parse_args():
 
 args = parse_args()
 
-if args.build_gedlibpy == 'true':
-	# Compile GEDLIBPY module:
-	import subprocess
+from setuptools.command.install import install
 
-	cur_python = sys.executable
-	subprocess.call([cur_python, '--version'])
-	subprocess.call(['which', cur_python])
-	gedlib_dir = 'gklearn/gedlib/'
-	subprocess.call(
-		[
-			cur_python, 'setup.py',
-			# '--use-existing-gedlib', args.use_existing_gedlib,
-			# '--build-gedlib', args.build_gedlib,
-			# '--develop-mode', args.develop_mode,
-			'build_ext', '--inplace'
-		], cwd=gedlib_dir
-	)
+
+class CustomInstallCommand(install):
+	"""Customized setuptools install command - prints a friendly greeting."""
+
+
+	def run(self):
+		if args.build_gedlibpy == 'true':
+			# Compile GEDLIBPY module:
+			import subprocess
+
+			cur_python = sys.executable
+			subprocess.call([cur_python, '--version'])
+			subprocess.call(['which', cur_python])
+			gedlib_dir = 'gklearn/gedlib/'
+			subprocess.call(
+				[
+					cur_python, 'setup_simple.py',  # 'setup.py',
+					# '--use-existing-gedlib', args.use_existing_gedlib,
+					# '--build-gedlib', args.build_gedlib,
+					# '--develop-mode', args.develop_mode,
+					'build_ext', '--inplace'
+				], cwd=gedlib_dir
+			)
+
+		install.run(self)
+
+
+# if args.build_gedlibpy == 'true':
+# 	# Compile GEDLIBPY module:
+# 	import subprocess
+#
+# 	cur_python = sys.executable
+# 	subprocess.call([cur_python, '--version'])
+# 	subprocess.call(['which', cur_python])
+# 	gedlib_dir = 'gklearn/gedlib/'
+# 	subprocess.call(
+# 		[
+# 			cur_python, 'setup_simple.py', # 'setup.py',
+# 			# '--use-existing-gedlib', args.use_existing_gedlib,
+# 			# '--build-gedlib', args.build_gedlib,
+# 			# '--develop-mode', args.develop_mode,
+# 			'build_ext', '--inplace'
+# 		], cwd=gedlib_dir
+# 	)
 
 # Install graphkit-learn:
 with open("README.md", "r") as fh:
@@ -90,8 +119,8 @@ setuptools.setup(
 	name="graphkit-learn",
 	version=version,
 	author="Linlin Jia",
-	author_email="linlin.jia@unibe.ch",
-	description="A Python library for graph kernels, graph edit distances, and graph pre-images",
+	author_email="jajupmochi@gmail.com",
+	description="A Python library for machine learning on graphs.",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	project_urls={
@@ -109,4 +138,12 @@ setuptools.setup(
 		'Intended Audience :: Developers',
 	],
 	install_requires=install_requires,
+	cmdclass={
+		'install': CustomInstallCommand,
+	},
+	# package_dir={'': 'gklearn'},
+	# package_data={
+	# 	# '': ['README.md', 'requirements_pypi.txt', 'requirements.txt', 'LICENSE'],
+	# 	'gedlib': ['README.rst', 'gedlibpy.pyx', '*.hpp', '*.ipp'],
+	# },
 )

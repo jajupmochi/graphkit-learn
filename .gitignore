@@ -94,5 +94,5 @@ virtualenv
 ci.sh
 
 # PyCharm.
-#.idea/
+.idea/sonarlint/
 

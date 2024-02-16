@@ -456,8 +456,8 @@ class Treelet(GraphKernel):
 		if len(keys) == 0:  # There is nothing in common...
 		        return 0
 
-		vector1 = np.array([canonkey1.get(key,0) for key in keys])
-		vector2 = np.array([canonkey2.get(key,0)for key in keys])
+		vector1 = np.array([canonkey1.get(key, 0) for key in keys])
+		vector2 = np.array([canonkey2.get(key, 0) for key in keys])
 
 		# 		vector1, vector2 = [], []
 		# 		keys1, keys2 = canonkey1, canonkey2

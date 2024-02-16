@@ -2,8 +2,8 @@
 mpython:S1192Â"ODefine a constant instead of duplicating this literal 'computing GEDs' 4 times.(ÍÊ©úÿÿÿÿ
 ;python:S125"Remove this commented out code.(ÒïÔöşÿÿÿÿ
 npython:S117&"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(×í¨­
-Ipython:S1172@",Remove the unused function parameter "sort".(ÌŸ„øÿÿÿÿ
 Mpython:S1172@"0Remove the unused function parameter "parallel".(ÌŸ„øÿÿÿÿ
+Ipython:S1172@",Remove the unused function parameter "sort".(ÌŸ„øÿÿÿÿ
 Lpython:S1172@"/Remove the unused function parameter "verbose".(ÌŸ„øÿÿÿÿ
 npython:S117S"WRename this local variable "listID" to match the regular expression ^[_a-z][a-z0-9_]*$.(×í¨­
 =python:S1481_"%Remove the unused local variable "i".(…èìÄ
@@ -34,6 +34,5 @@ Apython:S1110±"#Remove those redundant parentheses.(Ğ–ƒ¥úÿÿÿÿ
 rpython:S3776¾"TRefactor this function to reduce its Cognitive Complexity from 42 to the 15 allowed.(Á«’Ôüÿÿÿÿ
 7python:S125½"Remove this commented out code.(®É›ƒ
 Apython:S1481Ú"(Remove the unused local variable "n_vs".(±ĞÕë
-Fpython:S1481æ"(Remove the unused local variable "n_vs".(Ìã—¹ÿÿÿÿÿ
 rpython:S3776Ó"TRefactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed.(¿‡ÖÖÿÿÿÿÿ
 7python:S125ò"Remove this commented out code.(®É›ƒ
