@@ -29,6 +29,50 @@ from gklearn.utils import Trie
 class PathUpToH(GraphKernel):  # @todo: add function for k_func is None
 
 	def __init__(self, **kwargs):
+		"""Initialize the kernel.
+
+		Parameters
+		----------
+		node_labels : list of strings, optional
+			The name list of node labels in the graphs. The default is [].
+
+		edge_labels : list of strings, optional
+			The name list of edge labels in the graphs. The default is [].
+
+		depth : int, optional
+			The maximum depth of paths to be considered. The default is 10.
+
+		k_func : string, optional
+			The kernel function applied using different notions of fingerprint
+			similarity. The default is 'MinMax'.
+
+		compute_method : string, optional
+			The method to compute the kernel. The default is 'trie'.
+
+		ds_infos : dict, optional
+			The dataset information. The default is {}.
+
+		save_paths : boolean, optional
+			Whether to save the paths of graphs. The default is True.
+
+		parallel : boolean, optional
+			Whether to use parallelization. The default is True.
+
+		n_jobs : int, optional
+			The number of jobs to run in parallel. The default is 1.
+
+		chunksize : int, optional
+			The chunksize for parallelization. The default is 100.
+
+		normalize : boolean, optional
+			Whether to normalize the kernel matrix. The default is False.
+
+		copy_graphs : boolean, optional
+			Whether to copy the input graphs. The default is True.
+
+		verbose : int, optional
+			The verbosity level. The default is 0.
+		"""
 		GraphKernel.__init__(
 			self, **{
 				k: kwargs.get(k) for k in
