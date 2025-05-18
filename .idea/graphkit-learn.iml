@@ -19,8 +19,9 @@
       <excludeFolder url="file://$MODULE_DIR$/virtualenv" />
       <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/include" />
       <excludeFolder url="file://$MODULE_DIR$/gklearn/gedlib/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.8 (python3.8.16_20230817v1) (6)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="uv (graphkit-learn)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

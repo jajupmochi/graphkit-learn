@@ -11,10 +11,12 @@ This  package contains 4 sub  packages :
 """
 
 # info
-__version__ = "0.1"
-__author__  = "Benoit Gaüzère"
-__date__    = "November 2017"
- 
+import datetime
+
+__version__ = '0.2.1.post' + datetime.now().strftime('%Y%m%d%H%M%S')
+__author__ = 'Linlin Jia, Benoit Gaüzère, Paul Honeine'
+__date__ = 'November 2017'
+
 # import sub modules
 # from gklearn import c_ext
 # from gklearn import ged

@@ -1,0 +1,61 @@
+[build-system]
+requires = ["scikit-build-core>=0.8.0", "wheel", "setuptools>=42", "dynamic-metadata"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "graphkit-learn"
+dynamic = ["version"]
+authors = [
+    { name = "Linlin Jia", email = "jajupmochi@gmail.com" },
+]
+description = "A Python library for machine learning on graphs."
+readme = "README.md"
+license = { text = "GNU General Public License v3 (GPLv3)" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "control>=0.10.1",
+    "cvxopt>=1.3.2",
+    "cvxpy>=1.6.5",
+    "cython>=3.1.0",
+    "matplotlib>=3.10.3",
+    "mosek>=11.0.20",
+    "networkx>=3.4.2",
+    "numpy>=2.2.5",
+    "scikit-learn>=1.6.1",
+    "scipy>=1.15.3",
+    "slycot>=0.6.0",
+    "tabulate>=0.9.0",
+    "tqdm>=4.67.1",
+]
+
+[project.urls]
+Documentation = "https://graphkit-learn.readthedocs.io"
+Source = "https://github.com/jajupmochi/graphkit-learn"
+Tracker = "https://github.com/jajupmochi/graphkit-learn/issues"
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+cmake.version = ">=3.18"
+build-dir = "build/{wheel_tag}"
+build.verbose = true
+wheel.packages = ["gklearn"]
+
+[tool.scikit-build.sdist]
+include = ["gklearn/**/*", "CMakeLists.txt"]
+exclude = ["gklearn/gedlib/gedlib-master", "*.cpp", "*.so", "**/*.pyc"]
+
+[tool.scikit-build.cmake.define]
+BUILD_SHARED_LIBS = "ON"
+
+[tool.dynamic-metadata.version]
+provider = "dynamic_metadata.plugins.regex"
+input = "gklearn/__init__.py"
+regex = "(?i)^(__version__|VERSION) *= *(['\"])v?(?P<value>.+?)\\2"
+
