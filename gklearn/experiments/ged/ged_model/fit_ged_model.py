@@ -67,7 +67,7 @@ def fit_model_ged(
 					list(all_graphs[idx_edge[0]].edges)[0]].keys()
 			)
 
-	from .parallel_version import GEDModel
+	from gklearn.experiments.ged.ged_model.parallel_version import GEDModel
 
 	if parallel is False:
 		parallel = None
@@ -152,37 +152,85 @@ def fit_model_ged(
 	return model, matrix, stats
 
 
-def fit_model_ged_test():
+def fit_model_ged_test(feat_type: str = 'str'):
 	# Example usage:
 	from gklearn.experiments.ged.ged_model.graph_generator import GraphGenerator
-	generator = GraphGenerator(
-		num_graphs=10,
-		max_num_nodes=5,
-		min_num_nodes=3,
-		max_num_edges=10,
-		min_num_edges=5,
-		with_discrete_n_features=True,
-		with_discrete_e_features=True,
-		with_continuous_n_features=True,
-		with_continuous_e_features=True,
-		# 	node_features=['color', 'shape'],
-		# 	edge_features=['weight'],
-		# 	node_feature_values={'color': ['red', 'blue'], 'shape': ['circle', 'square']},
-		# 	edge_feature_values={'weight': [1, 2, 3]},
-	)
-	graphs = generator.generate_graphs()
+	if feat_type in ['str', 'int']:
+		generator = GraphGenerator(
+			num_graphs=10,
+			max_num_nodes=5,
+			min_num_nodes=3,
+			max_num_edges=10,
+			min_num_edges=5,
+			node_feat_type=feat_type,
+			edge_feat_type=feat_type,
+			with_discrete_n_features=True,
+			with_discrete_e_features=True,
+			with_continuous_n_features=False,
+			with_continuous_e_features=False,
+			continuous_n_feature_dim=1,
+			continuous_e_feature_dim=1,
+
+		)
+	else:
+		generator = GraphGenerator(
+			num_graphs=10,
+			max_num_nodes=5,
+			min_num_nodes=3,
+			max_num_edges=10,
+			min_num_edges=5,
+			with_discrete_n_features=True,
+			with_discrete_e_features=True,
+			with_continuous_n_features=True,
+			with_continuous_e_features=True,
+			continuous_n_feature_dim=5,
+			continuous_e_feature_dim=3,
+			# 	node_features=['color', 'shape'],
+			# 	edge_features=['weight'],
+			# 	node_feature_values={'color': ['red', 'blue'], 'shape': ['circle', 'square']},
+			# 	edge_feature_values={'weight': [1, 2, 3]},
+		)
+	run_fit(generator)
+
+
+def run_fit(graph_generator):
+	graphs = graph_generator.generate_graphs()
+
+	# Set GED options:
 	ged_options = {
-		'method': 'ged',
+		'method': 'BIPARTITE',
 		'edit_cost_fun': 'NON_SYMBOLIC',
 		'edit_costs': [3, 3, 1, 3, 3, 1],
 		'optim_method': 'init',
 		'repeats': 1
 	}
-	model, matrix, stats = fit_model_ged(graphs, ged_options)
+
+	fit_settings = {
+		'parallel': None,
+		'n_jobs': 1, # min(12, max(os.cpu_count() - 2, 0)),
+		'chunksize': None,  # None == automatic determination
+		'copy_graphs': True,
+		'reorder_graphs': False,
+	}
+
+	# Fit model and compute GED matrix:
+	model, matrix, stats = fit_model_ged(
+		graphs,
+		graphs_Y=None,
+		ged_options=ged_options,
+		read_resu_from_file=0,
+		output_dir=None,
+		params_idx=None,
+		verbose=2,
+		**fit_settings
+	)
 	print("Model:", model)
 	print("Matrix shape:", matrix.shape)
 
 
+
 if __name__ == '__main__':
 	# Test the class
-	fit_model_ged_test()
+	# feat_type = 'str'
+	feat_type = 'int'
+	fit_model_ged_test(feat_type=feat_type)

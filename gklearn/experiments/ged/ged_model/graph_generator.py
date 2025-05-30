@@ -4,6 +4,7 @@ graph_generator
 @Author: jajupmochi
 @Date: May 22 2025
 """
+import string
 
 
 class GraphGenerator:
@@ -36,12 +37,16 @@ class GraphGenerator:
 			min_num_nodes: int,
 			max_num_edges: int,
 			min_num_edges: int,
+			node_feat_type: str | None = 'str',
+			edge_feat_type: str | None = 'str',
 			with_discrete_n_features: bool = False,
 			with_discrete_e_features: bool = False,
 			with_continuous_n_features: bool = False,
 			with_continuous_e_features: bool = False,
-			continuous_n_feature_dim: int = 10,
-			continuous_e_feature_dim: int = 10,
+			continuous_n_feature_key: str | None = 'feature',
+			continuous_e_feature_key: str | None = 'feature',
+			continuous_n_feature_dim: int | None = 10,
+			continuous_e_feature_dim: int | None = 10,
 			node_features: list = None,
 			edge_features: list = None,
 			node_feature_values: dict = None,
@@ -53,10 +58,14 @@ class GraphGenerator:
 		self.min_num_nodes = min_num_nodes
 		self.max_num_edges = max_num_edges
 		self.min_num_edges = min_num_edges
+		self.node_feat_type = node_feat_type
+		self.edge_feat_type = edge_feat_type
 		self.with_discrete_n_features = with_discrete_n_features
 		self.with_discrete_e_features = with_discrete_e_features
 		self.with_continuous_n_features = with_continuous_n_features
 		self.with_continuous_e_features = with_continuous_e_features
+		self.continuous_n_feature_key = continuous_n_feature_key
+		self.continuous_e_feature_key = continuous_e_feature_key
 		self.continuous_n_feature_dim = continuous_n_feature_dim
 		self.continuous_e_feature_dim = continuous_e_feature_dim
 		self.node_features = node_features if node_features else []
@@ -65,10 +74,38 @@ class GraphGenerator:
 		self.edge_feature_values = edge_feature_values if edge_feature_values else {}
 		self.seed = seed
 		if with_discrete_n_features and node_features is None:
-			self.discrete_n_features = [str(i) for i in range(1, 100)]
+			self.discrete_n_features = self.generate_discrete_feats()
 		if with_discrete_e_features and edge_features is None:
-			import string
-			self.discrete_e_features = list(string.ascii_lowercase)
+			self.discrete_e_features = self.generate_discrete_feats()
+
+
+	def generate_discrete_feats(self):
+
+		if self.node_feat_type == 'str':
+			discrete_features = self.generate_symbolic_feats()
+		elif self.node_feat_type == 'int':
+			discrete_features = [i for i in range(1, 100)]
+		elif self.node_feat_type == 'float':
+			discrete_features = None
+		else:
+			raise ValueError(
+				"node_feat_type must be 'str' or 'int'."
+			)
+		return discrete_features
+
+
+	def generate_symbolic_feats(self):
+		flist = list(string.ascii_lowercase)
+		# Combine some letters to make them more realistic:
+		count = 0
+		for i in string.ascii_lowercase:
+			for j in string.ascii_lowercase:
+				if i != j:
+					flist.append(i + j)
+					count += 1
+					if count >= 26:
+						break
+		return flist
 
 
 	def generate_graphs(self):
@@ -80,7 +117,6 @@ class GraphGenerator:
 		"""
 		import numpy as np
 		import networkx as nx
-		import random
 
 		rng = np.random.default_rng(self.seed)
 
@@ -94,19 +130,27 @@ class GraphGenerator:
 			G.add_nodes_from(range(num_nodes))
 
 			if num_edges > 0:
-				while G.number_of_edges() < num_edges:
-					u = rng.integers(0, num_nodes)
-					v = rng.integers(0, num_nodes)
-					if u != v and not G.has_edge(u, v):
-						G.add_edge(u, v)
+				edge_pairs = num_nodes * (num_nodes - 1) // 2
+				if num_edges > edge_pairs:
+					num_edges = edge_pairs
+				# Generate random edges:
+				edges = rng.choice(
+					edge_pairs, num_edges, replace=False
+				)
+				for edge in edges:
+					u = edge // (num_nodes - 1)
+					v = edge % (num_nodes - 1)
+					if v >= u:
+						v += 1
+					G.add_edge(u, v)
 
+			# Add discrete node features:
 			if self.with_discrete_n_features:
-				if self.node_feature_values is None:
+				if self.node_feature_values == {}:
 					for node in G.nodes():
-						for feature in self.node_features:
-							G.nodes[node][feature] = rng.choice(
-								self.discrete_n_features
-							)
+						G.nodes[node]['feature'] = rng.choice(
+							self.discrete_n_features
+						).item()
 
 				else:
 					pass
@@ -117,12 +161,11 @@ class GraphGenerator:
 			# 		)
 
 			if self.with_discrete_e_features:
-				if self.edge_feature_values is None:
+				if self.edge_feature_values == {}:
 					for edge in G.edges():
-						for feature in self.edge_features:
-							G.edges[edge][feature] = rng.choice(
-								self.discrete_e_features
-							)
+						G.edges[edge]['feature'] = rng.choice(
+							self.discrete_e_features
+						).item()
 				else:
 					pass
 			# for edge in G.edges():
@@ -132,10 +175,10 @@ class GraphGenerator:
 			# 		)
 
 			if self.with_continuous_n_features:
-				if self.node_feature_values is None:
+				if self.node_feature_values == {}:
 					for node in G.nodes():
 						feature = rng.random(self.continuous_n_feature_dim)
-						G.nodes[node]['feature'] = feature
+						G.nodes[node][self.continuous_n_feature_key] = feature
 
 				else:
 					pass
@@ -147,10 +190,10 @@ class GraphGenerator:
 			# 		)
 
 			if self.with_continuous_e_features:
-				if self.edge_feature_values is None:
+				if self.edge_feature_values == {}:
 					for edge in G.edges():
 						feature = rng.random(self.continuous_e_feature_dim)
-						G.edges[edge]['feature'] = feature
+						G.edges[edge][self.continuous_e_feature_key] = feature
 
 				else:
 					pass

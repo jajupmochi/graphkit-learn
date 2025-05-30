@@ -319,8 +319,8 @@ def get_extensions():
 			],
 			libraries=["doublefann", "sgtelib", "svm", "nomad"],
 			language="c++",
-			extra_compile_args=["-std=c++11"],
-			extra_link_args=["-std=c++11"]
+			extra_compile_args=["-std=c++17"],
+			extra_link_args=["-std=c++17"]
 		)
 	]
 	return exts
@@ -370,7 +370,7 @@ if __name__ == '__main__':
 		),
 		name="gedlibpy",
 		author="Lambert Natacha and Linlin Jia",
-		author_email="linlin.jia@unibe.ch",
+		author_email="jajupmochi@gmail.com",
 		description="A Python wrapper library for C++ library GEDLIB of graph edit distances",
 		long_description=long_description,
 		long_description_content_type="text/markdown",

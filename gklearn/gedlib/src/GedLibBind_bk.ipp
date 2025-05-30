@@ -34,7 +34,7 @@ using namespace std;
 
 
 namespace pyged {
-
+	
 //!< List of available edit cost functions readable by Python.
 std::vector<std::string> editCostStringOptions = {
 	"CHEM_1",
@@ -45,6 +45,7 @@ std::vector<std::string> editCostStringOptions = {
 	"LETTER",
 	"LETTER2",
 	"NON_SYMBOLIC",
+	"GEOMETRIC",
 	"FINGERPRINT",
 	"PROTEIN",
 	"CONSTANT"
@@ -60,6 +61,7 @@ std::map<std::string, ged::Options::EditCosts> editCostOptions = {
 	{"LETTER", ged::Options::EditCosts::LETTER},
 	{"LETTER2", ged::Options::EditCosts::LETTER2},
 	{"NON_SYMBOLIC", ged::Options::EditCosts::NON_SYMBOLIC},
+	{"GEOMETRIC", ged::Options::EditCosts::GEOMETRIC},
 	{"FINGERPRINT", ged::Options::EditCosts::FINGERPRINT},
 	{"PROTEIN", ged::Options::EditCosts::PROTEIN},
 	{"CONSTANT", ged::Options::EditCosts::CONSTANT}
@@ -276,16 +278,49 @@ std::string toStringVectorInt(std::vector<unsigned long int> vector) {
 }
 
 
-PyGEDEnv::PyGEDEnv () {
-	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
-	this->initialized = false;
+PyGEDEnv::PyGEDEnv (LabelType type) : type_(type), env_(nullptr), initialized(false) {
+    // Initialize the environment with the specified label type:
+    switch (type) {
+        case GXLLabel:
+            env_ = new GEDEnvGXL();
+            break;
+        case AttrLabel:
+            env_ = new GEDEnvAttr();
+            break;
+        default:
+            throw std::invalid_argument("Unsupported label type");
+    }
+// 	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
+// 	this->initialized = false;
 }
 
 PyGEDEnv::~PyGEDEnv () {
-	if (env_ != NULL) {
-		delete env_;
-		env_ = NULL;
-	}
+	if (env_ != nullptr) {
+	    std::visit([](auto* env_ptr) {
+            delete env_ptr;
+        }, env_);
+    env_ = nullptr;
+    }
+}
+
+// ======== The Scope Guard API ========
+
+template<typename Func>
+decltype(auto)
+PyGEDEnv::withEnv(Func&& func) {
+    // Use std::visit to call the function on the correct environment type:
+    return std::visit([&func](auto* env_ptr) -> decltype(auto) {
+        // Get the reference to the environment pointer:
+        auto& env = *env_ptr;
+        // Call the function with the environment pointer and return its result:
+        return std::forward<Func>(func)(env);
+    }, env_);
+}
+
+// ======== Environment Public APIs ========
+
+PyGEDEnv::LabelType PyGEDEnv::getLabelType() const {
+    return type_;
 }
 
 // bool initialized = false; //Initialization boolean (because Env has one but not accessible).
@@ -299,15 +334,27 @@ void PyGEDEnv::restartEnv() {
 		delete env_;
 		env_ = NULL;
 	}
-	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
+	switch (type_) {
+        case GXLLabel:
+            env_ = new ged::GEDEnvGXL();
+            break;
+        case AttrLabel:
+            env_ = new ged::GEDEnvAttr();
+            break;
+        default:
+            throw std::invalid_argument("Unsupported label type");
+    }
 	initialized = false;
 }
 
 void PyGEDEnv::loadGXLGraph(const std::string & pathFolder, const std::string & pathXML, bool node_type, bool edge_type) {
-	 std::vector<ged::GEDGraph::GraphID> tmp_graph_ids(env_->load_gxl_graph(pathFolder, pathXML,
-	 	(node_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
-		(edge_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
-		std::unordered_set<std::string>(), std::unordered_set<std::string>()));
+    return withEnv([&](auto& env_) {
+    	std::vector<ged::GEDGraph::GraphID> tmp_graph_ids(env_.load_gxl_graph(pathFolder, pathXML,
+            (node_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
+            (edge_type ? ged::Options::GXLNodeEdgeType::LABELED : ged::Options::GXLNodeEdgeType::UNLABELED),
+            std::unordered_set<std::string>(), std::unordered_set<std::string>()));
+    }
+
 }
 
 std::pair<std::size_t,std::size_t> PyGEDEnv::getGraphIds() const {
@@ -341,6 +388,36 @@ void PyGEDEnv::addNode(std::size_t graphId, const std::string & nodeId, const st
 	initialized = false;
 }
 
+void PyGEDEnv::addNode(
+    std::size_t graphId,
+    const std::string& nodeId,
+    const std::unordered_map<std::string, std::string>& str_map,
+    const std::unordered_map<std::string, int>& int_map,
+    const std::unordered_map<std::string, double>& float_map,
+    const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+    const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+    const std::unordered_map<std::string, std::vector<double>>& list_float_map
+) {
+    // fixme: debug test only:
+    std::cout << "The node labels received by the c++ bindings are: " << std::endl;
+    printLabelMaps(str_map, int_map, float_map, list_str_map, list_int_map, list_float_map);
+
+    // Merge the maps into AttrLabel:
+    ged::AttrLabel nodeLabel = PyGEDEnv::constructAttrLabelFromMaps(
+        str_map,
+        int_map,
+        float_map,
+        list_str_map,
+        list_int_map,
+        list_float_map
+    );
+
+    std::cout << "The node label passed to c++ env is: " << nodeLabel << std::endl;
+
+    env_->add_node(graphId, nodeId, nodeLabel);
+    initialized = false;
+}
+
 /*void addEdge(std::size_t graphId, ged::GXLNodeID tail, ged::GXLNodeID head, ged::GXLLabel edgeLabel) {
 	env_->add_edge(graphId, tail, head, edgeLabel);
 }*/
@@ -348,6 +425,38 @@ void PyGEDEnv::addNode(std::size_t graphId, const std::string & nodeId, const st
 void PyGEDEnv::addEdge(std::size_t graphId, const std::string & tail, const std::string & head, const std::map<std::string, std::string> & edgeLabel, bool ignoreDuplicates) {
 	env_->add_edge(graphId, tail, head, edgeLabel, ignoreDuplicates);
 	initialized = false;
+}
+
+void PyGEDEnv::addEdge(
+    std::size_t graphId,
+    const std::string& tail,
+    const std::string& head,
+    const std::unordered_map<std::string, std::string>& str_map,
+    const std::unordered_map<std::string, int>& int_map,
+    const std::unordered_map<std::string, double>& float_map,
+    const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+    const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+    const std::unordered_map<std::string, std::vector<double>>& list_float_map,
+    bool ignoreDuplicates
+) {
+    // fixme: debug test only:
+    std::cout << "The edge labels received by the c++ bindings are: " << std::endl;
+    printLabelMaps(str_map, int_map, float_map, list_str_map, list_int_map, list_float_map);
+
+    // Merge the maps into AttrLabel:
+    ged::AttrLabel edgeLabel = PyGEDEnv::constructAttrLabelFromMaps(
+        str_map,
+        int_map,
+        float_map,
+        list_str_map,
+        list_int_map,
+        list_float_map
+    );
+
+    std::cout << "The edge label passed to c++ env is: " << edgeLabel << std::endl;
+
+    env_->add_edge(graphId, tail, head, edgeLabel, ignoreDuplicates);
+    initialized = false;
 }
 
 void PyGEDEnv::clearGraph(std::size_t graphId) {
@@ -550,6 +659,10 @@ std::vector<std::vector<double>> PyGEDEnv::hungarianLSAPE(std::vector<std::vecto
 	return res;
 }
 
+std::size_t PyGEDEnv::getNumGraphs() const {
+    return env_->num_graphs();
+}
+
 std::size_t PyGEDEnv::getNumNodeLabels() const {
 	return env_->num_node_labels();
 }
@@ -639,6 +752,89 @@ double PyGEDEnv::computeInducedCost(std::size_t g_id, std::size_t h_id, std::vec
 	return node_map.induced_cost();
 }
 
+
+ged::AttrLabel
+PyGEDEnv::constructAttrLabelFromMaps(
+    const std::unordered_map<std::string, std::string>& str_map,
+    const std::unordered_map<std::string, int>& int_map,
+    const std::unordered_map<std::string, double>& float_map,
+    const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+    const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+    const std::unordered_map<std::string, std::vector<double>>& list_float_map
+) {
+    // using ged::AttrLabel = std::unordered_map<std::string, std::variant<std::string, int, double, std::vector<std::string>, std::vector<int>, std::vector<double>>>;
+    ged::AttrLabel attr_label;
+    for (const auto& pair : str_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    for (const auto& pair : int_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    for (const auto& pair : float_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    for (const auto& pair : list_str_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    for (const auto& pair : list_int_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    for (const auto& pair : list_float_map) {
+        attr_label[pair.first] = pair.second;
+    }
+    return attr_label;
+}
+
+
+static void printLabelMaps(
+    const std::unordered_map<std::string, std::string>& str_map,
+    const std::unordered_map<std::string, int>& int_map,
+    const std::unordered_map<std::string, double>& float_map,
+    const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+    const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+    const std::unordered_map<std::string, std::vector<double>>& list_float_map
+) {
+    // Print the label maps for debugging purposes
+    std::cout << "String map: ";
+    for (const auto& pair : str_map) {
+        std::cout << pair.first << ": " << pair.second << ", ";
+    }
+    std::cout << "\nInt map: ";
+    for (const auto& pair : int_map) {
+        std::cout << pair.first << ": " << pair.second << ", ";
+    }
+    std::cout << "\nFloat map: ";
+    for (const auto& pair : float_map) {
+        std::cout << pair.first << ": " << pair.second << ", ";
+    }
+    std::cout << "\nList of strings map: ";
+    for (const auto& pair : list_str_map) {
+        std::cout << pair.first << ": [";
+        for (const auto& item : pair.second) {
+            std::cout << item << ", ";
+        }
+        std::cout << "], ";
+    }
+    std::cout << "\nList of ints map: ";
+    for (const auto& pair : list_int_map) {
+        std::cout << pair.first << ": [";
+        for (const auto& item : pair.second) {
+            std::cout << item << ", ";
+        }
+        std::cout << "], ";
+    }
+    std::cout << "\nList of floats map: ";
+    for (const auto& pair : list_float_map) {
+        std::cout << pair.first << ": [";
+        for (const auto& item : pair.second) {
+            std::cout << item << ", ";
+        }
+        std::cout << "], ";
+    }
+
+    std::cout << std::endl;
+
+}
 
 
 

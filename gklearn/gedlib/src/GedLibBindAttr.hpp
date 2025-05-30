@@ -1,30 +1,36 @@
 /****************************************************************************
  *                                                                          *
- *   Copyright (C) 2019-2020 by Natacha Lambert, David B. Blumenthal and    *
- *   Linlin Jia                                                             *
+ *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and
+ *   David B. Blumenthal
+ *                                                                          *
  *                                                                          *
  *   This file should be used by Python.                                    *
- * 	 Please call the Python module if you want to use GedLib with this code.*
+ * 	 Please call the Python module if you want to use GedLib with this code.* 
  *                                                                          *
  * 	 Otherwise, you can directly use GedLib for C++.                        *
  *                                                                          *
  ***************************************************************************/
-
+ 
 /*!
- * @file GedLibBind.hpp
- * @brief Classe and function declarations to call easly GebLib in Python without Gedlib's types
+ * @file GedLibBindAttr.hpp
+ * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
+ * with the AttrLabel.
+ * @todo: it is better to refactor it along with GedLibBindGXL.hpp or use pybind11.
  */
-#ifndef GEDLIBBIND_HPP
-#define GEDLIBBIND_HPP
-
+#ifndef GEDLIBBIND_ATTR_HPP
+#define GEDLIBBIND_ATTR_HPP
+ 
 //Include standard libraries.
 #include <string>
 #include <vector>
+#include <functional>
 #include <map>
 #include <list>
 #include <iostream>
 #include "../include/gedlib-master/src/env/ged_env.hpp"
 #include "../include/gedlib-master/src/env/node_map.hpp"
+#include "../include/gedlib-master/src/env/common_types.hpp"
+#include "GedLibBind.hpp"
 
 
 /*!
@@ -34,48 +40,29 @@
 namespace pyged {
 
 /*!
-* @brief Get list of available edit cost functions readable by Python.
-*/
-std::vector<std::string> getEditCostStringOptions();
-
-/*!
-* @brief Get list of available computation methods readable by Python.
-*/
-std::vector<std::string> getMethodStringOptions();
-
-/*!
-* @brief Get list of available initilaization options readable by Python.
-*/
-std::vector<std::string> getInitStringOptions();
-
-/*!
-* @brief Returns a dummy node.
-* @return ID of dummy node.
-*/
-static std::size_t getDummyNode();
-
-
-/*!
 * @brief Provides the API of GEDLIB for Python.
 */
-class PyGEDEnv {
+class PyGEDEnvAttr {
+
 
 public:
 
 	/*!
 	 * @brief Constructor.
 	 */
-    PyGEDEnv();
+    PyGEDEnvAttr();
 
-    // PyGEDEnv();
+    // PyGEDEnvAttr();
 
 	/*!
 	 * @brief Destructor.
 	 */
-    ~PyGEDEnv();
+    ~PyGEDEnvAttr();
+
+    // ======== Environment Public APIs ========
 
     /*!
-    * @brief Tests if the environment is initialized or not.
+    * @brief Tests if the environment is initialized or not. 
     * @return Boolean @p true if the environment is initialized and @p false otherwise.
     */
     bool isInitialized();
@@ -102,8 +89,8 @@ public:
     std::pair<std::size_t,std::size_t> getGraphIds() const;
 
     /*!
-    * @brief Returns the list of graphs IDs which are loaded in the environment.
-    * @return A vector which contains all the graphs Ids.
+    * @brief Returns the list of graphs IDs which are loaded in the environment. 
+    * @return A vector which contains all the graphs Ids. 
     */
     std::vector<std::size_t> getAllGraphIds();
 
@@ -129,23 +116,71 @@ public:
     */
     std::size_t addGraph(const std::string & graph_name, const std::string & graph_class);
 
+//    /*!
+//    * @brief Adds a labeled node.
+//    * @param[in] graphId ID of graph that has been added to the environment.
+//    * @param[in] nodeId The user-specific ID of the vertex that has to be added.
+//    * @param[in] nodeLabel The label of the vertex that has to be added. Only supports string labels.
+//    */
+//    void addNode(std::size_t graphId, const std::string & nodeId, const std::map<std::string, std::string> & nodeLabel);
+
     /*!
     * @brief Adds a labeled node.
     * @param[in] graphId ID of graph that has been added to the environment.
     * @param[in] nodeId The user-specific ID of the vertex that has to be added.
-    * @param[in] nodeLabel The label of the vertex that has to be added.
+    * @param[in] str_map The string attributes of the node.
+    * @param[in] int_map The integer attributes of the node.
+    * @param[in] float_map The float attributes of the node.
+    * @param[in] list_int_map The list of integer attributes of the node.
+    * @param[in] list_float_map The list of float attributes of the node.
+    * @param[in] list_str_map The list of string attributes of the node.
     */
-    void addNode(std::size_t graphId, const std::string & nodeId, const std::map<std::string, std::string> & nodeLabel);
+    void addNode(
+        std::size_t graphId,
+        const std::string& nodeId,
+        const std::unordered_map<std::string, std::string>& str_map,
+        const std::unordered_map<std::string, int>& int_map,
+        const std::unordered_map<std::string, double>& float_map,
+        const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+        const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+        const std::unordered_map<std::string, std::vector<double>>& list_float_map
+    );
+
+//    /*!
+//    * @brief Adds a labeled edge.
+//    * @param[in] graphId ID of graph that has been added to the environment.
+//    * @param[in] tail The user-specific ID of the tail of the edge that has to be added.
+//    * @param[in] head The user-specific ID of the head of the edge that has to be added.
+//    * @param[in] edgeLabel The label of the vertex that has to be added. Only supports string labels.
+//    * @param[in] ignoreDuplicates If @p true, duplicate edges are ignores. Otherwise, an exception is thrown if an existing edge is added to the graph.
+//    */
+//    void addEdge(std::size_t graphId, const std::string & tail, const std::string & head, const std::map<std::string, std::string> & edgeLabel, bool ignoreDuplicates = true);
 
     /*!
     * @brief Adds a labeled edge.
     * @param[in] graphId ID of graph that has been added to the environment.
     * @param[in] tail The user-specific ID of the tail of the edge that has to be added.
     * @param[in] head The user-specific ID of the head of the edge that has to be added.
-    * @param[in] edgeLabel The label of the vertex that has to be added.
+    * @param[in] str_map The string attributes of the edge.
+    * @param[in] int_map The integer attributes of the edge.
+    * @param[in] float_map The float attributes of the edge.
+    * @param[in] list_int_map The list of integer attributes of the edge.
+    * @param[in] list_float_map The list of float attributes of the edge.
+    * @param[in] list_str_map The list of string attributes of the edge.
     * @param[in] ignoreDuplicates If @p true, duplicate edges are ignores. Otherwise, an exception is thrown if an existing edge is added to the graph.
     */
-    void addEdge(std::size_t graphId, const std::string & tail, const std::string & head, const std::map<std::string, std::string> & edgeLabel, bool ignoreDuplicates = true);
+    void addEdge(
+        std::size_t graphId,
+        const std::string& tail,
+        const std::string& head,
+        const std::unordered_map<std::string, std::string>& str_map,
+        const std::unordered_map<std::string, int>& int_map,
+        const std::unordered_map<std::string, double>& float_map,
+        const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+        const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+        const std::unordered_map<std::string, std::vector<double>>& list_float_map,
+        bool ignoreDuplicates
+    );
 
     /*!
     * @brief Clears and de-initializes a graph that has previously been added to the environment. Call initEnv() after calling this method.
@@ -158,7 +193,7 @@ public:
     * @param graphId ID of the selected graph.
     * @return ged::ExchangeGraph representation of the selected graph.
     */
-    ged::ExchangeGraph<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel> getGraph(std::size_t graphId) const;
+    ged::ExchangeGraph<ged::GXLNodeID, ged::AttrLabel, ged::AttrLabel> getGraph(std::size_t graphId) const;
 
     /*!
     * @brief Returns the internal Id of a graph, selected by its ID.
@@ -193,14 +228,14 @@ public:
     * @param[in] graphId ID of an input graph that has been added to the environment.
     * @return The list of labels's nodes on the selected graph
     */
-    std::vector<std::map<std::string, std::string>> getGraphNodeLabels(std::size_t graphId);
+    std::vector<ged::AttrLabel> getGraphNodeLabels(std::size_t graphId);
 
     /*!
     * @brief Returns all the edges on a graph, selected by its ID.
     * @param[in] graphId ID of an input graph that has been added to the environment.
     * @return The list of edges on the selected graph
     */
-    std::map<std::pair<std::size_t, std::size_t>, std::map<std::string, std::string>> getGraphEdges(std::size_t graphId);
+    std::map<std::pair<std::size_t, std::size_t>, ged::AttrLabel> getGraphEdges(std::size_t graphId);
 
     /*!
     * @brief Returns the adjacence list of a graph, selected by its ID.
@@ -272,7 +307,7 @@ public:
     double getLowerBound(std::size_t g,std::size_t h) const;
 
     /*!
-    * @brief  Returns the forward map between nodes of the two indicated graphs.
+    * @brief  Returns the forward map between nodes of the two indicated graphs. 
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -280,7 +315,7 @@ public:
     std::vector<long unsigned int> getForwardMap(std::size_t g, std::size_t h) const;
 
     /*!
-    * @brief  Returns the backward map between nodes of the two indicated graphs.
+    * @brief  Returns the backward map between nodes of the two indicated graphs. 
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The backward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -312,10 +347,10 @@ public:
     * @return The induced cost between the two indicated graphs.
     */
     double getInducedCost(std::size_t g, std::size_t h) const;
-
+    
 
     /*!
-    * @brief Returns node map between the input graphs. This function duplicates datas.
+    * @brief Returns node map between the input graphs. This function duplicates datas. 
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Node map computed by the last call to run_method() with arguments @p g and @p h.
@@ -323,7 +358,7 @@ public:
     std::vector<std::pair<std::size_t, std::size_t>> getNodeMap(std::size_t g, std::size_t h);
 
     /*!
-    * @brief Returns assignment matrix between the input graphs. This function duplicates datas.
+    * @brief Returns assignment matrix between the input graphs. This function duplicates datas. 
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Assignment matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -331,7 +366,7 @@ public:
     std::vector<std::vector<int>> getAssignmentMatrix(std::size_t g, std::size_t h);
 
     /*!
-    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs.
+    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs. 
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward and backward maps to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -366,6 +401,13 @@ public:
     */
     std::vector<std::vector<double>> hungarianLSAPE(std::vector<std::vector<double>> matrixCost);
 
+
+    /*!
+    * @brief Returns the number of graphs.
+    * @return Number of graphs contained in the environment.
+    */
+    std::size_t getNumGraphs() const;
+
     /*!
 	 * @brief Returns the number of node labels.
 	 * @return Number of pairwise different node labels contained in the environment.
@@ -378,7 +420,7 @@ public:
 	 * @param[in] label_id ID of node label that should be returned. Must be between 1 and num_node_labels().
 	 * @return Node label for selected label ID.
 	 */
-	std::map<std::string, std::string> getNodeLabel(std::size_t label_id) const;
+	ged::AttrLabel getNodeLabel(std::size_t label_id) const;
 
     /*!
 	 * @brief Returns the number of edge labels.
@@ -392,7 +434,7 @@ public:
 	 * @param[in] label_id ID of edge label that should be returned. Must be between 1 and num_node_labels().
 	 * @return Edge label for selected label ID.
 	 */
-	std::map<std::string, std::string> getEdgeLabel(std::size_t label_id) const;
+	ged::AttrLabel getEdgeLabel(std::size_t label_id) const;
 
 	// /*!
 	//  * @brief Returns the number of nodes.
@@ -413,28 +455,28 @@ public:
 	 * @param[in] node_label_2 Second node label.
 	 * @return Node relabeling cost for the given node labels.
 	 */
-	double getNodeRelCost(const std::map<std::string, std::string> & node_label_1, const std::map<std::string, std::string> & node_label_2) const;
+	double getNodeRelCost(const ged::AttrLabel & node_label_1, const ged::AttrLabel & node_label_2) const;
 
 	/*!
 	 * @brief Returns node deletion cost.
 	 * @param[in] node_label Node label.
 	 * @return Cost of deleting node with given label.
 	 */
-	double getNodeDelCost(const std::map<std::string, std::string> & node_label) const;
+	double getNodeDelCost(const ged::AttrLabel & node_label) const;
 
 	/*!
 	 * @brief Returns node insertion cost.
 	 * @param[in] node_label Node label.
 	 * @return Cost of inserting node with given label.
 	 */
-	double getNodeInsCost(const std::map<std::string, std::string> & node_label) const;
+	double getNodeInsCost(const ged::AttrLabel & node_label) const;
 
 	/*!
 	 * @brief Computes median node label.
 	 * @param[in] node_labels The node labels whose median should be computed.
 	 * @return Median of the given node labels.
 	 */
-	std::map<std::string, std::string> getMedianNodeLabel(const std::vector<std::map<std::string, std::string>> & node_labels) const;
+	ged::AttrLabel getMedianNodeLabel(const std::vector<ged::AttrLabel> & node_labels) const;
 
 	/*!
 	 * @brief Returns edge relabeling cost.
@@ -442,28 +484,28 @@ public:
 	 * @param[in] edge_label_2 Second edge label.
 	 * @return Edge relabeling cost for the given edge labels.
 	 */
-	double getEdgeRelCost(const std::map<std::string, std::string> & edge_label_1, const std::map<std::string, std::string> & edge_label_2) const;
+	double getEdgeRelCost(const ged::AttrLabel & edge_label_1, const ged::AttrLabel & edge_label_2) const;
 
 	/*!
 	 * @brief Returns edge deletion cost.
 	 * @param[in] edge_label Edge label.
 	 * @return Cost of deleting edge with given label.
 	 */
-	double getEdgeDelCost(const std::map<std::string, std::string> & edge_label) const;
+	double getEdgeDelCost(const ged::AttrLabel & edge_label) const;
 
 	/*!
 	 * @brief Returns edge insertion cost.
 	 * @param[in] edge_label Edge label.
 	 * @return Cost of inserting edge with given label.
 	 */
-	double getEdgeInsCost(const std::map<std::string, std::string> & edge_label) const;
+	double getEdgeInsCost(const ged::AttrLabel & edge_label) const;
 
 	/*!
 	 * @brief Computes median edge label.
 	 * @param[in] edge_labels The edge labels whose median should be computed.
 	 * @return Median of the given edge labels.
 	 */
-	std::map<std::string, std::string> getMedianEdgeLabel(const std::vector<std::map<std::string, std::string>> & edge_labels) const;
+	ged::AttrLabel getMedianEdgeLabel(const std::vector<ged::AttrLabel> & edge_labels) const;
 
     /*!
 	 * @brief Returns the initialization type of the last initialization.
@@ -491,39 +533,47 @@ public:
 	// double getNodeCost(std::size_t label1, std::size_t label2) const;
 
 
+    /*!
+    * @brief Constructs a ged::AttrLabel from the given attribute maps.
+    * @param str_map The string attributes of the node/edge.
+    * @param int_map The integer attributes of the node/edge.
+    * @param float_map The float attributes of the node/edge.
+    * @param list_str_map The list of string attributes of the node/edge.
+    * @param list_int_map The list of integer attributes of the node/edge.
+    * @param list_float_map The list of float attributes of the node/edge.
+    * @return A ged::AttrLabel constructed from the given maps.
+    */
+	static ged::AttrLabel constructAttrLabelFromMaps(
+        const std::unordered_map<std::string, std::string>& str_map,
+        const std::unordered_map<std::string, int>& int_map,
+        const std::unordered_map<std::string, double>& float_map,
+        const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+        const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+        const std::unordered_map<std::string, std::vector<double>>& list_float_map
+    );
+
+
 private:
 
-    ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel> * env_; // environment variable
+    ged::GEDEnv<ged::GXLNodeID, ged::AttrLabel, ged::AttrLabel> * env_; // environment variable
 
     bool initialized; // initialization boolean (because env has one but not accessible)
 
-}; // end of class PyGEDEnv
+}; // class PyGEDEnvAttr
+
+static void printLabelMaps(
+    const std::unordered_map<std::string, std::string>& str_map,
+    const std::unordered_map<std::string, int>& int_map,
+    const std::unordered_map<std::string, double>& float_map,
+    const std::unordered_map<std::string, std::vector<std::string>>& list_str_map,
+    const std::unordered_map<std::string, std::vector<int>>& list_int_map,
+    const std::unordered_map<std::string, std::vector<double>>& list_float_map
+);
+
+static void printAttrLabel(const ged::AttrLabel & attr_label);
 
 } // namespace pyged
 
-#include "GedLibBind.ipp"
+#include "GedLibBindAttr.ipp"
 
-#endif /* SRC_GEDLIB_BIND_HPP */
-
-
-
-
-
-
-
-
-
-
-
-// namespace shapes {
-//     class Rectangle {
-//         public:
-//             int x0, y0, x1, y1;
-//             Rectangle();
-//             Rectangle(int x0, int y0, int x1, int y1);
-//             ~Rectangle();
-//             int getArea();
-//             void getSize(int* width, int* height);
-//             void move(int dx, int dy);
-//     };
-// }
+#endif /* SRC_GEDLIB_BIND_ATTR_HPP */
