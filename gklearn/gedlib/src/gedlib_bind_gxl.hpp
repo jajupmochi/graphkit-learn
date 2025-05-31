@@ -11,11 +11,12 @@
  ***************************************************************************/
 
 /*!
- * @file GedLibBind.hpp
- * @brief Classe and function declarations to call easly GebLib in Python without Gedlib's types
+ * @file gedlib_bind_gxl.hpp
+ * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
  */
-#ifndef GEDLIBBIND_HPP
-#define GEDLIBBIND_HPP
+#pragma once
+//#ifndef GEDLIBBIND_HPP
+//#define GEDLIBBIND_HPP
 
 //Include standard libraries.
 #include <string>
@@ -25,6 +26,7 @@
 #include <iostream>
 #include "../include/gedlib-master/src/env/ged_env.hpp"
 #include "../include/gedlib-master/src/env/node_map.hpp"
+#include "gedlib_bind_util.hpp"
 
 
 /*!
@@ -34,45 +36,23 @@
 namespace pyged {
 
 /*!
-* @brief Get list of available edit cost functions readable by Python.
+* @brief Provides the API of GEDLIB for Python for gxl labels (string labels).
 */
-std::vector<std::string> getEditCostStringOptions();
-
-/*!
-* @brief Get list of available computation methods readable by Python.
-*/
-std::vector<std::string> getMethodStringOptions();
-
-/*!
-* @brief Get list of available initilaization options readable by Python.
-*/
-std::vector<std::string> getInitStringOptions();
-
-/*!
-* @brief Returns a dummy node.
-* @return ID of dummy node.
-*/
-static std::size_t getDummyNode();
-
-
-/*!
-* @brief Provides the API of GEDLIB for Python.
-*/
-class PyGEDEnv {
+class PyGEDEnvGXL {
 
 public:
 
 	/*!
 	 * @brief Constructor.
 	 */
-    PyGEDEnv();
+    PyGEDEnvGXL();
 
-    // PyGEDEnv();
+    // PyGEDEnvGXL();
 
 	/*!
 	 * @brief Destructor.
 	 */
-    ~PyGEDEnv();
+    ~PyGEDEnvGXL();
 
     /*!
     * @brief Tests if the environment is initialized or not.
@@ -497,33 +477,10 @@ private:
 
     bool initialized; // initialization boolean (because env has one but not accessible)
 
-}; // end of class PyGEDEnv
+}; // end of class PyGEDEnvGXL
 
 } // namespace pyged
 
-#include "GedLibBind.ipp"
+//#include "GedLibBind.ipp"
 
-#endif /* SRC_GEDLIB_BIND_HPP */
-
-
-
-
-
-
-
-
-
-
-
-// namespace shapes {
-//     class Rectangle {
-//         public:
-//             int x0, y0, x1, y1;
-//             Rectangle();
-//             Rectangle(int x0, int y0, int x1, int y1);
-//             ~Rectangle();
-//             int getArea();
-//             void getSize(int* width, int* height);
-//             void move(int dx, int dy);
-//     };
-// }
+//#endif /* SRC_GEDLIB_BIND_HPP */

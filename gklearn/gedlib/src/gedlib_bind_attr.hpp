@@ -1,24 +1,24 @@
 /****************************************************************************
  *                                                                          *
- *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and
- *   David B. Blumenthal
- *                                                                          *
+ *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and David B.   *
+ *   Blumenthal                                                             *
  *                                                                          *
  *   This file should be used by Python.                                    *
- * 	 Please call the Python module if you want to use GedLib with this code.* 
+ * 	 Please call the Python module if you want to use GedLib with this code.*
  *                                                                          *
  * 	 Otherwise, you can directly use GedLib for C++.                        *
  *                                                                          *
  ***************************************************************************/
  
 /*!
- * @file GedLibBindAttr.hpp
+ * @file gedlib_bind_attr.hpp
  * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
  * with the AttrLabel.
  * @todo: it is better to refactor it along with GedLibBindGXL.hpp or use pybind11.
  */
-#ifndef GEDLIBBIND_ATTR_HPP
-#define GEDLIBBIND_ATTR_HPP
+#pragma once
+//#ifndef GEDLIBBIND_ATTR_HPP
+//#define GEDLIBBIND_ATTR_HPP
  
 //Include standard libraries.
 #include <string>
@@ -30,7 +30,7 @@
 #include "../include/gedlib-master/src/env/ged_env.hpp"
 #include "../include/gedlib-master/src/env/node_map.hpp"
 #include "../include/gedlib-master/src/env/common_types.hpp"
-#include "GedLibBind.hpp"
+#include "gedlib_bind_util.hpp"
 
 
 /*!
@@ -574,6 +574,6 @@ static void printAttrLabel(const ged::AttrLabel & attr_label);
 
 } // namespace pyged
 
-#include "GedLibBindAttr.ipp"
+//#include "GedLibBindAttr.ipp"
 
-#endif /* SRC_GEDLIB_BIND_ATTR_HPP */
+//#endif /* SRC_GEDLIB_BIND_ATTR_HPP */

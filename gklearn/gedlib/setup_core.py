@@ -63,14 +63,20 @@ def get_extensions():
 		Extension(
 			"gedlibpy",
 			# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
-			sources=["gedlibpy.pyx", "gedlibpy_attr.pyx"],
+			sources=[
+				"common_bind.pyx", "gedlibpy_gxl.pyx", "gedlibpy_attr.pyx",
+				"src/gedlib_bind_gxl.cpp", "src/gedlib_bind_attr.cpp", "src/gedlib_bind_util.cpp"
+			],
 			include_dirs=[
-				"src", "include", "include/lsape.5/include",
+				"src",
+				"include",
+				"include/lsape.5/include",
 				"include/eigen.3.3.4/Eigen",
 				"include/nomad.3.8.1/src",
 				"include/nomad.3.8.1/ext/sgtelib/src",
 				"include/libsvm.3.22",
-				"include/fann.2.2.0/include", "include/boost.1.69.0"
+				"include/fann.2.2.0/include",
+				"include/boost.1.69.0"
 			],
 			library_dirs=[
 				"lib/fann.2.2.0", "lib/libsvm.3.22",  # "lib/gedlib",
@@ -135,7 +141,8 @@ if __name__ == '__main__':
 			'Intended Audience :: Science/Research',
 			'Intended Audience :: Developers',
 		],
-		include_dirs=[numpy.get_include()]
+		include_dirs=[numpy.get_include()],
+		zip_safe=False,  # Do not zip the package, so that .so files can be loaded correctly
 	)
 
 	# List generated files:

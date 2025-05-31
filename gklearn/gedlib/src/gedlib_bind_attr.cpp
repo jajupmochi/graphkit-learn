@@ -1,7 +1,7 @@
 /****************************************************************************
  *                                                                          *
- *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and
- *   David B. Blumenthal                                                            *
+ *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and David B.   *
+ *   Blumenthal                                                             *
  *                                                                          *
  *   This file should be used by Python.                                    *
  * 	 Please call the Python module if you want to use GedLib with this code.*
@@ -11,17 +11,19 @@
  ***************************************************************************/
 
 /*!
- * @file GedLibBindAttr.ipp
- * @brief Class and function definitions to call easily GebLib in Python without Gedlib's types
+ * @file gedlib_bind_attr.cpp
+ * @brief Implementations of classes and functions to call easily GebLib in Python without Gedlib's types
  */
-#ifndef GEDLIBBIND_ATTR_IPP
-#define GEDLIBBIND_ATTR_IPP
+#pragma once
+//#ifndef GEDLIBBIND_ATTR_IPP
+//#define GEDLIBBIND_ATTR_IPP
 
 //Include standard libraries + GedLib library
 // #include <iostream>
 // #include "GedLibBind.h"
 // #include "../include/gedlib-master/src/env/ged_env.hpp"
 //#include "../include/gedlib-master/median/src/median_graph_estimator.hpp"
+#include "gedlib_bind_attr.hpp"
 
 using namespace std;
 
@@ -511,7 +513,7 @@ PyGEDEnvAttr::constructAttrLabelFromMaps(
 }
 
 
-static void printLabelMaps(
+void printLabelMaps(
     const std::unordered_map<std::string, std::string>& str_map,
     const std::unordered_map<std::string, int>& int_map,
     const std::unordered_map<std::string, double>& float_map,
@@ -561,7 +563,7 @@ static void printLabelMaps(
 
 }
 
-static void printAttrLabel(const ged::AttrLabel & attr_label) {
+void printAttrLabel(const ged::AttrLabel & attr_label) {
     std::cout << "AttrLabel: ";
     for (const auto& pair : attr_label) {
         std::cout << pair.first << ": ";
@@ -600,4 +602,4 @@ static void printAttrLabel(const ged::AttrLabel & attr_label) {
 
 } // namespace pyged
 
-#endif /* SRC_GEDLIB_BIND_ATTR_IPP */
+//#endif /* SRC_GEDLIB_BIND_ATTR_IPP */
