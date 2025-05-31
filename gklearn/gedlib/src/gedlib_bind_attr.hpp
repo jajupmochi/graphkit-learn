@@ -27,9 +27,10 @@
 #include <map>
 #include <list>
 #include <iostream>
-#include "../include/gedlib-master/src/env/ged_env.hpp"
-#include "../include/gedlib-master/src/env/node_map.hpp"
-#include "../include/gedlib-master/src/env/common_types.hpp"
+//#include "../include/gedlib-master/src/env/ged_env.hpp"
+//#include "../include/gedlib-master/src/env/node_map.hpp"
+//#include "../include/gedlib-master/src/env/common_types.hpp"
+#include "gedlib_header.hpp"
 #include "gedlib_bind_util.hpp"
 
 

@@ -65,7 +65,8 @@ def get_extensions():
 			# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
 			sources=[
 				"common_bind.pyx", "gedlibpy_gxl.pyx", "gedlibpy_attr.pyx",
-				"src/gedlib_bind_gxl.cpp", "src/gedlib_bind_attr.cpp", "src/gedlib_bind_util.cpp"
+				"src/gedlib_bind_gxl.cpp", "src/gedlib_bind_attr.cpp", "src/gedlib_bind_util.cpp",
+				"include/gedlib-master/src/env/ged_env.gxl.cpp"
 			],
 			include_dirs=[
 				"src",

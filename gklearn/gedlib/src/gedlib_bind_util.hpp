@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "../include/gedlib-master/src/env/ged_env.hpp"
-#include "../include/gedlib-master/src/env/node_map.hpp"
-
+//#include "../include/gedlib-master/src/env/ged_env.hpp"
+//#include "../include/gedlib-master/src/env/node_map.hpp"
+#include "gedlib_header.hpp"
 
 /*!
  * @namespace pyged
