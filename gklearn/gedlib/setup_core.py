@@ -60,13 +60,42 @@ def install(package):
 # def get_extensions(include_glibc):
 def get_extensions():
 	exts = [
+		# Extension(
+		# 	"gedlibpy",
+		# 	# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
+		# 	sources=[
+		# 		"common_bind.pyx", "gedlibpy_gxl.pyx", "gedlibpy_attr.pyx",
+		# 		"src/gedlib_bind_gxl.cpp", "src/gedlib_bind_attr.cpp", "src/gedlib_bind_util.cpp",
+		# 		# "include/gedlib-master/src/env/ged_env.gxl.cpp"
+		# 	],
+		# 	include_dirs=[
+		# 		"src",
+		# 		"include",
+		# 		"include/lsape.5/include",
+		# 		"include/eigen.3.3.4/Eigen",
+		# 		"include/nomad.3.8.1/src",
+		# 		"include/nomad.3.8.1/ext/sgtelib/src",
+		# 		"include/libsvm.3.22",
+		# 		"include/fann.2.2.0/include",
+		# 		"include/boost.1.69.0"
+		# 	],
+		# 	library_dirs=[
+		# 		"lib/fann.2.2.0", "lib/libsvm.3.22",  # "lib/gedlib",
+		# 		"lib/nomad.3.8.1"
+		# 	],
+		# 	libraries=["doublefann", "sgtelib", "svm", "nomad"],
+		# 	language="c++",
+		# 	extra_compile_args=["-std=c++17"],  # , "-DGXL_GEDLIB_SHARED"],
+		# 	extra_link_args=["-std=c++17"]
+		# )
 		Extension(
-			"gedlibpy",
+			"gedlibpy_gxl",
 			# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
 			sources=[
-				"common_bind.pyx", "gedlibpy_gxl.pyx", "gedlibpy_attr.pyx",
-				"src/gedlib_bind_gxl.cpp", "src/gedlib_bind_attr.cpp", "src/gedlib_bind_util.cpp",
-				"include/gedlib-master/src/env/ged_env.gxl.cpp"
+				# "include/gedlib-master/src/env/ged_env.gxl.cpp",
+				"gedlibpy_gxl.pyx",
+				# "src/gedlib_bind_gxl.cpp",
+				# "src/gedlib_bind_util.cpp",
 			],
 			include_dirs=[
 				"src",
@@ -85,9 +114,38 @@ def get_extensions():
 			],
 			libraries=["doublefann", "sgtelib", "svm", "nomad"],
 			language="c++",
-			extra_compile_args=["-std=c++17"],
+			extra_compile_args=["-std=c++17"],  # , "-DGXL_GEDLIB_SHARED"],
 			extra_link_args=["-std=c++17"]
-		)
+		),
+		Extension(
+			"gedlibpy_attr",
+			# sources=["gedlibpy.pyx", "src/GedLibBind.cpp"],
+			sources=[
+				# "include/gedlib-master/src/env/ged_env.gxl.cpp",
+				"gedlibpy_attr.pyx",
+				# "src/gedlib_bind_gxl.cpp",
+				# "src/gedlib_bind_util.cpp",
+			],
+			include_dirs=[
+				"src",
+				"include",
+				"include/lsape.5/include",
+				"include/eigen.3.3.4/Eigen",
+				"include/nomad.3.8.1/src",
+				"include/nomad.3.8.1/ext/sgtelib/src",
+				"include/libsvm.3.22",
+				"include/fann.2.2.0/include",
+				"include/boost.1.69.0"
+			],
+			library_dirs=[
+				"lib/fann.2.2.0", "lib/libsvm.3.22",  # "lib/gedlib",
+				"lib/nomad.3.8.1"
+			],
+			libraries=["doublefann", "sgtelib", "svm", "nomad"],
+			language="c++",
+			extra_compile_args=["-std=c++17"],  # , "-DGXL_GEDLIB_SHARED"],
+			extra_link_args=["-std=c++17"]
+		),
 	]
 	return exts
 
@@ -121,7 +179,15 @@ if __name__ == '__main__':
 	setup(
 		ext_modules=cythonize(
 			extensions,
-			compiler_directives={'language_level': '3'}
+			compiler_directives={'language_level': '3'},
+			# Generate .html files for Cython annotations, should be set to False for production
+			# (i.e., when the package is installed, not when it is developed):
+			annotate=True,  # todo
+			# Only recompile if the .pyx files are modified:
+			force=True,  # fixme: check if it still works if c++ wrappers are modified
+			# Use N threads for compilation multiple .pyx files to .cpp files (works
+			# only if there are multiple extensions):
+			nthreads=4,  # todo: change as needed
 		),
 		name="gedlibpy",
 		author="Lambert Natacha and Linlin Jia",
@@ -135,9 +201,10 @@ if __name__ == '__main__':
 			'Tracker': 'https://github.com/jajupmochi/graphkit-learn/issues',
 		},
 		url="https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib",
+		license="GPL-3.0-or-later",  # SPDX license identifier
 		classifiers=[
 			"Programming Language :: Python :: 3",
-			"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+			# "License :: OSI Approved",
 			"Operating System :: OS Independent",
 			'Intended Audience :: Science/Research',
 			'Intended Audience :: Developers',
@@ -158,6 +225,15 @@ if __name__ == '__main__':
 	print('Build completed!')
 	print()
 
-# Commande Bash : python setup_core.py build_ext --inplace
+# Bash Command:
+# python3 setup_core.py build_ext --inplace --parallel 8
+# -- Explain:
+# -- --parallel N: parallel the construction of .cpp files using c++ compiler (g++ or
+#    clang++) with N threads (on c++ layer, from .cpp to .so).
+#    It is different from the N threads in cythonize(), which is on cython layer (from
+#    .pyx to .cpp).
 # if error: command 'clang++' failed: No such file or directory:
+# Add "CXX=g++". e.g.,
 # CXX=g++ python setup_core.py build_ext --inplace
+
+

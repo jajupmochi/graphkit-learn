@@ -9,17 +9,17 @@
  * 	 Otherwise, you can directly use GedLib for C++.                        *
  *                                                                          *
  ***************************************************************************/
- 
+
 /*!
  * @file gedlib_bind_attr.hpp
  * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
- * with the AttrLabel.
+ * with the AttrLabel (complex labels).
  * @todo: it is better to refactor it along with GedLibBindGXL.hpp or use pybind11.
  */
 #pragma once
-//#ifndef GEDLIBBIND_ATTR_HPP
-//#define GEDLIBBIND_ATTR_HPP
- 
+//#ifndef SRC_GEDLIB_BIND_ATTR_HPP
+//#define SRC_GEDLIB_BIND_ATTR_HPP
+
 //Include standard libraries.
 #include <string>
 #include <vector>
@@ -27,11 +27,9 @@
 #include <map>
 #include <list>
 #include <iostream>
-//#include "../include/gedlib-master/src/env/ged_env.hpp"
-//#include "../include/gedlib-master/src/env/node_map.hpp"
-//#include "../include/gedlib-master/src/env/common_types.hpp"
-#include "gedlib_header.hpp"
-#include "gedlib_bind_util.hpp"
+#include "../include/gedlib-master/src/env/ged_env.hpp"
+#include "../include/gedlib-master/src/env/node_map.hpp"
+#include "../include/gedlib-master/src/env/common_types.hpp"
 
 
 /*!
@@ -41,10 +39,31 @@
 namespace pyged {
 
 /*!
-* @brief Provides the API of GEDLIB for Python.
+* @brief Get list of available edit cost functions readable by Python.
+*/
+std::vector<std::string> getEditCostStringOptions();
+
+/*!
+* @brief Get list of available computation methods readable by Python.
+*/
+std::vector<std::string> getMethodStringOptions();
+
+/*!
+* @brief Get list of available initilaization options readable by Python.
+*/
+std::vector<std::string> getInitStringOptions();
+
+/*!
+* @brief Returns a dummy node.
+* @return ID of dummy node.
+*/
+static std::size_t getDummyNode();
+
+
+/*!
+* @brief Provides the API of GEDLIB for Python for attr labels (complex labels).
 */
 class PyGEDEnvAttr {
-
 
 public:
 
@@ -63,7 +82,7 @@ public:
     // ======== Environment Public APIs ========
 
     /*!
-    * @brief Tests if the environment is initialized or not. 
+    * @brief Tests if the environment is initialized or not.
     * @return Boolean @p true if the environment is initialized and @p false otherwise.
     */
     bool isInitialized();
@@ -73,14 +92,14 @@ public:
     */
     void restartEnv();
 
-    /*!
-    * @brief Loads graph given in the [GXL file format](http://www.gupro.de/GXL/).
-    * @param[in] pathFolder The path to the directory containing the graphs.
-    * @param[in] pathXML The path to a XML file thats lists the graphs contained in @p pathFolder that should be loaded.
-    * @param[in] node_type Select if nodes are labeled or unlabeled.
-    * @param[in] edge_type Select if edges are labeled or unlabeled.
-    */
-    void loadGXLGraph(const std::string & pathFolder, const std::string & pathXML, bool node_type, bool edge_type);
+//    /*!
+//    * @brief Loads graph given in the [GXL file format](http://www.gupro.de/GXL/).
+//    * @param[in] pathFolder The path to the directory containing the graphs.
+//    * @param[in] pathXML The path to a XML file thats lists the graphs contained in @p pathFolder that should be loaded.
+//    * @param[in] node_type Select if nodes are labeled or unlabeled.
+//    * @param[in] edge_type Select if edges are labeled or unlabeled.
+//    */
+//    void loadGXLGraph(const std::string & pathFolder, const std::string & pathXML, bool node_type, bool edge_type);
 
     /*!
     * @brief Provides access to the IDs of the graphs contained in the environment.
@@ -90,8 +109,8 @@ public:
     std::pair<std::size_t,std::size_t> getGraphIds() const;
 
     /*!
-    * @brief Returns the list of graphs IDs which are loaded in the environment. 
-    * @return A vector which contains all the graphs Ids. 
+    * @brief Returns the list of graphs IDs which are loaded in the environment.
+    * @return A vector which contains all the graphs Ids.
     */
     std::vector<std::size_t> getAllGraphIds();
 
@@ -249,8 +268,15 @@ public:
     * @brief Sets the edit costs to one of the predefined edit costs.
     * @param[in] editCost Select one of the predefined edit costs.
     * @param[in] editCostConstants Parameters for the edit cost, empty by default.
+    * @param[in] editCostConfig Configuration passed to the constructor of the edit cost class selected by @p editCost. If not specified, the default value is used.
+    * @note The edit cost configuration is a map of string keys and values that can be either strings or booleans.
+    * @todo: In GEDEnv this config can be a std::any, but in Python we use only std::string or bool to avoid issues with cython. Consider using pybind11 in the future.
     */
-    void setEditCost(std::string editCost, std::vector<double> editCostConstants = {});
+    void setEditCost(
+        std::string editCost, std::vector<double> editCostConstants = {},
+        std::unordered_map<std::string, std::string> editCostConfigStr = {},
+        std::unordered_map<std::string, bool> editCostConfigBool = {}
+    );
 
     /*!
     * @brief Sets the edit costs to a personal Edit Cost Class.
@@ -308,7 +334,7 @@ public:
     double getLowerBound(std::size_t g,std::size_t h) const;
 
     /*!
-    * @brief  Returns the forward map between nodes of the two indicated graphs. 
+    * @brief  Returns the forward map between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -316,7 +342,7 @@ public:
     std::vector<long unsigned int> getForwardMap(std::size_t g, std::size_t h) const;
 
     /*!
-    * @brief  Returns the backward map between nodes of the two indicated graphs. 
+    * @brief  Returns the backward map between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The backward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -348,10 +374,10 @@ public:
     * @return The induced cost between the two indicated graphs.
     */
     double getInducedCost(std::size_t g, std::size_t h) const;
-    
+
 
     /*!
-    * @brief Returns node map between the input graphs. This function duplicates datas. 
+    * @brief Returns node map between the input graphs. This function duplicates datas.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Node map computed by the last call to run_method() with arguments @p g and @p h.
@@ -359,7 +385,7 @@ public:
     std::vector<std::pair<std::size_t, std::size_t>> getNodeMap(std::size_t g, std::size_t h);
 
     /*!
-    * @brief Returns assignment matrix between the input graphs. This function duplicates datas. 
+    * @brief Returns assignment matrix between the input graphs. This function duplicates datas.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Assignment matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -367,7 +393,7 @@ public:
     std::vector<std::vector<int>> getAssignmentMatrix(std::size_t g, std::size_t h);
 
     /*!
-    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs. 
+    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward and backward maps to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -575,6 +601,11 @@ static void printAttrLabel(const ged::AttrLabel & attr_label);
 
 } // namespace pyged
 
-//#include "GedLibBindAttr.ipp"
+// According to some Chat AI, if implementation is in the .ipp file, it will be
+// recognized by the compiler as inline code, so I can include it here and does not
+// cause the multiple definition error.
+// I will not use .cpp files to implement, it is a PAIN In The A to compile and link
+// while avoiding multiple definition errors...
+#include "gedlib_bind_attr.ipp"
 
 //#endif /* SRC_GEDLIB_BIND_ATTR_HPP */

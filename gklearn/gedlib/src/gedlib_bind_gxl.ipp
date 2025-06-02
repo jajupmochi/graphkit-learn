@@ -11,27 +11,19 @@
  ***************************************************************************/
 
 /*!
- * @file gedlib_bind_gxl.cpp
+ * @file gedlib_bind_gxl.ipp
  * @brief implementations of classes and functions to call easily GebLib in Python without Gedlib's types
  */
 #pragma once
-//#ifndef GEDLIBBIND_IPP
-//#define GEDLIBBIND_IPP
+//#ifndef SRC_GEDLIB_BIND_GXL_IPP
+//#define SRC_GEDLIB_BIND_GXL_IPP
 
 //Include standard libraries + GedLib library
 // #include <iostream>
 // #include "GedLibBind.h"
 // #include "../include/gedlib-master/src/env/ged_env.hpp"
 //#include "../include/gedlib-master/median/src/median_graph_estimator.hpp"
-#include "gedlib_bind_gxl.hpp"
-
-// Instantiation of GEDEnv for GXLNodeID and GXLLabel:
-namespace ged {
-
-extern template class GEDEnv<GXLNodeID, GXLLabel, GXLLabel>;
-
-} // namespace ged
-
+// #include "gedlib_bind_gxl.hpp"
 
 using namespace std;
 
@@ -288,17 +280,18 @@ std::string toStringVectorInt(std::vector<unsigned long int> vector) {
 }
 
 
-PyGEDEnvGXL::PyGEDEnvGXL () {
+PyGEDEnvGXL::PyGEDEnvGXL () : env_(nullptr), initialized(false) {
 	env_ = new ged::GEDEnv<ged::GXLNodeID, ged::GXLLabel, ged::GXLLabel>();
-	this->initialized = false;
 }
 
 PyGEDEnvGXL::~PyGEDEnvGXL () {
 	if (env_ != NULL) {
-		delete env_;
+	    delete env_;
 		env_ = NULL;
-	}
+    }
 }
+
+// ======== Environment Public APIs ========
 
 // bool initialized = false; //Initialization boolean (because Env has one but not accessible).
 
@@ -695,7 +688,7 @@ double PyGEDEnvGXL::computeInducedCost(std::size_t g_id, std::size_t h_id, std::
 
 } // namespace pyged
 
-//#endif /* SRC_GEDLIB_BIND_IPP */
+//#endif /* SRC_GEDLIB_BIND_GXL_IPP */
 
 // namespace shapes {
 

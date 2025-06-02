@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#define SRC_ENV_GED_ENV_GXL_CPP_
+
 #include "../include/gedlib-master/src/env/ged_env.hpp"
 #include "../include/gedlib-master/src/env/node_map.hpp"
 #include "../include/gedlib-master/src/env/common_types.hpp"

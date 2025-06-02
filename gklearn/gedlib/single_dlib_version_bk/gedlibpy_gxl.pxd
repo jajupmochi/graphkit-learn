@@ -38,8 +38,6 @@ cimport numpy as cnp
 
 ctypedef cnp.npy_uint32 UINT32_t
 
-from common_bind import *
-
 
 cdef extern from "src/gedlib_bind.hpp" namespace "pyged":
 
@@ -129,8 +127,6 @@ cdef extern from "src/gedlib_bind.hpp" namespace "pyged":
 #############################
 ##External Libs Import     ##
 #############################
-
-from libraries_import import lib1, lib2, lib3, lib4
 
 #############################
 ##CYTHON WRAPPER INTERFACES##

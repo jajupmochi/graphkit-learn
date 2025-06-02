@@ -5,14 +5,16 @@ Created on Tue Mar 31 17:06:22 2020
 
 @author: ljia
 """
-import numpy as np
-from itertools import combinations
 import multiprocessing
-from multiprocessing import Pool
-from functools import partial
 import sys
+from functools import partial
+from itertools import combinations
+from multiprocessing import Pool
+
 # from tqdm import tqdm
 import networkx as nx
+import numpy as np
+
 from gklearn.ged.env import GEDEnv
 from gklearn.utils import get_iters
 
@@ -71,25 +73,30 @@ def pairwise_ged(
 		- For methods such as BIPARTITE, the repeats may result same results.
 		- # of edit operations are not computed in this method.
 	"""
-	from gklearn.gedlib import librariesImport, gedlibpy
+	from gklearn.gedlib import gedlibpy
 
-	ged_env = gedlibpy.GEDEnv()
+	ged_env = gedlibpy.GEDEnv(env_type=options.get('env_type', 'attr'), verbose=False)
 	ged_env.set_edit_cost(
 		options['edit_cost'],
-		edit_cost_constant=options['edit_cost_constants']
+		edit_cost_constant=options['edit_cost_constants'],
+		**options.get('edit_cost_config') and {
+			'edit_cost_config': options['edit_cost_config']
+		} or {}
 	)
 	ged_env.add_nx_graph(g1, '')
 	ged_env.add_nx_graph(g2, '')
-	listID = ged_env.get_all_graph_ids()
+	list_id = ged_env.get_all_graph_ids()
 	ged_env.init(
-		init_option=(options[
-			             'init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES')
+		init_option=(
+			options[
+				'init_option'] if 'init_option' in options else 'EAGER_WITHOUT_SHUFFLED_COPIES'
+		)
 	)
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
-	g = listID[0]
-	h = listID[1]
+	g = list_id[0]
+	h = list_id[1]
 	dis_min = np.inf
 	# 	print('------------------------------------------')
 	for i in range(0, repeats):

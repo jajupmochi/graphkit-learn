@@ -67,7 +67,7 @@ def fit_model_ged(
 					list(all_graphs[idx_edge[0]].edges)[0]].keys()
 			)
 
-	from gklearn.experiments.ged.ged_model.parallel_version import GEDModel
+	from gklearn.experiments.ged.ged_model.ged_model_parallel import GEDModel
 
 	if parallel is False:
 		parallel = None

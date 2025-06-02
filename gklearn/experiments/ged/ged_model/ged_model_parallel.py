@@ -52,9 +52,11 @@ class GEDModel(BaseEstimator):  # , ABC):
 
 	def __init__(
 			self,
+			env_type: str | None = None,
 			ed_method='BIPARTITE',
 			edit_cost_fun='CONSTANT',
 			init_edit_cost_constants=[3, 3, 1, 3, 3, 1],
+			edit_cost_config: dict = {},
 			optim_method='init',
 			optim_options={'y_distance': euclid_d, 'mode': 'reg'},
 			node_labels=[],
@@ -66,12 +68,33 @@ class GEDModel(BaseEstimator):  # , ABC):
 			copy_graphs=True,  # make sure it is a full deep copy. and faster!
 			verbose=2
 	):
-		"""`__init__` for `GEDModel` object."""
+		"""`__init__` for `GEDModel` object.
+
+		Parameters
+		----------
+		env_type : str, optional
+			The type of the GED environment. Default is None. If None, try to determine
+			the type automatically based on the given graph node / edge labels.
+
+			Available types are:
+
+			- 'attr': Attribute-based environment (with complex node and edge labels).
+			Each node or edge can have multiple key-value label pairs, and each value can
+			be of the following types: int, float, str, list/np.ndarray of int or float.
+			This is the default type if no node or edge labels are provided.
+
+			- 'gxl' or 'str': GXLLabel environment (with string labels). Each node or
+			edge can have multiple key-value label pairs, but all values must be strings.
+			The type will be set to GXL only if at least one node or edge label is
+			provided.
+		"""
 		# @todo: the default settings of the parameters are different from those in the self.compute method.
 		#		self._graphs = None
+		self.env_type = env_type
 		self.ed_method = ed_method
 		self.edit_cost_fun = edit_cost_fun
 		self.init_edit_cost_constants = init_edit_cost_constants
+		self.edit_cost_config = edit_cost_config
 		self.optim_method = optim_method
 		self.optim_options = optim_options
 		self.node_labels = node_labels
@@ -1079,12 +1102,15 @@ class GEDModel(BaseEstimator):  # , ABC):
 
 	def compute_ged(self, Gi, Gj, **kwargs):
 		"""
-		Compute GED between two graph according to edit_cost.
+		Compute GED between two graphs according to edit_cost.
 		"""
+		env_type = self.get_env_type(graph=Gi)
 		ged_options = {
+			'env_type': env_type,
 			'edit_cost': self.edit_cost_fun,
 			'method': self.ed_method,
-			'edit_cost_constants': self._edit_cost_constants
+			'edit_cost_constants': self._edit_cost_constants,
+			'edit_cost_config': self.edit_cost_config,
 		}
 		repeats = kwargs.get('repeats', 1)
 		dis, pi_forward, pi_backward = pairwise_ged(
@@ -1101,6 +1127,42 @@ class GEDModel(BaseEstimator):  # , ABC):
 		# 	n_eo_tmp = None
 		# return dis, n_eo_tmp
 		return dis, None
+
+
+	def get_env_type(self, graph: nx.Graph | None = None):
+		"""
+		Check the environment type of the graph.
+		If `env_type` is set on initialization, return it.
+		Otherwise, check the given graph's node and edge labels to determine the type.
+
+		Only one node and one edge are checked to determine the type.
+		This function expects that all nodes have the same type of labels, so as all
+		edges.
+		"""
+		if self.env_type is not None:
+			return self.env_type
+		if graph is None:
+			raise ValueError(
+				'Graph is not provided while `env_type` not set on initialization. '
+				'Cannot determine environment type.'
+			)
+		# Use 'gxl' env type only if all nodes and edge labes are strings, and at least one
+		# node or edge label is present:
+		one_n_labels = graph.nodes[list(graph.nodes)[0]]
+		for k, v in one_n_labels.items():
+			if not isinstance(v, str):
+				return 'attr'
+		if nx.number_of_edges(graph) != 0:
+			one_e_labels = graph.edges[list(graph.edges)[0]]
+			for k, v in one_e_labels.items():
+				if not isinstance(v, str):
+					return 'attr'
+		if len(one_n_labels) > 0 or (
+				nx.number_of_edges(graph) != 0 and len(one_e_labels) > 0
+		):
+			return 'gxl'
+		return 'attr'
+
 
 
 	# 	def _compute_kernel_list(self, g1, g_list):

@@ -1,7 +1,7 @@
 /****************************************************************************
  *                                                                          *
- *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and David B.   *
- *   Blumenthal                                                             *
+ *   Copyright (C) 2019-2020 by Natacha Lambert, David B. Blumenthal and    *
+ *   Linlin Jia                                                             *
  *                                                                          *
  *   This file should be used by Python.                                    *
  * 	 Please call the Python module if you want to use GedLib with this code.*
@@ -13,11 +13,10 @@
 /*!
  * @file gedlib_bind_gxl.hpp
  * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
- * with the GXLLabel (string)
  */
 #pragma once
-//#ifndef SRC_GEDLIB_BIND_GXL_HPP
-//#define SRC_GEDLIB_BIND_GXL_HPP
+//#ifndef GEDLIBBIND_HPP
+//#define GEDLIBBIND_HPP
 
 //Include standard libraries.
 #include <string>
@@ -25,8 +24,10 @@
 #include <map>
 #include <list>
 #include <iostream>
-#include "../include/gedlib-master/src/env/ged_env.hpp"
-#include "../include/gedlib-master/src/env/node_map.hpp"
+//#include "../include/gedlib-master/src/env/ged_env.hpp"
+//#include "../include/gedlib-master/src/env/node_map.hpp"
+#include "gedlib_header.hpp"
+#include "gedlib_bind_util.hpp"
 
 
 /*!
@@ -34,28 +35,6 @@
  * @brief Global namespace for gedlibpy.
  */
 namespace pyged {
-
-/*!
-* @brief Get list of available edit cost functions readable by Python.
-*/
-std::vector<std::string> getEditCostStringOptions();
-
-/*!
-* @brief Get list of available computation methods readable by Python.
-*/
-std::vector<std::string> getMethodStringOptions();
-
-/*!
-* @brief Get list of available initilaization options readable by Python.
-*/
-std::vector<std::string> getInitStringOptions();
-
-/*!
-* @brief Returns a dummy node.
-* @return ID of dummy node.
-*/
-static std::size_t getDummyNode();
-
 
 /*!
 * @brief Provides the API of GEDLIB for Python for gxl labels (string labels).
@@ -503,11 +482,21 @@ private:
 
 } // namespace pyged
 
-// According to some Chat AI, if implementation is in the .ipp file, it will be
-// recognized by the compiler as inline code, so I can include it here and does not
-// cause the multiple definition error.
-// I will not use .cpp files to implement, it is a PAIN In The A to compile and link
-// while avoiding multiple definition errors...
-#include "gedlib_bind_gxl.ipp"
+//#include "GedLibBind.ipp"
 
-//#endif /* SRC_GEDLIB_BIND_GXL_HPP */
+//#endif /* SRC_GEDLIB_BIND_HPP */
+
+
+
+// namespace shapes {
+//     class Rectangle {
+//         public:
+//             int x0, y0, x1, y1;
+//             Rectangle();
+//             Rectangle(int x0, int y0, int x1, int y1);
+//             ~Rectangle();
+//             int getArea();
+//             void getSize(int* width, int* height);
+//             void move(int dx, int dy);
+//     };
+// }
