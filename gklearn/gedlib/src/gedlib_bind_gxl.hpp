@@ -1,22 +1,24 @@
 /****************************************************************************
  *                                                                          *
- *   Copyright (C) 2019-2020 by Natacha Lambert, David B. Blumenthal and    *
- *   Linlin Jia                                                             *
+ *   Copyright (C) 2019-2025 by Linlin Jia, Natacha Lambert, and David B.   *
+ *   Blumenthal                                                             *
  *                                                                          *
  *   This file should be used by Python.                                    *
- * 	 Please call the Python module if you want to use GedLib with this code.* 
+ * 	 Please call the Python module if you want to use GedLib with this code.*
  *                                                                          *
  * 	 Otherwise, you can directly use GedLib for C++.                        *
  *                                                                          *
  ***************************************************************************/
- 
+
 /*!
- * @file GedLibBind.hpp
- * @brief Classe and function declarations to call easly GebLib in Python without Gedlib's types
+ * @file gedlib_bind_gxl.hpp
+ * @brief Class and function declarations to call easily GebLib in Python without Gedlib's types
+ * with the GXLLabel (string)
  */
-#ifndef GEDLIBBIND_HPP
-#define GEDLIBBIND_HPP
- 
+#pragma once
+//#ifndef SRC_GEDLIB_BIND_GXL_HPP
+//#define SRC_GEDLIB_BIND_GXL_HPP
+
 //Include standard libraries.
 #include <string>
 #include <vector>
@@ -36,7 +38,7 @@ namespace pyged {
 /*!
 * @brief Get list of available edit cost functions readable by Python.
 */
-std::vector<std::string> getEditCostStringOptions(); 
+std::vector<std::string> getEditCostStringOptions();
 
 /*!
 * @brief Get list of available computation methods readable by Python.
@@ -56,26 +58,26 @@ static std::size_t getDummyNode();
 
 
 /*!
-* @brief Provides the API of GEDLIB for Python.
+* @brief Provides the API of GEDLIB for Python for gxl labels (string labels).
 */
-class PyGEDEnv {
+class PyGEDEnvGXL {
 
 public:
 
 	/*!
 	 * @brief Constructor.
 	 */
-    PyGEDEnv();
+    PyGEDEnvGXL();
 
-    // PyGEDEnv();
+    // PyGEDEnvGXL();
 
 	/*!
 	 * @brief Destructor.
 	 */
-    ~PyGEDEnv();
+    ~PyGEDEnvGXL();
 
     /*!
-    * @brief Tests if the environment is initialized or not. 
+    * @brief Tests if the environment is initialized or not.
     * @return Boolean @p true if the environment is initialized and @p false otherwise.
     */
     bool isInitialized();
@@ -102,8 +104,8 @@ public:
     std::pair<std::size_t,std::size_t> getGraphIds() const;
 
     /*!
-    * @brief Returns the list of graphs IDs which are loaded in the environment. 
-    * @return A vector which contains all the graphs Ids. 
+    * @brief Returns the list of graphs IDs which are loaded in the environment.
+    * @return A vector which contains all the graphs Ids.
     */
     std::vector<std::size_t> getAllGraphIds();
 
@@ -142,7 +144,7 @@ public:
     * @param[in] graphId ID of graph that has been added to the environment.
     * @param[in] tail The user-specific ID of the tail of the edge that has to be added.
     * @param[in] head The user-specific ID of the head of the edge that has to be added.
-    * @param[in] edgeLabel The label of the vertex that has to be added. 
+    * @param[in] edgeLabel The label of the vertex that has to be added.
     * @param[in] ignoreDuplicates If @p true, duplicate edges are ignores. Otherwise, an exception is thrown if an existing edge is added to the graph.
     */
     void addEdge(std::size_t graphId, const std::string & tail, const std::string & head, const std::map<std::string, std::string> & edgeLabel, bool ignoreDuplicates = true);
@@ -272,7 +274,7 @@ public:
     double getLowerBound(std::size_t g,std::size_t h) const;
 
     /*!
-    * @brief  Returns the forward map between nodes of the two indicated graphs. 
+    * @brief  Returns the forward map between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -280,7 +282,7 @@ public:
     std::vector<long unsigned int> getForwardMap(std::size_t g, std::size_t h) const;
 
     /*!
-    * @brief  Returns the backward map between nodes of the two indicated graphs. 
+    * @brief  Returns the backward map between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The backward map to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -312,10 +314,10 @@ public:
     * @return The induced cost between the two indicated graphs.
     */
     double getInducedCost(std::size_t g, std::size_t h) const;
-    
+
 
     /*!
-    * @brief Returns node map between the input graphs. This function duplicates datas. 
+    * @brief Returns node map between the input graphs. This function duplicates datas.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Node map computed by the last call to run_method() with arguments @p g and @p h.
@@ -323,7 +325,7 @@ public:
     std::vector<std::pair<std::size_t, std::size_t>> getNodeMap(std::size_t g, std::size_t h);
 
     /*!
-    * @brief Returns assignment matrix between the input graphs. This function duplicates datas. 
+    * @brief Returns assignment matrix between the input graphs. This function duplicates datas.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return Assignment matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -331,7 +333,7 @@ public:
     std::vector<std::vector<int>> getAssignmentMatrix(std::size_t g, std::size_t h);
 
     /*!
-    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs. 
+    * @brief  Returns a vector which contains the forward and the backward maps between nodes of the two indicated graphs.
     * @param[in] g ID of an input graph that has been added to the environment.
     * @param[in] h ID of an input graph that has been added to the environment.
     * @return The forward and backward maps to the adjacence matrix computed by the last call to run_method() with arguments @p g and @p h.
@@ -497,33 +499,15 @@ private:
 
     bool initialized; // initialization boolean (because env has one but not accessible)
 
-};
+}; // end of class PyGEDEnvGXL
 
-}
+} // namespace pyged
 
-#include "GedLibBind.ipp"
+// According to some Chat AI, if implementation is in the .ipp file, it will be
+// recognized by the compiler as inline code, so I can include it here and does not
+// cause the multiple definition error.
+// I will not use .cpp files to implement, it is a PAIN In The A to compile and link
+// while avoiding multiple definition errors...
+#include "gedlib_bind_gxl.ipp"
 
-#endif /* SRC_GEDLIB_BIND_HPP */
-
-
-
-
-
-
-
-
-
-
-
-// namespace shapes {
-//     class Rectangle {
-//         public:
-//             int x0, y0, x1, y1;
-//             Rectangle();
-//             Rectangle(int x0, int y0, int x1, int y1);
-//             ~Rectangle();
-//             int getArea();
-//             void getSize(int* width, int* height);
-//             void move(int dx, int dy);
-//     };
-// }
+//#endif /* SRC_GEDLIB_BIND_GXL_HPP */
