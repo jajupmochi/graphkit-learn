@@ -1,0 +1,187 @@
+site_name: graphkit-learn
+site_description: Graph-based machine learning toolkit
+site_author: Linlin Jia, Benoit Gaüzère, Paul Honeine
+site_url: https://yourdomain.com
+
+theme:
+  name: material
+  language: en  # default UI language
+  palette:
+    - scheme: default
+      primary: blue grey      # main color for light mode
+      accent: light blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey      # main color for dark mode
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: JetBrains Mono
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+    - header.autohide
+
+# Optional: switch between translated versions in the UI
+extra:
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    - name: 中文
+      link: /zh/
+      lang: zh
+    - name: Français
+      link: /fr/
+      lang: fr
+    - name: Deutsch
+      link: /de/
+      lang: de
+
+# Plugins
+plugins:
+  - search
+  - i18n:
+      default_language: en
+#      default_language_only: true
+      languages:
+        en: English
+        zh: 中文
+        fr: Français
+        de: Deutsch
+  - mkdocstrings:
+#      default_handler: python
+      handlers:
+        python:
+          paths: ["gklearn"]
+
+# Navigation structure — define per language in separate folders like docs/zh/, docs/fr/, etc.
+nav:
+- Home: index.md
+- reference/index.md
+#  - Dataset:
+#    - data_fetcher: reference/dataset/data_fetcher.md
+#    - dataset: reference/dataset/dataset.md
+#    - file_managers: reference/dataset/file_managers.md
+#    - graph_synthesizer: reference/dataset/graph_synthesizer.md
+#    - metadata: reference/dataset/metadata.md
+#  - Ged:
+#    - bipartite: reference/ged/bipartite.md
+#    - common_types: reference/ged/common_types.md
+#    - constant: reference/ged/constant.md
+#    - cost_matrices_learner: reference/ged/cost_matrices_learner.md
+#    - costs_learner: reference/ged/costs_learner.md
+#    - cpp2python: reference/ged/cpp2python.md
+#    - distances: reference/ged/distances.md
+#    - edit_cost: reference/ged/edit_cost.md
+#    - ged_com: reference/ged/ged_com.md
+#    - ged_data: reference/ged/ged_data.md
+#    - ged_env: reference/ged/ged_env.md
+#    - ged_method: reference/ged/ged_method.md
+#    - ged_model: reference/ged/ged_model.md
+#    - ged_model_bk: reference/ged/ged_model_bk.md
+#    - ged_model_global_env: reference/ged/ged_model_global_env.md
+#    - ged_model_local_env: reference/ged/ged_model_local_env.md
+#    - lsape_based_method: reference/ged/lsape_based_method.md
+#    - lsape_solver: reference/ged/lsape_solver.md
+#    - median_graph_estimator: reference/ged/median_graph_estimator.md
+#    - median_graph_estimator_cml: reference/ged/median_graph_estimator_cml.md
+#    - median_graph_estimator_py: reference/ged/median_graph_estimator_py.md
+#    - misc: reference/ged/misc.md
+#    - node_map: reference/ged/node_map.md
+#    - optim_costs: reference/ged/optim_costs.md
+#    - test_median_graph_estimator: reference/ged/test_median_graph_estimator.md
+#    - util: reference/ged/util.md
+#    - util2: reference/ged/util2.md
+#    - utils: reference/ged/utils.md
+#  - Gedlib:
+#    - gedlibpy: reference/gedlib/gedlibpy.md
+#    - libraries_import: reference/gedlib/libraries_import.md
+#    - setup: reference/gedlib/setup.md
+#    - setup_core: reference/gedlib/setup_core.md
+#    - setup_simple: reference/gedlib/setup_simple.md
+#    - test: reference/gedlib/test.md
+#  - Kernels:
+#    - commonWalkKernel: reference/kernels/commonWalkKernel.md
+#    - common_walk: reference/kernels/common_walk.md
+#    - conjugate_gradient: reference/kernels/conjugate_gradient.md
+#    - fixed_point: reference/kernels/fixed_point.md
+#    - graph_kernel: reference/kernels/graph_kernel.md
+#    - marginalized: reference/kernels/marginalized.md
+#    - marginalizedKernel: reference/kernels/marginalizedKernel.md
+#    - metadata: reference/kernels/metadata.md
+#    - path_up_to_h: reference/kernels/path_up_to_h.md
+#    - randomWalkKernel: reference/kernels/randomWalkKernel.md
+#    - random_walk: reference/kernels/random_walk.md
+#    - random_walk_meta: reference/kernels/random_walk_meta.md
+#    - shortest_path: reference/kernels/shortest_path.md
+#    - spKernel: reference/kernels/spKernel.md
+#    - spectral_decomposition: reference/kernels/spectral_decomposition.md
+#    - structural_sp: reference/kernels/structural_sp.md
+#    - structuralspKernel: reference/kernels/structuralspKernel.md
+#    - sylvester_equation: reference/kernels/sylvester_equation.md
+#    - treelet: reference/kernels/treelet.md
+#    - treeletKernel: reference/kernels/treeletKernel.md
+#    - untilHPathKernel: reference/kernels/untilHPathKernel.md
+#    - weisfeilerLehmanKernel: reference/kernels/weisfeilerLehmanKernel.md
+#    - weisfeiler_lehman: reference/kernels/weisfeiler_lehman.md
+#  - Model_Learning:
+#    - nested_cv: reference/model_learning/nested_cv.md
+#    - parameters: reference/model_learning/parameters.md
+#    - workflow: reference/model_learning/workflow.md
+#  - Preimage:
+#    - generate_random_preimages_by_class: reference/preimage/generate_random_preimages_by_class.md
+#    - kernel_knn_cv: reference/preimage/kernel_knn_cv.md
+#    - median_preimage_generator: reference/preimage/median_preimage_generator.md
+#    - median_preimage_generator_cml: reference/preimage/median_preimage_generator_cml.md
+#    - median_preimage_generator_py: reference/preimage/median_preimage_generator_py.md
+#    - preimage_generator: reference/preimage/preimage_generator.md
+#    - random_preimage_generator: reference/preimage/random_preimage_generator.md
+#    - remove_best_graph: reference/preimage/remove_best_graph.md
+#    - utils: reference/preimage/utils.md
+#    - visualization: reference/preimage/visualization.md
+#  - Utils:
+#    - dataset: reference/utils/dataset.md
+#    - graph_files: reference/utils/graph_files.md
+#    - graph_synthesizer: reference/utils/graph_synthesizer.md
+#    - graphdataset: reference/utils/graphdataset.md
+#    - graphfiles: reference/utils/graphfiles.md
+#    - isNotebook: reference/utils/isNotebook.md
+#    - iters: reference/utils/iters.md
+#    - kernels: reference/utils/kernels.md
+#    - knn: reference/utils/knn.md
+#    - logger2file: reference/utils/logger2file.md
+#    - math: reference/utils/math.md
+#    - median: reference/utils/median.md
+#    - model_selection_precomputed: reference/utils/model_selection_precomputed.md
+#    - parallel: reference/utils/parallel.md
+#    - stats: reference/utils/stats.md
+#    - timer: reference/utils/timer.md
+#    - trie: reference/utils/trie.md
+#    - utils: reference/utils/utils.md
+
+# Markdown extension support
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+#  - pymdownx.include:
+#    base_path: !relative $config_dir/..
+#    encoding: utf-8

@@ -1,0 +1,57 @@
+# .github/workflows/docs.yml
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - "v*.*.*"       # version branches like v1.0.1
+    tags-ignore:
+      - "**"
+    paths-ignore:
+      - "README.md"
+  workflow_dispatch:
+  # Optional: force build if commit message contains [docs]
+  workflow_call:
+
+jobs:
+  build-docs:
+    if: >
+      contains(github.event.head_commit.message, '[docs]') ||
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv package manager
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "~/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install documentation dependencies
+        run: |
+          uv pip install --system -r requirements-docs.txt
+
+      - name: Build documentation
+        run: |
+          mkdocs build --strict
+
+      - name: Upload built site as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+
+      # Optional: deploy to GitHub Pages
+      # - name: Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v4
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./site
