@@ -1,6 +1,3 @@
-# .github/workflows/docs.yml
-name: Build and Deploy Documentation
-
 on:
   push:
     branches:
@@ -11,47 +8,116 @@ on:
     paths-ignore:
       - "README.md"
   workflow_dispatch:
-  # Optional: force build if commit message contains [docs]
+  # Optional: force build if commit message contains [build-docs]
   workflow_call:
 
 jobs:
-  build-docs:
-    if: >
-      contains(github.event.head_commit.message, '[docs]') ||
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
+  # 检查是否应该强制构建
+  check-force-build:
     runs-on: ubuntu-latest
-
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+      force-build: ${{ steps.check.outputs.force-build }}
     steps:
-      - name: Checkout source
+      - name: Check commit message for force build
+        id: check
+        run: |
+          # 获取提交信息
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+          else
+            # 对于其他事件类型，默认构建
+            COMMIT_MSG=""
+          fi
+          
+          echo "Commit message: $COMMIT_MSG"
+          
+          # 检查是否包含 [build-docs]
+          if [[ "$COMMIT_MSG" == *"[build-docs]"* ]]; then
+            echo "Force build detected in commit message"
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "force-build=true" >> $GITHUB_OUTPUT
+          else
+            # 非强制构建情况下，检查是否满足正常触发条件
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ "${{ github.event_name }}" == "workflow_call" ]]; then
+              echo "Manual trigger or workflow call"
+              echo "should-build=true" >> $GITHUB_OUTPUT
+              echo "force-build=false" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.event_name }}" == "push" ]]; then
+              # Push 事件需要检查分支和路径限制
+              BRANCH_NAME="${{ github.ref_name }}"
+              echo "Branch: $BRANCH_NAME"
+              
+              # 检查分支是否匹配
+              if [[ "$BRANCH_NAME" == "main" ]] || [[ "$BRANCH_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+                echo "Branch matches trigger conditions"
+                echo "should-build=true" >> $GITHUB_OUTPUT
+                echo "force-build=false" >> $GITHUB_OUTPUT
+              else
+                echo "Branch does not match trigger conditions"
+                echo "should-build=false" >> $GITHUB_OUTPUT
+                echo "force-build=false" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "Event does not match trigger conditions"
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "force-build=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # 主构建任务
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: check-force-build
+    # 只有当应该构建时才运行
+    if: needs.check-force-build.outputs.should-build == 'true'
+    
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于版本信息
+
+      - name: Display build trigger info
+        run: |
+          echo "Build triggered by: ${{ github.event_name }}"
+          echo "Force build: ${{ needs.check-force-build.outputs.force-build }}"
+          echo "Branch: ${{ github.ref_name }}"
+          if [[ "${{ needs.check-force-build.outputs.force-build }}" == "true" ]]; then
+            echo "🚀 Force build activated - ignoring branch/path restrictions"
+          else
+            echo "📋 Standard build conditions met"
+          fi
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Install uv package manager
+      - name: Install dependencies
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "~/.cargo/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocstrings[python] pyyaml
 
-      - name: Install documentation dependencies
-        run: |
-          uv pip install --system -r requirements-docs.txt
+#      - name: Generate documentation
+#        run: |
+#          python generate_docs.py
 
       - name: Build documentation
         run: |
-          mkdocs build --strict
+          mkdocs build
 
-      - name: Upload built site as artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' || needs.check-force-build.outputs.force-build == 'true'
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: site
-          path: site/
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true
 
-      # Optional: deploy to GitHub Pages
-      # - name: Deploy to GitHub Pages
-      #   uses: peaceiris/actions-gh-pages@v4
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./site
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          retention-days: 30
