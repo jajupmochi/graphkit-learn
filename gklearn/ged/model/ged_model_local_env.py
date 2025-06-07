@@ -1,17 +1,20 @@
 """
-ged_model_parallel.py
+ged_model_local_env
 
-The parallel version of the GEDModel for testing. Local GEDEnv is used.
+The GEDModel class creating a GEDEnv locally inside the pairwise distance computation for
+each pair of graphs. This can be a bit time efficient, but also super slow.
+
+Check comments in `profile_ged_model.py` and `profile_ged_model_cross_matrix.py` in
+`gklearn/expeirments/ged/ged_model/` for the performance comparison.
 
 @Author: jajupmochi
-@Date: May 22 2025
+@Date: Jun 06 2025
 """
 import gc
 import multiprocessing
 import os
 import sys
 import time
-import warnings
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
@@ -110,12 +113,6 @@ class GEDModel(BaseEstimator):  # , ABC):
 		self.copy_graphs = copy_graphs
 		self.verbose = verbose
 
-		self.pairwise_stats = []  # Store pairwise stats for each pair of graphs.
-
-
-	#		self._run_time = 0
-	#		self._gram_matrix = None
-	#		self._gram_matrix_unnorm = None
 
 	##########################################################################
 	# The following is the 1st paradigm to compute GED distance matrix, which is
@@ -433,8 +430,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 		except NotFittedError:
 			# Compute diagonals of X.
 			self._X_diag = np.empty(shape=(len(self._graphs),))
-			graphs = ([g.copy() for g in
-			           self._graphs] if self.copy_graphs else self._graphs)
+			graphs = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
 			for i, x in enumerate(graphs):
 				self._X_diag[i] = self.pairwise_kernel(x, x)  # @todo: parallel?
 
@@ -506,8 +502,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			if Y is None:
 				check_is_fitted(self, ['_graphs'])
 				check_is_fitted(self, ['_targets'])
-				graphs = ([g.copy() for g in
-				           self._graphs] if self.copy_graphs else self._graphs)
+				graphs = ([g.copy() for g in self._graphs] if self.copy_graphs else self._graphs)
 				targets = self._targets
 			else:
 				graphs = ([g.copy() for g in Y] if self.copy_graphs else Y)
@@ -567,11 +562,6 @@ class GEDModel(BaseEstimator):  # , ABC):
 	def _compute_X_dm_series(self, graphs, **kwargs):
 		n = len(graphs)
 		dis_matrix = np.zeros((n, n))
-		if self.pairwise_stats:
-			warnings.warn(
-				'`pairwise_stats` is not empty. Cleaning it for the new computation.'
-			)
-			self.pairwise_stats = []
 
 		iterator = combinations(range(n), 2)
 		len_itr = int(n * (n - 1) / 2)
@@ -583,9 +573,8 @@ class GEDModel(BaseEstimator):  # , ABC):
 				file=sys.stdout, verbose=(self.verbose >= 2), length=len_itr
 		):
 			g1, g2 = graphs[i], graphs[j]
-			dis_matrix[i, j], stats = self.compute_ged(g1, g2, **kwargs)
+			dis_matrix[i, j] = self.compute_ged(g1, g2, **kwargs)
 			dis_matrix[j, i] = dis_matrix[i, j]
-			self.pairwise_stats.append(stats)
 		return dis_matrix
 
 
@@ -651,12 +640,6 @@ class GEDModel(BaseEstimator):  # , ABC):
 				f"Running with {n_jobs} parallel processes and chunk size of {chunksize}"
 			)
 
-		if self.pairwise_stats:
-			warnings.warn(
-				'`pairwise_stats` is not empty. Cleaning it for the new computation.'
-			)
-			self.pairwise_stats = []
-
 		# For networkx graphs, we need to use a Manager to share them between processes
 		with Manager() as manager:
 			# Create a managed shared list for the graphs
@@ -718,8 +701,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 						with ProcessPoolExecutor(
 								max_workers=n_jobs
 						) as executor:
-							futures = [executor.submit(worker, pair) for pair
-							           in pairs]
+							futures = [executor.submit(worker, pair) for pair in pairs]
 
 							# Track progress if verbose
 							if self.verbose >= 2:
@@ -753,8 +735,6 @@ class GEDModel(BaseEstimator):  # , ABC):
 										worker, pairs, chunksize=chunksize
 									)
 								)
-
-							self.pairwise_stats = [stats for _, _, _, stats in results]
 
 					else:
 						raise ValueError(
@@ -796,7 +776,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			)
 
 			# Compute distance using the function reference
-			distance, stats = compute_ged_func(g1, g2, **kwargs)
+			distance = compute_ged_func(g1, g2, **kwargs)
 
 			# Update the matrix
 			shared_matrix[i, j] = distance
@@ -807,7 +787,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			if 'existing_shm' in locals():
 				existing_shm.close()
 
-		return i, j, distance, stats  # Return for progress tracking
+		return i, j, distance  # Return for progress tracking
 
 
 	def _compute_cross_distance_matrix_series(self, graphs1, graphs2, **kwargs):
@@ -844,7 +824,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 				file=sys.stdout, verbose=(self.verbose >= 2), length=len_itr
 		):
 			g1, g2 = graphs1[i], graphs2[j]
-			dis_matrix[i, j], _ = self.compute_ged(g1, g2, **kwargs)
+			dis_matrix[i, j] = self.compute_ged(g1, g2, **kwargs)
 
 		return dis_matrix
 
@@ -1067,7 +1047,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			)
 
 			# Compute distance using the function reference
-			distance, stats = compute_ged_func(g1, g2, **kwargs)
+			distance = compute_ged_func(g1, g2, **kwargs)
 
 			# Update the matrix
 			shared_matrix[i, j] = distance
@@ -1097,7 +1077,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 			'edit_cost_config': self.edit_cost_config,
 		}
 		repeats = kwargs.get('repeats', 1)
-		dis, pi_forward, pi_backward, stats = pairwise_ged(
+		dis, pi_forward, pi_backward = pairwise_ged(
 			Gi, Gj, ged_options, repeats=repeats
 		)
 		# @TODO: Better to have a if here.
@@ -1110,7 +1090,7 @@ class GEDModel(BaseEstimator):  # , ABC):
 		# else:
 		# 	n_eo_tmp = None
 		# return dis, n_eo_tmp
-		return dis, stats
+		return dis
 
 
 	def get_env_type(self, graph: nx.Graph | None = None):
@@ -1284,11 +1264,6 @@ def pairwise_ged(
 	"""
 	from gklearn.gedlib import gedlibpy
 
-	env_setting_time, graphs_adding_time, ged_computing_time = 0, 0, 0
-
-	total_time = time.time()
-	start_time = total_time
-
 	ged_env = gedlibpy.GEDEnv(env_type=options.get('env_type', 'attr'), verbose=False)
 	ged_env.set_edit_cost(
 		options['edit_cost'],
@@ -1298,18 +1273,10 @@ def pairwise_ged(
 		} or {}
 	)
 
-	env_setting_time += time.time() - start_time
-
-	start_time = time.time()
-
 	ged_env.add_nx_graph(g1, '')
 	ged_env.add_nx_graph(g2, '')
 
-	graphs_adding_time += time.time() - start_time
-
 	list_id = ged_env.get_all_graph_ids()
-
-	start_time = time.time()
 
 	ged_env.init(
 		init_option=(
@@ -1320,14 +1287,9 @@ def pairwise_ged(
 	ged_env.set_method(options['method'], ged_options_to_string(options))
 	ged_env.init_method()
 
-	env_setting_time += time.time() - start_time
-
 	g = list_id[0]
 	h = list_id[1]
 	dis_min = np.inf
-	# 	print('------------------------------------------')
-
-	start_time = time.time()
 
 	for i in range(0, repeats):
 		ged_env.run_method(g, h)
@@ -1340,8 +1302,6 @@ def pairwise_ged(
 			pi_backward = ged_env.get_backward_map(g, h)
 	# 			lower = ged_env.get_lower_bound(g, h)
 
-	ged_computing_time += time.time() - start_time
-
 	# make the map label correct (label remove map as np.inf)
 	nodes1 = [n for n in g1.nodes()]
 	nodes2 = [n for n in g2.nodes()]
@@ -1351,13 +1311,4 @@ def pairwise_ged(
 	pi_backward = [nodes1[pi] if pi < nb1 else np.inf for pi in pi_backward]
 	#		print(pi_forward)
 
-	total_time = time.time() - total_time
-
-	stats = {
-		'pairwise_total_time': total_time,
-		'env_setting_time': env_setting_time,
-		'graphs_adding_time': graphs_adding_time,
-		'ged_computing_time': ged_computing_time
-	}
-
-	return dis, pi_forward, pi_backward, stats
+	return dis, pi_forward, pi_backward

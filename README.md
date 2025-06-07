@@ -94,13 +94,91 @@ A demo of computing graph kernels can be found on [Google Colab](https://colab.r
 
 ### 2 Graph Edit Distances
 
+We currently support a GEDModel class compatible with the `scikit-learn` transformer interface,
+which can be used to compute the graph edit distance between attributed graphs. 
+The `GEDModel` class is based on the extended [`GEDLIB`](https://github.com/dbblumenthal/gedlib) library. See Section
+[GEDLIB](#4-interface-to-gedlib) for more details. 
+
+#### The following GED methods are supported:
+
+- BRANCH            
+- BRANCH_FAST       
+- BRANCH_TIGHT   
+- BRANCH_UNIFORM
+- BRANCH_COMPACT
+- PARTITION
+- HYBRID
+- RING
+- ANCHOR_AWARE_GED
+- WALKS
+- IPFP
+- BIPARTITE
+- SUBGRAPH
+- NODE
+- RING_ML
+- BIPARTITE_ML
+- REFINE
+- BP_BEAM
+- SIMULATED_ANNEALING
+- HED
+- STAR		
+
+with `GUROBI`:
+
+- F1             
+- F2                 
+- COMPACT_MIP         
+- BLP_NO_EDGE_LABELS  
+
+#### The following GED cost functions are supported:
+
+- CHEM_1  
+- CHEM_2 
+- CMU      
+- GREC_1   
+- GREC_2   
+- PROTEIN   
+- FINGERPRINT
+- LETTER 
+- LETTER2
+  - Similar to `LETTER`, but uses 6 cost constants instead of 3. See details [here](https://github.com/jajupmochi/gedlib/blob/master/src/edit_costs/letter_2.hpp).
+- NON_SYMBOLIC
+  - Edit costs for graphs containing only non-symbolic (numeric) node and edge
+    labels. These labels are used to compute relabeling (substitution) costs, using
+    e.g., the Euclidean distance. See details [here](https://github.com/jajupmochi/gedlib/blob/master/src/edit_costs/non_symbolic.hpp#L35).
+- GEOMETRIC 
+  - Edit costs for graphs containing mixed node and edge attributes (e.g., string (symbolic) and numeric (non-symbolic)). 
+    Users can choose the (dis-)similarity measure for each label type, e.g.,
+    `cosine_distance` for numeric vectors. See details [here](https://github.com/jajupmochi/gedlib/blob/master/src/edit_costs/geometric.hpp#L42).
+- CONSTANT    
+
+Detailed documentation can be found [here](https://dbblumenthal.github.io/gedlib/index.html).
+
 ### 3 Graph preimage methods
 
 A demo of generating graph preimages can be found on [Google Colab](https://colab.research.google.com/drive/1PIDvHOcmiLEQ5Np3bgBDdu0kLOquOMQK?usp=sharing) and in the [`examples`](https://github.com/jajupmochi/graphkit-learn/blob/master/gklearn/examples/median_preimege_generator.py) folder.
 
 ### 4 Interface to `GEDLIB`
 
-[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the graph edit distance between attributed graphs. [A Python interface](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib) for `GEDLIB` is integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library.
+[`GEDLIB`](https://github.com/dbblumenthal/gedlib) is an easily extensible C++ library for (suboptimally) computing the 
+graph edit distance between attributed graphs. [A Python interface](https://github.com/jajupmochi/graphkit-learn/tree/master/gklearn/gedlib) for `GEDLIB` is
+integrated in this library, based on [`gedlibpy`](https://github.com/Ryurin/gedlibpy) library. We also extended the 
+library, adding the following features:
+
+- Support attributed graphs with the following node and edge label types:
+  - strings, integers, floats, lists / `numpy` arrays of floats and integers. Arbitrary
+  numbers of features can be added.
+
+- Support fast vectorized computation between labels using `Eigen` (e.g., cosine or 
+  Euclidean distances). 
+  - To benefit from this, we recommend merging numeric labels into 
+    a single label with a `numpy` array.
+
+- Support the following GED cost functions: 
+  - `LETTER2`, `NON_SYMBOLIC`, `GEOMETRIC`. 
+  - See Section [GED](#3-graph-edit-distances) for more details.
+
+- Use modern C++ 17 features, such as `std::optional`, `std::variant`, `std::any`. 
 
 ### 5 Computation optimization methods
 

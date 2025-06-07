@@ -28,7 +28,7 @@ def compute_ged(g1, g2, options):
 		- # of edit operations are not computed in this method.
 
 	"""
-	from gklearn.gedlib import librariesImport, gedlibpy
+	from gklearn.gedlib import libraries_import, gedlibpy
 
 	ged_env = gedlibpy.GEDEnv()
 	ged_env.set_edit_cost(
@@ -375,7 +375,7 @@ def _compute_geds_without_permutation(
 	-----
 		- # of edit operations are computed in this method.
 	"""
-	from gklearn.gedlib import librariesImport, gedlibpy
+	from gklearn.gedlib import libraries_import, gedlibpy
 
 	# initialize ged env.
 	ged_env = gedlibpy.GEDEnv()
@@ -626,7 +626,7 @@ def get_nb_edit_operations(
 				g1, g2, forward_map, backward_map,
 				node_attrs=node_attrs, edge_attrs=edge_attrs
 			)
-		elif edit_cost == 'CONSTANT':
+		elif edit_cost in ['CONSTANT', 'CHEM_1', 'CHEM_2']:
 			node_labels = kwargs.get('node_labels', [])
 			edge_labels = kwargs.get('edge_labels', [])
 			return get_nb_edit_operations_symbolic(
@@ -634,10 +634,16 @@ def get_nb_edit_operations(
 				node_labels=node_labels, edge_labels=edge_labels
 			)
 		else:
-			return get_nb_edit_operations_symbolic(
-				g1, g2, forward_map,
-				backward_map
+			# The following edit costs include non-symbolic computations:
+			# 'CMU', 'GREC_1', 'GREC_2', 'FINGERPRINT', 'PROTEIN', 'GEOMETRIC'.
+			raise NotImplementedError(
+				f'`get_nb_edit_operations()` is not implemented for edit cost "{edit_cost}". '
 			)
+
+		# return get_nb_edit_operations_symbolic(
+		# 	g1, g2, forward_map,
+		# 	backward_map
+		# )
 
 
 def get_nb_edit_operations_symbolic(

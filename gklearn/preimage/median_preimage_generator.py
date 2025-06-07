@@ -16,7 +16,7 @@ from gklearn.preimage.utils import compute_k_dis
 from gklearn.ged.util import compute_geds, ged_options_to_string
 from gklearn.ged.median import MedianGraphEstimator
 from gklearn.ged.median import constant_node_costs,mge_options_to_string
-from gklearn.gedlib import librariesImport, gedlibpy
+from gklearn.gedlib import libraries_import, gedlibpy
 from gklearn.utils import Timer
 from gklearn.utils.utils import get_graph_kernel_by_name
 
