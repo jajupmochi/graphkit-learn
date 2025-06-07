@@ -9,7 +9,7 @@ Created on Mon Mar 16 17:26:40 2020
 def test_median_graph_estimator():
 	from gklearn.utils import load_dataset
 	from gklearn.ged.median import MedianGraphEstimator, constant_node_costs
-	from gklearn.gedlib import librariesImport, gedlibpy
+	from gklearn.gedlib import libraries_import, gedlibpy
 	from gklearn.preimage.utils import get_same_item_indices
 	import multiprocessing
 
@@ -83,7 +83,7 @@ def test_median_graph_estimator():
 def test_median_graph_estimator_symb():
 	from gklearn.utils import load_dataset
 	from gklearn.ged.median import MedianGraphEstimator, constant_node_costs
-	from gklearn.gedlib import librariesImport, gedlibpy
+	from gklearn.gedlib import libraries_import, gedlibpy
 	from gklearn.preimage.utils import get_same_item_indices
 	import multiprocessing
 

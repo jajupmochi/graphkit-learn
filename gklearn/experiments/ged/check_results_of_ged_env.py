@@ -79,7 +79,7 @@ def compute_geds_by_GEDEnv(dataset):
 
 
 def compute_geds_by_GEDLIB(dataset):
-	from gklearn.gedlib import librariesImport, gedlibpy	
+	from gklearn.gedlib import libraries_import, gedlibpy
 	from gklearn.ged.util import ged_options_to_string
 	import numpy as np
 	

@@ -401,9 +401,9 @@ if __name__ == '__main__':
 	seed = 42
 	n_graphs = 500
 	n_emb_dim = 100
-	parellel = True
+	parallel = True
 	compare_gedlib_with_coords_in_string_and_attr_format(
-		seed=seed, n_graphs=n_graphs, n_emb_dim=n_emb_dim, parallel=parellel
+		seed=seed, n_graphs=n_graphs, n_emb_dim=n_emb_dim, parallel=parallel
 	)
 
 	# # Comparison of the two versions:

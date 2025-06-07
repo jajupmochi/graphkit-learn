@@ -2,7 +2,7 @@
 
 #Pour que "import script" trouve les librairies qu'a besoin GedLib
 #Equivalent à définir la variable d'environnement LD_LIBRARY_PATH sur un bash
-import librariesImport
+import libraries_import
 import gedlibpy
 import networkx as nx
 
