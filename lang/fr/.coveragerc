@@ -1,0 +1,4 @@
+[run]
+omit = 
+	gklearn/tests/*
+	gklearn/examples/*

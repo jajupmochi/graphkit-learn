@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+networkx
+scikit-learn
+tabulate
+tqdm
+pytest

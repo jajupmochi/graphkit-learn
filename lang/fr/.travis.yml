@@ -1,0 +1,22 @@
+---
+language: python
+python:
+  - '3.6'
+  - '3.7'
+  - '3.8'
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install codecov
+  - pip install coverage
+  - pip install pytest-cov
+  - sudo apt-get -y install gfortran
+install:
+  - pip install -r requirements.txt
+  - pip install wheel
+script:
+  - python setup.py bdist_wheel
+  - if [ $TRAVIS_PYTHON_VERSION == 3.6 ]; then pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/; else pytest -v --cov-config=.coveragerc --cov-report term --cov=gklearn gklearn/tests/ --ignore=gklearn/tests/test_median_preimage_generator.py; fi
+after_success:
+  - codecov
